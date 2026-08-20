@@ -139,6 +139,52 @@ const TERMOS_PROIBIDOS_REGEX = new RegExp([
 // =========================================================================
 
 /**
+ * [ROTA] AUTH: REGISTRO DE USUÁRIO
+ */
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { role } }
+    });
+    if (error) return res.status(400).json({ sucesso: false, erro: error.message });
+    return res.status(200).json({ sucesso: true, user: data.user });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno no registro.' });
+  }
+});
+
+/**
+ * [ROTA] AUTH: LOGIN
+ */
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return res.status(401).json({ sucesso: false, erro: 'Credenciais inválidas.' });
+    return res.status(200).json({ sucesso: true, session: data.session });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno no login.' });
+  }
+});
+
+/**
+ * [ROTA] ACEITE DE TERMOS
+ */
+app.post('/api/auth/aceite-termos', async (req, res) => {
+  const { user_id } = req.body;
+  const { error } = await supabase
+    .from('perfis')
+    .update({ has_seen_welcome_notice: true })
+    .eq('id', user_id);
+
+  if (error) return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
+  return res.status(200).json({ sucesso: true });
+});
+
+/**
  * [ROTA] CHAT E MODERAÇÃO
  * Integrada perfeitamente com o Fluxo 4 do app.js
  */
@@ -318,7 +364,7 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
 // =========================================================================
 // 6. INICIALIZAÇÃO
 // =========================================================================
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   logger.info(`TATTOOGO MK - NÚCLEO DE PRODUÇÃO RODANDO NA PORTA ${PORT}`);
 });

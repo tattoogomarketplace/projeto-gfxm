@@ -24,8 +24,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className
           )}
           ref={ref}
-          {...props}
-        }
+                    {...props}
+        />
         {error && (
           <span className="text-[10px] font-medium text-red-500 ml-1">
             {error}

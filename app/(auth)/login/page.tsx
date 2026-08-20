@@ -3,12 +3,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { Input } from '@/components/input';
+import Link from 'next/link';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -34,12 +34,12 @@ export default function LoginPage() {
       return response.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem('tattoogo_token', data.token);
-      toast.success('Bem-vindo de volta!');
+      localStorage.setItem('tattoogo_token', data.session?.access_token);
+      toast.success('Bem-vindo de volta à elite!');
       router.push('/dashboard');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao realizar login');
+      toast.error(error.response?.data?.erro || 'Erro ao realizar login');
     },
   });
 
@@ -48,37 +48,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#121212] px-4">
+      <div className="w-full max-w-sm space-y-8 bg-zinc-950 p-8 rounded-2xl border border-zinc-800">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-amber-gold">TattooGo MK</h1>
-          <p className="text-graphite-400 mt-2">Acesse sua conta de elite</p>
+          <h1 className="text-3xl font-extrabold text-white">TattooGo <span className="text-orange-500">MK</span></h1>
+          <p className="text-zinc-500 mt-2 text-sm">Acesse sua conta de elite</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <Input
-            label="E-mail"
-            type="email"
-            placeholder="seu@email.com"
-            {...register('email')}
-            error={errors.email?.message}
-          />
-          <Input
-            label="Senha"
-            type="password"
-            placeholder="••••••••"
-            {...register('password')}
-            error={errors.password?.message}
-          />
+          <div className="space-y-4">
+            <Input
+              label="E-mail"
+              type="email"
+              placeholder="seu@email.com"
+              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              {...register('email')}
+              error={errors.email?.message}
+            />
+            <Input
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              {...register('password')}
+              error={errors.password?.message}
+            />
+          </div>
 
-          <Button
+          <button
             type="submit"
-            className="w-full"
-            isLoading={mutation.isPending}
+            disabled={mutation.isPending}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] disabled:opacity-50"
           >
-            Entrar
-          </Button>
+            {mutation.isPending ? 'Autenticando...' : 'Entrar'}
+          </button>
         </form>
+
+        <p className="text-center text-sm text-zinc-500">
+          Ainda não faz parte da elite?{' '}
+          <Link href="/register" className="text-orange-500 hover:underline">
+            Cadastre-se
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -412,3 +412,4 @@ CREATE POLICY "agendamentos_update_tatuador"
 -- 3. Mutex de slot (unique index) evita double-booking na janela de sinal (25%).
 -- 4. version habilita optimistic locking em updates de agendamento/perfil.
 -- 5. Para produção: mover pagamentos/KYC para RPCs SECURITY DEFINER auditadas.
+
