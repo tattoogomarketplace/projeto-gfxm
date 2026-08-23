@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /dashboard
+Disallow: /chat
+Disallow: /api
+Disallow: /checkout
+
+Allow: /
+Allow: /feed
+Allow: /explore
