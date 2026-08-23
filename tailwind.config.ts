@@ -54,6 +54,9 @@ const config: Config = {
       maxWidth: {
         app: "480px",
       },
+      zIndex: {
+        "9999": "9999",
+      },
       spacing: {
         "safe-top": "env(safe-area-inset-top)",
         "safe-bottom": "env(safe-area-inset-bottom)",
@@ -66,3 +69,4 @@ const config: Config = {
 };
 
 module.exports = config;
+

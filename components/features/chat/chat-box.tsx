@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
+import { validateChatMessage } from "@/lib/utils/chat-moderation";
 
 interface Message {
   id: string;
@@ -10,18 +11,18 @@ interface Message {
 const FORBIDDEN_WORDS = ['palavrao1', 'palavrao2']; // Exemplo
 const PAYMENT_LINK_REGEX = /(https?:\/\/)?(www\.)?(pay|checkout|stripe|paypal|picpay)\.[a-z]{2,}/i;
 
-export default function ChatBox() {
+export function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
 
-    // Moderação de IA
-    if (PAYMENT_LINK_REGEX.test(input) || FORBIDDEN_WORDS.some(word => input.toLowerCase().includes(word))) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'ai', text: '⚠️ Mensagem bloqueada: Violação das políticas de segurança.' }]);
-      setInput('');
+    const { isValid, error } = validateChatMessage(input);
+
+    if (!isValid) {
+      alert(error);
       return;
     }
 
@@ -34,7 +35,7 @@ export default function ChatBox() {
   }, [messages]);
 
   return (
-    <div className="flex flex-col w-full h-[600px] bg-[#121212] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col w-full h-150 bg-[#121212] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -59,3 +60,4 @@ export default function ChatBox() {
     </div>
   );
 }
+

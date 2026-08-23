@@ -1,41 +1,45 @@
-import { createClient } from '@/lib/supabase';
-import { PortfolioCard } from '@/components/features/portfolio-card';
-import { Skeleton } from '@/components/ui/skeleton';
+'use client';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { supabase } from '@/lib/mock-services';
+import { maskEmail } from '@/lib/utils/security';
+export default function ClienteDashboard() {
+  const [profile, setProfile] = useState<any>(null);
+  const [agendamentos, setAgendamentos] = useState<any[]>([]);
 
-export default async function ClienteDashboard() {
-  const supabase = createClient();
-  
-  // Busca funcional dos posts de tatuagem
-  const { data: posts, error } = await supabase
-    .from('posts')
-    .select('id, image_url, artist_name')
-    .order('created_at', { ascending: false });
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
+      const { data: p } = await supabase.from('perfis').select('*').eq('id', user.id).single();
+      const { data: a } = await supabase.from('agendamentos').select('*').eq('cliente_id', user.id);
+
+      setProfile(p);
+      setAgendamentos(a || []);
+    }
+    load();
+  }, []);
+
+  if (!profile) return <div className="text-white p-10">Carregando painel de elite...</div>;
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-white">Inspiração</h1>
-        <p className="text-zinc-400">Tatuagens selecionadas para você.</p>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {error ? (
-           <div className="col-span-full p-8 text-center text-red-500 bg-red-900/10 rounded-2xl border border-red-900/20">
-             Erro ao carregar feed. Verifique a conexão com o Supabase.
-           </div>
-        ) : posts && posts.length > 0 ? (
-          posts.map((post) => (
-            <PortfolioCard 
-              key={post.id} 
-              id={post.id} 
-              imageUrl={post.image_url} 
-              artistName={post.artist_name} 
-            />
-          ))
-        ) : (
-          [...Array(6)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 bg-[#121212] min-h-screen text-white">
+      <div className="backdrop-blur-md bg-zinc-900/40 border border-zinc-800 p-6 rounded-3xl mb-8">
+        <h1 className="text-2xl font-bold text-amber-500">Bem-vindo, {profile.email.split('@')[0]}</h1>
+        <p className="text-zinc-400">Email: {maskEmail(profile.email)}</p>
+      </div>
+      <h2 className="text-xl font-bold mb-4">Meus Agendamentos</h2>
+      <div className="space-y-4">
+        {agendamentos.length > 0 ? agendamentos.map((a) => (
+          <div key={a.id} className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between">
+            <span>{new Date(a.data_hora).toLocaleDateString()}</span>
+            <span className="text-amber-500 font-bold">{a.status}</span>
+          </div>
+        )) : (
+          <div className="text-zinc-600 italic">Nenhum agendamento encontrado.</div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
+

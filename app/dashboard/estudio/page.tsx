@@ -1,31 +1,35 @@
-import { createClient } from '@/lib/supabase';
+'use client';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { supabase } from '@/lib/mock-services';
 
-export default async function EstudioDashboard() {
-  const supabase = createClient();
+export default function EstudioDashboard() {
+  const [tatuadores, setTatuadores] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function load() {
   const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Busca tatuadores vinculados ao estúdio
+      const { data } = await supabase.from('perfis').select('*').eq('role', 'tatuador');
+      setTatuadores(data || []);
+    }
+    load();
+  }, []);
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-white">Painel do Estúdio</h1>
-        <p className="text-zinc-400">Gestão de artistas e métricas de faturamento.</p>
-      </header>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 bg-[#121212] min-h-screen text-white">
+      <h1 className="text-2xl font-bold text-amber-500 mb-8">Painel do Estúdio</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Métricas de Comissão */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-          <h2 className="text-sm text-zinc-400 uppercase tracking-wider mb-2">Comissão (2% CNPJ)</h2>
-          <p className="text-3xl font-bold text-orange-500">R$ 0,00</p>
+      <div className="space-y-4">
+        {tatuadores.map((t) => (
+          <div key={t.id} className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 flex justify-between">
+            <span className="font-bold">{t.email}</span>
+            <span className="text-zinc-400 text-sm">Status: {t.kyc_status}</span>
         </div>
-
-        {/* Gestão de Artistas */}
-        <div className="col-span-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Artistas Vinculados</h2>
-          <div className="h-40 flex items-center justify-center text-zinc-600 border-2 border-dashed border-zinc-800 rounded-xl">
-            Nenhum artista vinculado ao estúdio.
+        ))}
           </div>
-        </div>
-      </div>
-    </div>
+    </motion.div>
   );
 }
+
