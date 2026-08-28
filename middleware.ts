@@ -9,15 +9,8 @@ export async function middleware(request: NextRequest) {
     request: { headers: request.headers },
   });
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return response;
-  }
-
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
@@ -36,21 +29,30 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  // Proteção de Rotas Públicas
-  if (!user && !path.startsWith("/login") && !path.startsWith("/register") && path !== "/") {
+  // 1. Acesso Público
+  const isAuthPage = path.startsWith("/login") || path.startsWith("/register") || path === "/";
+  if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Proteção de Role (RBAC)
+  // 2. Acesso Autenticado
   if (user) {
-    const role = user.user_metadata.role;
+    // Busca perfil para validar termos (usando select otimizado)
+    const { data: perfil } = await supabase
+      .from('perfis')
+      .select('has_seen_welcome_notice')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    // Redireciona para o dashboard correto caso tente acessar o dashboard genérico
-    if (path === "/dashboard") {
-      return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
+    const aceitouTermos = perfil?.has_seen_welcome_notice;
+
+    // Bloqueio se não aceitou termos (exceto na página de termos)
+    if (!aceitouTermos && path !== "/termos" && !isAuthPage) {
+      return NextResponse.redirect(new URL("/termos", request.url));
     }
 
-    // Impede role tampering
+    // RBAC: Impede acesso cruzado entre perfis
+    const role = user.user_metadata.role;
     if (path.startsWith("/dashboard/") && !path.startsWith(`/dashboard/${role}`)) {
       return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
     }
@@ -60,9 +62,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
 

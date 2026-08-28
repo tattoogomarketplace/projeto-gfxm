@@ -2,8 +2,14 @@
 
 import { supabase } from '@/lib/mock-services';
 import { moderateImageWithGemini } from '@/lib/ai-moderation';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { NeonButton } from '@/components/ui/neon-button';
 
 export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
+  const router = useRouter();
+  const content = { subtitle: "Gerencie seu portfólio e alcance mais clientes.", cta: "Ir para o Dashboard" };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -56,6 +62,9 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
           onChange={handleUpload} 
         />
       </label>
+      <p className="text-zinc-400 mb-8 max-w-sm">{content.subtitle}</p>
+      <NeonButton onClick={() => router.push('/dashboard')}>{content.cta}</NeonButton>
     </div>
   );
 }
+

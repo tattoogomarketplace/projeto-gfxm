@@ -19,6 +19,7 @@ export function ChatBox() {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
+    // Bloqueio duplo: UI já bloqueia, backend é a camada final (chamada será feita abaixo)
     const { isValid, error } = validateChatMessage(input);
 
     if (!isValid) {
@@ -27,6 +28,18 @@ export function ChatBox() {
     }
 
     setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: input }]);
+
+    // Injeção cirúrgica: Chamada ao backend para dupla validação
+    try {
+      await fetch('/api/chat/enviar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensagem: input }) // Id e destinatário devem ser geridos pelo contexto
+      });
+    } catch (err) {
+      console.error("Erro na moderação:", err);
+    }
+
     setInput('');
   };
 

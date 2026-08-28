@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,6 +10,7 @@ import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Input } from '@/components/input';
 import Link from 'next/link';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -19,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const [token, setToken] = useState<string>();
 
   const {
     register,
@@ -29,7 +32,7 @@ export default function LoginPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: LoginFormValues) => {
+    mutationFn: async (data: LoginFormValues & { turnstileToken: string }) => {
       const response = await api.post('/api/auth/login', data);
       return response.data;
     },
@@ -44,7 +47,11 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    mutation.mutate(data);
+    if (!token) {
+      toast.error('Por favor, valide o Turnstile.');
+      return;
+    }
+    mutation.mutate({ ...data, turnstileToken: token });
   };
 
   return (
@@ -73,6 +80,10 @@ export default function LoginPage() {
               {...register('password')}
               error={errors.password?.message}
             />
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+              onSuccess={(token) => setToken(token)}
+            />
           </div>
 
           <button
@@ -94,3 +105,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

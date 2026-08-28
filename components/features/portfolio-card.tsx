@@ -3,38 +3,55 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
+import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 
 interface PortfolioCardProps {
   id: string;
   imageUrl: string;
   artistName: string;
+  initialLikes?: number;
 }
 
-export function PortfolioCard({ id, imageUrl, artistName }: PortfolioCardProps) {
+export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: PortfolioCardProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(initialLikes);
+  const { triggerHaptic } = useHapticFeedback();
 
-  const handleLike = () => {
+  const handleLike = async () => {
     // Optimistic UI Update
-    setIsLiked(!isLiked);
+    const previousLiked = isLiked;
+    const previousLikes = likes;
     
+    setIsLiked(!isLiked);
+    setLikes(prev => isLiked ? prev - 1 : prev + 1);
+
     // Haptic Feedback (Apple-tier experience)
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(50);
+    triggerHaptic('medium');
+
+    // Sincronia com o Backend
+    try {
+      const res = await fetch(`/api/portfolio/like/${id}`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+    } catch (error) {
+      console.error("Erro na sincronia com backend:", error);
+      setIsLiked(previousLiked);
+      setLikes(previousLikes);
     }
   };
 
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="group bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden shadow-lg transition-all"
+      className="group shrink-0 w-full sm:w-[calc(50%-1rem)] bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden shadow-lg transition-all"
     >
       <div className="relative h-64 w-full overflow-hidden">
-        <img src={imageUrl} alt="Tattoo" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
       </div>
       
       <div className="p-4 flex justify-between items-center bg-zinc-950/30">
         <span className="text-zinc-300 font-medium">{artistName}</span>
-        <button onClick={handleLike} className="relative p-2">
+        <button onClick={handleLike} className="relative p-2 flex items-center gap-2">
           <AnimatePresence>
             <motion.div
               key={isLiked ? "liked" : "unliked"}
@@ -49,8 +66,10 @@ export function PortfolioCard({ id, imageUrl, artistName }: PortfolioCardProps) 
               />
             </motion.div>
           </AnimatePresence>
+          <span className="text-zinc-400 font-medium">{likes}</span>
         </button>
       </div>
     </motion.div>
   );
 }
+

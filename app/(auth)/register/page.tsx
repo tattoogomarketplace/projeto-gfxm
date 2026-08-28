@@ -9,11 +9,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/input';
 import { createClient } from '@/lib/supabase';
-import { OtpInput } from '@/components/shared/otp-input';
+import { TattooOTPVerification } from '@/components/features/tattoo-otp';
+import { WelcomeGate } from '@/components/features/welcome-gate';
 
 const registerSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Precisa de 1 letra maiúscula')
+    .regex(/[a-z]/, 'Precisa de 1 letra minúscula')
+    .regex(/[^A-Za-z0-9]/, 'Precisa de 1 caractere especial'),
   role: z.enum(['cliente', 'tatuador', 'estudio']),
   cpf: z.string().min(11, 'CPF inválido'),
   dataNascimento: z.string().min(1, 'Data obrigatória'),
@@ -29,8 +34,10 @@ export default function RegisterPage() {
   const [status, setStatus] = useState<'normal' | 'menor_14' | 'menor_18'>('normal');
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [userRole, setUserRole] = useState<'cliente' | 'tatuador' | 'estudio'>('cliente');
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -58,6 +65,7 @@ export default function RegisterPage() {
         return;
     }
     setLoading(true);
+    setUserRole(data.role);
     try {
       const { error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -93,14 +101,17 @@ export default function RegisterPage() {
 
       if (error) throw error;
 
-      toast.success('Bem-vindo à elite TattooGo MK!');
-      router.push('/dashboard');
+      setShowWelcome(true);
     } catch (err: any) {
       toast.error('Código inválido ou expirado.');
-    } finally {
       setLoading(false);
+      throw err;
     }
   };
+
+  if (showWelcome) {
+    return <WelcomeGate role={userRole} />;
+  }
 
   if (isVerifying) {
     return (
@@ -108,7 +119,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
-          <OtpInput length={6} onComplete={handleVerifyOtp} isLoading={loading} />
+          <TattooOTPVerification onVerify={handleVerifyOtp} />
           </div>
             </div>
   );

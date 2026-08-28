@@ -4,14 +4,28 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/mock-services';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { ChatBox } from '@/components/features/chat/chat-box';
+import { checkAccess } from '@/lib/utils/rbac-guard';
+import { redirect } from 'next/navigation';
 
-export default function TatuadorDashboard() {
+export default async function TatuadorDashboard() {
+  const access = await checkAccess('tatuador');
+
+  if (!access.allowed) {
+    redirect(access.redirect);
+  }
+
+  // Corrigido: Remover o componente async que usa useState/useEffect
+  // Renderizar o componente de cliente ou extrair a lógica
+  return <TatuadorDashboardClient />;
+}
+
+function TatuadorDashboardClient() {
   const [portfolio, setPortfolio] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
   const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user?.id) return;
       const { data } = await supabase.from('portfolios').select('*').eq('tatuador_id', user.id);
       setPortfolio(data || []);
     }
@@ -53,3 +67,4 @@ export default function TatuadorDashboard() {
     </motion.div>
   );
 }
+

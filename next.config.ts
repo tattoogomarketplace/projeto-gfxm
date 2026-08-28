@@ -1,16 +1,22 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV !== 'production';
+// Trava de segurança: impede build sem as variáveis críticas exigidas pelo protocolo de segurança
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || !process.env.GEMINI_API_KEY) {
+  throw new Error("❌ FATAL: Variáveis de infraestrutura ausentes. Build abortado.");
+}
 
-// Adicione aqui todos os domínios necessários para o seu app
-const allowedConnectSrc = [
-  "'self'",
-  "https://jvtvscutqskmyzgczrew.supabase.co", // Seu Supabase
-  "https://*.supabase.co",                    // Genérico para garantir
-  "ws://localhost:*",                         // Necessário para o HMR do Next.js
-];
+// Configuração PWA (Otimização para Offline)
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+});
 
 const nextConfig: NextConfig = {
+    turbopack: {},
+  allowedDevOrigins: ['localhost:3000', '192.168.0.203:3000', '192.168.0.203'],
   async headers() {
     return [
       {
@@ -19,16 +25,11 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { 
-            key: "Content-Security-Policy", 
-            value: isDev 
-              ? `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src ${allowedConnectSrc.join(' ')};` 
-              : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://jvtvscutqskmyzgczrew.supabase.co;` 
-          },
         ],
       },
     ];
   },
 };
 
-export default nextConfig;
+module.exports = withPWA(nextConfig);
+

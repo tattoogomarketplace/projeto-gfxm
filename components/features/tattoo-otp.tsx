@@ -3,11 +3,11 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
-export function TattooOTPVerification({ onVerify }: { onVerify: (code: string) => void }) {
+export function TattooOTPVerification({ onVerify }: { onVerify: (code: string) => Promise<void> }) {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
-  const { playTattoo, playSuccess } = useSoundEffects();
+  const { playTattoo, playSuccess, playError } = useSoundEffects();
 
   const setRef = useCallback((el: HTMLInputElement | null, index: number) => {
     inputs.current[index] = el;
@@ -35,13 +35,19 @@ export function TattooOTPVerification({ onVerify }: { onVerify: (code: string) =
     }
   };
 
-  const completeVerification = (fullCode: string) => {
+  const completeVerification = async (fullCode: string) => {
     setIsVerifying(true);
     playTattoo();
-    setTimeout(() => {
+
+    try {
+      await onVerify(fullCode);
       playSuccess();
-      onVerify(fullCode);
-    }, 1200);
+    } catch (error) {
+      playError(); // Som de maquininha falhando
+      // triggerHaptic([100, 50, 100]); // Shake tátil
+      setIsVerifying(false);
+      // O shake visual será controlado pela classe de animação no motion.input
+    }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -69,8 +75,10 @@ export function TattooOTPVerification({ onVerify }: { onVerify: (code: string) =
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
-                className="w-12 h-16 text-center text-2xl font-bold bg-zinc-950 text-amber-500 border-b-2 border-amber-500 focus:outline-none focus:border-amber-400 transition-colors"
+                // Animação de erro via Framer Motion: se onVerify falhar, o estado de erro deve ser disparado
+                animate={{ x: 0 }}
                 whileFocus={{ scale: 1.1, y: -2 }}
+                className="w-12 h-16 text-center text-2xl font-bold bg-zinc-950 text-amber-500 border-b-2 border-amber-500 focus:outline-none focus:border-amber-400 transition-colors"
               />
             ))}
           </motion.div>

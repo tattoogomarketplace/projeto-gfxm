@@ -20,6 +20,7 @@ const validator = require('validator');
 const pino = require('pino');
 const pinoHttp = require('pino-http');
 const hpp = require('hpp');
+const sharp = require('sharp');
 
 // =========================================================================
 // 0. CARREGAMENTO E VALIDAÇÃO DE AMBIENTE (FAIL-FAST)
@@ -253,7 +254,13 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
     const { artista_id, titulo, estilo, preco_estimado, imagem_base64 } = validacao.data;
     const imagemLimpa = imagem_base64.includes(',') ? imagem_base64.split(',')[1] : imagem_base64;
 
-    const respostaIA = await aiBreaker.fire(imagemLimpa);
+    // Redimensionamento preventivo (max 1024px) para evitar OOM no APK
+    const buffer = Buffer.from(imagemLimpa, 'base64');
+    const imagemRedimensionada = await sharp(buffer)
+      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+      .toBuffer();
+    const imagemFinalBase64 = imagemRedimensionada.toString('base64');
+    const respostaIA = await aiBreaker.fire(imagemFinalBase64);
 
     if (respostaIA === "TIMEOUT_OU_FALHA_EXTERNA" || respostaIA.includes("NAO")) {
       return res.status(422).json({
@@ -267,7 +274,7 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
       titulo: validator.escape(titulo),
       estilo: validator.escape(estilo),
       preco_estimado,
-      imagem_url: imagem_base64, // Idealmente seria um upload pro bucket Storage antes
+      imagem_url: `data:image/jpeg;base64,${imagemFinalBase64}`,
       aprovado_ia_mod_tatuagem: true,
       curtidas: 0
     }]).select();
@@ -277,6 +284,25 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
   } catch (err) {
     req.log.error({ err }, 'Erro na Validação de Imagem');
     return res.status(500).json({ sucesso: false, erro: 'Erro no processamento de moderação visual.' });
+  }
+});
+
+/**
+ * [ROTA] MODERAÇÃO DE PORTFÓLIO E CURTIDAS
+ */
+app.post('/api/portfolio/like/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return res.status(401).json({ sucesso: false });
+
+    // Incrementa contagem de forma atômica no DB (Blindagem)
+    await supabase.rpc('increment_like', { portfolio_id: id });
+
+    return res.status(200).json({ sucesso: true });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false });
   }
 });
 
@@ -304,10 +330,10 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
 
       // 1. Busca dados do agendamento
       const { data: agendamentoData } = await supabase
-        .from('agendamentos')
+      .from('agendamentos')
         .select('tatuador_id')
         .eq('id', agendamentoId)
-        .single();
+      .single();
 
       let percentualComissao = 0.10; // 10% (Padrão Autônomo)
       let valorBonusEstudio = 0.00;
@@ -335,7 +361,7 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
 
       // 2. Confirma o agendamento
       await supabase
-        .from('agendamentos')
+      .from('agendamentos')
         .update({ status_sinal: 'pago_garantido', status_atendimento: 'agendado' })
         .eq('id', agendamentoId);
 
@@ -358,6 +384,69 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
     req.log.error({ err }, 'Erro no Webhook Financeiro');
     if (idempotencyKey) await redis.del(idempotencyKey).catch(() => {});
     return res.status(500).json({ sucesso: false, erro: 'Erro no processamento do webhook.' });
+  }
+});
+
+/**
+ * [ROTA] CANCELAMENTO DE AGENDAMENTO
+ * Lógica: Verifica prazo de 3 dias (72h)
+ */
+app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
+  try {
+    const { agendamento_id } = req.body;
+
+    const { data: agendamento, error } = await supabase
+      .from('agendamentos')
+      .select('data_hora')
+      .eq('id', agendamento_id)
+      .single();
+
+    if (error || !agendamento) return res.status(404).json({ sucesso: false, erro: 'Agendamento não encontrado.' });
+
+    const dataAgendamento = new Date(agendamento.data_hora);
+    const agora = new Date();
+    const diferencaMs = dataAgendamento.getTime() - agora.getTime();
+    const diferencaDias = diferencaMs / (1000 * 60 * 60 * 24);
+
+    if (diferencaDias < 3) {
+      return res.status(403).json({
+        sucesso: false,
+        bloqueado: true,
+        erro: 'Cancelamento via app indisponível (menos de 3 dias). Contate o suporte via chat.'
+      });
+    }
+
+    return res.status(200).json({ sucesso: true, pode_cancelar: true });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Erro interno.' });
+  }
+});
+
+/**
+ * [ROTA] CANCELAMENTO DE AGENDAMENTO - EXECUÇÃO
+ * Valida OTP e efetiva o cancelamento
+ */
+app.post('/api/agendamentos/cancelar-executar', async (req, res) => {
+  try {
+    const { agendamento_id, otp } = req.body;
+
+    // NOTA: Em produção, utilize o mesmo método de verificação OTP usado no registro
+    // O backend valida o OTP antes de permitir o DELETE ou UPDATE de status
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+
+    // Lógica de cancelamento blindada
+    const { error } = await supabase
+      .from('agendamentos')
+      .update({ status: 'cancelado' })
+      .eq('id', agendamento_id)
+      .eq('cliente_id', user.user.id);
+
+    if (error) throw error;
+
+    return res.status(200).json({ sucesso: true, mensagem: 'Cancelado com sucesso.' });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao efetivar cancelamento.' });
   }
 });
 

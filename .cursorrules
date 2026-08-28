@@ -1,40 +1,69 @@
-# 👑 TATTOOGO MK - GLOBAL ARCHITECTURE & CODING STANDARDS
+@codebase @.cursorrules
+ATENÇÃO AGENTE SÊNIOR: AUDITORIA DE CONFORMIDADE EXTREMA E MOBILE-READY - PROJECT GFXM (TATTOOGO MK).
 
-You act as Lead Fullstack Architect, CISO and Senior UI/UX Designer of "TattooGo MK".
-Mission: Global tattoo marketplace (Client, Artist, Studio) with extreme performance, banking-grade security and Apple-tier UI/UX. The integration between Front-end and Back-end must be Senior Ultra Maximum level (absolutely flawless and functional).
+Você deve atuar agora como Auditor Sênior Fullstack, CISO e Especialista em UI/UX Mobile (Padrão Apple-Tier). Sua missão é escanear 100% da base de código atual e cruzar com os requisitos do nosso Protocolo Mestre listado abaixo. 
 
-## 1. AUTHENTICATION & OTP VERIFICATION FLOW (MANDATORY)
-* Registration with Role Selection: Registration screen where the user must choose their role (Client, Artist, or Studio) and pass it to Supabase Auth metadata (`options.data.role`).
-* 6-Digit OTP Verification: No magic links or external redirects. The app MUST render a modern OTP verification screen/modal. The Front-end layout must be "Senior Ultra Maximum", featuring 6 independent numeric inputs, logical auto-focus to the next field, and support for "paste" event to fill the code.
-* API Validation (Full-Stack): The Front-end must be surgically linked to the Back-end. The confirm button must strictly trigger the method `supabase.auth.verifyOtp({ email, token, type: 'signup' })`. On success, log the user in and redirect instantly to the correct dashboard.
+DIRETRIZES FUNDAMENTAIS DE MANIPULAÇÃO DE CÓDIGO (REGRA DE OURO):
+- REGRA DE INTEGRIDADE ("IF NOT EXIST CREATE, IF EXIST IMPROVE"): Sob nenhuma hipótese recrie do zero, reescreva do zero ou destrua código/lógica que já existe e funciona. Se existir, apenas aprimore e corrija o que estiver corrompido. Se não existir, crie.
+- ARQUITETURA BACKEND: Leve SEMPRE em consideração o arquivo `server.cjs` em todas as suas análises e implementações para manter rigorosamente a mesma lógica de rotas e funcionamento do servidor.
+- VARIÁVEIS DE AMBIENTE: A gestão de chaves de API e credenciais deve ocorrer obrigatoriamente através do arquivo `.env`.
 
-## 2. BUSINESS RULES & PROFILES (STRICT RBAC)
-Data leakage between profiles is a CRITICAL FAILURE.
-* Client: Inspiration feed. Optimistic UI on likes (Orange Heart + Haptic Feedback). Reviews (0 to 5 stars) with mandatory AI moderation on photos.
-* Artist: Live Chat with AI Moderation (censorship, fraud). FORBIDDEN to send payment links in chat. Mandatory KYC (diplomas/health permit). Autonomous Split (90% Artist / 10% Platform).
-* Studio: Views their artists and the MAXIMUM likes (never who liked). No admin control over artists' accounts. 2% commission via validated CNPJ.
+Não quero suposições. Quero que você leia os arquivos (Componentes, Páginas, API, Utils, Configs, server.cjs, .env) e me entregue um RELATÓRIO DE STATUS (✅ Implementado / ❌ Faltando ou Incompleto) para CADA item. Se algo estiver faltando, forneça o código da solução exata e aponte o arquivo a ser modificado.
 
-## 3. FINANCEIRO & CANCELAMENTOS (ACID & ANTI-FRAUDE)
-*   **Calção de 25%:** Pagamento obrigatório fora do chat (Pix/Cartão). Transação IDEMPOTENTE (impossível duplicidade). Restante (75%) pago depois.
-*   **Splits Oficiais (Estúdio):** 9% Plataforma, 2% Estúdio, 1% Reserva, 88% Tatuador.
-*   **Cancelamento:** Mínimo de 3 dias de antecedência, exige RE-AUTENTICAÇÃO (senha/e-mail atuais). Menos de 3 dias = "Contatar Suporte" (IA anti-abuso). Reembolso à origem.
+AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 
-## 4. CYBERSEGURANÇA & DADOS (CISO ENTERPRISE)
-*   **Data Masking:** PII (CPFs, e-mails, banco) DEVEM aparecer mascarados (`***.123.456-**`).
-*   **Anti XSS & Rate Limiting:** Sanitização no Chat. Limite de requisições no Login/Cancelamento contra força bruta.
-*   **Terms of Use Modal:** Modal z-index 9999 no primeiro acesso. Botão só ativa (Laranja) após confirmação.
-*   **RLS & JWT:** Row Level Security OBRIGATÓRIO no Supabase.
+### 1. MICRO-INTERAÇÕES, ÁUDIO E ANIMAÇÃO (REF: VÍDEO 1000164234.mp4)
+- [ ] VALIDAÇÃO REAL: A animação principal está travada e SÓ inicia após a promise do Supabase (ex: verificação do OTP de 6 dígitos) retornar status 200 de sucesso?
+- [ ] ANIMAÇÃO DA MÁQUINA DE TATUAR: O código aciona o comportamento de um "fullstack sênior animado", exibindo visualmente uma máquina de tatuagem em pleno funcionamento, ligada, tatuando os 6 dígitos numéricos na tela?
+- [ ] SINCRONIA SENSORIAL (ÁUDIO + UI): Existe o controle exato de milissegundos sincronizando o arquivo de áudio (o barulho contínuo da máquina de tatuagem batendo) com a renderização/desenho individual de cada número sendo "tatuado" na tela?
+- [ ] SOM DE SAÍDA E CONCLUSÃO: O áudio de sucesso/conclusão é disparado com precisão logo após a renderização do 6º dígito e o desligamento da máquina?
+- [ ] ESTADO DE ERRO (UI/UX): Se o OTP falhar no banco, existe uma animação de "Shake" (tremor) nos inputs com feedback visual vermelho?
 
-## 5. UI/UX DESIGN SYSTEM (APPLE TIER)
-*   **Tokens:** Fundo Deep Graphite (#121212). Botões ativos Neon Orange/Âmbar (`orange-500` a `orange-600`).
-*   **Visuais:** Glassmorphism (`backdrop-blur-md`), bordas sutis. Uso OBRIGATÓRIO de Skeleton Loaders.
-*   **Animações (60fps/Framer Motion):** Neon Lamp Pull Switch (troca fluida de perfil), Paradrop Progress Bar (upload) e Elastic Dock (efeito menisco/3D Parallax).
+### 2. POLIMENTO MOBILE-FIRST E PREPARAÇÃO PARA APK
+- [ ] AUTO-SUBMIT OTP: O fluxo faz o auto-submit (envio automático) no exato momento em que o 6º dígito é preenchido, eliminando a necessidade de apertar um botão de "Confirmar"?
+- [ ] HAPTIC FEEDBACK: A API de vibração nativa (Haptic Engine) é acionada em sincronia com o som da máquina e o surgimento de cada dígito na tela, entregando resposta tátil ao usuário?
+- [ ] KEYBOARD AVOIDANCE & SAFE AREA: A tela possui `KeyboardAvoidingView` (ou equivalente) para o teclado não cobrir os inputs, e respeita a `safe-area-inset` do notch (recorte da câmera) no iOS/Android?
+- [ ] TOUCH TARGETS & GESTURES: Os botões de ação possuem o mínimo de 44x44px exigido para acessibilidade? O ecossistema suporta gestos como "Swipe to Go Back" e "Pull to Refresh" no Feed?
+- [ ] THEME LOCK (DARK MODE): Como o design system exige o Deep Graphite (#121212), o código possui um "Theme Lock" para impedir que o "Light Mode" nativo do celular quebre o contraste da UI?
+- [ ] OTIMIZAÇÃO DE MEMÓRIA (IMAGENS): O Feed de Inspiração utiliza webp/avif e `next/image` (com lazy loading) para evitar travamentos de memória (Out of Memory) ao scrollar no APK?
 
-## 6. ENGENHARIA, CACHE E OTIMIZAÇÃO
-*   **Cache & Lazy Loading:** Use React Query/Zustand para evitar sobrecarga. Carregue animações complexas sob demanda (Dynamic Imports).
-*   **Zero Data Loss:** Verifique arquivos antes de modificar. Atualize cirurgicamente.
-*   **Código:** TypeScript Strict (sem `any`). Zero placeholders (`// TODO`). Error Boundaries com Toasts.
+### 3. AUTENTICAÇÃO E SEGURANÇA (CISO)
+- [ ] PII MASKING: O mascaramento de dados sensíveis (CPF, E-mails, Banco) está ativo com a função `***.123.456-**` nas UIs aplicáveis?
+- [ ] MODAL DE TERMOS DE USO: O z-index é 9999 forçando bloqueio no primeiro acesso, e o botão Neon Orange de aceite SÓ é ativado após o usuário fazer o scroll completo da leitura?
+- [ ] RLS (ROW LEVEL SECURITY): As políticas RLS do banco estão configuradas para blindar o vazamento de dados entre os perfis de Tatuador, Cliente e Estúdio?
 
-## 7. VARIÁVEIS E ARQUITETURA DE ROTAS (SCHEMA LOCK)
-*   **Nomenclatura Padrão:** Use `cliente_id`, `tatuador_id`, `estudio_id` nas chaves estrangeiras. Status de orçamentos mapeados estritamente como: `rascunho`, `aguardando_sinal`, `confirmado`, `concluido`, `cancelado`.
-*   **Roteamento (App Router):** Todas as rotas de API devem residir em `app/api/...` ou comunicar via `server.cjs`. Interações de cliente exigem `"use client"`.
+### 4. PAINÉIS E REGRAS DE NEGÓCIO (RBAC)
+- [ ] PAINEL DO CLIENTE: O layout contém Feed de Inspiração? A função de curtir usa "Optimistic UI" (Cor Laranja imediata no click)? 
+- [ ] PAINEL DO TATUADOR: Existe a exigência de envio de documentos (KYC/Sanitária)? Há independência total da conta dele, sem submissão administrativa ao Estúdio? 
+- [ ] PAINEL DO ESTÚDIO: O layout permite visualizar a lista de tatuadores parceiros e a soma geral de curtidas do estúdio sem quebrar o anonimato de quem curtiu? Validação de CNPJ ativa?
+
+### 5. CHAT E MODERAÇÃO IA
+- [ ] BLINDAGEM DE PAGAMENTO: A interface do Chat-Box impede negociações por fora da plataforma?
+- [ ] REGEX DE LINKS: A moderação bloqueia efetivamente o envio de links externos (Mercado Pago, PicPay, etc)?
+- [ ] FILTRO DE TOXICIDADE: O filtro contra palavras de baixo calão está ativo nas funções de envio do chat?
+
+### 6. MOTOR FINANCEIRO E GATEWAY (LÓGICA BLINDADA E TAXAS)
+- [ ] LÓGICA DE CHECKOUT E TAXAS (UI/UX): A interface do carrinho possui estado gerenciando a forma de pagamento selecionada? Regra Estrita: Se "PIX", o valor cobrado do cliente é exato (TattooGo absorve a taxa de transação). Se "Cartão de Crédito", a interface DEVE recalcular o total dinamicamente, repassando/embutindo a taxa do gateway e os juros diretamente no valor final do cliente, com um aviso visual transparente?
+- [ ] SEGURANÇA DE PAGAMENTO (BACKEND): O frontend envia estritamente a intenção (`servico_id`, `metodo_pagamento`) e NUNCA os valores financeiros calculados? O recálculo de taxas de cartão e a geração de links/payloads ocorrem de forma 100% blindada via Backend (Edge Functions no Supabase / Route Handlers integrados no `server.cjs`)?
+- [ ] IDEMPOTÊNCIA (CALÇÃO 25%): A lógica de cobrança de sinal via Pix/Cartão possui chaves de idempotência únicas (UUID por transação) para garantir que oscilações de rede não gerem cobrança dupla no cartão do cliente?
+- [ ] MATEMÁTICA DE SPLIT (WEBHOOK): A divisão dos valores é executada baseada em 100% do **Valor Líquido** original do serviço (ignorando os acréscimos do cartão pagos pelo cliente), e segue a condicional exata abaixo?
+  - **Cenário Autônomo:** Tatuador (90%), Plataforma TattooGo (9%), Fundo de Reserva (1%).
+  - **Cenário Estúdio:** Tatuador (88%), Plataforma TattooGo (8%), Estúdio (3%), Fundo de Reserva (1%).
+- [ ] CONSISTÊNCIA DE DB: O status da tabela `agendamentos` só é alterado de "pendente" para "pago" EXCLUSIVAMENTE após a webhook do gateway retornar o evento de sucesso para o backend?
+- [ ] CANCELAMENTO SEGURO COM REAUTENTICAÇÃO OTP (MÁQUINA DE TATUAR): O processo de cancelamento exige obrigatoriamente a inserção de e-mail e senha seguidos de verificação por código OTP. Esta tela de OTP de cancelamento **DEVE reutilizar exatamente o mesmo componente/layout imersivo de cadastro** (com a animação da máquina de tatuagem desenhando os números na tela, áudio contínuo sincronizado, haptic feedback e som de conclusão ao validar o status 200 do Supabase). Além disso, valida o prazo: se cancelado com mais de 3 dias, executa o fluxo OTP e cancela; se for menos de 3 dias, a UI bloqueia e direciona para "Contatar Suporte".
+
+### 7. DESIGN SYSTEM E UI/UX (APPLE-TIER)
+- [ ] FUNDO GLOBAL: O background global está estritamente configurado como Deep Graphite (#121212)?
+- [ ] DESTAQUES: As interações ativas e botões primários utilizam tons de Neon Orange / Âmbar?
+- [ ] TRANSIÇÕES: Elementos de Glassmorphism (desfoque/backdrop-filter) e Skeleton Loaders estão implementados nas transições de telas e carregamentos assíncronos?
+
+### 8. PRODUÇÃO E SEO
+- [ ] Os arquivos `public/robots.txt` e `public/sitemap.xml` estão devidamente estruturados?
+- [ ] O arquivo de configuração do Next.js contém os Headers de segurança obrigatórios (X-Frame-Options: DENY, X-Content-Type-Options: nosniff)?
+
+### 9. ESTADO, OFFLINE-FIRST E OBSERVABILIDADE 
+- [ ] OFFLINE-FIRST E CACHE: O app possui estratégia de cache local (ex: Service Workers para PWA ou persistência de estado) para manter o Feed e os Chats recentes visualizáveis mesmo em oscilações de rede (3G/4G instável)?
+- [ ] TRATAMENTO DE ERROS GLOBAL: Existe uma camada de Error Boundaries (React) acoplada a um logger global para evitar "telas brancas" (crash silencioso) no celular do usuário sem o devido aviso ou fallback visual?
+- [ ] VALIDAÇÃO DE AMBIENTE E .ENV: O arquivo de configurações verifica rigorosamente se todas as variáveis de ambiente e chaves de API (Supabase, Stripe/MercadoPago) estão preenchidas no `.env` no momento do build, travando o processo de compilação do APK se faltar alguma?
+
+Gere o relatório rigoroso respondendo a cada tópico. Identifique qualquer gargalo que possa quebrar a experiência imersiva na hora de gerar a build do APK.
