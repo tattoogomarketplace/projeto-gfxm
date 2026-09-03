@@ -60,7 +60,7 @@ export default function CancelarAgendamentoPage() {
         ) : (
           <>
             <h2 className="text-xl font-bold mb-4 text-center">Confirme o Cancelamento</h2>
-            <TattooOTPInput onComplete={handleVerify} />
+            <TattooOTPInput onComplete={handleVerify} length={8} />
           </>
         )}
       </GlassContainer>

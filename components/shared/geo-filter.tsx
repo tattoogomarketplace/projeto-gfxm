@@ -15,7 +15,9 @@ export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => 
         const { data, error: supabaseError } = await supabase
           .from('perfis')
           .select('cidade, estado')
+          .in('role', ['tatuador', 'estudio'])
           .not('cidade', 'is', null)
+          .not('estado', 'is', null)
           .order('cidade')
           .limit(1000);
 

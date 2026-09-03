@@ -2,9 +2,9 @@
 import { processPaymentMock } from '@/lib/mock-services';
 
 export const calculateSplits = (valorTotal: number, tipo: 'solo' | 'estudio') => {
-  const plataformaTax = tipo === 'solo' ? 0.10 : 0.09;
-  const estudioTax = tipo === 'solo' ? 0 : 0.02;
-  const reservaTax = tipo === 'solo' ? 0 : 0.01;
+  const plataformaTax = tipo === 'solo' ? 0.09 : 0.08;
+  const estudioTax = tipo === 'solo' ? 0 : 0.03;
+  const reservaTax = 0.01;
   const tatuadorTax = 1 - (plataformaTax + estudioTax + reservaTax);
 
   return {

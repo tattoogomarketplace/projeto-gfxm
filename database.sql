@@ -114,7 +114,11 @@ BEGIN
   VALUES (
     NEW.id,
     NEW.email,
-    'cliente',
+    CASE
+      WHEN NEW.raw_user_meta_data->>'role' IN ('cliente', 'tatuador', 'estudio')
+        THEN (NEW.raw_user_meta_data->>'role')::public.perfil_role
+      ELSE 'cliente'::public.perfil_role
+    END,
     'pendente',
     false
   )
@@ -134,16 +138,26 @@ CREATE TABLE public.perfis (
   role                    public.perfil_role NOT NULL DEFAULT 'cliente',
   kyc_status              public.kyc_status NOT NULL DEFAULT 'pendente',
   has_seen_welcome_notice boolean NOT NULL DEFAULT false,
+  cidade                  text,
+  estado                  text,
+  cnpj                    text,
+  agendamentos_pendentes_repasse integer NOT NULL DEFAULT 0,
+  agenda_bloqueada        boolean NOT NULL DEFAULT false,
   created_at              timestamptz NOT NULL DEFAULT now(),
   updated_at              timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT perfis_email_lowercase CHECK (email = lower(email)),
-  CONSTRAINT perfis_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+  CONSTRAINT perfis_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+  CONSTRAINT perfis_cnpj_digits CHECK (cnpj IS NULL OR cnpj ~ '^[0-9]{14}$'),
+  CONSTRAINT perfis_pendentes_repasse_range CHECK (agendamentos_pendentes_repasse >= 0 AND agendamentos_pendentes_repasse <= 2)
 );
 
 CREATE UNIQUE INDEX perfis_email_unique_idx ON public.perfis (email);
 CREATE INDEX perfis_role_idx ON public.perfis (role);
 CREATE INDEX perfis_kyc_status_idx ON public.perfis (kyc_status);
+CREATE INDEX perfis_cidade_idx ON public.perfis (cidade);
+CREATE INDEX perfis_estado_idx ON public.perfis (estado);
+CREATE INDEX perfis_geo_idx ON public.perfis (cidade, estado) WHERE cidade IS NOT NULL;
 
 CREATE TRIGGER perfis_set_updated_at
   BEFORE UPDATE ON public.perfis
@@ -173,6 +187,7 @@ CREATE TABLE public.portfolios (
   url_imagem  text NOT NULL,
   estilo      text NOT NULL,
   descricao   text,
+  likes_count integer NOT NULL DEFAULT 0,
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now(),
 
@@ -376,6 +391,7 @@ CREATE POLICY "agendamentos_insert_cliente"
       WHERE t.id = tatuador_id
         AND t.role = 'tatuador'
         AND t.kyc_status = 'aprovado'
+        AND t.agenda_bloqueada = false
     )
     AND status IN ('rascunho', 'aguardando_sinal')
     AND sinal_pago = false
@@ -403,6 +419,217 @@ CREATE POLICY "agendamentos_update_tatuador"
     tatuador_id = (SELECT auth.uid())
     AND cliente_id = (SELECT cliente_id FROM public.agendamentos WHERE id = agendamentos.id)
   );
+
+-- =============================================================================
+-- Extensões cirúrgicas (geofilter, likes, chat, split, CNPJ, presencial)
+-- =============================================================================
+
+ALTER TABLE public.perfis
+  ADD COLUMN IF NOT EXISTS cidade text,
+  ADD COLUMN IF NOT EXISTS estado text,
+  ADD COLUMN IF NOT EXISTS cnpj text,
+  ADD COLUMN IF NOT EXISTS agendamentos_pendentes_repasse integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS agenda_bloqueada boolean NOT NULL DEFAULT false;
+
+ALTER TABLE public.agendamentos
+  ADD COLUMN IF NOT EXISTS pagamento_restante_presencial boolean NOT NULL DEFAULT false;
+
+ALTER TABLE public.portfolios
+  ADD COLUMN IF NOT EXISTS likes_count integer NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS public.portfolio_likes (
+  user_id      uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  portfolio_id uuid NOT NULL REFERENCES public.portfolios (id) ON DELETE CASCADE,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, portfolio_id)
+);
+
+CREATE INDEX IF NOT EXISTS portfolio_likes_portfolio_id_idx ON public.portfolio_likes (portfolio_id);
+
+CREATE TABLE IF NOT EXISTS public.mensagens_chat (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  remetente_id    uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  destinatario_id uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  mensagem        text NOT NULL,
+  bloqueada       boolean NOT NULL DEFAULT false,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT mensagens_chat_partes_distintas CHECK (remetente_id <> destinatario_id),
+  CONSTRAINT mensagens_chat_mensagem_length CHECK (char_length(mensagem) BETWEEN 1 AND 1000)
+);
+
+CREATE INDEX IF NOT EXISTS mensagens_chat_thread_idx
+  ON public.mensagens_chat (remetente_id, destinatario_id, created_at);
+
+CREATE TABLE IF NOT EXISTS public.transacoes_pagamentos (
+  id                           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  agendamento_id               uuid NOT NULL REFERENCES public.agendamentos (id) ON DELETE RESTRICT,
+  gateway_id                   text NOT NULL,
+  metodo_pagamento             text NOT NULL DEFAULT 'pix',
+  valor_bruto                  numeric(12, 2) NOT NULL,
+  taxa_plataforma              numeric(12, 2) NOT NULL DEFAULT 0,
+  valor_liquido_tatuador       numeric(12, 2) NOT NULL DEFAULT 0,
+  valor_bonus_estudio          numeric(12, 2) NOT NULL DEFAULT 0,
+  valor_fundo_reserva          numeric(12, 2) NOT NULL DEFAULT 0,
+  comissao_plataforma_percentual numeric(5, 2) NOT NULL DEFAULT 0,
+  idempotency_key              text NOT NULL,
+  status                       text NOT NULL DEFAULT 'aprovado',
+  created_at                   timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT transacoes_gateway_id_unique UNIQUE (gateway_id),
+  CONSTRAINT transacoes_idempotency_unique UNIQUE (idempotency_key)
+);
+
+CREATE INDEX IF NOT EXISTS transacoes_agendamento_id_idx ON public.transacoes_pagamentos (agendamento_id);
+
+CREATE TABLE IF NOT EXISTS public.estudios_compliance (
+  id               uuid PRIMARY KEY REFERENCES public.perfis (id) ON DELETE CASCADE,
+  cnpj             text NOT NULL,
+  razao_social     text,
+  endereco_oficial text,
+  status_receita   text NOT NULL DEFAULT 'pendente',
+  updated_at       timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT estudios_compliance_cnpj_digits CHECK (cnpj ~ '^[0-9]{14}$')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS estudios_compliance_cnpj_idx ON public.estudios_compliance (cnpj);
+
+CREATE TABLE IF NOT EXISTS public.estudio_tatuadores (
+  estudio_id     uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  tatuador_id    uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  status_vinculo text NOT NULL DEFAULT 'ativo',
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (estudio_id, tatuador_id)
+);
+
+CREATE INDEX IF NOT EXISTS estudio_tatuadores_tatuador_idx ON public.estudio_tatuadores (tatuador_id);
+
+CREATE OR REPLACE FUNCTION public.increment_like(portfolio_id uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_count integer;
+BEGIN
+  INSERT INTO public.portfolio_likes (user_id, portfolio_id)
+  VALUES (auth.uid(), portfolio_id)
+  ON CONFLICT (user_id, portfolio_id) DO NOTHING;
+
+  GET DIAGNOSTICS new_count = ROW_COUNT;
+
+  IF new_count > 0 THEN
+    UPDATE public.portfolios
+    SET likes_count = likes_count + 1
+    WHERE id = portfolio_id
+    RETURNING likes_count INTO new_count;
+  ELSE
+    SELECT likes_count INTO new_count FROM public.portfolios WHERE id = portfolio_id;
+  END IF;
+
+  RETURN COALESCE(new_count, 0);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.registrar_pendencia_presencial(p_tatuador_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  pendencias integer;
+BEGIN
+  UPDATE public.perfis
+  SET agendamentos_pendentes_repasse = LEAST(agendamentos_pendentes_repasse + 1, 2)
+  WHERE id = p_tatuador_id
+  RETURNING agendamentos_pendentes_repasse INTO pendencias;
+
+  IF pendencias >= 2 THEN
+    UPDATE public.perfis
+    SET agenda_bloqueada = true
+    WHERE id = p_tatuador_id;
+  END IF;
+
+  RETURN pendencias >= 2;
+END;
+$$;
+
+ALTER TABLE public.portfolio_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mensagens_chat ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transacoes_pagamentos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.estudios_compliance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.estudio_tatuadores ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.portfolio_likes FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.mensagens_chat FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.transacoes_pagamentos FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.estudios_compliance FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.estudio_tatuadores FORCE ROW LEVEL SECURITY;
+
+GRANT EXECUTE ON FUNCTION public.increment_like(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.registrar_pendencia_presencial(uuid) TO authenticated;
+
+ALTER TABLE public.mensagens_chat REPLICA IDENTITY FULL;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.mensagens_chat;
+EXCEPTION
+  WHEN undefined_object THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+GRANT SELECT, INSERT, DELETE ON public.portfolio_likes TO authenticated;
+GRANT SELECT, INSERT ON public.mensagens_chat TO authenticated;
+GRANT SELECT ON public.transacoes_pagamentos TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.estudios_compliance TO authenticated;
+GRANT SELECT ON public.estudio_tatuadores TO authenticated;
+
+CREATE POLICY "portfolio_likes_select_own"
+  ON public.portfolio_likes FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+
+CREATE POLICY "portfolio_likes_insert_own"
+  ON public.portfolio_likes FOR INSERT TO authenticated
+  WITH CHECK (user_id = (SELECT auth.uid()));
+
+CREATE POLICY "portfolio_likes_delete_own"
+  ON public.portfolio_likes FOR DELETE TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+
+CREATE POLICY "mensagens_chat_select_participants"
+  ON public.mensagens_chat FOR SELECT TO authenticated
+  USING (
+    remetente_id = (SELECT auth.uid())
+    OR destinatario_id = (SELECT auth.uid())
+  );
+
+CREATE POLICY "mensagens_chat_insert_own"
+  ON public.mensagens_chat FOR INSERT TO authenticated
+  WITH CHECK (remetente_id = (SELECT auth.uid()));
+
+CREATE POLICY "transacoes_select_participants"
+  ON public.transacoes_pagamentos FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.agendamentos a
+      WHERE a.id = agendamento_id
+        AND (a.cliente_id = (SELECT auth.uid()) OR a.tatuador_id = (SELECT auth.uid()))
+    )
+  );
+
+CREATE POLICY "estudios_compliance_own"
+  ON public.estudios_compliance FOR ALL TO authenticated
+  USING (id = (SELECT auth.uid()))
+  WITH CHECK (id = (SELECT auth.uid()));
+
+CREATE POLICY "estudio_tatuadores_select_related"
+  ON public.estudio_tatuadores FOR SELECT TO authenticated
+  USING (
+    estudio_id = (SELECT auth.uid())
+    OR tatuador_id = (SELECT auth.uid())
+  );
+
+ALTER TABLE public.agendamentos DROP CONSTRAINT IF EXISTS agendamentos_tatuador_aprovado_check;
 
 -- =============================================================================
 -- Notas de segurança (operacionais)

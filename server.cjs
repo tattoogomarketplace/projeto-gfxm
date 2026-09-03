@@ -283,13 +283,11 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
     }
 
     const { data: portfolio, error } = await supabase.from('portfolios').insert([{
-      artista_id,
-      titulo: validator.escape(titulo),
+      tatuador_id: artista_id,
+      descricao: validator.escape(titulo),
       estilo: validator.escape(estilo),
-      preco_estimado,
-      imagem_url: `data:image/jpeg;base64,${imagemFinalBase64}`,
-      aprovado_ia_mod_tatuagem: true,
-      curtidas: 0
+      url_imagem: `data:image/jpeg;base64,${imagemFinalBase64}`,
+      likes_count: 0
     }]).select();
 
     if (error) throw error;
@@ -306,14 +304,20 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
 app.post('/api/portfolio/like/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data: { user } } = await supabase.auth.getUser();
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
 
-    if (!user) return res.status(401).json({ sucesso: false });
+    if (authError || !user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
 
-    // Incrementa contagem de forma atômica no DB (Blindagem)
-    await supabase.rpc('increment_like', { portfolio_id: id });
+    const authed = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false }
+    });
+    const { data: likeCount, error: likeError } = await authed.rpc('increment_like', { portfolio_id: id });
+    if (likeError) throw likeError;
 
-    return res.status(200).json({ sucesso: true });
+    return res.status(200).json({ sucesso: true, likes_count: likeCount });
   } catch (err) {
     return res.status(500).json({ sucesso: false });
   }
@@ -348,9 +352,9 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
         .eq('id', agendamentoId)
       .single();
 
-      let percentualComissao = 0.10; // 10% (Padrão Autônomo)
+      let percentualComissao = 0.09;
       let valorBonusEstudio = 0.00;
-      let valorFundoReserva = 0.00;
+      let valorFundoReserva = valorBrutoSinal * 0.01;
 
       if (agendamentoData) {
         // Verifica se o tatuador é homologado em um estúdio
@@ -362,10 +366,9 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
           .maybeSingle();
 
         if (vinculoEstudio) {
-          // Novo Split para Estúdios (Total 12%)
-          percentualComissao = 0.09;                // 9% para a plataforma
-          valorBonusEstudio = valorBrutoSinal * 0.02; // 2% para o dono do estúdio
-          valorFundoReserva = valorBrutoSinal * 0.01; // 1% para fundo de reserva/impostos da plataforma
+          percentualComissao = 0.08;
+          valorBonusEstudio = valorBrutoSinal * 0.03;
+          valorFundoReserva = valorBrutoSinal * 0.01;
         }
       }
 
@@ -375,20 +378,21 @@ app.post('/api/pagamentos/webhook-gateway', async (req, res) => {
       // 2. Confirma o agendamento
       await supabase
       .from('agendamentos')
-        .update({ status_sinal: 'pago_garantido', status_atendimento: 'agendado' })
+        .update({ status: 'confirmado', sinal_pago: true })
         .eq('id', agendamentoId);
 
-      // 3. Registra a transação (Alimenta o Dashboard Financeiro)
       await supabase.from('transacoes_pagamentos').insert([{
         agendamento_id: agendamentoId,
         gateway_id: String(evento.data.id || crypto.randomUUID()),
-        valor_bruto_sinal: valorBrutoSinal,
+        metodo_pagamento: evento.data.payment_type_id === 'credit_card' ? 'credit' : 'pix',
+        valor_bruto: valorBrutoSinal,
+        taxa_plataforma: valorComissaoPlataforma,
+        valor_liquido_tatuador: valorLiquidoRepassado,
+        valor_bonus_estudio: valorBonusEstudio,
+        valor_fundo_reserva: valorFundoReserva,
         comissao_plataforma_percentual: percentualComissao * 100,
-        valor_comissao_plataforma: valorComissaoPlataforma,
-        valor_bonus_estudio_2porcento: valorBonusEstudio,
-        valor_fundo_reserva_1porcento: valorFundoReserva,
-        valor_liquido_repassado: valorLiquidoRepassado,
-        status_transacao: 'aprovado'
+        idempotency_key: idempotencyKey || `tx_${agendamentoId}_${evento.data.id}`,
+        status: 'aprovado'
       }]);
     }
 
@@ -505,6 +509,14 @@ app.post('/api/estudio/validar-cnpj', async (req, res) => {
 
     if (useMock) {
       console.log(`[CNPJ MOCK] Validado sintaticamente: ${cnpjLimpo} para user: ${userId}`);
+      await supabase.from('estudios_compliance').upsert([{
+        id: userId,
+        cnpj: cnpjLimpo,
+        razao_social: 'Estudio Mock',
+        status_receita: 'ativa',
+        updated_at: new Date().toISOString()
+      }]);
+      await supabase.from('perfis').update({ cnpj: cnpjLimpo }).eq('id', userId);
       return res.status(200).json({ sucesso: true, status: 'validado_mock' });
     }
 
@@ -549,6 +561,8 @@ app.post('/api/estudio/validar-cnpj', async (req, res) => {
       return res.status(500).json({ sucesso: false, erro: 'Falha ao registrar dados na base.' });
   }
 
+    await supabase.from('perfis').update({ cnpj: cnpjLimpo }).eq('id', userId);
+
     return res.status(200).json({
       sucesso: true,
       razao_social: data.nome,
@@ -558,6 +572,59 @@ app.post('/api/estudio/validar-cnpj', async (req, res) => {
   } catch (err) {
     req.log.error({ err }, 'Erro na API ReceitaWS');
     return res.status(500).json({ sucesso: false, erro: 'Falha na conexão com o serviço de validação.' });
+  }
+});
+
+/**
+ * [ROTA] PAGAMENTO PRESENCIAL — TETO DE 2 PENDÊNCIAS DE REPASSE
+ */
+app.post('/api/pagamentos/presencial', async (req, res) => {
+  try {
+    const { agendamento_id } = req.body;
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
+    if (authError || !user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+
+    const { data: agendamento, error } = await supabase
+      .from('agendamentos')
+      .select('id, tatuador_id, cliente_id, status')
+      .eq('id', agendamento_id)
+      .single();
+
+    if (error || !agendamento) return res.status(404).json({ sucesso: false, erro: 'Agendamento não encontrado.' });
+    if (agendamento.cliente_id !== user.id) return res.status(403).json({ sucesso: false, erro: 'Acesso negado.' });
+
+    const { data: perfil } = await supabase
+      .from('perfis')
+      .select('agendamentos_pendentes_repasse, agenda_bloqueada')
+      .eq('id', agendamento.tatuador_id)
+      .single();
+
+    if (perfil?.agenda_bloqueada || (perfil?.agendamentos_pendentes_repasse || 0) >= 2) {
+      return res.status(403).json({
+        sucesso: false,
+        bloqueado: true,
+        erro: 'Agenda bloqueada: teto de 2 pendências de repasse atingido. Quite os débitos para reabrir a agenda.'
+      });
+    }
+
+    const authed = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false }
+    });
+    const { data: bloqueado } = await authed.rpc('registrar_pendencia_presencial', {
+      p_tatuador_id: agendamento.tatuador_id
+    });
+
+    await supabase
+      .from('agendamentos')
+      .update({ pagamento_restante_presencial: true })
+      .eq('id', agendamento_id);
+
+    return res.status(200).json({ sucesso: true, agenda_bloqueada: !!bloqueado });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao registrar pagamento presencial.' });
   }
 });
 

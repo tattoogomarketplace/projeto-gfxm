@@ -5,15 +5,30 @@ import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { perfilService } from '@/lib/services/perfil-service';
 import { GeoFilter } from '@/components/shared/geo-filter';
+import { ChatBox } from '@/components/features/chat/chat-box';
+import { PortfolioCard } from '@/components/features/portfolio-card';
+import { createClient } from '@/lib/supabase';
 
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
   const [artistas, setArtistas] = useState<any[]>([]);
   const [cidade, setCidade] = useState('');
+  const [chatPeer, setChatPeer] = useState<string | null>(null);
+  const [feed, setFeed] = useState<any[]>([]);
 
   useEffect(() => {
     perfilService.listarArtistas({ cidade }).then(setArtistas);
   }, [cidade]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('portfolios')
+      .select('id, url_imagem, likes_count, tatuador_id, estilo')
+      .order('created_at', { ascending: false })
+      .limit(24)
+      .then(({ data }) => setFeed(data || []));
+  }, []);
 
   return (
     <div className="p-8 text-white min-h-screen bg-graphite">
@@ -24,7 +39,26 @@ export default function ClienteDashboard() {
         <GeoFilter onChange={setCidade} />
         <div className="grid grid-cols-2 gap-4">
           {artistas.map(a => (
-            <div key={a.id} className="p-3 bg-zinc-900 rounded-lg">{a.email}</div>
+            <button key={a.id} onClick={() => setChatPeer(a.id)} className="p-3 bg-zinc-900 rounded-lg text-left min-h-11">
+              {a.email}
+              {a.cidade ? <span className="block text-xs text-zinc-500">{a.cidade}/{a.estado}</span> : null}
+            </button>
+          ))}
+        </div>
+        {chatPeer && (
+          <div className="mt-4">
+            <ChatBox destinatarioId={chatPeer} />
+          </div>
+        )}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {feed.map((item) => (
+            <PortfolioCard
+              key={item.id}
+              id={item.id}
+              imageUrl={item.url_imagem}
+              artistName={item.estilo}
+              initialLikes={item.likes_count || 0}
+            />
           ))}
         </div>
       </div>

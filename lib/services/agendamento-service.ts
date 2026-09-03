@@ -17,9 +17,11 @@ export const agendamentoService = {
 
   async criarAgendamento(dados: { tatuador_id: string; data_hora: string; valor_total: number }) {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Não autenticado.');
     const { data, error } = await supabase
       .from('agendamentos')
-      .insert([dados])
+      .insert([{ ...dados, cliente_id: user.id, status: 'aguardando_sinal', sinal_pago: false }])
       .select()
       .single();
 

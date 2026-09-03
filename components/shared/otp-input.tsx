@@ -4,12 +4,12 @@ import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'reac
 import { motion } from 'framer-motion';
 
 interface OtpInputProps {
-  length: number;
+  length?: number;
   onComplete: (otp: string) => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
-export function OtpInput({ length = 6, onComplete, isLoading }: OtpInputProps) {
+export function OtpInput({ length = 8, onComplete, isLoading }: OtpInputProps) {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -37,14 +37,14 @@ export function OtpInput({ length = 6, onComplete, isLoading }: OtpInputProps) {
 
   const handlePaste = (e: ClipboardEvent) => {
     e.preventDefault();
-    const data = e.clipboardData.getData('text').slice(0, length);
-    const newOtp = data.split('');
+    const data = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
+    const newOtp = [...data.split(''), ...Array(Math.max(0, length - data.length)).fill('')];
     setOtp(newOtp);
-    if (newOtp.length === length) onComplete(data);
+    if (data.length === length) onComplete(data);
   };
 
   return (
-    <div className="flex justify-center gap-2" onPaste={handlePaste}>
+    <div className="flex flex-wrap justify-center gap-2" onPaste={handlePaste}>
       {otp.map((digit, index) => (
         <motion.input
           key={index}

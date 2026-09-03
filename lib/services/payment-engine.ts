@@ -15,8 +15,8 @@ export async function processPaymentSplit(amount: number, transactionId: string)
   // Simulação de check de Idempotência no banco (deve ser implementado quando o DB estiver pronto)
   // if (await db.checkTransaction(transactionId)) throw new Error("Transação já processada");
 
-  const platformFee = amount * 0.09;
-  const studioFee = amount * 0.02;
+  const platformFee = amount * 0.08;
+  const studioFee = amount * 0.03;
   const reserveFee = amount * 0.01;
   const artistAmount = amount * 0.88;
 

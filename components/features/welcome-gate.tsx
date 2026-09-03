@@ -13,11 +13,15 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
   const content = role === 'cliente' ? {
     title: 'Sua primeira ou próxima arte te espera',
     subtitle: 'Conectando você aos melhores artistas. Inspire-se, encontre o traço perfeito.',
-    cta: 'Explorar Artistas'
+    cta: 'Minha Jornada na Pele'
+  } : role === 'estudio' ? {
+    title: 'Gestão master conectada.',
+    subtitle: 'A agenda do seu império está online. Homologue artistas e acompanhe o split.',
+    cta: 'Entrar no Atelier Digital'
   } : {
     title: 'Bancada montada e máquina regulada!',
     subtitle: 'Hora de eternizar sua arte e organizar seu dia. Veja agendamentos e gerencie pagamentos.',
-    cta: 'Ir para a Bancada'
+    cta: 'Entrar no Atelier Digital'
   };
 
   return (

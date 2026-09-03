@@ -10,6 +10,9 @@ export interface Perfil {
   kyc_status: 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
   cidade?: string;
   estado?: string;
+  cnpj?: string;
+  agendamentos_pendentes_repasse?: number;
+  agenda_bloqueada?: boolean;
   avatar_url?: string;
   created_at: string;
 }
@@ -32,6 +35,7 @@ export interface Agendamento {
   status: 'rascunho' | 'aguardando_sinal' | 'confirmado' | 'cancelado' | 'concluido';
   valor_total: number;
   sinal_pago: boolean;
+  pagamento_restante_presencial?: boolean;
   version: number;
 }
 

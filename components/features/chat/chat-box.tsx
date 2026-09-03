@@ -1,25 +1,83 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
+import { createClient } from '@/lib/supabase';
 
 interface Message {
   id: string;
-  sender: 'user' | 'ai';
+  sender: 'user' | 'peer';
   text: string;
+  remetente_id?: string;
 }
 
-const FORBIDDEN_WORDS = ['palavrao1', 'palavrao2']; // Exemplo
-const PAYMENT_LINK_REGEX = /(https?:\/\/)?(www\.)?(pay|checkout|stripe|paypal|picpay)\.[a-z]{2,}/i;
-
-export function ChatBox() {
+export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    // Bloqueio duplo: UI já bloqueia, backend é a camada final (chamada será feita abaixo)
+    async function boot() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const peer = destinatarioId;
+      if (!peer) return;
+
+      const { data } = await supabase
+        .from('mensagens_chat')
+        .select('id, remetente_id, destinatario_id, mensagem, created_at')
+        .or(`and(remetente_id.eq.${user.id},destinatario_id.eq.${peer}),and(remetente_id.eq.${peer},destinatario_id.eq.${user.id})`)
+        .eq('bloqueada', false)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      if (data) {
+        setMessages(data.map((m) => ({
+          id: m.id,
+          sender: m.remetente_id === user.id ? 'user' : 'peer',
+          text: m.mensagem,
+          remetente_id: m.remetente_id,
+        })));
+      }
+
+      channel = supabase
+        .channel(`chat:${[user.id, peer].sort().join(':')}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'mensagens_chat' },
+          (payload) => {
+            const row = payload.new as { id: string; remetente_id: string; destinatario_id: string; mensagem: string; bloqueada?: boolean };
+            const involved = (row.remetente_id === user.id && row.destinatario_id === peer)
+              || (row.remetente_id === peer && row.destinatario_id === user.id);
+            if (!involved || row.bloqueada) return;
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === row.id)) return prev;
+              return [...prev, {
+                id: row.id,
+                sender: row.remetente_id === user.id ? 'user' : 'peer',
+                text: row.mensagem,
+                remetente_id: row.remetente_id,
+              }];
+            });
+          }
+        )
+        .subscribe();
+    }
+
+    boot();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [destinatarioId]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || !userId || !destinatarioId) return;
+
     const { isValid, error } = validateChatMessage(input);
 
     if (!isValid) {
@@ -27,14 +85,22 @@ export function ChatBox() {
       return;
     }
 
-    setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: input }]);
+    const optimistic: Message = { id: Date.now().toString(), sender: 'user', text: input, remetente_id: userId };
+    setMessages(prev => [...prev, optimistic]);
 
-    // Injeção cirúrgica: Chamada ao backend para dupla validação
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
       await fetch('/api/chat/enviar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagem: input }) // Id e destinatário devem ser geridos pelo contexto
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          remetente_id: userId,
+          destinatario_id: destinatarioId,
+          mensagem: input,
+        })
       });
     } catch (err) {
       console.error("Erro na moderação:", err);
@@ -64,7 +130,8 @@ export function ChatBox() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500"
-          placeholder="Digite sua mensagem..."
+          placeholder={destinatarioId ? 'Digite sua mensagem...' : 'Selecione um artista para conversar'}
+          disabled={!destinatarioId}
         />
         <button onClick={sendMessage} className="text-orange-500 hover:text-orange-400">
           <Send size={20} />

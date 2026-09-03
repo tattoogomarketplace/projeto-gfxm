@@ -21,11 +21,13 @@ export default async function TatuadorDashboard() {
 
 function TatuadorDashboardClient() {
   const [portfolio, setPortfolio] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string>('me');
 
   useEffect(() => {
     async function load() {
   const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
+      setUserId(user.id);
       const { data } = await supabase.from('portfolios').select('*').eq('tatuador_id', user.id);
       setPortfolio(data || []);
     }
@@ -43,7 +45,7 @@ function TatuadorDashboardClient() {
         {/* Gestão de Portfólio / Agendamentos */}
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 h-125">
           <h2 className="text-lg font-semibold text-white mb-4">Agenda do Dia</h2>
-          <PortfolioUpload tatuadorId="me" />
+          <PortfolioUpload tatuadorId={userId} />
 
           <div className="mt-8 grid grid-cols-2 gap-4">
             {portfolio.map((item) => (

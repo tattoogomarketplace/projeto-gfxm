@@ -118,8 +118,8 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
         <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
-          <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
-          <TattooOTPVerification onVerify={handleVerifyOtp} />
+          <p className="text-zinc-400 text-center mb-8">Digite o código de 8 dígitos enviado para {emailForVerification}</p>
+          <TattooOTPVerification onVerify={handleVerifyOtp} userRole={userRole} />
           </div>
             </div>
   );

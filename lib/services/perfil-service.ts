@@ -10,6 +10,7 @@ export const perfilService = {
 
     if (filtros?.cidade) query = query.eq('cidade', filtros.cidade);
     if (filtros?.estado) query = query.eq('estado', filtros.estado);
+    query = query.eq('agenda_bloqueada', false);
 
     const { data, error } = await query;
     if (error) throw error;

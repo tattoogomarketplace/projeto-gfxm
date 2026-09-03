@@ -31,8 +31,14 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
 
     // Sincronia com o Backend
     try {
-      const res = await fetch(`/api/portfolio/like/${id}`, { method: 'POST' });
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+      const res = await fetch(`/api/portfolio/like/${id}`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) throw new Error();
+      const payload = await res.json();
+      if (typeof payload.likes_count === 'number') setLikes(payload.likes_count);
     } catch (error) {
       console.error("Erro na sincronia com backend:", error);
       setIsLiked(previousLiked);

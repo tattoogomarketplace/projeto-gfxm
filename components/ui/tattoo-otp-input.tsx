@@ -15,7 +15,7 @@ interface TattooOTPInputProps {
  * TATTOOGO MK - COMPONENTE DE INPUT DE OTP "MÁQUINA DE TATUAR"
  * Unifica a lógica de entrada, animação de escrita e feedback sensorial.
  */
-export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }: TattooOTPInputProps) {
+export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }: TattooOTPInputProps) {
   const [digits, setDigits] = useState<string[]>(Array(length).fill(''));
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
@@ -42,7 +42,6 @@ export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }:
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit no 6º dígito
     if (newDigits.every(d => d !== '')) {
       handleSubmit(newDigits.join(''));
     }
@@ -80,7 +79,7 @@ export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }:
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="flex gap-2 justify-center">
+      <div className="flex flex-wrap justify-center gap-2">
       {digits.map((digit, index) => (
         <motion.input
           key={index}
@@ -89,6 +88,12 @@ export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }:
           maxLength={1}
           value={digit}
           onChange={(e) => handleInput(index, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Backspace' && !digit && index > 0) {
+              inputRefs.current[index - 1]?.focus();
+            }
+          }}
+          inputMode="numeric"
           animate={error ? {
             x: [-10, 10, -10, 10, 0],
             borderColor: '#991b1b',
@@ -96,7 +101,7 @@ export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }:
           } : { opacity: digit ? 1 : 0.4 }}
           transition={{ duration: 0.2 }}
           className={`w-12 h-16 text-center text-2xl font-bold bg-zinc-900 border-2 rounded-xl transition-all
-              ${error ? 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)] bg-red-950/30' : 'border-zinc-700 text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)]'}`}
+              ${error ? 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)] bg-red-950/30 text-red-400' : digit ? 'border-orange-500 text-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.25)]' : 'border-zinc-700 text-zinc-600 focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)]'}`}
         />
       ))}
     </div>
