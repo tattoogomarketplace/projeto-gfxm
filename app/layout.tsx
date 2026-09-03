@@ -5,8 +5,11 @@ import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: 'swap',
+});
 export const metadata: Metadata = {
   title: "TattooGo MK | Marketplace de Elite",
   description: "A plataforma definitiva para tatuadores e entusiastas.",

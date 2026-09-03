@@ -16,7 +16,6 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 
 const nextConfig: NextConfig = {
     turbopack: {},
-  allowedDevOrigins: ['localhost:3000', '192.168.0.203:3000', '192.168.0.203'],
   async headers() {
     return [
       {

@@ -1,18 +1,17 @@
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
-:root {
-  --background: #121212;
-  --foreground: #F5F5F5;
-  --amber-gold: #FFBF00;
-}
+@import "tailwindcss";
 
 @layer base {
   :root {
     color-scheme: dark;
+    --background: #121212;
+    --foreground: #F5F5F5;
+    --amber-gold: #FFBF00;
+    --neon-orange: #F97316;
   }
+  
   body {
-    background-color: #121212 !important;
-    color: #F5F5F5 !important;
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
     height: 100%;
     margin: 0;
   }
@@ -26,4 +25,3 @@
     padding-right: env(safe-area-inset-right);
   }
 }
-

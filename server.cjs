@@ -74,7 +74,20 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { sucesso: false, erro: 'Muitas requisições originadas deste IP. Bloqueio preventivo.' }
 });
+
+// [BLINDAGEM SÊNIOR] Rate Limiting Crítico para Autenticação e OTP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { sucesso: false, erro: 'Muitas tentativas. Tente novamente mais tarde.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/', globalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/agendamentos/cancelar-executar', authLimiter);
 
 // Inicialização de Clientes (Redis, Supabase, Gemini)
 const redis = Redis.fromEnv();
@@ -447,6 +460,104 @@ app.post('/api/agendamentos/cancelar-executar', async (req, res) => {
     return res.status(200).json({ sucesso: true, mensagem: 'Cancelado com sucesso.' });
   } catch (err) {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao efetivar cancelamento.' });
+  }
+});
+
+/**
+ * [ROTA] VALIDAÇÃO DE CNPJ (CONSULTA REAL RECEITA WS)
+ */
+app.post('/api/estudio/validar-cnpj', async (req, res) => {
+  const { cnpj, userId } = req.body;
+  const useMock = process.env.USE_MOCK_CNPJ === 'true';
+
+  // Validador matemático (Primeira barreira)
+  const validarCNPJMatematico = (cnpj) => {
+    cnpj = cnpj.replace(/[^\d]+/g, '');
+    if (cnpj.length !== 14) return false;
+    let tamanho = cnpj.length - 2;
+    let numeros = cnpj.substring(0, tamanho);
+    let digitos = cnpj.substring(tamanho);
+    let soma = 0;
+    let pos = tamanho - 7;
+    for (let i = tamanho; i >= 1; i--) {
+      soma += numeros.charAt(tamanho - i) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+    if (resultado != digitos.charAt(0)) return false;
+    tamanho = tamanho + 1;
+    numeros = cnpj.substring(0, tamanho);
+    soma = 0;
+    pos = tamanho - 7;
+    for (let i = tamanho; i >= 1; i--) {
+      soma += numeros.charAt(tamanho - i) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+    return resultado == digitos.charAt(1);
+  };
+
+  try {
+    const cnpjLimpo = cnpj.replace(/[^\d]+/g, '');
+    if (!validarCNPJMatematico(cnpjLimpo)) {
+      return res.status(400).json({ sucesso: false, erro: 'Formato de CNPJ inválido.' });
+    }
+
+    if (useMock) {
+      console.log(`[CNPJ MOCK] Validado sintaticamente: ${cnpjLimpo} para user: ${userId}`);
+      return res.status(200).json({ sucesso: true, status: 'validado_mock' });
+    }
+
+    // [ETAPA 3] Consulta Real ReceitaWS
+    const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.RECEITA_WS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    // [DIAGNÓSTICO SÊNIOR] Log de observabilidade para validar a conexão real
+    console.log(`[DEBUG RECEITAWS] Resposta para CNPJ ${cnpjLimpo}:`, JSON.stringify(data, null, 2));
+
+    if (data.status === 'ERROR') {
+      return res.status(400).json({ sucesso: false, erro: 'CNPJ não encontrado ou indisponível.' });
+    }
+
+    if (data.situacao !== 'ATIVA') {
+      return res.status(403).json({ sucesso: false, erro: `Cadastro inválido: Situação ${data.situacao}.` });
+    }
+
+    // Sucesso Total: CNPJ existe e está ATIVO
+
+    // [ETAPA 3.1] Persistência Atômica no Supabase (Homologação Automática)
+    const { error: dbError } = await supabase
+      .from('estudios_compliance')
+      .upsert([{
+        id: userId,
+        cnpj: cnpjLimpo,
+      razao_social: data.nome,
+        endereco_oficial: `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio}/${data.uf}`,
+        status_receita: 'ativa',
+        updated_at: new Date().toISOString()
+      }]);
+
+    if (dbError) {
+      req.log.error({ dbError }, 'Erro ao salvar dados de compliance');
+      return res.status(500).json({ sucesso: false, erro: 'Falha ao registrar dados na base.' });
+  }
+
+    return res.status(200).json({
+      sucesso: true,
+      razao_social: data.nome,
+      status: 'ativo_confirmado_e_registrado'
+});
+
+  } catch (err) {
+    req.log.error({ err }, 'Erro na API ReceitaWS');
+    return res.status(500).json({ sucesso: false, erro: 'Falha na conexão com o serviço de validação.' });
   }
 });
 

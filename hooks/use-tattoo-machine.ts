@@ -63,5 +63,21 @@ export const useTattooMachine = () => {
     }
   }, [triggerHaptic]);
 
-  return { isTattooing, startTattooing, stopTattooing };
+  const triggerError = useCallback(() => {
+    if (typeof window === 'undefined' || !audioCtx.current) return;
+    const osc = audioCtx.current.createOscillator();
+    const gain = audioCtx.current.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(40, audioCtx.current.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.current.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.2, audioCtx.current.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.current.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.current.destination);
+    osc.start();
+    osc.stop(audioCtx.current.currentTime + 0.3);
+    triggerHaptic('heavy');
+  }, [triggerHaptic]);
+  return { isTattooing, startTattooing, stopTattooing, triggerError };
 };
+
