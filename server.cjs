@@ -188,14 +188,24 @@ app.post('/api/auth/login', async (req, res) => {
  * [ROTA] ACEITE DE TERMOS
  */
 app.post('/api/auth/aceite-termos', async (req, res) => {
-  const { user_id } = req.body;
-  const { error } = await supabase
-    .from('perfis')
-    .update({ has_seen_welcome_notice: true })
-    .eq('id', user_id);
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
 
-  if (error) return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
-  return res.status(200).json({ sucesso: true });
+    if (authError || !user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+
+    const authed = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false }
+    });
+    const { error } = await authed.rpc('aceitar_termos');
+
+    if (error) return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
+    return res.status(200).json({ sucesso: true });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
+  }
 });
 
 /**

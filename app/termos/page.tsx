@@ -22,10 +22,7 @@ export default function TermsPage() {
         throw new Error('Sessao expirada. Faca login novamente.');
       }
 
-      const { error } = await supabase
-        .from('perfis')
-        .update({ has_seen_welcome_notice: true })
-        .eq('id', userId);
+      const { error } = await supabase.rpc('aceitar_termos');
 
       if (error) {
         throw new Error(error.message);
