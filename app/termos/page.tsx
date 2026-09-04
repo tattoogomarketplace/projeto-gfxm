@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
+import { createClient } from '@/lib/supabase';
 
 export default function TermsPage() {
   const [loading, setLoading] = useState(false);
@@ -11,20 +13,38 @@ export default function TermsPage() {
   const { user } = useAuthStore();
 
   const handleAccept = async () => {
-    if (!user) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/aceite-termos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-
-      if (response.ok) {
-        router.push('/dashboard');
+      const supabase = createClient();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
+      const userId = sessionData.user?.id || user?.id;
+      if (sessionError || !userId) {
+        throw new Error('Sessao expirada. Faca login novamente.');
       }
+
+      const { error } = await supabase
+        .from('perfis')
+        .update({ has_seen_welcome_notice: true })
+        .eq('id', userId);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const role = (sessionData.user?.user_metadata?.role as string) || 'cliente';
+      const dashboard =
+        role === 'tatuador'
+          ? '/dashboard/tatuador'
+          : role === 'estudio'
+            ? '/dashboard/estudio'
+            : '/dashboard/cliente';
+
+      router.push(dashboard);
+      router.refresh();
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao aceitar termos.';
       console.error('Falha ao aceitar termos:', error);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
