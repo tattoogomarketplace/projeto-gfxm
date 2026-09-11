@@ -7,10 +7,10 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
-import api from '@/lib/api';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { createClient } from '@/lib/supabase';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -33,16 +33,26 @@ export default function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: LoginFormValues & { turnstileToken: string }) => {
-      const response = await api.post('/api/auth/login', data);
-      return response.data;
+      const supabase = createClient();
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) {
+        throw error;
+      }
+      return authData;
     },
     onSuccess: (data) => {
-      localStorage.setItem('tattoogo_token', data.session?.access_token);
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        localStorage.setItem('tattoogo_token', accessToken);
+      }
       toast.success('Bem-vindo de volta à elite!');
       router.push('/dashboard');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.erro || 'Erro ao realizar login');
+      toast.error(error.response?.data?.erro || error.message || 'Erro ao realizar login');
     },
   });
 

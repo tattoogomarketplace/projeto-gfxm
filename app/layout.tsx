@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: 'swap',
-});
 export const metadata: Metadata = {
   title: "TattooGo MK | Marketplace de Elite",
   description: "A plataforma definitiva para tatuadores e entusiastas.",
@@ -34,7 +27,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
         <meta name="theme-color" content="#121212" />
       </head>
-      <body className={`${inter.variable} font-sans bg-[#121212] text-white antialiased h-full`}>
+      <body className="font-sans bg-[#121212] text-white antialiased h-full">
         <ErrorBoundary>
           <Providers>
             <ThemeProvider>

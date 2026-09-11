@@ -7,6 +7,7 @@
     --foreground: #F5F5F5;
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
+    --font-inter: Inter, system-ui, -apple-system, sans-serif;
   }
   
   body {

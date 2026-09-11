@@ -1,16 +1,22 @@
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 interface DashboardPageProps {
-  params: { role: string };
+  params: Promise<{ role: string }>;
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
-  const supabase = createClient();
+  const { role } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.user_metadata.role !== params.role) {
+  if (!user) {
     redirect('/login');
+  }
+
+  const userRole = user.user_metadata?.role || 'cliente';
+  if (userRole !== role) {
+    redirect(`/dashboard/${userRole}`);
   }
 
   return (

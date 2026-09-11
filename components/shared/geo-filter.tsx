@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
+import { getCachedCidades } from '@/lib/catalogo';
 
 export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => {
   const [locais, setLocais] = useState<{ cidade: string; estado: string }[]>([]);
@@ -11,6 +12,13 @@ export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => 
   useEffect(() => {
     async function fetchLocalidades() {
       try {
+        const cached = await getCachedCidades();
+        if (cached) {
+          setLocais(cached);
+          setLoading(false);
+          return;
+        }
+
         const supabase = createClient();
         const { data, error: supabaseError } = await supabase
           .from('perfis')

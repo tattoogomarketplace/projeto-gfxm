@@ -7,6 +7,7 @@ import { GeoFilter } from '@/components/shared/geo-filter';
 import { perfilService } from '@/lib/services/perfil-service';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
+import { getCachedFeed } from '@/lib/catalogo';
 export default function ClienteDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [agendamentos, setAgendamentos] = useState<any[]>([]);
@@ -20,10 +21,10 @@ export default function ClienteDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: p } = await supabase.from('perfis').select('*').eq('id', user.id).single();
-      const { data: a } = await supabase.from('agendamentos').select('*').eq('cliente_id', user.id);
+      const { data: p } = await supabase.from('perfis').select('id, email').eq('id', user.id).maybeSingle();
+      const { data: a } = await supabase.from('agendamentos').select('id, data_hora, status').eq('cliente_id', user.id);
 
-      setProfile(p);
+      setProfile(p || { id: user.id, email: user.email });
       setAgendamentos(a || []);
     }
     load();
@@ -34,8 +35,7 @@ export default function ClienteDashboard() {
   }, [cidade]);
 
   useEffect(() => {
-    supabase.from('portfolios').select('id, url_imagem, likes_count, estilo').order('created_at', { ascending: false }).limit(24)
-      .then(({ data }) => setFeed(data || []));
+    getCachedFeed().then(setFeed).catch(() => setFeed([]));
   }, []);
 
   if (!profile) return <div className="text-white p-10">Carregando painel de elite...</div>;

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/mock-services';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { ChatBox } from '@/components/features/chat/chat-box';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { checkAccess } from '@/lib/utils/rbac-guard';
 import { redirect } from 'next/navigation';
 
@@ -28,7 +29,7 @@ function TatuadorDashboardClient() {
   const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
       setUserId(user.id);
-      const { data } = await supabase.from('portfolios').select('*').eq('tatuador_id', user.id);
+      const { data } = await supabase.from('portfolios').select('id, url_imagem').eq('tatuador_id', user.id);
       setPortfolio(data || []);
     }
     load();
@@ -54,7 +55,7 @@ function TatuadorDashboardClient() {
                 whileHover={{ scale: 1.05 }}
                 className="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800"
               >
-                <img src={item.url_imagem} alt="Tattoo" className="w-full h-40 object-cover" />
+                <OptimizedImage src={item.url_imagem} alt="Tattoo" className="w-full h-40" />
               </motion.div>
             ))}
         </div>

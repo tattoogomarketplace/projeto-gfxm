@@ -5,19 +5,27 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
   throw new Error("❌ FATAL: Variáveis de infraestrutura ausentes. Build abortado.");
 }
 
-// Configuração PWA (Otimização para Offline)
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  disable: process.env.NODE_ENV === 'development',
-});
+const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
     turbopack: {},
     experimental: {
       allowedHosts: ['.monkeycode-ai.live'],
+    },
+    images: {
+      minimumCacheTTL: 86400,
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: '*.supabase.co',
+          pathname: '/storage/v1/object/public/**',
+        },
+        {
+          protocol: 'https',
+          hostname: '*.supabase.in',
+          pathname: '/storage/v1/object/public/**',
+        },
+      ],
     },
   async rewrites() {
     return [
@@ -37,9 +45,29 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      {
+        source: "/_next/image",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+          },
+        ],
+      },
     ];
   },
 };
 
-module.exports = withPWA(nextConfig);
+if (isDev) {
+  module.exports = nextConfig;
+} else {
+  const withPWA = require('@ducanh2912/next-pwa').default({
+    dest: 'public',
+    cacheOnFrontEndNav: true,
+    aggressiveFrontEndNavCaching: true,
+    reloadOnOnline: true,
+    disable: false,
+  });
+  module.exports = withPWA(nextConfig);
+}
 

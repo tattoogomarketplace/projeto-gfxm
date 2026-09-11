@@ -95,6 +95,22 @@ const supabase = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPA
   auth: { persistSession: false },
   db: { schema: 'public' }
 });
+
+async function cacheGet(key) {
+  try {
+    return await redis.get(key);
+  } catch {
+    return null;
+  }
+}
+
+async function cacheSet(key, value, ttlSec) {
+  try {
+    await redis.set(key, value, { ex: ttlSec });
+  } catch {
+    return;
+  }
+}
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // =========================================================================
@@ -151,6 +167,71 @@ const TERMOS_PROIBIDOS_REGEX = new RegExp([
 // =========================================================================
 // 5. ROTAS DE API (COMPLIANCE E FINANCEIRO)
 // =========================================================================
+
+app.get('/api/catalogo/feed', async (req, res) => {
+  try {
+    const key = 'feed:portfolios:v1';
+    const hit = await cacheGet(key);
+    if (hit) return res.status(200).json({ sucesso: true, data: hit });
+    const { data, error } = await supabase
+      .from('portfolios')
+      .select('id, url_imagem, likes_count, estilo')
+      .order('created_at', { ascending: false })
+      .limit(24);
+    if (error) throw error;
+    await cacheSet(key, data || [], 30);
+    return res.status(200).json({ sucesso: true, data: data || [] });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao carregar o feed.' });
+  }
+});
+
+app.get('/api/catalogo/artistas', async (req, res) => {
+  try {
+    const cidade = typeof req.query.cidade === 'string' ? req.query.cidade : '';
+    const estado = typeof req.query.estado === 'string' ? req.query.estado : '';
+    const key = `artistas:${cidade || 'all'}:${estado || 'all'}`;
+    const hit = await cacheGet(key);
+    if (hit) return res.status(200).json({ sucesso: true, data: hit });
+    let query = supabase
+      .from('perfis')
+      .select('id, email, cidade, estado')
+      .in('role', ['tatuador', 'estudio'])
+      .eq('agenda_bloqueada', false);
+    if (cidade) query = query.eq('cidade', cidade);
+    if (estado) query = query.eq('estado', estado);
+    const { data, error } = await query.limit(100);
+    if (error) throw error;
+    await cacheSet(key, data || [], 60);
+    return res.status(200).json({ sucesso: true, data: data || [] });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao listar artistas.' });
+  }
+});
+
+app.get('/api/catalogo/cidades', async (req, res) => {
+  try {
+    const key = 'geo:cidades:v1';
+    const hit = await cacheGet(key);
+    if (hit) return res.status(200).json({ sucesso: true, data: hit });
+    const { data, error } = await supabase
+      .from('perfis')
+      .select('cidade, estado')
+      .in('role', ['tatuador', 'estudio'])
+      .not('cidade', 'is', null)
+      .not('estado', 'is', null)
+      .order('cidade')
+      .limit(1000);
+    if (error) throw error;
+    const unique = Array.from(
+      new Map((data || []).map((item) => [`${item.cidade}-${item.estado}`, item])).values()
+    );
+    await cacheSet(key, unique, 300);
+    return res.status(200).json({ sucesso: true, data: unique });
+  } catch (err) {
+    return res.status(500).json({ sucesso: false, erro: 'Falha ao listar cidades.' });
+  }
+});
 
 /**
  * [ROTA] AUTH: REGISTRO DE USUÁRIO

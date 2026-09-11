@@ -6,7 +6,7 @@ export const agendamentoService = {
     const { data, error } = await supabase
       .from('agendamentos')
       .select(`
-        *,
+        id, data_hora, status, tatuador_id, cliente_id, valor_total,
         tatuador:perfis!agendamentos_tatuador_id_fkey(id, email)
       `)
       .order('data_hora', { ascending: true });
@@ -22,7 +22,7 @@ export const agendamentoService = {
     const { data, error } = await supabase
       .from('agendamentos')
       .insert([{ ...dados, cliente_id: user.id, status: 'aguardando_sinal', sinal_pago: false }])
-      .select()
+      .select('id, data_hora, status, tatuador_id, cliente_id, valor_total')
       .single();
 
     if (error) throw error;

@@ -7,7 +7,7 @@ import { perfilService } from '@/lib/services/perfil-service';
 import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
-import { createClient } from '@/lib/supabase';
+import { getCachedFeed } from '@/lib/catalogo';
 
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
@@ -21,13 +21,7 @@ export default function ClienteDashboard() {
   }, [cidade]);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from('portfolios')
-      .select('id, url_imagem, likes_count, tatuador_id, estilo')
-      .order('created_at', { ascending: false })
-      .limit(24)
-      .then(({ data }) => setFeed(data || []));
+    getCachedFeed().then(setFeed).catch(() => setFeed([]));
   }, []);
 
   return (
