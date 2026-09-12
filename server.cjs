@@ -350,18 +350,27 @@ app.post('/api/chat/enviar-mensagem', (req, res) => {
  */
 app.post('/api/portfolio/upload-validado', async (req, res) => {
   try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
+    if (authError || !user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+
     const validacao = portfolioSchema.safeParse(req.body);
     if (!validacao.success) {
       return res.status(400).json({ sucesso: false, erro: validacao.error.errors[0].message });
     }
 
-    const { artista_id, titulo, estilo, preco_estimado, imagem_base64 } = validacao.data;
+    const { artista_id, titulo, estilo, imagem_base64 } = validacao.data;
+    if (artista_id !== user.id) {
+      return res.status(403).json({ sucesso: false, erro: 'Artista inválido.' });
+    }
     const imagemLimpa = imagem_base64.includes(',') ? imagem_base64.split(',')[1] : imagem_base64;
 
     // Redimensionamento preventivo (max 1024px) para evitar OOM no APK
     const buffer = Buffer.from(imagemLimpa, 'base64');
     const imagemRedimensionada = await sharp(buffer)
       .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80 })
       .toBuffer();
     const imagemFinalBase64 = imagemRedimensionada.toString('base64');
     const respostaIA = await aiBreaker.fire(imagemFinalBase64);
@@ -373,15 +382,32 @@ app.post('/api/portfolio/upload-validado', async (req, res) => {
       });
     }
 
-    const { data: portfolio, error } = await supabase.from('portfolios').insert([{
-      tatuador_id: artista_id,
+    const authed = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false }
+    });
+    const filePath = `${user.id}/${Date.now()}.jpg`;
+    const { error: uploadError } = await authed.storage
+      .from('portfolios')
+      .upload(filePath, imagemRedimensionada, { contentType: 'image/jpeg', upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data: publicData } = authed.storage.from('portfolios').getPublicUrl(filePath);
+    const urlImagem = publicData?.publicUrl;
+    if (!urlImagem || !/^https:\/\//i.test(urlImagem)) {
+      return res.status(500).json({ sucesso: false, erro: 'Falha ao gerar URL pública da imagem.' });
+    }
+
+    const { data: portfolio, error } = await authed.from('portfolios').insert([{
+      tatuador_id: user.id,
       descricao: validator.escape(titulo),
       estilo: validator.escape(estilo),
-      url_imagem: `data:image/jpeg;base64,${imagemFinalBase64}`,
+      url_imagem: urlImagem,
       likes_count: 0
-    }]).select();
+    }]).select('id, url_imagem, estilo, likes_count, tatuador_id');
 
     if (error) throw error;
+    await redis.del('feed:portfolios:v1').catch(() => {});
     return res.status(200).json({ sucesso: true, portfolio: portfolio[0] });
   } catch (err) {
     req.log.error({ err }, 'Erro na Validação de Imagem');

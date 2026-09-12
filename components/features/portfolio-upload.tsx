@@ -30,19 +30,30 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
       // 3. Upload para o Storage real
       const { data, error } = await supabase.storage
         .from('portfolios')
-        .upload(`${tatuadorId}/${Date.now()}.jpg`, file);
+        .upload(`${tatuadorId}/${Date.now()}.jpg`, file, { contentType: file.type || 'image/jpeg', upsert: false });
 
       if (error) {
         alert("Erro no upload: " + error.message);
         return;
       }
 
+      const { data: publicData } = supabase.storage.from('portfolios').getPublicUrl(data.path);
+      const urlImagem = publicData?.publicUrl;
+      if (!urlImagem || !urlImagem.startsWith('https://')) {
+        alert("Falha ao gerar URL pública da imagem.");
+        return;
+      }
+
       // 4. Persistência real no Banco
-      await supabase.from('portfolios').insert({
+      const { error: insertError } = await supabase.from('portfolios').insert({
         tatuador_id: tatuadorId,
-        url_imagem: data.path,
+        url_imagem: urlImagem,
         estilo: 'Realismo'
       });
+      if (insertError) {
+        alert("Erro ao publicar: " + insertError.message);
+        return;
+      }
 
       alert("Foto moderada e publicada com sucesso!");
     };

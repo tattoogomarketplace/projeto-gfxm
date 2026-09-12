@@ -13,6 +13,8 @@ function getRedis(): Redis | null {
   return redis;
 }
 
+type PerfilWelcome = { has_seen_welcome_notice?: boolean; role?: string };
+
 async function rateLimit(id: string, bucket: string, limit: number, windowSec: number): Promise<boolean> {
   try {
     const client = getRedis();
@@ -23,6 +25,27 @@ async function rateLimit(id: string, bucket: string, limit: number, windowSec: n
     return n <= limit;
   } catch {
     return true;
+  }
+}
+
+async function getCachedPerfil(userId: string): Promise<PerfilWelcome | null> {
+  try {
+    const client = getRedis();
+    if (!client) return null;
+    const hit = await withTimeout(client.get<PerfilWelcome>(`perfil:welcome:${userId}`), 500);
+    return hit ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedPerfil(userId: string, perfil: PerfilWelcome): Promise<void> {
+  try {
+    const client = getRedis();
+    if (!client) return;
+    await client.set(`perfil:welcome:${userId}`, perfil, { ex: 60 });
+  } catch {
+    return;
   }
 }
 
@@ -107,18 +130,23 @@ export async function proxy(request: NextRequest) {
 
   // 2. Acesso Autenticado
   if (user) {
-    let perfil: { has_seen_welcome_notice?: boolean } | null = null;
-    try {
-      const perfilResult = await withTimeout(
-        supabase
-          .from('perfis')
-          .select('has_seen_welcome_notice')
-          .eq('id', user.id)
-          .maybeSingle(),
-        2000
-      );
-      perfil = perfilResult.data;
-    } catch {
+    let perfil: PerfilWelcome | null = await getCachedPerfil(user.id);
+    if (!perfil) {
+      try {
+        const perfilResult = await withTimeout(
+          supabase
+            .from('perfis')
+            .select('has_seen_welcome_notice, role')
+            .eq('id', user.id)
+            .maybeSingle(),
+          2000
+        );
+        perfil = perfilResult.data;
+        if (perfil?.has_seen_welcome_notice) await setCachedPerfil(user.id, perfil);
+      } catch {
+        perfil = null;
+      }
+    } else if (!perfil.has_seen_welcome_notice) {
       perfil = null;
     }
 
@@ -129,7 +157,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const allowedRoles = ["cliente", "tatuador", "estudio"];
-    const role = user.user_metadata?.role;
+    const role = perfil?.role || user.user_metadata?.role;
     if (
       role &&
       allowedRoles.includes(role) &&
