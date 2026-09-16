@@ -58,7 +58,7 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
       await onVerify(fullCode);
       stopTattooing(true);
       playSuccess();
-    } catch (error) {
+    } catch {
       playError();
       triggerError();
       setHasError(true);

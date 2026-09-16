@@ -2,7 +2,6 @@
 
 import { supabase } from '@/lib/mock-services';
 import { moderateImageWithGemini } from '@/lib/ai-moderation';
-import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { NeonButton } from '@/components/ui/neon-button';
 

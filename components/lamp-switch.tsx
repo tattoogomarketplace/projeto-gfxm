@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-export default function LampSwitch({ onToggle }) {
+export default function LampSwitch({ onToggle }: { onToggle: () => void }) {
   const [pulled, setPulled] = useState(false);
 
   const handlePull = () => {

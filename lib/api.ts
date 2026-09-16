@@ -25,7 +25,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('tattoogo_token');
-        window.location.href = '/login';
+        // URL absoluta: o roteador do Next não está disponível em interceptors do axios.
+        window.location.href = new URL('/login', window.location.origin).toString();
       }
     }
     return Promise.reject(error);

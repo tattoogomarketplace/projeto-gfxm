@@ -10,7 +10,7 @@ interface TermsModalProps {
   onAccept: () => void;
 }
 
-export function TermsModal({ isOpen, onClose, onAccept }: TermsModalProps) {
+export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
   const [canAccept, setCanAccept] = useState(false);
   return (
     <AnimatePresence>

@@ -27,7 +27,7 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
         className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-white mb-4"
         onChange={(e) => setBank(e.target.value)}
       />
-      <button onClick={handleSave} className="bg-orange-500 px-4 py-2 rounded-lg font-bold">Salvar Dados</button>
+      <button onClick={handleSave} disabled={loading} className="bg-orange-500 px-4 py-2 rounded-lg font-bold disabled:opacity-50">Salvar Dados</button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
+import { useState, useRef, KeyboardEvent, ClipboardEvent } from 'react';
 import { motion } from 'framer-motion';
 
 interface OtpInputProps {

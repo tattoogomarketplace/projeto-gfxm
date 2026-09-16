@@ -1,11 +1,15 @@
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
+
+type AccessResult = { allowed: true } | { allowed: false; redirect: string };
 
 /**
  * RBAC GUARD - TATTOOGO MK
  * Valida a role e o status KYC de forma centralizada.
  */
-export const checkAccess = async (requiredRole: 'cliente' | 'tatuador' | 'estudio') => {
-  const supabase = createClient();
+export const checkAccess = async (
+  requiredRole: 'cliente' | 'tatuador' | 'estudio'
+): Promise<AccessResult> => {
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { allowed: false, redirect: '/login' };
 
@@ -25,4 +29,3 @@ export const checkAccess = async (requiredRole: 'cliente' | 'tatuador' | 'estudi
 
   return { allowed: true };
 };
-

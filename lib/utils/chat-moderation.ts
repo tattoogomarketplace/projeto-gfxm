@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 const LINK_REGEX = /(https?:\/\/[^\s]+)/gi;
 const FORBIDDEN_PLATFORMS = [/mercadopago/i, /picpay/i, /pagseguro/i, /pix/i, /zap/i, /whatsapp/i, /insta/i, /instagram/i];
 const TOXIC_WORDS = [

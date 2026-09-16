@@ -38,7 +38,7 @@ export default function CancelarAgendamentoPage() {
     toast.success('Agendamento cancelado com sucesso.');
     router.push('/dashboard');
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   };

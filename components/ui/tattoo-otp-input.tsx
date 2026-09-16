@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { motion, AnimatePresence } from 'framer-motion';

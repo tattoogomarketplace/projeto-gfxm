@@ -9,9 +9,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
     turbopack: {},
-    experimental: {
-      allowedHosts: ['.monkeycode-ai.live'],
-    },
+    allowedDevOrigins: ['*.monkeycode-ai.live', '**.monkeycode-ai.live'],
     images: {
       minimumCacheTTL: 86400,
       remotePatterns: [
@@ -45,15 +43,6 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
-      {
-        source: "/_next/image",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
-          },
-        ],
-      },
     ];
   },
 };
@@ -61,6 +50,7 @@ const nextConfig: NextConfig = {
 if (isDev) {
   module.exports = nextConfig;
 } else {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const withPWA = require('@ducanh2912/next-pwa').default({
     dest: 'public',
     cacheOnFrontEndNav: true,

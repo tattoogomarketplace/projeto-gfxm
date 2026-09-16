@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { PII_Masking } from '@/lib/utils/masking';
 
 export function KYCForm({ userId }: { userId: string }) {
   const [cnpj, setCnpj] = useState('');
@@ -38,7 +37,7 @@ export function KYCForm({ userId }: { userId: string }) {
       } else {
         alert("Erro: " + (result.erro || "Falha na validação."));
       }
-    } catch (err) {
+    } catch {
       alert("Falha na comunicação com o servidor.");
     } finally {
       setLoading(false);
