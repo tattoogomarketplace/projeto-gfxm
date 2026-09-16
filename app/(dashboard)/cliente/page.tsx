@@ -8,13 +8,14 @@ import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
 import { getCachedFeed } from '@/lib/catalogo';
+import type { ArtistaResumo, FeedItem } from '@/lib/types/database';
 
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
-  const [artistas, setArtistas] = useState<any[]>([]);
+  const [artistas, setArtistas] = useState<ArtistaResumo[]>([]);
   const [cidade, setCidade] = useState('');
   const [chatPeer, setChatPeer] = useState<string | null>(null);
-  const [feed, setFeed] = useState<any[]>([]);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
 
   useEffect(() => {
     perfilService.listarArtistas({ cidade }).then(setArtistas);
@@ -64,7 +65,7 @@ export default function ClienteDashboard() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {agendamentos?.map((ag: any) => (
+          {agendamentos?.map((ag) => (
             <GlassContainer key={ag.id} className="p-4">
               <h2 className="font-bold text-neon-orange">{ag.status}</h2>
               <p className="text-sm">Data: {new Date(ag.data_hora).toLocaleDateString()}</p>

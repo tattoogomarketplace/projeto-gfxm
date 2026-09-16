@@ -18,7 +18,11 @@ export const useTattooMachine = () => {
     
     // Inicializa o contexto de áudio (se não existir)
     if (!audioCtx.current) {
-      audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      audioCtx.current = new AudioContextCtor();
     }
     
     setIsTattooing(true);

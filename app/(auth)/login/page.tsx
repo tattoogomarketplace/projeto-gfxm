@@ -51,8 +51,9 @@ export default function LoginPage() {
       toast.success('Bem-vindo de volta à elite!');
       router.push('/dashboard');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.erro || error.message || 'Erro ao realizar login');
+    onError: (error: Error) => {
+      const apiError = error as Error & { response?: { data?: { erro?: string } } };
+      toast.error(apiError.response?.data?.erro || apiError.message || 'Erro ao realizar login');
     },
   });
 

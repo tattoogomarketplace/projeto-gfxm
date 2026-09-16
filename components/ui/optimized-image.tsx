@@ -20,19 +20,16 @@ export function OptimizedImage({ src, alt, className }: OptimizedImageProps) {
 
   return (
     <div className={`relative ${className} bg-zinc-800`}>
-      {isDataUrl ? (
-        <img src={resolved} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
-      ) : (
-        <Image
-          src={resolved}
-          alt={alt}
-          fill
-          sizes="(max-width: 480px) 100vw, 480px"
-          className="object-cover transition-opacity duration-300"
-          loading="lazy"
-          quality={75}
-        />
-      )}
+      <Image
+        src={resolved}
+        alt={alt}
+        fill
+        sizes="(max-width: 480px) 100vw, 480px"
+        className="object-cover transition-opacity duration-300"
+        loading="lazy"
+        quality={75}
+        unoptimized={isDataUrl}
+      />
     </div>
   );
 }

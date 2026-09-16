@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/input';
 import { createClient } from '@/lib/supabase';
@@ -28,10 +27,23 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+type FaixaEtaria = 'normal' | 'menor_14' | 'menor_18';
+
+function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
+  if (!dataNascimento) return 'normal';
+  const birthDate = new Date(dataNascimento);
+  if (Number.isNaN(birthDate.getTime())) return 'normal';
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  if (age < 14) return 'menor_14';
+  if (age < 18) return 'menor_18';
+  return 'normal';
+}
+
 export default function RegisterPage() {
-  const router = useRouter();
   const supabase = createClient();
-  const [status, setStatus] = useState<'normal' | 'menor_14' | 'menor_18'>('normal');
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -39,25 +51,12 @@ export default function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [userRole, setUserRole] = useState<'cliente' | 'tatuador' | 'estudio'>('cliente');
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const dataNascimento = watch('dataNascimento');
-
-  useEffect(() => {
-    if (dataNascimento) {
-      const birthDate = new Date(dataNascimento);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-      
-      if (age < 14) setStatus('menor_14');
-      else if (age < 18) setStatus('menor_18');
-      else setStatus('normal');
-    }
-  }, [dataNascimento]);
+  const dataNascimento = useWatch({ control, name: 'dataNascimento' });
+  const status = getFaixaEtaria(dataNascimento);
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
@@ -83,8 +82,8 @@ export default function RegisterPage() {
       setEmailForVerification(data.email);
       setIsVerifying(true);
       toast.success('Código enviado para seu e-mail!');
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao realizar cadastro.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao realizar cadastro.');
     } finally {
       setLoading(false);
     }
@@ -102,7 +101,7 @@ export default function RegisterPage() {
       if (error) throw error;
 
       setShowWelcome(true);
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Código inválido ou expirado.');
       setLoading(false);
       throw err;

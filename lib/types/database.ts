@@ -39,6 +39,39 @@ export interface Agendamento {
   version: number;
 }
 
+export interface ArtistaResumo {
+  id: string;
+  email: string;
+  cidade?: string | null;
+  estado?: string | null;
+}
+
+export interface FeedItem {
+  id: string;
+  url_imagem: string;
+  estilo: string;
+  likes_count: number;
+}
+
+export interface AgendamentoResumo {
+  id: string;
+  data_hora: string;
+  status: string;
+  cliente_id?: string;
+}
+
+export interface TatuadorVinculo {
+  id?: string;
+  tatuador_id?: string;
+  email?: string | null;
+  kyc_status?: string | null;
+  perfis?: {
+    id?: string;
+    email?: string | null;
+    kyc_status?: string | null;
+  } | null;
+}
+
 export interface Transacao {
   id: string;
   agendamento_id: string;

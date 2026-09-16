@@ -181,7 +181,7 @@ app.get('/api/catalogo/feed', async (req, res) => {
     if (error) throw error;
     await cacheSet(key, data || [], 30);
     return res.status(200).json({ sucesso: true, data: data || [] });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao carregar o feed.' });
   }
 });
@@ -204,7 +204,7 @@ app.get('/api/catalogo/artistas', async (req, res) => {
     if (error) throw error;
     await cacheSet(key, data || [], 60);
     return res.status(200).json({ sucesso: true, data: data || [] });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao listar artistas.' });
   }
 });
@@ -228,7 +228,7 @@ app.get('/api/catalogo/cidades', async (req, res) => {
     );
     await cacheSet(key, unique, 300);
     return res.status(200).json({ sucesso: true, data: unique });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao listar cidades.' });
   }
 });
@@ -246,7 +246,7 @@ app.post('/api/auth/register', async (req, res) => {
     });
     if (error) return res.status(400).json({ sucesso: false, erro: error.message });
     return res.status(200).json({ sucesso: true, user: data.user });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Erro interno no registro.' });
   }
 });
@@ -260,7 +260,7 @@ app.post('/api/auth/login', async (req, res) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return res.status(401).json({ sucesso: false, erro: 'Credenciais inválidas.' });
     return res.status(200).json({ sucesso: true, session: data.session });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Erro interno no login.' });
   }
 });
@@ -284,7 +284,7 @@ app.post('/api/auth/aceite-termos', async (req, res) => {
 
     if (error) return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
     return res.status(200).json({ sucesso: true });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao salvar aceite.' });
   }
 });
@@ -435,7 +435,7 @@ app.post('/api/portfolio/like/:id', async (req, res) => {
     if (likeError) throw likeError;
 
     return res.status(200).json({ sucesso: true, likes_count: likeCount });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false });
   }
 });
@@ -551,7 +551,7 @@ app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
     }
 
     return res.status(200).json({ sucesso: true, pode_cancelar: true });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Erro interno.' });
   }
 });
@@ -562,7 +562,7 @@ app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
  */
 app.post('/api/agendamentos/cancelar-executar', async (req, res) => {
   try {
-    const { agendamento_id, otp } = req.body;
+    const { agendamento_id } = req.body;
 
     // NOTA: Em produção, utilize o mesmo método de verificação OTP usado no registro
     // O backend valida o OTP antes de permitir o DELETE ou UPDATE de status
@@ -579,7 +579,7 @@ app.post('/api/agendamentos/cancelar-executar', async (req, res) => {
     if (error) throw error;
 
     return res.status(200).json({ sucesso: true, mensagem: 'Cancelado com sucesso.' });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao efetivar cancelamento.' });
   }
 });
@@ -740,7 +740,7 @@ app.post('/api/pagamentos/presencial', async (req, res) => {
       .eq('id', agendamento_id);
 
     return res.status(200).json({ sucesso: true, agenda_bloqueada: !!bloqueado });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ sucesso: false, erro: 'Falha ao registrar pagamento presencial.' });
   }
 });

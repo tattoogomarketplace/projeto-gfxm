@@ -15,7 +15,11 @@ export const useSoundEffects = () => {
 
   const playError = () => {
     // Usando uma frequência sonora via Web Audio API para evitar dependência de arquivos externos que podem quebrar
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const ctx = new AudioContextCtor();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);

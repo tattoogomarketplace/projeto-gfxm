@@ -16,7 +16,7 @@ export default function ArtistaDashboard() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {agendamentos?.map((ag: any) => (
+          {agendamentos?.map((ag) => (
             <GlassContainer key={ag.id} className="p-4 border-l-4 border-neon-orange">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold">Cliente ID: {ag.cliente_id.slice(0, 8)}...</h2>

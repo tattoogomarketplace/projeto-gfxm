@@ -8,13 +8,14 @@ import { perfilService } from '@/lib/services/perfil-service';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
 import { getCachedFeed } from '@/lib/catalogo';
+import type { AgendamentoResumo, ArtistaResumo, FeedItem } from '@/lib/types/database';
 export default function ClienteDashboard() {
-  const [profile, setProfile] = useState<any>(null);
-  const [agendamentos, setAgendamentos] = useState<any[]>([]);
-  const [artistas, setArtistas] = useState<any[]>([]);
+  const [profile, setProfile] = useState<{ id: string; email: string } | null>(null);
+  const [agendamentos, setAgendamentos] = useState<AgendamentoResumo[]>([]);
+  const [artistas, setArtistas] = useState<ArtistaResumo[]>([]);
   const [cidade, setCidade] = useState('');
   const [chatPeer, setChatPeer] = useState<string | null>(null);
-  const [feed, setFeed] = useState<any[]>([]);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -24,7 +25,7 @@ export default function ClienteDashboard() {
       const { data: p } = await supabase.from('perfis').select('id, email').eq('id', user.id).maybeSingle();
       const { data: a } = await supabase.from('agendamentos').select('id, data_hora, status').eq('cliente_id', user.id);
 
-      setProfile(p || { id: user.id, email: user.email });
+      setProfile(p || { id: user.id, email: user.email ?? '' });
       setAgendamentos(a || []);
     }
     load();
