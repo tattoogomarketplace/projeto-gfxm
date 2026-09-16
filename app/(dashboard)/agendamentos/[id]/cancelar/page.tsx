@@ -11,10 +11,18 @@ export default function CancelarAgendamentoPage() {
   const router = useRouter();
   const [step, setStep] = useState<'validate' | 'verify'>('validate');
 
+  const authHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   const iniciarCancelamento = async () => {
     const res = await fetch('/api/agendamentos/cancelar-solicitacao', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ agendamento_id: id }),
     });
 
@@ -30,7 +38,7 @@ export default function CancelarAgendamentoPage() {
     try {
       const response = await fetch('/api/agendamentos/cancelar-executar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ agendamento_id: id, otp: code }),
       });
 

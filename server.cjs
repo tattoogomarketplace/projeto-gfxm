@@ -87,6 +87,7 @@ const authLimiter = rateLimit({
 app.use('/api/', globalLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/agendamentos/cancelar-solicitacao', authLimiter);
 app.use('/api/agendamentos/cancelar-executar', authLimiter);
 
 // Inicialização de Clientes (Redis, Supabase, Gemini)
@@ -95,6 +96,16 @@ const supabase = createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPA
   auth: { persistSession: false },
   db: { schema: 'public' }
 });
+
+// Cliente efêmero por requisição. Evita que operações de Auth (signInWithOtp /
+// verifyOtp) gravem sessão no singleton compartilhado e vazem contexto entre
+// requisições concorrentes no servidor.
+function createScopedClient(accessToken) {
+  return createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    ...(accessToken ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } } : {}),
+  });
+}
 
 async function cacheGet(key) {
   try {
@@ -529,13 +540,27 @@ app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
   try {
     const { agendamento_id } = req.body;
 
+    // [SEGURANÇA] Exige sessão válida (Bearer) antes de qualquer verificação
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
+
+    if (authError || !user || !user.email) {
+      return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+    }
+
     const { data: agendamento, error } = await supabase
       .from('agendamentos')
-      .select('data_hora')
+      .select('data_hora, cliente_id')
       .eq('id', agendamento_id)
       .single();
 
     if (error || !agendamento) return res.status(404).json({ sucesso: false, erro: 'Agendamento não encontrado.' });
+
+    // [SEGURANÇA] Ownership: o agendamento precisa pertencer ao usuário autenticado
+    if (agendamento.cliente_id !== user.id) {
+      return res.status(403).json({ sucesso: false, erro: 'Agendamento não pertence a este usuário.' });
+    }
 
     const dataAgendamento = new Date(agendamento.data_hora);
     const agora = new Date();
@@ -550,6 +575,18 @@ app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
       });
     }
 
+    // [OTP] Dispara o código de confirmação para o e-mail do usuário autenticado.
+    // Reutiliza o Supabase Auth (mesmo provedor do cadastro). Requer o template de
+    // e-mail OTP com {{ .Token }} habilitado no painel do Supabase.
+    const { error: otpError } = await createScopedClient().auth.signInWithOtp({
+      email: user.email,
+      options: { shouldCreateUser: false },
+    });
+
+    if (otpError) {
+      return res.status(500).json({ sucesso: false, erro: 'Falha ao enviar o código de confirmação.' });
+    }
+
     return res.status(200).json({ sucesso: true, pode_cancelar: true });
   } catch {
     return res.status(500).json({ sucesso: false, erro: 'Erro interno.' });
@@ -562,19 +599,38 @@ app.post('/api/agendamentos/cancelar-solicitacao', async (req, res) => {
  */
 app.post('/api/agendamentos/cancelar-executar', async (req, res) => {
   try {
-    const { agendamento_id } = req.body;
+    const { agendamento_id, otp } = req.body;
 
-    // NOTA: Em produção, utilize o mesmo método de verificação OTP usado no registro
-    // O backend valida o OTP antes de permitir o DELETE ou UPDATE de status
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+    if (!otp || typeof otp !== 'string') {
+      return res.status(400).json({ sucesso: false, erro: 'Código OTP obrigatório.' });
+    }
 
-    // Lógica de cancelamento blindada
-    const { error } = await supabase
+    // [SEGURANÇA] Exige sessão válida (Bearer)
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token || undefined);
+
+    if (authError || !user || !user.email) {
+      return res.status(401).json({ sucesso: false, erro: 'Não autorizado.' });
+    }
+
+    // [OTP] Valida o código no Supabase Auth antes de qualquer alteração de estado
+    const { error: otpError } = await createScopedClient().auth.verifyOtp({
+      email: user.email,
+      token: otp,
+      type: 'email',
+    });
+
+    if (otpError) {
+      return res.status(401).json({ sucesso: false, erro: 'Código OTP inválido ou expirado.' });
+    }
+
+    // [SEGURANÇA] UPDATE com o token do usuário (respeita RLS) e ownership
+    const { error } = await createScopedClient(token)
       .from('agendamentos')
       .update({ status: 'cancelado' })
       .eq('id', agendamento_id)
-      .eq('cliente_id', user.user.id);
+      .eq('cliente_id', user.id);
 
     if (error) throw error;
 
