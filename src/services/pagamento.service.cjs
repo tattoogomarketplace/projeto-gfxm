@@ -19,10 +19,26 @@ async function processarWebhookGateway(evento) {
       const agendamentoId = evento.data.external_reference;
       const valorBrutoSinal = Number(evento.data.transaction_amount || 0);
 
+      const agora = new Date();
+      await prisma.agendamento.updateMany({
+        where: {
+          id: agendamentoId,
+          status: "aguardando_sinal",
+          sinal_pago: false,
+          mutex_expira_em: { lte: agora },
+          deleted_at: null,
+        },
+        data: { status: "cancelado", deleted_at: agora },
+      });
+
       const agendamentoData = await prisma.agendamento.findFirst({
         where: { id: agendamentoId, deleted_at: null },
-        select: { tatuador_id: true, cliente_id: true },
+        select: { tatuador_id: true, cliente_id: true, status: true, mutex_expira_em: true },
       });
+
+      if (!agendamentoData || agendamentoData.status === "cancelado") {
+        return { sucesso: true, recebido: true, mutex_expirado: true };
+      }
 
       let percentualComissao = 0.09;
       let valorBonusEstudio = 0.0;
@@ -56,7 +72,7 @@ async function processarWebhookGateway(evento) {
 
       await prisma.agendamento.update({
         where: { id: agendamentoId },
-        data: { status: "confirmado", sinal_pago: true },
+        data: { status: "confirmado", sinal_pago: true, mutex_expira_em: null },
       });
 
       await prisma.transacaoPagamento.create({

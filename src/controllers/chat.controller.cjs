@@ -23,30 +23,27 @@ async function enviar(req, res) {
     const { remetente_id, destinatario_id, mensagem } = validacao.data;
     const mensagemSanitizada = validator.escape(mensagem);
 
-    if (chatService.isMensagemProibida(mensagemSanitizada)) {
-      await chatService.logCompliance({
-        userId: remetente_id,
-        termoDetectado: mensagemSanitizada,
-        acaoTomada: "bloqueio_imediato_e_flag_de_seguranca",
-      });
-
-      return res.status(403).json({
-        sucesso: false,
-        bloqueado: true,
-        erro: "ALERTA DE COMPLIANCE: Mensagem bloqueada por violar as diretrizes antifraude e de segurança.",
-      });
+    if (req.user && remetente_id !== req.user.id && !String(remetente_id).startsWith("usr_")) {
+      return res.status(403).json({ sucesso: false, erro: "Remetente nao corresponde a sessao." });
     }
 
     try {
-      const data = await chatService.salvarMensagem({
-        remetenteId: remetente_id,
+      const data = await chatService.enviarDuvida({
+        remetenteId: req.user?.id || remetente_id,
         destinatarioId: destinatario_id,
         mensagem: mensagemSanitizada,
       });
-      return res.status(200).json({ sucesso: true, mensagem: data });
-    } catch {
-      console.warn("[Backend] Aviso: Tabela mensagens_chat não encontrada ou erro de permissão.");
-      return res.status(200).json({ sucesso: true, mensagem: { remetente_id, mensagem: mensagemSanitizada } });
+      return res.status(200).json({ sucesso: true, mensagem: data, status: data.status });
+    } catch (err) {
+      if (err.status === 403) {
+        return res.status(403).json({
+          sucesso: false,
+          bloqueado: true,
+          erro: err.message,
+          mensagem: err.mensagem,
+        });
+      }
+      throw err;
     }
   } catch (err) {
     req.log.error({ err }, "Erro na API de Chat");
@@ -54,4 +51,37 @@ async function enviar(req, res) {
   }
 }
 
-module.exports = { enviar };
+async function historico(req, res) {
+  try {
+    const interlocutorId = req.query.interlocutor_id;
+    if (!interlocutorId || typeof interlocutorId !== "string") {
+      return res.status(400).json({ sucesso: false, erro: "interlocutor_id obrigatorio." });
+    }
+    const data = await chatService.historico({
+      userId: req.user.id,
+      interlocutorId,
+    });
+    return res.status(200).json({ sucesso: true, data });
+  } catch (err) {
+    req.log.error({ err }, "Erro ao carregar historico de chat");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao carregar historico." });
+  }
+}
+
+async function marcarLido(req, res) {
+  try {
+    const { mensagem_id } = req.body;
+    const atualizado = await chatService.marcarLido({
+      mensagemId: mensagem_id,
+      userId: req.user.id,
+    });
+    if (!atualizado) {
+      return res.status(404).json({ sucesso: false, erro: "Mensagem nao encontrada." });
+    }
+    return res.status(200).json({ sucesso: true, mensagem: atualizado });
+  } catch {
+    return res.status(500).json({ sucesso: false, erro: "Falha ao marcar como lida." });
+  }
+}
+
+module.exports = { enviar, historico, marcarLido };

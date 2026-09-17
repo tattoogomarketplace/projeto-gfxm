@@ -1,5 +1,8 @@
 const { prisma } = require("./prisma.service.cjs");
 const { useMockCnpj, receitaWsToken } = require("../config/env.cjs");
+const { sendOtp, verifyOtp } = require("./supabase-auth.service.cjs");
+
+const CONVITE_TTL_DIAS = 7;
 
 function validarCNPJMatematico(cnpj) {
   cnpj = cnpj.replace(/[^\d]+/g, "");
@@ -109,4 +112,141 @@ async function validarCnpj({ cnpj, userId }) {
   };
 }
 
-module.exports = { validarCnpj, validarCNPJMatematico };
+function httpError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+async function convidarTatuador({ estudioUser, tatuadorId }) {
+  const estudio = await prisma.perfil.findFirst({
+    where: { id: estudioUser.id, deleted_at: null },
+    select: { id: true, role: true },
+  });
+
+  if (!estudio || estudio.role !== "estudio") {
+    throw httpError(403, "Apenas contas de estudio podem enviar convites.");
+  }
+
+  const tatuador = await prisma.perfil.findFirst({
+    where: { id: tatuadorId, deleted_at: null, role: "tatuador" },
+    select: { id: true, email: true, studio_id: true },
+  });
+
+  if (!tatuador) {
+    throw httpError(404, "Tatuador nao encontrado.");
+  }
+
+  if (tatuador.studio_id && tatuador.studio_id !== estudio.id) {
+    throw httpError(409, "Tatuador ja vinculado a outro estudio.");
+  }
+
+  const expiresAt = new Date(Date.now() + CONVITE_TTL_DIAS * 24 * 60 * 60 * 1000);
+
+  const convite = await prisma.estudioConvite.create({
+    data: {
+      estudio_id: estudio.id,
+      tatuador_id: tatuador.id,
+      status: "pendente",
+      expires_at: expiresAt,
+    },
+  });
+
+  const { error: otpError } = await sendOtp(tatuador.email);
+  if (otpError) {
+    throw httpError(500, "Falha ao disparar OTP de vinculacao.");
+  }
+
+  return {
+    sucesso: true,
+    convite_id: convite.id,
+    expires_at: convite.expires_at,
+    ttl_dias: CONVITE_TTL_DIAS,
+  };
+}
+
+async function aceitarConvite({ tatuadorUser, conviteId, otp }) {
+  if (!otp || typeof otp !== "string") {
+    throw httpError(400, "Codigo OTP obrigatorio.");
+  }
+
+  const { error: otpError } = await verifyOtp({ email: tatuadorUser.email, token: otp });
+  if (otpError) {
+    throw httpError(401, "Codigo OTP invalido ou expirado.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const agora = new Date();
+    await tx.estudioConvite.updateMany({
+      where: {
+        status: "pendente",
+        expires_at: { lte: agora },
+        deleted_at: null,
+      },
+      data: { status: "expirado" },
+    });
+
+    const convite = await tx.estudioConvite.findFirst({
+      where: {
+        id: conviteId,
+        tatuador_id: tatuadorUser.id,
+        deleted_at: null,
+      },
+    });
+
+    if (!convite) {
+      throw httpError(404, "Convite nao encontrado.");
+    }
+
+    if (convite.status !== "pendente") {
+      throw httpError(409, "Convite nao esta mais pendente.");
+    }
+
+    if (convite.expires_at.getTime() < agora.getTime()) {
+      await tx.estudioConvite.update({
+        where: { id: convite.id },
+        data: { status: "expirado" },
+      });
+      throw httpError(410, "Convite expirado (TTL de 7 dias).");
+    }
+
+    await tx.perfil.update({
+      where: { id: tatuadorUser.id },
+      data: { studio_id: convite.estudio_id },
+    });
+
+    await tx.estudioTatuador.upsert({
+      where: {
+        estudio_id_tatuador_id: {
+          estudio_id: convite.estudio_id,
+          tatuador_id: tatuadorUser.id,
+        },
+      },
+      update: { status_vinculo: "ativo", deleted_at: null },
+      create: {
+        estudio_id: convite.estudio_id,
+        tatuador_id: tatuadorUser.id,
+        status_vinculo: "ativo",
+      },
+    });
+
+    const aceito = await tx.estudioConvite.update({
+      where: { id: convite.id },
+      data: { status: "aceito", accepted_at: agora },
+    });
+
+    return {
+      sucesso: true,
+      studio_id: convite.estudio_id,
+      convite: aceito,
+    };
+  });
+}
+
+module.exports = {
+  validarCnpj,
+  validarCNPJMatematico,
+  convidarTatuador,
+  aceitarConvite,
+  CONVITE_TTL_DIAS,
+};

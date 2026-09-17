@@ -31,4 +31,29 @@ async function moderateTattooImage(imagemBase64Limpa) {
   return aiBreaker.fire(imagemBase64Limpa);
 }
 
-module.exports = { moderateTattooImage, aiBreaker };
+const runChatModeration = async (mensagem) => {
+  const promptText = [
+    "Voce e o moderador do chat de duvidas do marketplace TattooGo.",
+    "O chat e EXCLUSIVAMENTE para duvidas sobre o servico de tatuagem.",
+    "Responda apenas DUVIDA_OK se a mensagem for uma duvida legitima sobre tatuagem, agendamento, estilo, tamanho, cicatrizacao ou local.",
+    "Responda NEGOCIACAO se houver tentativa de pagar por fora, pedir contato externo, preco combinado fora da plataforma ou link de pagamento.",
+    "Responda FORA_DO_ESCOPO se nao for uma duvida sobre o servico.",
+    "Mensagem:",
+    mensagem,
+  ].join(" ");
+  const result = await model.generateContent(promptText);
+  return result.response.text().trim().toUpperCase();
+};
+
+const chatBreaker = new CircuitBreaker(runChatModeration, {
+  timeout: 8000,
+  errorThresholdPercentage: 50,
+  resetTimeout: 30000,
+});
+chatBreaker.fallback(() => "TIMEOUT_OU_FALHA_EXTERNA");
+
+async function moderateChatDuvida(mensagem) {
+  return chatBreaker.fire(mensagem);
+}
+
+module.exports = { moderateTattooImage, moderateChatDuvida, aiBreaker, chatBreaker };

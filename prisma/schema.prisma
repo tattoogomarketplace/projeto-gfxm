@@ -34,6 +34,23 @@ enum AgendamentoStatus {
   @@map("agendamento_status")
 }
 
+enum ChatMensagemStatus {
+  enviado
+  entregue
+  lido
+
+  @@map("chat_mensagem_status")
+}
+
+enum EstudioConviteStatus {
+  pendente
+  aceito
+  expirado
+  recusado
+
+  @@map("estudio_convite_status")
+}
+
 model Perfil {
   id                             String     @id @db.Uuid
   email                          String
@@ -65,6 +82,8 @@ model Perfil {
   vinculosComoEstudio      EstudioTatuador[] @relation("EstudioDoVinculo")
   vinculosComoTatuador     EstudioTatuador[] @relation("TatuadorDoVinculo")
   complianceLogs           ComplianceLog[]
+  convitesEnviados         EstudioConvite[]  @relation("ConviteEstudio")
+  convitesRecebidos        EstudioConvite[]  @relation("ConviteTatuador")
 
   @@unique([email], map: "perfis_email_unique_idx")
   @@index([role], map: "perfis_role_idx")
@@ -104,8 +123,10 @@ model Agendamento {
   data_hora                     DateTime          @db.Timestamptz(6)
   status                        AgendamentoStatus @default(rascunho)
   valor_total                   Decimal           @db.Decimal(12, 2)
+  valor_sinal                   Decimal           @default(0) @db.Decimal(12, 2)
   sinal_pago                    Boolean           @default(false)
   pagamento_restante_presencial Boolean           @default(false)
+  mutex_expira_em               DateTime?         @db.Timestamptz(6)
   version                       Int               @default(1)
   created_at                    DateTime          @default(now()) @db.Timestamptz(6)
   updated_at                    DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
@@ -114,14 +135,30 @@ model Agendamento {
   cliente     Perfil               @relation("AgendamentoCliente", fields: [cliente_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
   tatuador    Perfil               @relation("AgendamentoTatuador", fields: [tatuador_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
   transacoes  TransacaoPagamento[]
+  extras      AgendamentoExtra[]
 
   @@index([cliente_id], map: "agendamentos_cliente_id_idx")
   @@index([tatuador_id], map: "agendamentos_tatuador_id_idx")
   @@index([data_hora], map: "agendamentos_data_hora_idx")
   @@index([status], map: "agendamentos_status_idx")
   @@index([tatuador_id, data_hora], map: "agendamentos_tatuador_slot_idx")
+  @@index([mutex_expira_em], map: "agendamentos_mutex_expira_em_idx")
   @@index([deleted_at], map: "agendamentos_deleted_at_idx")
   @@map("agendamentos")
+}
+
+model AgendamentoExtra {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamento_id String   @db.Uuid
+  descricao      String
+  valor          Decimal  @db.Decimal(12, 2)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+
+  agendamento Agendamento @relation(fields: [agendamento_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([agendamento_id], map: "agendamento_extras_agendamento_id_idx")
+  @@map("agendamento_extras")
 }
 
 model PortfolioLike {
@@ -139,20 +176,43 @@ model PortfolioLike {
 }
 
 model MensagemChat {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  remetente_id    String   @db.Uuid
-  destinatario_id String   @db.Uuid
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  remetente_id    String             @db.Uuid
+  destinatario_id String             @db.Uuid
   mensagem        String
-  bloqueada       Boolean  @default(false)
-  created_at      DateTime @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime? @db.Timestamptz(6)
+  bloqueada       Boolean            @default(false)
+  status          ChatMensagemStatus @default(enviado)
+  entregue_em     DateTime?          @db.Timestamptz(6)
+  lido_em         DateTime?          @db.Timestamptz(6)
+  created_at      DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?          @db.Timestamptz(6)
 
   remetente    Perfil @relation("ChatRemetente", fields: [remetente_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   destinatario Perfil @relation("ChatDestinatario", fields: [destinatario_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([remetente_id, destinatario_id, created_at], map: "mensagens_chat_thread_idx")
+  @@index([status], map: "mensagens_chat_status_idx")
   @@index([deleted_at], map: "mensagens_chat_deleted_at_idx")
   @@map("mensagens_chat")
+}
+
+model EstudioConvite {
+  id          String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  estudio_id  String                @db.Uuid
+  tatuador_id String                @db.Uuid
+  status      EstudioConviteStatus  @default(pendente)
+  expires_at  DateTime              @db.Timestamptz(6)
+  accepted_at DateTime?             @db.Timestamptz(6)
+  created_at  DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at  DateTime?             @db.Timestamptz(6)
+
+  estudio  Perfil @relation("ConviteEstudio", fields: [estudio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tatuador Perfil @relation("ConviteTatuador", fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tatuador_id, status], map: "estudio_convites_tatuador_status_idx")
+  @@index([estudio_id], map: "estudio_convites_estudio_id_idx")
+  @@index([expires_at], map: "estudio_convites_expires_at_idx")
+  @@map("estudio_convites")
 }
 
 model TransacaoPagamento {
