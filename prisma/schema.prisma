@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PerfilRole {
+  cliente
+  tatuador
+  estudio
+
+  @@map("perfil_role")
+}
+
+enum KycStatus {
+  pendente
+  em_analise
+  aprovado
+  rejeitado
+
+  @@map("kyc_status")
+}
+
+enum AgendamentoStatus {
+  rascunho
+  aguardando_sinal
+  confirmado
+  cancelado
+  concluido
+
+  @@map("agendamento_status")
+}
+
+model Perfil {
+  id                             String     @id @db.Uuid
+  email                          String
+  role                           PerfilRole @default(cliente)
+  kyc_status                     KycStatus  @default(pendente)
+  has_seen_welcome_notice        Boolean    @default(false)
+  cidade                         String?
+  estado                         String?
+  cnpj                           String?
+  agendamentos_pendentes_repasse Int        @default(0)
+  agenda_bloqueada               Boolean    @default(false)
+  studio_id                      String?    @db.Uuid
+  created_at                     DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at                     DateTime?  @db.Timestamptz(6)
+
+  studio                   Perfil?  @relation("TatuadorVinculoEstudio", fields: [studio_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  tatuadoresVinculados     Perfil[] @relation("TatuadorVinculoEstudio")
+
+  portfolios               Portfolio[]
+  agendamentosComoCliente  Agendamento[]     @relation("AgendamentoCliente")
+  agendamentosComoTatuador Agendamento[]     @relation("AgendamentoTatuador")
+  likes                    PortfolioLike[]
+  mensagensEnviadas        MensagemChat[]    @relation("ChatRemetente")
+  mensagensRecebidas       MensagemChat[]    @relation("ChatDestinatario")
+  transacoesComoCliente    TransacaoPagamento[] @relation("TransacaoCliente")
+  transacoesComoTatuador   TransacaoPagamento[] @relation("TransacaoTatuador")
+  estudioCompliance        EstudioCompliance?
+  vinculosComoEstudio      EstudioTatuador[] @relation("EstudioDoVinculo")
+  vinculosComoTatuador     EstudioTatuador[] @relation("TatuadorDoVinculo")
+  complianceLogs           ComplianceLog[]
+
+  @@unique([email], map: "perfis_email_unique_idx")
+  @@index([role], map: "perfis_role_idx")
+  @@index([kyc_status], map: "perfis_kyc_status_idx")
+  @@index([cidade], map: "perfis_cidade_idx")
+  @@index([estado], map: "perfis_estado_idx")
+  @@index([cidade, estado], map: "perfis_geo_idx")
+  @@index([studio_id], map: "perfis_studio_id_idx")
+  @@index([deleted_at], map: "perfis_deleted_at_idx")
+  @@map("perfis")
+}
+
+model Portfolio {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tatuador_id String   @db.Uuid
+  url_imagem  String
+  estilo      String
+  descricao   String?
+  likes_count Int      @default(0)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at  DateTime? @db.Timestamptz(6)
+
+  tatuador Perfil          @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  likes    PortfolioLike[]
+
+  @@index([tatuador_id], map: "portfolios_tatuador_id_idx")
+  @@index([estilo], map: "portfolios_estilo_idx")
+  @@index([deleted_at], map: "portfolios_deleted_at_idx")
+  @@map("portfolios")
+}
+
+model Agendamento {
+  id                            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cliente_id                    String            @db.Uuid
+  tatuador_id                   String            @db.Uuid
+  data_hora                     DateTime          @db.Timestamptz(6)
+  status                        AgendamentoStatus @default(rascunho)
+  valor_total                   Decimal           @db.Decimal(12, 2)
+  sinal_pago                    Boolean           @default(false)
+  pagamento_restante_presencial Boolean           @default(false)
+  version                       Int               @default(1)
+  created_at                    DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                    DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at                    DateTime?         @db.Timestamptz(6)
+
+  cliente     Perfil               @relation("AgendamentoCliente", fields: [cliente_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  tatuador    Perfil               @relation("AgendamentoTatuador", fields: [tatuador_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  transacoes  TransacaoPagamento[]
+
+  @@index([cliente_id], map: "agendamentos_cliente_id_idx")
+  @@index([tatuador_id], map: "agendamentos_tatuador_id_idx")
+  @@index([data_hora], map: "agendamentos_data_hora_idx")
+  @@index([status], map: "agendamentos_status_idx")
+  @@index([tatuador_id, data_hora], map: "agendamentos_tatuador_slot_idx")
+  @@index([deleted_at], map: "agendamentos_deleted_at_idx")
+  @@map("agendamentos")
+}
+
+model PortfolioLike {
+  user_id      String   @db.Uuid
+  portfolio_id String   @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at   DateTime? @db.Timestamptz(6)
+
+  user      Perfil    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  portfolio Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([user_id, portfolio_id])
+  @@index([portfolio_id], map: "portfolio_likes_portfolio_id_idx")
+  @@map("portfolio_likes")
+}
+
+model MensagemChat {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  remetente_id    String   @db.Uuid
+  destinatario_id String   @db.Uuid
+  mensagem        String
+  bloqueada       Boolean  @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+
+  remetente    Perfil @relation("ChatRemetente", fields: [remetente_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  destinatario Perfil @relation("ChatDestinatario", fields: [destinatario_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([remetente_id, destinatario_id, created_at], map: "mensagens_chat_thread_idx")
+  @@index([deleted_at], map: "mensagens_chat_deleted_at_idx")
+  @@map("mensagens_chat")
+}
+
+model TransacaoPagamento {
+  id                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamento_id                 String   @db.Uuid
+  cliente_id                     String?  @db.Uuid
+  tatuador_id                    String?  @db.Uuid
+  gateway_id                     String
+  metodo_pagamento               String   @default("pix")
+  valor_bruto                    Decimal  @db.Decimal(12, 2)
+  taxa_plataforma                Decimal  @default(0) @db.Decimal(12, 2)
+  valor_liquido_tatuador         Decimal  @default(0) @db.Decimal(12, 2)
+  valor_bonus_estudio            Decimal  @default(0) @db.Decimal(12, 2)
+  valor_fundo_reserva            Decimal  @default(0) @db.Decimal(12, 2)
+  comissao_plataforma_percentual Decimal  @default(0) @db.Decimal(5, 2)
+  idempotency_key                String
+  status                         String   @default("aprovado")
+  webhook_payload                Json?
+  created_at                     DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at                     DateTime? @db.Timestamptz(6)
+
+  agendamento Agendamento @relation(fields: [agendamento_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  cliente     Perfil?     @relation("TransacaoCliente", fields: [cliente_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  tatuador    Perfil?     @relation("TransacaoTatuador", fields: [tatuador_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([gateway_id], map: "transacoes_gateway_id_unique")
+  @@unique([idempotency_key], map: "transacoes_idempotency_unique")
+  @@index([agendamento_id], map: "transacoes_agendamento_id_idx")
+  @@index([deleted_at], map: "transacoes_deleted_at_idx")
+  @@map("transacoes_pagamentos")
+}
+
+model EstudioCompliance {
+  id               String   @id @db.Uuid
+  cnpj             String
+  razao_social     String?
+  endereco_oficial String?
+  status_receita   String   @default("pendente")
+  updated_at       DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at       DateTime? @db.Timestamptz(6)
+
+  perfil Perfil @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([cnpj], map: "estudios_compliance_cnpj_idx")
+  @@map("estudios_compliance")
+}
+
+model EstudioTatuador {
+  estudio_id     String   @db.Uuid
+  tatuador_id    String   @db.Uuid
+  status_vinculo String   @default("ativo")
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+
+  estudio  Perfil @relation("EstudioDoVinculo", fields: [estudio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tatuador Perfil @relation("TatuadorDoVinculo", fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([estudio_id, tatuador_id])
+  @@index([tatuador_id], map: "estudio_tatuadores_tatuador_idx")
+  @@map("estudio_tatuadores")
+}
+
+model ComplianceLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String   @db.Uuid
+  termo_detectado String
+  acao_tomada     String
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+
+  user Perfil @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([user_id], map: "compliance_logs_user_id_idx")
+  @@index([created_at], map: "compliance_logs_created_at_idx")
+  @@map("compliance_logs")
+}
