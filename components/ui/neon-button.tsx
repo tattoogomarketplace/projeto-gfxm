@@ -10,7 +10,7 @@ export const NeonButton = ({ children, className = '', ...props }: NeonButtonPro
 
   return (
     <button
-    className={`bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)] ${className}`}
+    className={`bg-neon-orange hover:bg-orange-600 text-white font-bold py-3 px-6 min-h-11 min-w-11 rounded-lg transition-all duration-300 active:scale-95 shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)] ${className}`}
     {...props}
       onMouseDown={() => triggerHaptic(20)}
       onTouchStart={() => triggerHaptic(20)}

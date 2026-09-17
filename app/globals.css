@@ -8,13 +8,41 @@
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
     --font-inter: Inter, system-ui, -apple-system, sans-serif;
+    --touch-min: 44px;
   }
-  
+
+  html {
+    background-color: #121212 !important;
+    color-scheme: dark;
+  }
+
   body {
     background-color: var(--background) !important;
     color: var(--foreground) !important;
     height: 100%;
     margin: 0;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+  }
+
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: var(--touch-min);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:active:not(:disabled),
+  [role="button"]:active {
+    transform: scale(0.98);
   }
 }
 
@@ -24,5 +52,17 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .glass-panel {
+    background: rgba(26, 26, 26, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 }

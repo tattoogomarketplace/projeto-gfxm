@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
 import { createClient } from '@/lib/supabase';
+import { useOfflineQueue } from '@/hooks/use-offline-queue';
 
 interface Message {
   id: string;
@@ -85,28 +86,36 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
       return;
     }
 
+    const payload = {
+      remetente_id: userId,
+      destinatario_id: destinatarioId,
+      mensagem: input,
+    };
     const optimistic: Message = { id: Date.now().toString(), sender: 'user', text: input, remetente_id: userId };
     setMessages(prev => [...prev, optimistic]);
+    setInput('');
+
+    const online = typeof navigator === 'undefined' ? true : navigator.onLine;
+    if (!online) {
+      useOfflineQueue.getState().enqueue('message', payload);
+      return;
+    }
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
-      await fetch('/api/chat/enviar', {
+      const res = await fetch('/api/chat/enviar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          remetente_id: userId,
-          destinatario_id: destinatarioId,
-          mensagem: input,
-        })
+        body: JSON.stringify(payload)
       });
+      if (!res.ok) throw new Error('chat-send-failed');
     } catch (err) {
       console.error("Erro na moderação:", err);
+      useOfflineQueue.getState().enqueue('message', payload);
     }
-
-    setInput('');
   };
 
   useEffect(() => {
@@ -133,7 +142,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
           placeholder={destinatarioId ? 'Digite sua mensagem...' : 'Selecione um artista para conversar'}
           disabled={!destinatarioId}
         />
-        <button onClick={sendMessage} className="text-orange-500 hover:text-orange-400">
+        <button onClick={sendMessage} className="flex min-h-11 min-w-11 items-center justify-center text-orange-500 hover:text-orange-400 active:scale-95">
           <Send size={20} />
         </button>
       </div>

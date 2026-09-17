@@ -57,6 +57,11 @@ if (isDev) {
     aggressiveFrontEndNavCaching: true,
     reloadOnOnline: true,
     disable: false,
+    fallbacks: { document: '/offline.html' },
+    workboxOptions: {
+      skipWaiting: true,
+      clientsClaim: true,
+    },
   });
   module.exports = withPWA(nextConfig);
 }
