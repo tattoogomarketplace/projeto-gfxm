@@ -25,7 +25,8 @@ CREATE TYPE public.agendamento_status AS ENUM (
   'aguardando_sinal',
   'confirmado',
   'cancelado',
-  'concluido'
+  'concluido',
+  'no_show'
 );
 
 -- -----------------------------------------------------------------------------

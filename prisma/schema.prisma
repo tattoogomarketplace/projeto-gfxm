@@ -30,6 +30,7 @@ enum AgendamentoStatus {
   confirmado
   cancelado
   concluido
+  no_show
 
   @@map("agendamento_status")
 }

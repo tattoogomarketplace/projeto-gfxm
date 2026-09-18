@@ -32,7 +32,7 @@ export interface Agendamento {
   cliente_id: string;
   tatuador_id: string;
   data_hora: string;
-  status: 'rascunho' | 'aguardando_sinal' | 'confirmado' | 'cancelado' | 'concluido';
+  status: 'rascunho' | 'aguardando_sinal' | 'confirmado' | 'cancelado' | 'concluido' | 'no_show';
   valor_total: number;
   sinal_pago: boolean;
   pagamento_restante_presencial?: boolean;
