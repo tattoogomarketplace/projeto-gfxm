@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, KeyboardEvent, ClipboardEvent } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import { motion } from 'framer-motion';
 
 interface OtpInputProps {
@@ -12,6 +12,10 @@ interface OtpInputProps {
 export function OtpInput({ length = 8, onComplete, isLoading }: OtpInputProps) {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
 
   const handleChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return;

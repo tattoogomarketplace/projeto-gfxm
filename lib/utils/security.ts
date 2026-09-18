@@ -4,6 +4,7 @@ export const maskCPF = (cpf: string) => {
 
 export const maskEmail = (email: string) => {
   const [user, domain] = email.split("@");
+  if (!user || !domain) return "***";
   return `${user[0]}***@${domain}`;
 };
 

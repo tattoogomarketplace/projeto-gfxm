@@ -1,9 +1,10 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
 export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVerify: (code: string) => Promise<void>; userRole?: 'cliente' | 'tatuador' | 'estudio' }) {
   const OTP_LENGTH = 8;
@@ -14,6 +15,10 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
   const { playTattoo, playSuccess, playError } = useSoundEffects();
   const { startTattooing, stopTattooing, triggerError } = useTattooMachine();
   const { triggerHaptic } = useHapticFeedback();
+
+  useEffect(() => {
+    inputs.current[0]?.focus();
+  }, []);
 
   const setRef = useCallback((el: HTMLInputElement | null, index: number) => {
     inputs.current[index] = el;
@@ -104,9 +109,9 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
             key="success"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-amber-500 font-bold text-xl tracking-wider uppercase"
+            className="flex flex-col items-center gap-3"
           >
-            Tatuagem finalizada...
+            <TattooMachineLoader label="Tatuagem finalizada..." />
           </motion.div>
         )}
       </AnimatePresence>

@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
+import { UserIdentity } from '@/components/layout/user-identity';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 
 const TABS: { value: AppTab; label: string }[] = [
@@ -42,22 +44,24 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   };
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[#121212] text-white">
+    <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
       <header
         className={cn(
-          'sticky top-0 z-40 border-b border-white/5 bg-[#121212]/80 backdrop-blur-xl',
+          'sticky top-0 z-40 border-b border-white/5 bg-[color-mix(in_srgb,var(--background)_80%,transparent)] backdrop-blur-xl',
           'pt-3'
         )}
       >
         <div className="flex min-h-11 items-center justify-between px-4 pb-3">
           <h1 className="text-[17px] font-semibold tracking-tight">{title}</h1>
-          {!isOnline || pending > 0 ? (
-            <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-zinc-300">
-              {!isOnline ? 'Offline' : `${pending} na fila`}
-            </span>
-          ) : (
-            <span className="h-7 w-7" aria-hidden />
-          )}
+          <div className="flex items-center gap-2">
+            {!isOnline || pending > 0 ? (
+              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-zinc-300">
+                {!isOnline ? 'Offline' : `${pending} na fila`}
+              </span>
+            ) : null}
+            <ThemeToggle />
+            <UserIdentity />
+          </div>
         </div>
         <div className="px-4 pb-3">
           <SegmentedControl

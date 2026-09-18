@@ -2,8 +2,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-
-const allowedRoles = ['cliente', 'tatuador', 'estudio'] as const;
+import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,20 +24,15 @@ export default function DashboardPage() {
         .maybeSingle();
 
       const role = profile?.role || user.user_metadata?.role || 'cliente';
-      if (allowedRoles.includes(role)) {
-        router.push(`/dashboard/${role}`);
-        return;
-      }
-
-      router.push('/dashboard/cliente');
+      router.push(dashboardPathForRole(role));
     }
     checkRole();
   }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <div className="text-amber-500 font-bold animate-pulse">Conectando ao seu painel...</div>
-          </div>
+      <TattooMachineLoader label="Conectando ao seu painel" />
+    </div>
   );
 }
 

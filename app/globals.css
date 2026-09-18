@@ -1,29 +1,39 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
-    color-scheme: dark;
-    --background: #121212;
-    --foreground: #F5F5F5;
+    color-scheme: light;
+    --background: #F5F5F5;
+    --foreground: #121212;
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
     --font-inter: Inter, system-ui, -apple-system, sans-serif;
     --touch-min: 44px;
   }
 
-  html {
-    background-color: #121212 !important;
+  .dark {
     color-scheme: dark;
+    --background: #121212;
+    --foreground: #F5F5F5;
+  }
+
+  html {
+    background-color: var(--background);
+    color-scheme: inherit;
+    transition: background-color 160ms ease, color 160ms ease;
   }
 
   body {
-    background-color: var(--background) !important;
-    color: var(--foreground) !important;
+    background-color: var(--background);
+    color: var(--foreground);
     height: 100%;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     overscroll-behavior-y: none;
+    transition: background-color 160ms ease, color 160ms ease;
   }
 
   button,
@@ -64,5 +74,41 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tattoo-machine-buzz {
+    animation: tattoo-buzz 0.12s linear infinite;
+  }
+
+  .tattoo-machine-fill {
+    animation: tattoo-fill 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes tattoo-buzz {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(0.6px, -0.6px) rotate(-1.4deg);
+  }
+  75% {
+    transform: translate(-0.6px, 0.6px) rotate(1.4deg);
+  }
+}
+
+@keyframes tattoo-fill {
+  0% {
+    transform: scaleY(0.12);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.12);
+    opacity: 0.55;
   }
 }

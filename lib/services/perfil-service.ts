@@ -10,7 +10,8 @@ export const perfilService = {
     let query = supabase
       .from('perfis')
       .select('id, email, cidade, estado')
-      .in('role', ['tatuador', 'estudio']);
+      .in('role', ['tatuador', 'estudio'])
+      .is('deleted_at', null);
 
     if (filtros?.cidade) query = query.eq('cidade', filtros.cidade);
     if (filtros?.estado) query = query.eq('estado', filtros.estado);

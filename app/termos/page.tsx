@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
 import { createClient } from '@/lib/supabase';
+import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
 export default function TermsPage() {
   const [loading, setLoading] = useState(false);
@@ -29,14 +31,7 @@ export default function TermsPage() {
       }
 
       const role = (sessionData.user?.user_metadata?.role as string) || 'cliente';
-      const dashboard =
-        role === 'tatuador'
-          ? '/dashboard/tatuador'
-          : role === 'estudio'
-            ? '/dashboard/estudio'
-            : '/dashboard/cliente';
-
-      router.push(dashboard);
+      router.push(dashboardPathForRole(role));
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao aceitar termos.';
@@ -57,7 +52,7 @@ export default function TermsPage() {
           Ao prosseguir, você confirma que leu e concorda com todos os termos.
         </p>
         <NeonButton onClick={handleAccept} disabled={loading} className="w-full">
-          {loading ? 'Processando...' : 'Confirmar e Prosseguir'}
+          {loading ? <TattooMachineLoader compact label="Processando" /> : 'Confirmar e Prosseguir'}
         </NeonButton>
       </div>
     </div>

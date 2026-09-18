@@ -15,11 +15,15 @@ export const checkAccess = async (
 
   const { data: perfil } = await supabase
     .from('perfis')
-    .select('role, kyc_status')
+    .select('role, kyc_status, deleted_at')
     .eq('id', user.id)
     .single();
 
-  if (!perfil || perfil.role !== requiredRole) {
+  if (!perfil || perfil.deleted_at) {
+    return { allowed: false, redirect: '/login' };
+  }
+
+  if (perfil.role !== requiredRole) {
     return { allowed: false, redirect: '/dashboard' };
   }
 

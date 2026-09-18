@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { resolveDisplayName } from '@/lib/utils/display-name';
 
 interface DashboardPageProps {
   params: Promise<{ role: string }>;
@@ -25,7 +26,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Placeholder para conteúdo de cada perfil */}
         <div className="h-40 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-          <p className="text-zinc-400">Bem-vindo, {user.email}</p>
+          <p className="text-zinc-400">Bem-vindo, {resolveDisplayName(user.user_metadata)}</p>
         </div>
       </div>
     </div>

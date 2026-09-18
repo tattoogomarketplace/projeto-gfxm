@@ -6,7 +6,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-[#121212]">
+    <div className="min-h-dvh bg-[var(--background)]">
       <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
     </div>
   );

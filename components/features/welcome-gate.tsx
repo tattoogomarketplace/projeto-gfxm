@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useRouter } from 'next/navigation';
+import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 
 interface WelcomeGateProps {
   role: 'cliente' | 'tatuador' | 'estudio';
@@ -35,7 +36,7 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       </div>
       <h1 className="text-3xl font-bold text-white mb-2">{content.title}</h1>
       <p className="text-zinc-400 mb-8 max-w-sm">{content.subtitle}</p>
-      <NeonButton onClick={() => router.push('/dashboard')}>{content.cta}</NeonButton>
+      <NeonButton onClick={() => router.push(dashboardPathForRole(role))}>{content.cta}</NeonButton>
     </motion.div>
   );
 }

@@ -10,8 +10,9 @@ import { PortfolioCard } from '@/components/features/portfolio-card';
 import { getCachedFeed } from '@/lib/catalogo';
 import type { AgendamentoResumo, ArtistaResumo, FeedItem } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { resolveDisplayName } from '@/lib/utils/display-name';
 export default function ClienteDashboard() {
-  const [profile, setProfile] = useState<{ id: string; email: string } | null>(null);
+  const [profile, setProfile] = useState<{ id: string; email: string; fullName: string } | null>(null);
   const [agendamentos, setAgendamentos] = useState<AgendamentoResumo[]>([]);
   const [artistas, setArtistas] = useState<ArtistaResumo[]>([]);
   const [cidade, setCidade] = useState('');
@@ -26,7 +27,11 @@ export default function ClienteDashboard() {
       const { data: p } = await supabase.from('perfis').select('id, email').eq('id', user.id).maybeSingle();
       const { data: a } = await supabase.from('agendamentos').select('id, data_hora, status').eq('cliente_id', user.id);
 
-      setProfile(p || { id: user.id, email: user.email ?? '' });
+      setProfile({
+        id: p?.id || user.id,
+        email: p?.email || user.email || '',
+        fullName: resolveDisplayName(user.user_metadata),
+      });
       setAgendamentos(a || []);
     }
     load();
@@ -46,7 +51,7 @@ export default function ClienteDashboard() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 sm:p-6 bg-[#121212] min-h-full text-white">
       <div className="glass-panel p-6 rounded-3xl mb-6">
-        <h1 className="text-2xl font-bold text-amber-500">Bem-vindo, {profile.email.split('@')[0]}</h1>
+        <h1 className="text-2xl font-bold text-amber-500">Bem-vindo, {profile.fullName}</h1>
         <p className="text-zinc-400">Email: {maskEmail(profile.email)}</p>
       </div>
       {activeTab === 'chat' || activeTab === 'portfolio' ? (

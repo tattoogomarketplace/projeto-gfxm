@@ -7,9 +7,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      forcedTheme="dark"
       enableSystem={false}
-      disableTransitionOnChange
+      storageKey="tattoogo-theme"
+      disableTransitionOnChange={false}
     >
       {children}
     </NextThemesProvider>

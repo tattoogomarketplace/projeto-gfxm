@@ -3,8 +3,13 @@ const { aceitarTermos } = require("../services/perfil.service.cjs");
 
 async function register(req, res) {
   try {
-    const { email, password, role } = req.body;
-    const { data, error } = await signUp({ email, password, role });
+    const { email, password, role, full_name, nome } = req.body;
+    const { data, error } = await signUp({
+      email,
+      password,
+      role,
+      full_name: full_name || nome,
+    });
     if (error) return res.status(400).json({ sucesso: false, erro: error.message });
     return res.status(200).json({ sucesso: true, user: data.user });
   } catch {

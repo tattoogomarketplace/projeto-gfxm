@@ -3,14 +3,14 @@ import { create } from 'zustand';
 interface User {
   id: string;
   email: string;
-  // Adicione outros campos necessários do usuário
+  fullName?: string;
 }
 
 interface AuthState {
   user: User | null;
-  role: 'client' | 'artist' | 'studio' | null;
+  role: 'cliente' | 'tatuador' | 'estudio' | null;
   setUser: (user: User | null) => void;
-  setRole: (role: 'client' | 'artist' | 'studio' | null) => void;
+  setRole: (role: 'cliente' | 'tatuador' | 'estudio' | null) => void;
   clearAuth: () => void;
 }
 

@@ -32,8 +32,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F5" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+  ],
+  colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -47,16 +50,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className="dark h-full bg-[#121212]" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+    <html lang="pt-BR" className="h-full" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#121212" />
-        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#121212" />
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className="font-sans bg-[#121212] text-white antialiased h-full overflow-hidden">
+      <body className="font-sans antialiased h-full overflow-hidden">
         <ErrorBoundary>
           <Providers>
             <ThemeProvider>

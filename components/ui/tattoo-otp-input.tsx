@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,10 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
   const { startTattooing, stopTattooing, triggerError } = useTattooMachine();
   const { triggerHaptic } = useHapticFeedback();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
 
   const handleInput = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);

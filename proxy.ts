@@ -13,7 +13,7 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-type PerfilWelcome = { has_seen_welcome_notice?: boolean; role?: string };
+type PerfilWelcome = { has_seen_welcome_notice?: boolean; role?: string; deleted_at?: string | null };
 
 async function rateLimit(id: string, bucket: string, limit: number, windowSec: number): Promise<boolean> {
   try {
@@ -136,7 +136,7 @@ export async function proxy(request: NextRequest) {
         const perfilResult = await withTimeout(
           supabase
             .from('perfis')
-            .select('has_seen_welcome_notice, role')
+            .select('has_seen_welcome_notice, role, deleted_at')
             .eq('id', user.id)
             .maybeSingle(),
           2000
@@ -148,6 +148,11 @@ export async function proxy(request: NextRequest) {
       }
     } else if (!perfil.has_seen_welcome_notice) {
       perfil = null;
+    }
+
+    if (perfil?.deleted_at) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     const aceitouTermos = perfil?.has_seen_welcome_notice;

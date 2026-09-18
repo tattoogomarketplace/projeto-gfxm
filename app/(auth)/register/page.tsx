@@ -10,8 +10,10 @@ import { Input } from '@/components/input';
 import { createClient } from '@/lib/supabase';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { WelcomeGate } from '@/components/features/welcome-gate';
+import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
 const registerSchema = z.object({
+  nome: z.string().min(2, 'Informe seu nome real'),
   email: z.string().email('E-mail inválido'),
   password: z.string()
     .min(8, 'Senha deve ter no mínimo 8 caracteres')
@@ -72,6 +74,8 @@ export default function RegisterPage() {
         options: {
           data: {
             role: data.role,
+            full_name: data.nome,
+            nome: data.nome,
             cpf: data.cpf,
             data_nascimento: data.dataNascimento,
           },
@@ -92,13 +96,18 @@ export default function RegisterPage() {
   const handleVerifyOtp = async (token: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email: emailForVerification,
         token,
         type: 'signup',
       });
 
       if (error) throw error;
+
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        localStorage.setItem('tattoogo_token', accessToken);
+      }
 
       setShowWelcome(true);
     } catch (err) {
@@ -144,6 +153,14 @@ export default function RegisterPage() {
                 <option value="estudio">Estúdio</option>
              </select>
           </div>
+          <Input
+            label="Nome completo"
+            type="text"
+            autoComplete="name"
+            {...register('nome')}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={errors.nome?.message}
+          />
           <Input
             label="E-mail"
             type="email"
@@ -210,7 +227,7 @@ export default function RegisterPage() {
             disabled={status === 'menor_14' || loading}
             className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
-            {loading ? 'Processando...' : 'Cadastrar'}
+            {loading ? <TattooMachineLoader compact label="Processando" /> : 'Cadastrar'}
           </button>
         </form>
 

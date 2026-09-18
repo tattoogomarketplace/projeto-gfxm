@@ -19,11 +19,11 @@ async function getUserFromToken(token) {
   return data.user;
 }
 
-async function signUp({ email, password, role }) {
+async function signUp({ email, password, role, full_name }) {
   return createAuthClient().auth.signUp({
     email,
     password,
-    options: { data: { role } },
+    options: { data: { role, full_name, nome: full_name } },
   });
 }
 
