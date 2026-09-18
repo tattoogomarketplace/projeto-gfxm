@@ -10,9 +10,17 @@ async function register(req, res) {
       role,
       full_name: full_name || nome,
     });
-    if (error) return res.status(400).json({ sucesso: false, erro: error.message });
+    if (error) {
+      console.error("[TattooGo] signup falhou", {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+      return res.status(error.status === 500 ? 500 : 400).json({ sucesso: false, erro: error.message });
+    }
     return res.status(200).json({ sucesso: true, user: data.user });
-  } catch {
+  } catch (err) {
+    console.error("[TattooGo] signup exception", err);
     return res.status(500).json({ sucesso: false, erro: "Erro interno no registro." });
   }
 }

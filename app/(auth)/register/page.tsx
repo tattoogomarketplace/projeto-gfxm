@@ -88,7 +88,7 @@ export default function RegisterPage() {
     setUserRole(data.role);
     try {
       const { error: authError } = await supabase.auth.signUp({
-        email: data.email,
+        email: data.email.trim().toLowerCase(),
         password: data.password,
         options: {
           data: {
@@ -100,7 +100,21 @@ export default function RegisterPage() {
           },
         },
       });
-      if (authError) throw authError;
+      if (authError) {
+        console.error('[TattooGo] signup falhou', {
+          status: authError.status,
+          code: authError.code,
+          message: authError.message,
+        });
+        const msg = (authError.message || '').toLowerCase();
+        if (msg.includes('database') || msg.includes('trigger') || authError.status === 500) {
+          throw new Error('Falha ao criar perfil no banco. Rode o SQL do trigger no painel do Supabase.');
+        }
+        if (msg.includes('rate') || msg.includes('smtp') || msg.includes('error sending')) {
+          throw new Error('Limite de e-mail/SMTP do Supabase. Confira Authentication > Email no painel.');
+        }
+        throw authError;
+      }
 
       setEmailForVerification(data.email);
       setIsVerifying(true);
@@ -202,7 +216,10 @@ export default function RegisterPage() {
             autoComplete="new-password"
             {...register('confirmPassword')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={errors.confirmPassword?.message}
+            error={
+              errors.confirmPassword?.message ||
+              (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
+            }
           />
           <Input
             label="CPF"

@@ -29,7 +29,7 @@ export function getTurnstileSiteKey() {
 }
 
 export function isTurnstileEnabled() {
-  return Boolean(getTurnstileSiteKey());
+  return process.env.NODE_ENV === 'production' && Boolean(getTurnstileSiteKey());
 }
 
 type TurnstileGuardProps = {
@@ -37,6 +37,7 @@ type TurnstileGuardProps = {
 };
 
 export function TurnstileGuard({ onToken }: TurnstileGuardProps) {
+  if (process.env.NODE_ENV !== 'production') return null;
   const siteKey = getTurnstileSiteKey();
   if (!siteKey) return null;
 

@@ -60,20 +60,32 @@ export function getPasswordStrength(password: string) {
   const percent = (score / PASSWORD_RULES.length) * 100;
 
   let label = 'Digite sua senha';
+  let tone: 'muted' | 'red' | 'yellow' | 'orange' | 'green' = 'muted';
   if (password) {
-    if (score <= 1) label = 'Muito fraca';
-    else if (score === 2) label = 'Fraca';
-    else if (score === 3) label = `Falta ${missing[0]?.short}`;
-    else if (score === 4) {
+    if (score <= 1) {
+      label = 'Muito fraca';
+      tone = 'red';
+    } else if (score === 2) {
+      label = 'Fraca';
+      tone = 'red';
+    } else if (score === 3) {
+      label = `Falta ${missing[0]?.short}`;
+      tone = 'yellow';
+    } else if (score === 4) {
       const miss = missing[0];
       label = miss?.id === 'special' ? 'Falta um símbolo' : `Falta ${miss?.short}`;
-    } else label = 'Blindada';
+      tone = 'yellow';
+    } else {
+      label = 'Blindada';
+      tone = 'green';
+    }
   }
 
   return {
     score,
     percent,
     label,
+    tone,
     checks,
     isComplete: score === PASSWORD_RULES.length,
   };

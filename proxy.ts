@@ -77,7 +77,12 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith("/login") || path.startsWith("/register") || path === "/";
-  const isPublicAsset = path.startsWith("/api") || path.startsWith("/auth");
+  const isPublicAsset =
+    path.startsWith("/api") ||
+    path.startsWith("/auth") ||
+    path === "/manifest.json" ||
+    path === "/sw.js" ||
+    path === "/offline.html";
   const ip = clientIp(request);
 
   const isAuthAttempt = path.startsWith("/login") || path.startsWith("/register");
@@ -177,6 +182,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json|js|mp3|ico|html)$).*)"],
 };
 
