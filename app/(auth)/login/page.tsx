@@ -9,10 +9,10 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/input';
 import Link from 'next/link';
-import { Turnstile } from '@marsidev/react-turnstile';
 import { createClient } from '@/lib/supabase';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { TurnstileGuard, isTurnstileEnabled } from '@/components/features/turnstile-guard';
 import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 
@@ -59,11 +59,11 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    if (!token) {
+    if (isTurnstileEnabled() && !token) {
       toast.error('Por favor, valide o Turnstile.');
       return;
     }
-    mutation.mutate({ ...data, turnstileToken: token });
+    mutation.mutate({ ...data, turnstileToken: token || 'dev-bypass' });
   };
 
   const handleVerifyOtp = async (otp: string) => {
@@ -160,10 +160,7 @@ export default function LoginPage() {
               {...register('email')}
               error={errors.email?.message}
             />
-            <Turnstile
-              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-              onSuccess={(nextToken) => setToken(nextToken)}
-            />
+            <TurnstileGuard onToken={setToken} />
           </div>
 
           <button

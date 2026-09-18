@@ -11,21 +11,26 @@ import { createClient } from '@/lib/supabase';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { WelcomeGate } from '@/components/features/welcome-gate';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
+import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
+import { passwordSchema } from '@/lib/utils/password-strength';
 
-const registerSchema = z.object({
-  nome: z.string().min(2, 'Informe seu nome real'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string()
-    .min(8, 'Senha deve ter no mínimo 8 caracteres')
-    .regex(/[A-Z]/, 'Precisa de 1 letra maiúscula')
-    .regex(/[a-z]/, 'Precisa de 1 letra minúscula')
-    .regex(/[^A-Za-z0-9]/, 'Precisa de 1 caractere especial'),
-  role: z.enum(['cliente', 'tatuador', 'estudio']),
-  cpf: z.string().min(11, 'CPF inválido'),
-  dataNascimento: z.string().min(1, 'Data obrigatória'),
-  responsavelNome: z.string().optional(),
-  responsavelCpf: z.string().optional(),
-});
+const registerSchema = z
+  .object({
+    nome: z.string().min(2, 'Informe seu nome real'),
+    email: z.string().email('E-mail inválido'),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Confirme sua senha'),
+    role: z.enum(['cliente', 'tatuador', 'estudio']),
+    cpf: z.string().min(11, 'CPF inválido'),
+    dataNascimento: z.string().min(1, 'Data obrigatória'),
+    responsavelNome: z.string().optional(),
+    responsavelCpf: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -51,14 +56,28 @@ export default function RegisterPage() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [userRole, setUserRole] = useState<'cliente' | 'tatuador' | 'estudio'>('cliente');
+  const [userRole, setUserRole] = useState<RegisterRole>('cliente');
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    mode: 'onChange',
+    defaultValues: {
+      role: 'cliente',
+      nome: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      cpf: '',
+      dataNascimento: '',
+    },
   });
 
   const dataNascimento = useWatch({ control, name: 'dataNascimento' });
+  const passwordValue = useWatch({ control, name: 'password' }) || '';
+  const confirmPasswordValue = useWatch({ control, name: 'confirmPassword' }) || '';
+  const roleValue = useWatch({ control, name: 'role' }) || 'cliente';
   const status = getFaixaEtaria(dataNascimento);
+  const passwordsMatch = Boolean(passwordValue) && passwordValue === confirmPasswordValue;
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
@@ -145,14 +164,14 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-             <label className="text-sm text-zinc-400">Eu sou um:</label>
-             <select {...register('role')} className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-white">
-                <option value="cliente">Cliente</option>
-                <option value="tatuador">Tatuador</option>
-                <option value="estudio">Estúdio</option>
-             </select>
-          </div>
+          <RoleSelector
+            value={roleValue}
+            onChange={(role) => {
+              setValue('role', role, { shouldValidate: true, shouldDirty: true });
+              setUserRole(role);
+            }}
+          />
+          <input type="hidden" {...register('role')} />
           <Input
             label="Nome completo"
             type="text"
@@ -171,9 +190,19 @@ export default function RegisterPage() {
           <Input
             label="Senha"
             type="password"
+            autoComplete="new-password"
             {...register('password')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={errors.password?.message}
+          />
+          <PasswordStrengthBar password={passwordValue} />
+          <Input
+            label="Confirmar senha"
+            type="password"
+            autoComplete="new-password"
+            {...register('confirmPassword')}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={errors.confirmPassword?.message}
           />
           <Input
             label="CPF"
@@ -224,7 +253,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={status === 'menor_14' || loading}
+            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms}
             className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? <TattooMachineLoader compact label="Processando" /> : 'Cadastrar'}
