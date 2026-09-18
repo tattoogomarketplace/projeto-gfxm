@@ -1,23 +1,30 @@
-/**
- * TATTOOGO MK - HOOK DE HAPTIC FEEDBACK (APPLE-TIER)
- * Centraliza a resposta tátil para garantir consistência entre Android/iOS
- * e evitar chamadas órfãs ao navigator.vibrate.
- */
+'use client';
+
+import { useUiStore } from '@/hooks/use-ui-store';
+
+type HapticKind = 'light' | 'medium' | 'heavy' | 'success';
+
+const PATTERNS: Record<HapticKind, number | number[]> = {
+  light: 10,
+  medium: 30,
+  heavy: 60,
+  success: [30, 50, 30],
+};
+
+export function triggerNativeVibrate(type: HapticKind = 'light') {
+  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  const enabled = useUiStore.getState().hapticsEnabled;
+  if (!enabled) return;
+  navigator.vibrate(PATTERNS[type]);
+}
 
 export const useHapticFeedback = () => {
-  const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' = 'light') => {
-    // Verificação de segurança para execução apenas em ambiente de browser/mobile
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      const patterns = {
-        light: 10,
-        medium: 30,
-        heavy: 60,
-        success: [30, 50, 30] // Padrão "conclusão" de máquina
-      };
+  const hapticsEnabled = useUiStore((s) => s.hapticsEnabled);
 
-      navigator.vibrate(patterns[type]);
-    }
+  const triggerHaptic = (type: HapticKind = 'light') => {
+    if (!hapticsEnabled) return;
+    triggerNativeVibrate(type);
   };
 
-  return { triggerHaptic };
+  return { triggerHaptic, hapticsEnabled };
 };

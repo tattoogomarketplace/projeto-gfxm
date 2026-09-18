@@ -22,9 +22,13 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
 
   const handleLike = async () => {
     const nextLiked = !isLiked;
+
     setIsLiked(nextLiked);
     setLikes((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
-    triggerHaptic('medium');
+    triggerHaptic(nextLiked ? 'medium' : 'light');
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(nextLiked ? 24 : 12);
+    }
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
     if (!online) {
@@ -58,7 +62,13 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
       
       <div className="p-4 flex justify-between items-center bg-zinc-950/30">
         <span className="text-zinc-300 font-medium">{artistName}</span>
-        <button onClick={handleLike} className="relative flex min-h-11 min-w-11 items-center gap-2 p-2 active:scale-95">
+        <button
+          type="button"
+          onClick={handleLike}
+          aria-pressed={isLiked}
+          aria-label={isLiked ? 'Remover curtida' : 'Curtir'}
+          className="relative flex min-h-11 min-w-11 items-center gap-2 p-2 active:scale-95"
+        >
           <AnimatePresence>
             <motion.div
               key={isLiked ? "liked" : "unliked"}
@@ -79,4 +89,3 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
     </motion.div>
   );
 }
-

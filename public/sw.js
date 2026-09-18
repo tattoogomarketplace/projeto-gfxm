@@ -1,7 +1,8 @@
-const CACHE_VERSION = 'tattoogo-mk-v1';
+const CACHE_VERSION = 'tattoogo-mk-v2';
 const SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const IMAGE_CACHE = CACHE_VERSION + '-images';
+const CHAT_CACHE = CACHE_VERSION + '-chat';
 
 const APP_SHELL = [
   '/',
@@ -9,10 +10,12 @@ const APP_SHELL = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/apple-touch-icon.png',
+  '/splash/apple-splash-1170-2532.png'
 ];
 
 const DATA_PATHS = ['/api/catalogo/feed', '/api/catalogo/artistas', '/api/catalogo/cidades'];
+const CHAT_PATHS = ['/api/chat/historico'];
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -54,6 +57,11 @@ self.addEventListener('fetch', function (event) {
 
   if (DATA_PATHS.some(function (path) { return url.pathname.indexOf(path) === 0; })) {
     event.respondWith(networkFirst(request, DATA_CACHE));
+    return;
+  }
+
+  if (CHAT_PATHS.some(function (path) { return url.pathname.indexOf(path) === 0; })) {
+    event.respondWith(networkFirst(request, CHAT_CACHE));
     return;
   }
 

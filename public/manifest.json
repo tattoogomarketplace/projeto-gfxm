@@ -6,22 +6,18 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui",
-    "browser"
-  ],
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#121212",
   "theme_color": "#121212",
   "lang": "pt-BR",
   "dir": "ltr",
-  "categories": [
-    "lifestyle",
-    "shopping",
-    "social"
-  ],
+  "categories": ["lifestyle", "shopping", "social"],
   "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
   "icons": [
     {
       "src": "/icon.svg",
@@ -60,39 +56,40 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/splash/apple-splash-1170-2532.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "TattooGo MK"
+    },
+    {
+      "src": "/splash/apple-splash-1668-2388.png",
+      "sizes": "1668x2388",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "TattooGo MK"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Portfólio",
       "short_name": "Portfólio",
       "url": "/dashboard/cliente?tab=portfolio",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Agendar",
       "short_name": "Agendar",
       "url": "/dashboard/cliente?tab=agendar",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Chat",
       "short_name": "Chat",
       "url": "/dashboard/cliente?tab=chat",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

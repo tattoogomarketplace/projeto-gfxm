@@ -11,14 +11,19 @@
     --touch-min: 44px;
   }
 
+  html.light {
+    color-scheme: light;
+    --background: #F4F4F5;
+    --foreground: #121212;
+  }
+
   html {
-    background-color: #121212 !important;
-    color-scheme: dark;
+    background-color: var(--background);
   }
 
   body {
-    background-color: var(--background) !important;
-    color: var(--foreground) !important;
+    background-color: var(--background);
+    color: var(--foreground);
     height: 100%;
     margin: 0;
     -webkit-tap-highlight-color: transparent;
@@ -43,6 +48,11 @@
   button:active:not(:disabled),
   [role="button"]:active {
     transform: scale(0.98);
+  }
+
+  html.light body {
+    background-color: #F4F4F5;
+    color: #121212;
   }
 }
 

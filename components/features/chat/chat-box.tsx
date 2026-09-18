@@ -5,12 +5,22 @@ import { Send } from 'lucide-react';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
 import { createClient } from '@/lib/supabase';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
+import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 
 interface Message {
   id: string;
   sender: 'user' | 'peer';
   text: string;
   remetente_id?: string;
+  status?: string;
+}
+
+function authHeaders() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 }
 
 export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
@@ -18,6 +28,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { triggerHaptic } = useHapticFeedback();
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,21 +42,48 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
       const peer = destinatarioId;
       if (!peer) return;
 
-      const { data } = await supabase
-        .from('mensagens_chat')
-        .select('id, remetente_id, destinatario_id, mensagem, created_at')
-        .or(`and(remetente_id.eq.${user.id},destinatario_id.eq.${peer}),and(remetente_id.eq.${peer},destinatario_id.eq.${user.id})`)
-        .eq('bloqueada', false)
-        .order('created_at', { ascending: true })
-        .limit(100);
+      try {
+        const res = await fetch(`/api/chat/historico?interlocutor_id=${encodeURIComponent(peer)}`, {
+          headers: authHeaders(),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const rows = (json.data || []) as Array<{
+            id: string;
+            remetente_id: string;
+            mensagem: string;
+            status?: string;
+            bloqueada?: boolean;
+          }>;
+          setMessages(
+            rows
+              .filter((m) => !m.bloqueada)
+              .map((m) => ({
+                id: m.id,
+                sender: m.remetente_id === user.id ? 'user' : 'peer',
+                text: m.mensagem,
+                remetente_id: m.remetente_id,
+                status: m.status,
+              }))
+          );
+        }
+      } catch {
+        const { data } = await supabase
+          .from('mensagens_chat')
+          .select('id, remetente_id, destinatario_id, mensagem, created_at')
+          .or(`and(remetente_id.eq.${user.id},destinatario_id.eq.${peer}),and(remetente_id.eq.${peer},destinatario_id.eq.${user.id})`)
+          .eq('bloqueada', false)
+          .order('created_at', { ascending: true })
+          .limit(100);
 
-      if (data) {
-        setMessages(data.map((m) => ({
-          id: m.id,
-          sender: m.remetente_id === user.id ? 'user' : 'peer',
-          text: m.mensagem,
-          remetente_id: m.remetente_id,
-        })));
+        if (data) {
+          setMessages(data.map((m) => ({
+            id: m.id,
+            sender: m.remetente_id === user.id ? 'user' : 'peer',
+            text: m.mensagem,
+            remetente_id: m.remetente_id,
+          })));
+        }
       }
 
       channel = supabase
@@ -54,7 +92,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'mensagens_chat' },
           (payload) => {
-            const row = payload.new as { id: string; remetente_id: string; destinatario_id: string; mensagem: string; bloqueada?: boolean };
+            const row = payload.new as { id: string; remetente_id: string; destinatario_id: string; mensagem: string; bloqueada?: boolean; status?: string };
             const involved = (row.remetente_id === user.id && row.destinatario_id === peer)
               || (row.remetente_id === peer && row.destinatario_id === user.id);
             if (!involved || row.bloqueada) return;
@@ -65,6 +103,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
                 sender: row.remetente_id === user.id ? 'user' : 'peer',
                 text: row.mensagem,
                 remetente_id: row.remetente_id,
+                status: row.status,
               }];
             });
           }
@@ -91,9 +130,11 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
       destinatario_id: destinatarioId,
       mensagem: input,
     };
-    const optimistic: Message = { id: Date.now().toString(), sender: 'user', text: input, remetente_id: userId };
+    const optimistic: Message = { id: Date.now().toString(), sender: 'user', text: input, remetente_id: userId, status: 'enviado' };
     setMessages(prev => [...prev, optimistic]);
     setInput('');
+    triggerHaptic('light');
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(12);
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
     if (!online) {
@@ -102,16 +143,18 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
     }
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
       const res = await fetch('/api/chat/enviar', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('chat-send-failed');
+      const json = await res.json();
+      if (json.mensagem?.id) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimistic.id ? { ...m, id: json.mensagem.id, status: json.status || json.mensagem.status } : m))
+        );
+      }
     } catch (err) {
       console.error("Erro na moderação:", err);
       useOfflineQueue.getState().enqueue('message', payload);
@@ -138,15 +181,14 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500"
+          className="flex-1 min-h-11 bg-transparent border-none outline-none text-white placeholder-gray-500"
           placeholder={destinatarioId ? 'Digite sua mensagem...' : 'Selecione um artista para conversar'}
           disabled={!destinatarioId}
         />
-        <button onClick={sendMessage} className="flex min-h-11 min-w-11 items-center justify-center text-orange-500 hover:text-orange-400 active:scale-95">
+        <button type="button" onClick={sendMessage} className="flex min-h-11 min-w-11 items-center justify-center text-orange-500 hover:text-orange-400 active:scale-95">
           <Send size={20} />
         </button>
       </div>
     </div>
   );
 }
-
