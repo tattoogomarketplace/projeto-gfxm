@@ -41,7 +41,9 @@ async function signInWithPassword({ email, password }) {
 async function sendOtp(email) {
   return createAuthClient().auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: false },
+    options: {
+      shouldCreateUser: false,
+    },
   });
 }
 

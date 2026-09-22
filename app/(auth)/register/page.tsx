@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import { createClient } from '@/lib/supabase';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
@@ -15,6 +16,8 @@ import { PasswordStrengthBar } from '@/components/features/password-strength-bar
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
+import { normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
+import { useAuthStore } from '@/hooks/use-auth-store';
 import api from '@/lib/api';
 
 const registerSchema = z
@@ -64,6 +67,9 @@ function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const setUser = useAuthStore((s) => s.setUser);
+  const setRole = useAuthStore((s) => s.setRole);
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -142,6 +148,7 @@ export default function RegisterPage() {
         email: emailNorm,
         password: data.password,
         options: {
+          emailRedirectTo: undefined,
           data: {
             role: data.role,
             full_name: data.nome,
@@ -164,9 +171,9 @@ export default function RegisterPage() {
         throw new Error('Este e-mail já está cadastrado.');
       }
 
-      setEmailForVerification(data.email);
+      setEmailForVerification(emailNorm);
       setIsVerifying(true);
-      toast.success('Código enviado para seu e-mail!');
+      toast.success('Código de 8 dígitos enviado para o seu e-mail.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao realizar cadastro.');
     } finally {
@@ -190,14 +197,19 @@ export default function RegisterPage() {
         localStorage.setItem('tattoogo_token', accessToken);
       }
 
-      const userId = data.user?.id || data.session?.user?.id;
+      const user = data.user || data.session?.user;
+      const userId = user?.id;
+      const resolvedRole = normalizeAppRole(
+        (user?.user_metadata?.role as string) || userRole
+      );
       if (userId) {
         try {
-          const nomeMeta = (data.user?.user_metadata?.nome || data.user?.user_metadata?.full_name) as string | undefined;
-          const cpfMeta = onlyCpfDigits(String(data.user?.user_metadata?.cpf || ''));
+          const nomeMeta = (user?.user_metadata?.nome || user?.user_metadata?.full_name) as string | undefined;
+          const cpfMeta = onlyCpfDigits(String(user?.user_metadata?.cpf || ''));
           await supabase
             .from('perfis')
             .update({
+              role: resolvedRole,
               ...(nomeMeta ? { nome: nomeMeta } : {}),
               ...(cpfMeta.length === 11 ? { cpf: cpfMeta } : {}),
               ...(acceptedTerms ? { has_seen_welcome_notice: true } : {}),
@@ -209,9 +221,21 @@ export default function RegisterPage() {
         } catch {
           // Cadastro já autenticado; o aceite pode ser refeito em /termos.
         }
+
+        setUser({
+          id: userId,
+          email: user?.email ?? emailForVerification,
+          fullName:
+            (user?.user_metadata?.full_name as string) ||
+            (user?.user_metadata?.nome as string) ||
+            '',
+        });
+        setRole(resolvedRole);
       }
 
       setShowWelcome(true);
+      router.push(postSignupPathForRole(resolvedRole));
+      router.refresh();
     } catch (err) {
       setLoading(false);
       throw err;
@@ -253,7 +277,12 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onSubmit, () => {
+            toast.error('Revise os campos do cadastro para continuar.');
+          })}
+          className="space-y-4"
+        >
           <RoleSelector
             value={roleValue}
             onChange={(role) => {

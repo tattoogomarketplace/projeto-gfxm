@@ -22,12 +22,27 @@ async function verificarDuplicidade({ email, cpf }) {
   if (emailNorm) orFilters.push({ email: emailNorm, deleted_at: null });
   if (cpfNorm.length === 11) orFilters.push({ cpf: cpfNorm, deleted_at: null });
 
-  const existing = orFilters.length
-    ? await prisma.perfil.findFirst({
+  let existing = null;
+  if (orFilters.length) {
+    try {
+      existing = await prisma.perfil.findFirst({
         where: { OR: orFilters },
         select: { email: true, cpf: true },
-      })
-    : null;
+      });
+    } catch (err) {
+      const message = String((err && err.message) || "");
+      if (message.includes("Unknown argument `cpf`") || message.includes("Unknown arg `cpf`")) {
+        existing = emailNorm
+          ? await prisma.perfil.findFirst({
+              where: { email: emailNorm, deleted_at: null },
+              select: { email: true },
+            })
+          : null;
+      } else {
+        throw err;
+      }
+    }
+  }
 
   if (!existing) {
     return { disponivel: true };

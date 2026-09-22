@@ -55,7 +55,7 @@ model Perfil {
   id                             String     @id @db.Uuid
   email                          String
   nome                           String?
-  cpf                            String?
+  cpf                            String?    @unique(map: "perfis_cpf_unique_idx")
   role                           PerfilRole @default(cliente)
   kyc_status                     KycStatus  @default(pendente)
   has_seen_welcome_notice        Boolean    @default(false)
@@ -89,7 +89,6 @@ model Perfil {
   convitesRecebidos        EstudioConvite[]  @relation("ConviteTatuador")
 
   @@unique([email], map: "perfis_email_unique_idx")
-  @@unique([cpf], map: "perfis_cpf_unique_idx")
   @@index([role], map: "perfis_role_idx")
   @@index([kyc_status], map: "perfis_kyc_status_idx")
   @@index([cidade], map: "perfis_cidade_idx")

@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    color-scheme: light;
-    --background: #F5F5F5;
-    --foreground: #121212;
+    color-scheme: dark;
+    --background: #121212;
+    --foreground: #F5F5F5;
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
     --font-inter: Inter, system-ui, -apple-system, sans-serif;

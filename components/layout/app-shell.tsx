@@ -6,7 +6,6 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { UserIdentity } from '@/components/layout/user-identity';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 
 const TABS: { value: AppTab; label: string }[] = [
@@ -59,7 +58,6 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
-            <ThemeToggle />
             <UserIdentity />
           </div>
         </div>

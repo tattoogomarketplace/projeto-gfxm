@@ -2,7 +2,8 @@
 import { motion } from 'framer-motion';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useRouter } from 'next/navigation';
-import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { useEffect } from 'react';
+import { postSignupPathForRole } from '@/lib/utils/auth-redirect';
 
 interface WelcomeGateProps {
   role: 'cliente' | 'tatuador' | 'estudio';
@@ -10,7 +11,13 @@ interface WelcomeGateProps {
 
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const router = useRouter();
-  
+  const destination = postSignupPathForRole(role);
+
+  useEffect(() => {
+    router.push(destination);
+    router.refresh();
+  }, [destination, router]);
+
   const content = role === 'cliente' ? {
     title: 'Sua primeira ou próxima arte te espera',
     subtitle: 'Conectando você aos melhores artistas. Inspire-se, encontre o traço perfeito.',
@@ -36,7 +43,15 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       </div>
       <h1 className="text-3xl font-bold text-white mb-2">{content.title}</h1>
       <p className="text-zinc-400 mb-8 max-w-sm">{content.subtitle}</p>
-      <NeonButton onClick={() => router.push(dashboardPathForRole(role))}>{content.cta}</NeonButton>
+      <NeonButton
+        type="button"
+        onClick={() => {
+          router.push(destination);
+          router.refresh();
+        }}
+      >
+        {content.cta}
+      </NeonButton>
     </motion.div>
   );
 }

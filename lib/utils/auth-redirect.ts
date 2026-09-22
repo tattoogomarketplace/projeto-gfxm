@@ -15,3 +15,10 @@ export function dashboardPathForRole(role?: string | null): string {
   if (normalized === 'estudio') return '/dashboard/estudio';
   return '/dashboard/cliente';
 }
+
+export function postSignupPathForRole(role?: string | null): string {
+  const normalized = normalizeAppRole(role);
+  if (normalized === 'tatuador') return '/dashboard/kyc-pendente';
+  if (normalized === 'estudio') return '/dashboard/estudio';
+  return '/dashboard/cliente';
+}

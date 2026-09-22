@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,10 +10,10 @@ import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import { TattooOTPVerification } from '@/components/features/tattoo-otp';
+import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TurnstileGuard, isTurnstileEnabled } from '@/components/features/turnstile-guard';
-import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 
 const loginSchema = z.object({
@@ -22,6 +22,17 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+async function sendEmailOtp(email: string) {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  });
+  if (error) throw error;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
@@ -29,6 +40,8 @@ export default function LoginPage() {
   const [token, setToken] = useState<string>();
   const [emailForVerification, setEmailForVerification] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(60);
+  const [resending, setResending] = useState(false);
 
   const {
     register,
@@ -40,17 +53,13 @@ export default function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: LoginFormValues & { turnstileToken: string }) => {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: data.email,
-        options: { shouldCreateUser: false },
-      });
-      if (error) throw error;
-      return data.email;
+      await sendEmailOtp(data.email.trim().toLowerCase());
+      return data.email.trim().toLowerCase();
     },
     onSuccess: (email) => {
       setEmailForVerification(email);
       setIsVerifying(true);
+      setResendSeconds(60);
       toast.success('Código de 8 dígitos enviado para o seu e-mail.');
     },
     onError: (error: Error) => {
@@ -66,59 +75,82 @@ export default function LoginPage() {
     mutation.mutate({ ...data, turnstileToken: token || 'dev-bypass' });
   };
 
+  useEffect(() => {
+    if (!isVerifying || resendSeconds <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isVerifying, resendSeconds]);
+
   const handleResendOtp = async () => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: emailForVerification,
-      options: { shouldCreateUser: false },
-    });
-    if (error) throw error;
+    if (resendSeconds > 0 || resending) return;
+    setResending(true);
+    try {
+      await sendEmailOtp(emailForVerification);
+      setResendSeconds(60);
+      toast.success('Novo código enviado.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao reenviar o código.');
+    } finally {
+      setResending(false);
+    }
   };
 
-  const handleVerifyOtp = async (otp: string) => {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: emailForVerification,
-      token: otp,
-      type: 'email',
-    });
-    if (error) throw error;
+  const handleVerifyOtp = async (otp: string): Promise<boolean> => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: emailForVerification,
+        token: otp,
+        type: 'email',
+      });
+      if (error) throw error;
 
-    const user = data.user;
-    if (!user) throw new Error('Sessão inválida após verificação.');
+      const user = data.user;
+      if (!user) throw new Error('Sessão inválida após verificação.');
 
-    const { data: profile } = await supabase
-      .from('perfis')
-      .select('role, deleted_at')
-      .eq('id', user.id)
-      .maybeSingle();
+      const { data: profile } = await supabase
+        .from('perfis')
+        .select('role, deleted_at, kyc_status')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (profile?.deleted_at) {
-      await supabase.auth.signOut();
-      throw new Error('Esta conta foi desativada.');
+      if (profile?.deleted_at) {
+        await supabase.auth.signOut();
+        throw new Error('Esta conta foi desativada.');
+      }
+
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        localStorage.setItem('tattoogo_token', accessToken);
+      }
+
+      const role = normalizeAppRole(profile?.role || (user.user_metadata?.role as string));
+      const fullName =
+        (user.user_metadata?.full_name as string) ||
+        (user.user_metadata?.nome as string) ||
+        '';
+
+      setUser({
+        id: user.id,
+        email: user.email ?? emailForVerification,
+        fullName,
+      });
+      setRole(role);
+
+      toast.success('Bem-vindo de volta à elite!');
+      const nextPath =
+        role === 'tatuador' && profile?.kyc_status !== 'aprovado'
+          ? postSignupPathForRole(role)
+          : dashboardPathForRole(role);
+      router.push(nextPath);
+      router.refresh();
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Código inválido.');
+      return false;
     }
-
-    const accessToken = data.session?.access_token;
-    if (accessToken) {
-      localStorage.setItem('tattoogo_token', accessToken);
-    }
-
-    const role = normalizeAppRole(profile?.role || (user.user_metadata?.role as string));
-    const fullName =
-      (user.user_metadata?.full_name as string) ||
-      (user.user_metadata?.nome as string) ||
-      '';
-
-    setUser({
-      id: user.id,
-      email: user.email ?? emailForVerification,
-      fullName,
-    });
-    setRole(role);
-
-    toast.success('Bem-vindo de volta à elite!');
-    router.push(dashboardPathForRole(role));
-    router.refresh();
   };
 
   if (isVerifying) {
@@ -133,7 +165,19 @@ export default function LoginPage() {
               Digite o código de 8 dígitos enviado para {emailForVerification}
             </p>
           </div>
-          <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} />
+          <TattooOTPInput onComplete={handleVerifyOtp} length={8} />
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={resendSeconds > 0 || resending}
+            className="w-full text-center text-sm font-semibold text-orange-500 disabled:text-zinc-500 disabled:cursor-not-allowed hover:underline"
+          >
+            {resending
+              ? 'Reenviando...'
+              : resendSeconds > 0
+                ? `Reenviar código em ${resendSeconds}s`
+                : 'Reenviar código'}
+          </button>
           <button
             type="button"
             onClick={() => {

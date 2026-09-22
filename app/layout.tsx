@@ -32,11 +32,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F5F5" },
-    { media: "(prefers-color-scheme: dark)", color: "#121212" },
-  ],
-  colorScheme: "dark light",
+  themeColor: "#121212",
+  colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -50,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className="h-full" suppressHydrationWarning>
+    <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#121212" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
