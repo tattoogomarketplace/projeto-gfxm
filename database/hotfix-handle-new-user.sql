@@ -3,9 +3,11 @@
 -- Fase 1: persiste nome, has_seen_welcome_notice (aceite no cadastro) e reativa soft-delete.
 
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS nome text;
+ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS cpf text;
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS bank_account jsonb;
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 CREATE INDEX IF NOT EXISTS perfis_deleted_at_idx ON public.perfis (deleted_at);
+CREATE UNIQUE INDEX IF NOT EXISTS perfis_cpf_unique_idx ON public.perfis (cpf) WHERE cpf IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -17,6 +19,7 @@ DECLARE
   v_email text;
   v_role public.perfil_role;
   v_nome text;
+  v_cpf text;
   v_terms boolean;
 BEGIN
   v_email := lower(trim(both FROM COALESCE(NEW.email, NEW.raw_user_meta_data->>'email', '')));
@@ -36,17 +39,23 @@ BEGIN
     ''
   )), '');
 
+  v_cpf := NULLIF(regexp_replace(COALESCE(NEW.raw_user_meta_data->>'cpf', ''), '[^0-9]', '', 'g'), '');
+  IF v_cpf IS NOT NULL AND length(v_cpf) <> 11 THEN
+    v_cpf := NULL;
+  END IF;
+
   v_terms := COALESCE(
     (NEW.raw_user_meta_data->>'accepted_terms') IN ('true', 't', '1'),
     false
   );
 
-  INSERT INTO public.perfis (id, email, nome, role, kyc_status, has_seen_welcome_notice)
-  VALUES (NEW.id, v_email, v_nome, v_role, 'pendente'::public.kyc_status, v_terms)
+  INSERT INTO public.perfis (id, email, nome, cpf, role, kyc_status, has_seen_welcome_notice)
+  VALUES (NEW.id, v_email, v_nome, v_cpf, v_role, 'pendente'::public.kyc_status, v_terms)
   ON CONFLICT (id) DO UPDATE
     SET
       email = EXCLUDED.email,
       nome = COALESCE(EXCLUDED.nome, public.perfis.nome),
+      cpf = COALESCE(EXCLUDED.cpf, public.perfis.cpf),
       has_seen_welcome_notice = public.perfis.has_seen_welcome_notice OR EXCLUDED.has_seen_welcome_notice,
       deleted_at = NULL,
       updated_at = now();

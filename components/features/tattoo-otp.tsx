@@ -1,18 +1,39 @@
 'use client';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
-export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVerify: (code: string) => Promise<void>; userRole?: 'cliente' | 'tatuador' | 'estudio' }) {
-  const OTP_LENGTH = 8;
+const OTP_LENGTH = 8;
+const RESEND_COOLDOWN_SEC = 60;
+
+const ERROR_COPY = {
+  cliente: 'Código Incorreto. A tinta não fixou na pele. Verifique o código e tente novamente.',
+  estudio: 'Código Incorreto. Curto-circuito na bancada principal.',
+  tatuador: 'Código Incorreto. Máquina descalibrada. Refaça a calibragem.',
+} as const;
+
+export function TattooOTPVerification({
+  onVerify,
+  onResend,
+  userRole = 'cliente',
+}: {
+  onVerify: (code: string) => Promise<void>;
+  onResend?: () => Promise<void>;
+  userRole?: 'cliente' | 'tatuador' | 'estudio';
+}) {
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [isVerifying, setIsVerifying] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(RESEND_COOLDOWN_SEC);
+  const [resending, setResending] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
-  const { playTattoo, playSuccess, playError } = useSoundEffects();
+  const verifyingLock = useRef(false);
+  const { playTattoo, playSuccess, playError, stopTattoo } = useSoundEffects();
   const { startTattooing, stopTattooing, triggerError } = useTattooMachine();
   const { triggerHaptic } = useHapticFeedback();
 
@@ -20,11 +41,63 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
     inputs.current[0]?.focus();
   }, []);
 
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
+
+  useEffect(() => {
+    return () => {
+      stopTattoo();
+      stopTattooing(false);
+    };
+  }, [stopTattoo, stopTattooing]);
+
+  const hardStopAudio = useCallback(() => {
+    stopTattoo();
+    stopTattooing(false);
+  }, [stopTattoo, stopTattooing]);
+
+  const resetInputs = useCallback(() => {
+    setCode(Array(OTP_LENGTH).fill(''));
+    requestAnimationFrame(() => inputs.current[0]?.focus());
+  }, []);
+
   const setRef = useCallback((el: HTMLInputElement | null, index: number) => {
     inputs.current[index] = el;
   }, []);
 
+  const completeVerification = useCallback(async (fullCode: string) => {
+    if (verifyingLock.current) return;
+    verifyingLock.current = true;
+    setIsVerifying(true);
+    setHasError(false);
+    setErrorMessage('');
+
+    try {
+      await onVerify(fullCode);
+      hardStopAudio();
+      stopTattooing(true);
+      playSuccess();
+    } catch {
+      hardStopAudio();
+      playError();
+      triggerError();
+      setHasError(true);
+      setErrorMessage(ERROR_COPY[userRole] || 'Código Incorreto');
+      toast.error('Código Incorreto');
+      setIsVerifying(false);
+      verifyingLock.current = false;
+      resetInputs();
+      window.setTimeout(() => setHasError(false), 2500);
+    }
+  }, [hardStopAudio, onVerify, playError, playSuccess, resetInputs, stopTattooing, triggerError, userRole]);
+
   const handleChange = (index: number, value: string) => {
+    if (isVerifying) return;
     if (isNaN(Number(value))) return;
 
     if (value.length > 1) {
@@ -56,30 +129,30 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
     }
   };
 
-  const completeVerification = async (fullCode: string) => {
-    setIsVerifying(true);
-
-    try {
-      await onVerify(fullCode);
-      stopTattooing(true);
-      playSuccess();
-    } catch {
-      playError();
-      triggerError();
-      setHasError(true);
-      setIsVerifying(false);
-      setTimeout(() => setHasError(false), 2500);
-    }
-  };
-
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === 'Backspace' && index > 0 && code[index] === '') {
       inputs.current[index - 1]?.focus();
     }
   };
 
+  const handleResend = async () => {
+    if (!onResend || resendSeconds > 0 || resending || isVerifying) return;
+    setResending(true);
+    hardStopAudio();
+    try {
+      await onResend();
+      setResendSeconds(RESEND_COOLDOWN_SEC);
+      resetInputs();
+      toast.success('Novo código enviado.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao reenviar o código.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
-    <div className="flex flex-wrap justify-center gap-2 p-8 bg-zinc-900 rounded-3xl border border-zinc-800 min-h-40 items-center">
+    <div className="flex flex-col items-center gap-4 p-8 bg-zinc-900 rounded-3xl border border-zinc-800 min-h-40">
       <AnimatePresence mode="wait">
         {!isVerifying ? (
           <motion.div 
@@ -116,15 +189,24 @@ export function TattooOTPVerification({ onVerify, userRole = 'cliente' }: { onVe
         )}
       </AnimatePresence>
       {hasError && (
-        <p className="w-full text-center text-sm text-red-400 mt-4 px-4">
-          {userRole === 'cliente'
-            ? 'Falha no traço. A tinta não fixou na pele. Verifique o código e tente novamente.'
-            : userRole === 'estudio'
-              ? 'Curto-circuito na bancada principal. Credenciais fiscais ou código inválidos.'
-              : 'Máquina descalibrada. O traço tremeu e o código falhou. Refaça a calibragem.'}
+        <p className="w-full text-center text-sm text-red-400 mt-2 px-4">
+          {errorMessage || 'Código Incorreto'}
         </p>
       )}
+      {onResend ? (
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resendSeconds > 0 || resending || isVerifying}
+          className="mt-2 min-h-11 px-4 text-sm font-semibold text-amber-500 disabled:text-zinc-500 disabled:cursor-not-allowed hover:underline"
+        >
+          {resending
+            ? 'Reenviando...'
+            : resendSeconds > 0
+              ? `Reenviar código em ${resendSeconds}s`
+              : 'Reenviar código'}
+        </button>
+      ) : null}
     </div>
   );
 }
-

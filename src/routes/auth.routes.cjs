@@ -7,6 +7,7 @@ const router = Router();
 
 router.post("/register", authLimiter, authController.register);
 router.post("/login", authLimiter, authController.login);
+router.post("/check-duplicidade", authLimiter, authController.checkDuplicidade);
 router.post("/aceite-termos", requireAuth, authController.aceiteTermos);
 
 module.exports = router;

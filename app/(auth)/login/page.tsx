@@ -66,6 +66,15 @@ export default function LoginPage() {
     mutation.mutate({ ...data, turnstileToken: token || 'dev-bypass' });
   };
 
+  const handleResendOtp = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: emailForVerification,
+      options: { shouldCreateUser: false },
+    });
+    if (error) throw error;
+  };
+
   const handleVerifyOtp = async (otp: string) => {
     const supabase = createClient();
     const { data, error } = await supabase.auth.verifyOtp({
@@ -124,7 +133,7 @@ export default function LoginPage() {
               Digite o código de 8 dígitos enviado para {emailForVerification}
             </p>
           </div>
-          <TattooOTPVerification onVerify={handleVerifyOtp} />
+          <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} />
           <button
             type="button"
             onClick={() => {

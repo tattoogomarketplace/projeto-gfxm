@@ -114,6 +114,7 @@ DECLARE
   v_email text;
   v_role public.perfil_role;
   v_nome text;
+  v_cpf text;
   v_terms boolean;
 BEGIN
   v_email := lower(trim(both FROM COALESCE(NEW.email, NEW.raw_user_meta_data->>'email', '')));
@@ -133,17 +134,23 @@ BEGIN
     ''
   )), '');
 
+  v_cpf := NULLIF(regexp_replace(COALESCE(NEW.raw_user_meta_data->>'cpf', ''), '[^0-9]', '', 'g'), '');
+  IF v_cpf IS NOT NULL AND length(v_cpf) <> 11 THEN
+    v_cpf := NULL;
+  END IF;
+
   v_terms := COALESCE(
     (NEW.raw_user_meta_data->>'accepted_terms') IN ('true', 't', '1'),
     false
   );
 
-  INSERT INTO public.perfis (id, email, nome, role, kyc_status, has_seen_welcome_notice)
-  VALUES (NEW.id, v_email, v_nome, v_role, 'pendente'::public.kyc_status, v_terms)
+  INSERT INTO public.perfis (id, email, nome, cpf, role, kyc_status, has_seen_welcome_notice)
+  VALUES (NEW.id, v_email, v_nome, v_cpf, v_role, 'pendente'::public.kyc_status, v_terms)
   ON CONFLICT (id) DO UPDATE
     SET
       email = EXCLUDED.email,
       nome = COALESCE(EXCLUDED.nome, public.perfis.nome),
+      cpf = COALESCE(EXCLUDED.cpf, public.perfis.cpf),
       has_seen_welcome_notice = public.perfis.has_seen_welcome_notice OR EXCLUDED.has_seen_welcome_notice,
       deleted_at = NULL,
       updated_at = now();
@@ -167,6 +174,7 @@ CREATE TABLE public.perfis (
   id                      uuid PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
   email                   text NOT NULL,
   nome                    text,
+  cpf                     text,
   role                    public.perfil_role NOT NULL DEFAULT 'cliente',
   kyc_status              public.kyc_status NOT NULL DEFAULT 'pendente',
   has_seen_welcome_notice boolean NOT NULL DEFAULT false,
@@ -182,11 +190,13 @@ CREATE TABLE public.perfis (
 
   CONSTRAINT perfis_email_lowercase CHECK (email = lower(email)),
   CONSTRAINT perfis_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+  CONSTRAINT perfis_cpf_digits CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$'),
   CONSTRAINT perfis_cnpj_digits CHECK (cnpj IS NULL OR cnpj ~ '^[0-9]{14}$'),
   CONSTRAINT perfis_pendentes_repasse_range CHECK (agendamentos_pendentes_repasse >= 0 AND agendamentos_pendentes_repasse <= 2)
 );
 
 CREATE UNIQUE INDEX perfis_email_unique_idx ON public.perfis (email);
+CREATE UNIQUE INDEX perfis_cpf_unique_idx ON public.perfis (cpf) WHERE cpf IS NOT NULL;
 CREATE INDEX perfis_role_idx ON public.perfis (role);
 CREATE INDEX perfis_kyc_status_idx ON public.perfis (kyc_status);
 CREATE INDEX perfis_cidade_idx ON public.perfis (cidade);
@@ -671,9 +681,11 @@ ALTER TABLE public.agendamentos DROP CONSTRAINT IF EXISTS agendamentos_tatuador_
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS nome text;
+ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS cpf text;
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS bank_account jsonb;
 ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 CREATE INDEX IF NOT EXISTS perfis_deleted_at_idx ON public.perfis (deleted_at);
+CREATE UNIQUE INDEX IF NOT EXISTS perfis_cpf_unique_idx ON public.perfis (cpf) WHERE cpf IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.aceitar_termos()
 RETURNS boolean

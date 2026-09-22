@@ -6,6 +6,43 @@ function httpError(status, message) {
   return error;
 }
 
+function onlyDigits(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+async function verificarDuplicidade({ email, cpf }) {
+  const emailNorm = String(email || "").trim().toLowerCase();
+  const cpfNorm = onlyDigits(cpf);
+
+  if (!emailNorm && !cpfNorm) {
+    throw httpError(400, "Informe e-mail ou CPF para verificar duplicidade.");
+  }
+
+  const orFilters = [];
+  if (emailNorm) orFilters.push({ email: emailNorm, deleted_at: null });
+  if (cpfNorm.length === 11) orFilters.push({ cpf: cpfNorm, deleted_at: null });
+
+  const existing = orFilters.length
+    ? await prisma.perfil.findFirst({
+        where: { OR: orFilters },
+        select: { email: true, cpf: true },
+      })
+    : null;
+
+  if (!existing) {
+    return { disponivel: true };
+  }
+
+  if (emailNorm && existing.email === emailNorm) {
+    throw httpError(409, "Este e-mail já está cadastrado.");
+  }
+  if (cpfNorm && existing.cpf === cpfNorm) {
+    throw httpError(409, "Este CPF já está cadastrado.");
+  }
+
+  throw httpError(409, "E-mail ou CPF já cadastrado.");
+}
+
 async function aceitarTermos(userId) {
   await prisma.perfil.update({
     where: { id: userId },
@@ -58,4 +95,4 @@ async function desativarConta(userId) {
   return { sucesso: true };
 }
 
-module.exports = { aceitarTermos, obterPerfil, desativarConta };
+module.exports = { verificarDuplicidade, aceitarTermos, obterPerfil, desativarConta };

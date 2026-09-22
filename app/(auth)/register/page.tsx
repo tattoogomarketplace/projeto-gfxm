@@ -14,6 +14,8 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
+import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
+import api from '@/lib/api';
 
 const registerSchema = z
   .object({
@@ -22,7 +24,10 @@ const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string().min(1, 'Confirme sua senha'),
     role: z.enum(['cliente', 'tatuador', 'estudio']),
-    cpf: z.string().min(11, 'CPF inválido'),
+    cpf: z
+      .string()
+      .min(11, 'CPF inválido')
+      .refine((value) => isValidCpf(value), 'CPF inválido'),
     dataNascimento: z.string().min(1, 'Data obrigatória'),
     responsavelNome: z.string().optional(),
     responsavelCpf: z.string().optional(),
@@ -30,6 +35,15 @@ const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'As senhas não coincidem',
     path: ['confirmPassword'],
+  })
+  .superRefine((data, ctx) => {
+    if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['responsavelCpf'],
+        message: 'CPF do responsável inválido',
+      });
+    }
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -76,26 +90,63 @@ export default function RegisterPage() {
   const passwordValue = useWatch({ control, name: 'password' }) || '';
   const confirmPasswordValue = useWatch({ control, name: 'confirmPassword' }) || '';
   const roleValue = useWatch({ control, name: 'role' }) || 'cliente';
+  const cpfValue = useWatch({ control, name: 'cpf' }) || '';
   const status = getFaixaEtaria(dataNascimento);
   const passwordsMatch = Boolean(passwordValue) && passwordValue === confirmPasswordValue;
+  const cpfIsValid = isValidCpf(cpfValue);
+
+  const mapAuthConflict = (authError: { status?: number; code?: string; message?: string }) => {
+    const msg = (authError.message || '').toLowerCase();
+    const code = (authError.code || '').toLowerCase();
+    if (authError.status === 409 || code.includes('already') || msg.includes('already registered') || msg.includes('user already')) {
+      return 'Este e-mail já está cadastrado.';
+    }
+    if (msg.includes('cpf')) {
+      return 'Este CPF já está cadastrado.';
+    }
+    if (msg.includes('database') || msg.includes('trigger') || authError.status === 500) {
+      return 'Falha ao criar perfil no banco. Rode o SQL do trigger no painel do Supabase.';
+    }
+    if (msg.includes('rate') || msg.includes('smtp') || msg.includes('error sending')) {
+      return 'Limite de e-mail/SMTP do Supabase. Confira Authentication > Email no painel.';
+    }
+    return authError.message || 'Erro ao realizar cadastro.';
+  };
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
         toast.error('Você precisa aceitar os termos de uso.');
         return;
     }
+    if (!isValidCpf(data.cpf)) {
+      toast.error('CPF inválido.');
+      return;
+    }
     setLoading(true);
     setUserRole(data.role);
+    const emailNorm = data.email.trim().toLowerCase();
+    const cpfDigits = onlyCpfDigits(data.cpf);
     try {
-      const { error: authError } = await supabase.auth.signUp({
-        email: data.email.trim().toLowerCase(),
+      try {
+        await api.post('/api/auth/check-duplicidade', { email: emailNorm, cpf: cpfDigits });
+      } catch (dupErr: unknown) {
+        const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
+        const statusCode = axiosErr.response?.status;
+        const message = axiosErr.response?.data?.erro || 'E-mail ou CPF já cadastrado.';
+        if (statusCode === 409 || statusCode === 400) {
+          throw new Error(message);
+        }
+      }
+
+      const { data: signUpData, error: authError } = await supabase.auth.signUp({
+        email: emailNorm,
         password: data.password,
         options: {
           data: {
             role: data.role,
             full_name: data.nome,
             nome: data.nome,
-            cpf: data.cpf,
+            cpf: cpfDigits,
             data_nascimento: data.dataNascimento,
             accepted_terms: acceptedTerms,
           },
@@ -107,14 +158,10 @@ export default function RegisterPage() {
           code: authError.code,
           message: authError.message,
         });
-        const msg = (authError.message || '').toLowerCase();
-        if (msg.includes('database') || msg.includes('trigger') || authError.status === 500) {
-          throw new Error('Falha ao criar perfil no banco. Rode o SQL do trigger no painel do Supabase.');
-        }
-        if (msg.includes('rate') || msg.includes('smtp') || msg.includes('error sending')) {
-          throw new Error('Limite de e-mail/SMTP do Supabase. Confira Authentication > Email no painel.');
-        }
-        throw authError;
+        throw new Error(mapAuthConflict(authError));
+      }
+      if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+        throw new Error('Este e-mail já está cadastrado.');
       }
 
       setEmailForVerification(data.email);
@@ -147,10 +194,12 @@ export default function RegisterPage() {
       if (userId) {
         try {
           const nomeMeta = (data.user?.user_metadata?.nome || data.user?.user_metadata?.full_name) as string | undefined;
+          const cpfMeta = onlyCpfDigits(String(data.user?.user_metadata?.cpf || ''));
           await supabase
             .from('perfis')
             .update({
               ...(nomeMeta ? { nome: nomeMeta } : {}),
+              ...(cpfMeta.length === 11 ? { cpf: cpfMeta } : {}),
               ...(acceptedTerms ? { has_seen_welcome_notice: true } : {}),
             })
             .eq('id', userId);
@@ -164,10 +213,17 @@ export default function RegisterPage() {
 
       setShowWelcome(true);
     } catch (err) {
-      toast.error('Código inválido ou expirado.');
       setLoading(false);
       throw err;
     }
+  };
+
+  const handleResendOtp = async () => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: emailForVerification,
+    });
+    if (error) throw error;
   };
 
   if (showWelcome) {
@@ -180,7 +236,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 8 dígitos enviado para {emailForVerification}</p>
-          <TattooOTPVerification onVerify={handleVerifyOtp} userRole={userRole} />
+          <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} userRole={userRole} />
           </div>
             </div>
   );
@@ -243,7 +299,15 @@ export default function RegisterPage() {
           />
           <Input
             label="CPF"
-            {...register('cpf')}
+            inputMode="numeric"
+            autoComplete="off"
+            {...register('cpf', {
+              onChange: (e) => {
+                const formatted = formatCpf(e.target.value);
+                if (e.target.value !== formatted) e.target.value = formatted;
+                setValue('cpf', formatted, { shouldValidate: true, shouldDirty: true });
+              },
+            })}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={errors.cpf?.message}
           />
@@ -265,7 +329,15 @@ export default function RegisterPage() {
               />
               <Input
                 label="CPF do Responsável Legal"
-                {...register('responsavelCpf')}
+                inputMode="numeric"
+                autoComplete="off"
+                {...register('responsavelCpf', {
+                  onChange: (e) => {
+                    const formatted = formatCpf(e.target.value);
+                    if (e.target.value !== formatted) e.target.value = formatted;
+                    setValue('responsavelCpf', formatted, { shouldValidate: true, shouldDirty: true });
+                  },
+                })}
                 className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
                 error={errors.responsavelCpf?.message}
               />
@@ -290,7 +362,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms}
+            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !cpfIsValid}
             className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? <TattooMachineLoader compact label="Processando" /> : 'Cadastrar'}

@@ -25,6 +25,16 @@ export const useTattooMachine = () => {
       audioCtx.current = new AudioContextCtor();
     }
     
+    if (oscillator.current) {
+      try {
+        oscillator.current.stop();
+        oscillator.current.disconnect();
+      } catch {
+        void 0;
+      }
+      oscillator.current = null;
+    }
+
     setIsTattooing(true);
     
     // Sintetiza o som de "bater" da máquina (frequência baixa/pulsante)
@@ -43,10 +53,18 @@ export const useTattooMachine = () => {
 
   const stopTattooing = useCallback((success: boolean = false) => {
     setIsTattooing(false);
-    
+
     if (oscillator.current) {
-      oscillator.current.stop();
-      oscillator.current.disconnect();
+      try {
+        oscillator.current.stop();
+      } catch {
+        void 0;
+      }
+      try {
+        oscillator.current.disconnect();
+      } catch {
+        void 0;
+      }
       oscillator.current = null;
     }
     
@@ -68,6 +86,7 @@ export const useTattooMachine = () => {
   }, [triggerHaptic]);
 
   const triggerError = useCallback(() => {
+    stopTattooing(false);
     if (typeof window === 'undefined' || !audioCtx.current) return;
     const osc = audioCtx.current.createOscillator();
     const gain = audioCtx.current.createGain();
@@ -81,7 +100,7 @@ export const useTattooMachine = () => {
     osc.start();
     osc.stop(audioCtx.current.currentTime + 0.3);
     triggerHaptic('heavy');
-  }, [triggerHaptic]);
+  }, [stopTattooing, triggerHaptic]);
   return { isTattooing, startTattooing, stopTattooing, triggerError };
 };
 

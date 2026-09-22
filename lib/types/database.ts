@@ -16,6 +16,7 @@ export interface Perfil {
   id: string;
   email: string;
   nome?: string | null;
+  cpf?: string | null;
   role: 'cliente' | 'tatuador' | 'estudio';
   kyc_status: 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
   has_seen_welcome_notice?: boolean;

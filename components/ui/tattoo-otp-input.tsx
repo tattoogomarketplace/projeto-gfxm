@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TattooOTPInputProps {
@@ -20,12 +21,20 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
   const { startTattooing, stopTattooing, triggerError } = useTattooMachine();
+  const { playTattoo, playError, playSuccess, stopTattoo } = useSoundEffects();
   const { triggerHaptic } = useHapticFeedback();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      stopTattoo();
+      stopTattooing(false);
+    };
+  }, [stopTattoo, stopTattooing]);
 
   const handleInput = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);
@@ -34,6 +43,7 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
     // Sincronia: Start no primeiro dígito
     if (digits.every(d => d === '') && value !== '') {
       startTattooing();
+      playTattoo();
     }
 
     const newDigits = [...digits];
@@ -71,12 +81,17 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
 
     if (success) {
       setMessage(MESSAGES[userRole].success);
+      stopTattoo();
       stopTattooing(true);
+      playSuccess();
       setError(false);
     } else {
+      stopTattoo();
       triggerError();
-      setMessage(MESSAGES[userRole].error);
+      playError();
+      setMessage('Código Incorreto. ' + MESSAGES[userRole].error);
       setError(true);
+      setDigits(Array(length).fill(''));
       setTimeout(() => { setError(false); setMessage(''); }, 2500);
     }
   };
