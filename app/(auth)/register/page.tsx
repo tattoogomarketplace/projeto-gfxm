@@ -97,6 +97,7 @@ export default function RegisterPage() {
             nome: data.nome,
             cpf: data.cpf,
             data_nascimento: data.dataNascimento,
+            accepted_terms: acceptedTerms,
           },
         },
       });
@@ -140,6 +141,25 @@ export default function RegisterPage() {
       const accessToken = data.session?.access_token;
       if (accessToken) {
         localStorage.setItem('tattoogo_token', accessToken);
+      }
+
+      const userId = data.user?.id || data.session?.user?.id;
+      if (userId) {
+        try {
+          const nomeMeta = (data.user?.user_metadata?.nome || data.user?.user_metadata?.full_name) as string | undefined;
+          await supabase
+            .from('perfis')
+            .update({
+              ...(nomeMeta ? { nome: nomeMeta } : {}),
+              ...(acceptedTerms ? { has_seen_welcome_notice: true } : {}),
+            })
+            .eq('id', userId);
+          if (acceptedTerms) {
+            await supabase.rpc('aceitar_termos');
+          }
+        } catch {
+          // Cadastro já autenticado; o aceite pode ser refeito em /termos.
+        }
       }
 
       setShowWelcome(true);

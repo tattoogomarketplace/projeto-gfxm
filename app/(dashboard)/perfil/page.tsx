@@ -78,6 +78,7 @@ export default function PerfilPage() {
       if (error) throw error;
 
       const user = data.user;
+      await supabase.from('perfis').update({ nome: nextName }).eq('id', user.id);
       setUser({
         id: user.id,
         email: user.email ?? email,

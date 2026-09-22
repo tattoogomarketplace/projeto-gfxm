@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
+    "dev": "concurrently -k -n next,express -c cyan,magenta \"npm run dev:next\" \"npm run dev:api\"",
+    "dev:next": "next dev -H 0.0.0.0 -p 3000",
+    "dev:api": "node server.cjs",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
@@ -62,6 +64,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",

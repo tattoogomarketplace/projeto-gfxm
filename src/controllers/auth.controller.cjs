@@ -3,12 +3,13 @@ const { aceitarTermos } = require("../services/perfil.service.cjs");
 
 async function register(req, res) {
   try {
-    const { email, password, role, full_name, nome } = req.body;
+    const { email, password, role, full_name, nome, accepted_terms } = req.body;
     const { data, error } = await signUp({
       email,
       password,
       role,
       full_name: full_name || nome,
+      accepted_terms: Boolean(accepted_terms),
     });
     if (error) {
       console.error("[TattooGo] signup falhou", {

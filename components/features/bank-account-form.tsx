@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase';
@@ -9,10 +11,28 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
 
   const handleSave = async () => {
     setLoading(true);
-    // Mascara o input antes de salvar no DB
-    const masked = `***${bank.slice(-4)}`;
-    const { error } = await supabase.from('perfis').update({ bank_account: masked }).eq('role', role);
-    
+    const digits = bank.replace(/\D/g, '');
+    const masked = digits.length >= 4 ? `***${digits.slice(-4)}` : `***${bank.slice(-4)}`;
+    const payload = {
+      tipo: role,
+      masked,
+      last4: digits.slice(-4) || bank.slice(-4),
+    };
+
+    const { data: sessionData } = await supabase.auth.getUser();
+    const userId = sessionData.user?.id;
+    if (!userId) {
+      toast.error('Sessao expirada. Faca login novamente.');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('perfis')
+      .update({ bank_account: payload })
+      .eq('id', userId)
+      .eq('role', role);
+
     if (error) toast.error('Erro ao salvar conta.');
     else toast.success('Conta bancária registrada com segurança.');
     setLoading(false);

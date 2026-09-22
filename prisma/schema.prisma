@@ -54,9 +54,11 @@ enum EstudioConviteStatus {
 model Perfil {
   id                             String     @id @db.Uuid
   email                          String
+  nome                           String?
   role                           PerfilRole @default(cliente)
   kyc_status                     KycStatus  @default(pendente)
   has_seen_welcome_notice        Boolean    @default(false)
+  bank_account                   Json?
   cidade                         String?
   estado                         String?
   cnpj                           String?

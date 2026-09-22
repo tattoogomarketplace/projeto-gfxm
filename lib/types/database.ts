@@ -3,11 +3,23 @@
  * Mapeamento da Estrutura Suprema do Banco de Dados Supabase.
  */
 
+export interface BankAccount {
+  banco?: string;
+  agencia?: string;
+  conta?: string;
+  tipo?: string;
+  pix?: string;
+  masked?: string;
+}
+
 export interface Perfil {
   id: string;
   email: string;
+  nome?: string | null;
   role: 'cliente' | 'tatuador' | 'estudio';
   kyc_status: 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
+  has_seen_welcome_notice?: boolean;
+  bank_account?: BankAccount | string | null;
   cidade?: string;
   estado?: string;
   cnpj?: string;
@@ -15,6 +27,7 @@ export interface Perfil {
   agenda_bloqueada?: boolean;
   avatar_url?: string;
   created_at: string;
+  deleted_at?: string | null;
 }
 
 export interface Portfolio {

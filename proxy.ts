@@ -77,6 +77,8 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith("/login") || path.startsWith("/register") || path === "/";
+  const isTermsPage = path === "/termos" || path.startsWith("/termos/");
+  const isKycPendente = path === "/dashboard/kyc-pendente" || path.startsWith("/dashboard/kyc-pendente/");
   const isPublicAsset =
     path.startsWith("/api") ||
     path.startsWith("/auth") ||
@@ -162,8 +164,13 @@ export async function proxy(request: NextRequest) {
 
     const aceitouTermos = perfil?.has_seen_welcome_notice;
 
-    if (perfil && !aceitouTermos && path !== "/termos") {
+    if (perfil && !aceitouTermos && !isTermsPage) {
       return NextResponse.redirect(new URL("/termos", request.url));
+    }
+
+    if (aceitouTermos && isTermsPage) {
+      const acceptedRole = perfil?.role || user.user_metadata?.role || "cliente";
+      return NextResponse.redirect(new URL(`/dashboard/${acceptedRole}`, request.url));
     }
 
     const allowedRoles = ["cliente", "tatuador", "estudio"];
@@ -172,7 +179,8 @@ export async function proxy(request: NextRequest) {
       role &&
       allowedRoles.includes(role) &&
       path.startsWith("/dashboard/") &&
-      !path.startsWith(`/dashboard/${role}`)
+      !path.startsWith(`/dashboard/${role}`) &&
+      !isKycPendente
     ) {
       return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
     }

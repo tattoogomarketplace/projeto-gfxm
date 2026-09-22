@@ -6,9 +6,10 @@ type UserMetadata = {
 
 export function resolveDisplayName(
   metadata?: UserMetadata,
-  fallback = 'Artista'
+  fallback = 'Artista',
+  perfilNome?: string | null
 ): string {
-  const raw = metadata?.full_name || metadata?.nome || metadata?.name || '';
+  const raw = perfilNome || metadata?.full_name || metadata?.nome || metadata?.name || '';
   const name = raw.trim();
   if (!name) return fallback;
   return name.split(/\s+/)[0];
@@ -16,9 +17,10 @@ export function resolveDisplayName(
 
 export function resolveFullName(
   metadata?: UserMetadata,
-  fallback = ''
+  fallback = '',
+  perfilNome?: string | null
 ): string {
-  const raw = metadata?.full_name || metadata?.nome || metadata?.name || '';
+  const raw = perfilNome || metadata?.full_name || metadata?.nome || metadata?.name || '';
   const name = raw.trim();
   return name || fallback;
 }

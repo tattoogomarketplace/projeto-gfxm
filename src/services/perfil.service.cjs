@@ -20,8 +20,11 @@ async function obterPerfil(userId) {
     select: {
       id: true,
       email: true,
+      nome: true,
       role: true,
       kyc_status: true,
+      has_seen_welcome_notice: true,
+      bank_account: true,
       deleted_at: true,
       agenda_bloqueada: true,
     },

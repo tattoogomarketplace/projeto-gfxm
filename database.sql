@@ -113,6 +113,8 @@ AS $$
 DECLARE
   v_email text;
   v_role public.perfil_role;
+  v_nome text;
+  v_terms boolean;
 BEGIN
   v_email := lower(trim(both FROM COALESCE(NEW.email, NEW.raw_user_meta_data->>'email', '')));
   IF v_email = '' THEN
@@ -125,11 +127,24 @@ BEGIN
     ELSE 'cliente'::public.perfil_role
   END;
 
-  INSERT INTO public.perfis (id, email, role, kyc_status, has_seen_welcome_notice)
-  VALUES (NEW.id, v_email, v_role, 'pendente'::public.kyc_status, false)
+  v_nome := NULLIF(trim(both FROM COALESCE(
+    NEW.raw_user_meta_data->>'nome',
+    NEW.raw_user_meta_data->>'full_name',
+    ''
+  )), '');
+
+  v_terms := COALESCE(
+    (NEW.raw_user_meta_data->>'accepted_terms') IN ('true', 't', '1'),
+    false
+  );
+
+  INSERT INTO public.perfis (id, email, nome, role, kyc_status, has_seen_welcome_notice)
+  VALUES (NEW.id, v_email, v_nome, v_role, 'pendente'::public.kyc_status, v_terms)
   ON CONFLICT (id) DO UPDATE
     SET
       email = EXCLUDED.email,
+      nome = COALESCE(EXCLUDED.nome, public.perfis.nome),
+      has_seen_welcome_notice = public.perfis.has_seen_welcome_notice OR EXCLUDED.has_seen_welcome_notice,
       deleted_at = NULL,
       updated_at = now();
 
@@ -151,9 +166,11 @@ $$;
 CREATE TABLE public.perfis (
   id                      uuid PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
   email                   text NOT NULL,
+  nome                    text,
   role                    public.perfil_role NOT NULL DEFAULT 'cliente',
   kyc_status              public.kyc_status NOT NULL DEFAULT 'pendente',
   has_seen_welcome_notice boolean NOT NULL DEFAULT false,
+  bank_account            jsonb,
   cidade                  text,
   estado                  text,
   cnpj                    text,
@@ -161,6 +178,7 @@ CREATE TABLE public.perfis (
   agenda_bloqueada        boolean NOT NULL DEFAULT false,
   created_at              timestamptz NOT NULL DEFAULT now(),
   updated_at              timestamptz NOT NULL DEFAULT now(),
+  deleted_at              timestamptz,
 
   CONSTRAINT perfis_email_lowercase CHECK (email = lower(email)),
   CONSTRAINT perfis_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
@@ -174,6 +192,7 @@ CREATE INDEX perfis_kyc_status_idx ON public.perfis (kyc_status);
 CREATE INDEX perfis_cidade_idx ON public.perfis (cidade);
 CREATE INDEX perfis_estado_idx ON public.perfis (estado);
 CREATE INDEX perfis_geo_idx ON public.perfis (cidade, estado) WHERE cidade IS NOT NULL;
+CREATE INDEX perfis_deleted_at_idx ON public.perfis (deleted_at);
 
 CREATE TRIGGER perfis_set_updated_at
   BEFORE UPDATE ON public.perfis
@@ -646,6 +665,44 @@ CREATE POLICY "estudio_tatuadores_select_related"
   );
 
 ALTER TABLE public.agendamentos DROP CONSTRAINT IF EXISTS agendamentos_tatuador_aprovado_check;
+
+-- -----------------------------------------------------------------------------
+-- Fase 1: colunas e RPC que o front já exige (idempotente em bases existentes)
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS nome text;
+ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS bank_account jsonb;
+ALTER TABLE public.perfis ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+CREATE INDEX IF NOT EXISTS perfis_deleted_at_idx ON public.perfis (deleted_at);
+
+CREATE OR REPLACE FUNCTION public.aceitar_termos()
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Nao autenticado.';
+  END IF;
+
+  UPDATE public.perfis
+  SET
+    has_seen_welcome_notice = true,
+    updated_at = now()
+  WHERE id = auth.uid()
+    AND deleted_at IS NULL;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Perfil nao encontrado.';
+  END IF;
+
+  RETURN true;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.aceitar_termos() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.aceitar_termos() TO service_role;
 
 -- =============================================================================
 -- Notas de segurança (operacionais)
