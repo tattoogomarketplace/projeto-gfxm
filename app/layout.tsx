@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -48,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={ptBR}>
       <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
         <head>
           <meta name="theme-color" content="#121212" />

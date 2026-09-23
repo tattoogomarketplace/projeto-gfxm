@@ -14,15 +14,7 @@ async function fromCatalogoApi<T>(path: string): Promise<T | null> {
 
 export async function getCachedFeed() {
   const cached = await fromCatalogoApi<Array<{ id: string; url_imagem: string; likes_count: number; estilo: string }>>('/api/catalogo/feed');
-  if (cached) return cached;
-  const { createClient } = await import('@/lib/supabase');
-  const supabase = createClient();
-  const { data } = await supabase
-    .from('portfolios')
-    .select('id, url_imagem, likes_count, estilo')
-    .order('created_at', { ascending: false })
-    .limit(24);
-  return data || [];
+  return cached || [];
 }
 
 export async function getCachedArtistas(filtros?: { cidade?: string; estado?: string }) {
