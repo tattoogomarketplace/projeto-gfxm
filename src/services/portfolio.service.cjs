@@ -2,7 +2,6 @@ const sharp = require("sharp");
 const validator = require("validator");
 const { prisma } = require("./prisma.service.cjs");
 const { moderateTattooImage } = require("./gemini.service.cjs");
-const { getStorageClient } = require("./supabase-auth.service.cjs");
 const { cacheDel } = require("./cache.service.cjs");
 
 async function prepareImage(imagemBase64) {
@@ -36,40 +35,33 @@ async function uploadValidatedPortfolio({ user, accessToken, artistaId, titulo, 
     throw error;
   }
 
-  const storage = getStorageClient(accessToken);
-  const filePath = `${user.id}/${Date.now()}.jpg`;
-  const { error: uploadError } = await storage.storage
-    .from("portfolios")
-    .upload(filePath, buffer, { contentType: "image/jpeg", upsert: false });
-  if (uploadError) throw uploadError;
+  void buffer;
+  void accessToken;
+  // TODO: Refatorar para Prisma
+  // const storage = getStorageClient(accessToken);
+  // const filePath = `${user.id}/${Date.now()}.jpg`;
+  // const { error: uploadError } = await storage.storage
+  //   .from("portfolios")
+  //   .upload(filePath, buffer, { contentType: "image/jpeg", upsert: false });
+  // if (uploadError) throw uploadError;
+  // const { data: publicData } = storage.storage.from("portfolios").getPublicUrl(filePath);
+  // const urlImagem = publicData?.publicUrl;
+  const error = new Error("Upload de storage pendente de migracao (Fase 3).");
+  error.status = 501;
+  throw error;
 
-  const { data: publicData } = storage.storage.from("portfolios").getPublicUrl(filePath);
-  const urlImagem = publicData?.publicUrl;
-  if (!urlImagem || !/^https:\/\//i.test(urlImagem)) {
-    const error = new Error("Falha ao gerar URL pública da imagem.");
-    error.status = 500;
-    throw error;
-  }
-
-  const portfolio = await prisma.portfolio.create({
-    data: {
-      tatuador_id: user.id,
-      descricao: validator.escape(titulo),
-      estilo: validator.escape(estilo),
-      url_imagem: urlImagem,
-      likes_count: 0,
-    },
-    select: {
-      id: true,
-      url_imagem: true,
-      estilo: true,
-      likes_count: true,
-      tatuador_id: true,
-    },
-  });
-
-  await cacheDel("feed:portfolios:v1");
-  return portfolio;
+  // TODO: Refatorar para Prisma
+  // const portfolio = await prisma.portfolio.create({
+  //   data: {
+  //     tatuador_id: user.id,
+  //     descricao: validator.escape(titulo),
+  //     estilo: validator.escape(estilo),
+  //     url_imagem: urlImagem,
+  //     likes_count: 0,
+  //   },
+  // });
+  // await cacheDel("feed:portfolios:v1");
+  // return portfolio;
 }
 
 async function incrementLike(userId, portfolioId) {
