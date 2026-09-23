@@ -1,11 +1,11 @@
-const { createClient } = require("@supabase/supabase-js");
-const { supabaseUrl, supabaseAnonKey } = require("../config/env.cjs");
+const MIGRATION_MESSAGE =
+  "Fase 1: autenticacao Supabase desativada. Clerk entra na Fase 2.";
 
-function createAuthClient(accessToken) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    ...(accessToken ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } } : {}),
-  });
+function authUnavailable(status = 503) {
+  const error = new Error(MIGRATION_MESSAGE);
+  error.status = status;
+  error.code = "CLERK_MIGRATION_PENDING";
+  return error;
 }
 
 function extractBearerToken(req) {
@@ -13,50 +13,32 @@ function extractBearerToken(req) {
   return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 }
 
-async function getUserFromToken(token) {
-  const { data, error } = await createAuthClient(token).auth.getUser(token || undefined);
-  if (error || !data?.user) return null;
-  return data.user;
+function createAuthClient() {
+  throw authUnavailable();
 }
 
-async function signUp({ email, password, role, full_name, accepted_terms }) {
-  return createAuthClient().auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        role,
-        full_name,
-        nome: full_name,
-        accepted_terms: Boolean(accepted_terms),
-      },
-    },
-  });
+async function getUserFromToken() {
+  return null;
 }
 
-async function signInWithPassword({ email, password }) {
-  return createAuthClient().auth.signInWithPassword({ email, password });
+async function signUp() {
+  return { data: { user: null }, error: authUnavailable(501) };
 }
 
-async function sendOtp(email) {
-  return createAuthClient().auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: false,
-    },
-  });
+async function signInWithPassword() {
+  return { data: { session: null }, error: authUnavailable(501) };
 }
 
-async function verifyOtp({ email, token }) {
-  return createAuthClient().auth.verifyOtp({
-    email,
-    token,
-    type: "email",
-  });
+async function sendOtp() {
+  return { data: null, error: authUnavailable(501) };
 }
 
-function getStorageClient(accessToken) {
-  return createAuthClient(accessToken);
+async function verifyOtp() {
+  return { data: { user: null, session: null }, error: authUnavailable(501) };
+}
+
+function getStorageClient() {
+  throw authUnavailable();
 }
 
 module.exports = {

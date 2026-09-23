@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -47,27 +48,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
-      <head>
-        <meta name="theme-color" content="#121212" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-      </head>
-      <body className="font-sans antialiased h-full overflow-hidden">
-        <ErrorBoundary>
-          <Providers>
-            <ThemeProvider>
-              <PwaRegister />
-              <main className="h-full w-full overflow-y-auto env-safe-area">
-                <div className="max-w-app mx-auto min-h-full">
-                  {children}
-                </div>
-              </main>
-            </ThemeProvider>
-          </Providers>
-        </ErrorBoundary>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
+        <head>
+          <meta name="theme-color" content="#121212" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <link rel="manifest" href="/manifest.json" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        </head>
+        <body className="font-sans antialiased h-full overflow-hidden">
+          <ErrorBoundary>
+            <Providers>
+              <ThemeProvider>
+                <PwaRegister />
+                <main className="h-full w-full overflow-y-auto env-safe-area">
+                  <div className="max-w-app mx-auto min-h-full">
+                    {children}
+                  </div>
+                </main>
+              </ThemeProvider>
+            </Providers>
+          </ErrorBoundary>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
