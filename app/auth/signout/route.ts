@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   const requestUrl = new URL(request.url)

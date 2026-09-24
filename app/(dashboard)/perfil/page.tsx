@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';

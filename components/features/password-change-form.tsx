@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 
 export function PasswordChangeForm() {
   const [newPassword, setNewPassword] = useState('');

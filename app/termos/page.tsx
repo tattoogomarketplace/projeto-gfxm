@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TERMS_TEXT } from '@/lib/terms';

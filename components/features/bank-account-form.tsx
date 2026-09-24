@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   const [bank, setBank] = useState('');

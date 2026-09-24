@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 
 interface Message {

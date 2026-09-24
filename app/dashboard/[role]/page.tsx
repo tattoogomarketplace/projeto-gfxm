@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
 import { resolveDisplayName } from '@/lib/utils/display-name';
 

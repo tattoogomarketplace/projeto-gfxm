@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { resolveDisplayName, resolveFullName } from '@/lib/utils/display-name';
 import { normalizeAppRole } from '@/lib/utils/auth-redirect';

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { getCachedCidades } from '@/lib/catalogo';
 
 export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => {

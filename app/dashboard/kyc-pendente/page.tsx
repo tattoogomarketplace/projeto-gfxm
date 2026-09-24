@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { KYCForm } from '@/components/features/kyc-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';

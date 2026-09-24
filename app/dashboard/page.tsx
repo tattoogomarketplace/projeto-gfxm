@@ -1,7 +1,8 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
+// TODO: Migrar lógica para Prisma e Clerk
+// import { createClient } from '@/lib/supabase';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
