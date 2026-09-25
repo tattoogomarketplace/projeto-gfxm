@@ -70,12 +70,13 @@ export default function LoginPage() {
   };
 
   const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
     if (isTurnstileEnabled() && !token) {
       toast.error('Por favor, valide o Turnstile.');
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     console.log("[DEBUG] 1. Início do onSubmit, botão travado");
     console.log("[DEBUG] 2. Clerk isLoaded:", isLoaded);
     try {
@@ -260,7 +261,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit, (errors) => { console.error("[DEBUG FORM ERRO INVISÍVEL]:", errors); })} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, (errors) => { console.error("[DEBUG FORM ERRO INVISÍVEL]:", errors); })} className="space-y-6" noValidate>
           <div className="space-y-4">
             <Input
               label="E-mail"
