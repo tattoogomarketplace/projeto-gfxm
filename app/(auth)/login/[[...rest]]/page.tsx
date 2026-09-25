@@ -265,41 +265,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
         </div>
 
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            console.log("[DEBUG RAW] 1. Botão clicado! Ignorando validação Zod.");
-            setIsLoading(true);
-
-            try {
-              const formData = getValues() as LoginFormValues & {
-                cpf?: string;
-                password?: string;
-                senha?: string;
-              };
-              console.log("[DEBUG RAW] 2. Dados capturados:", formData);
-
-              console.log("[DEBUG RAW] 3. Disparando para o Clerk...");
-              const result = await signIn.create({
-                identifier: formData.email || formData.cpf,
-                password: formData.password || formData.senha,
-              });
-
-              console.log("[DEBUG RAW] 4. Sucesso Clerk:", result);
-              if (result.status === 'complete') {
-                await setActive({ session: result.createdSessionId });
-                window.location.href = '/dashboard';
-              }
-            } catch (err) {
-              console.error("[DEBUG RAW] 5. Erro no Clerk:", err);
-            } finally {
-              setIsLoading(false);
-              console.log("[DEBUG RAW] 6. Loading destravado.");
-            }
-          }}
-          className="space-y-6"
-          noValidate
-        >
+        <form className="space-y-6" noValidate>
           <div className="space-y-4">
             <Input
               label="E-mail"
@@ -313,8 +279,35 @@ export default function LoginPage() {
           </div>
 
           <button
-            type="submit"
+            type="button"
             disabled={isLoading}
+            onClick={async (e) => {
+              e.preventDefault();
+              console.log("[DEBUG FATAL] 1. Clique interceptado direto no botão!");
+              setIsLoading(true);
+              try {
+                const formData = getValues() as LoginFormValues & {
+                  cpf?: string;
+                  password?: string;
+                  senha?: string;
+                };
+                console.log("[DEBUG FATAL] 2. Dados capturados:", formData);
+                const result = await signIn.create({
+                  identifier: formData.email || formData.cpf,
+                  password: formData.password || formData.senha,
+                });
+                console.log("[DEBUG FATAL] 3. Resposta Clerk:", result);
+                if (result.status === 'complete') {
+                  await setActive({ session: result.createdSessionId });
+                  window.location.href = '/dashboard';
+                }
+              } catch (err) {
+                console.error("[DEBUG FATAL] 4. ERRO CLERK:", err);
+              } finally {
+                setIsLoading(false);
+                console.log("[DEBUG FATAL] 5. UI destravada.");
+              }
+            }}
             className="w-full rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
