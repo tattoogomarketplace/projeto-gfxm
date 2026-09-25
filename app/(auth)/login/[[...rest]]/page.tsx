@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
 import { useClerk, useSignIn } from '@clerk/nextjs';
 import { Input } from '@/components/input';
 import Link from 'next/link';
@@ -42,6 +41,7 @@ export default function LoginPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(60);
   const [resending, setResending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
@@ -71,28 +71,52 @@ export default function LoginPage() {
     });
   };
 
-  const mutation = useMutation({
-    mutationFn: async (data: LoginFormValues & { turnstileToken: string }) => {
-      await sendEmailOtp(data.email.trim().toLowerCase());
-      return data.email.trim().toLowerCase();
-    },
-    onSuccess: (email) => {
-      setEmailForVerification(email);
-      setIsVerifying(true);
-      setResendSeconds(60);
-      toast.success('Código de 8 dígitos enviado para o seu e-mail.');
-    },
-    onError: (error: unknown) => {
-      toast.error(clerkErrorMessage(error) || 'Erro ao enviar o código.');
-    },
-  });
-
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     if (isTurnstileEnabled() && !token) {
       toast.error('Por favor, valide o Turnstile.');
       return;
     }
-    mutation.mutate({ ...data, turnstileToken: token || 'dev-bypass' });
+
+    setIsLoading(true);
+    try {
+      if (!signIn || !setActive) {
+        throw new Error('Clerk ainda não está pronto.');
+      }
+
+      const result = await signIn.create({
+        identifier: data.email.trim().toLowerCase(),
+      });
+      console.log('CLERK SUCCESS:', result);
+
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId });
+        router.push('/dashboard');
+        return;
+      }
+
+      const emailFactor = result.supportedFirstFactors?.find(
+        (factor) => factor.strategy === 'email_code'
+      );
+
+      if (!emailFactor || emailFactor.strategy !== 'email_code') {
+        throw new Error('Login por código de e-mail não está disponível para esta conta.');
+      }
+
+      await signIn.prepareFirstFactor({
+        strategy: 'email_code',
+        emailAddressId: emailFactor.emailAddressId,
+      });
+
+      setEmailForVerification(data.email.trim().toLowerCase());
+      setIsVerifying(true);
+      setResendSeconds(60);
+      toast.success('Código de 8 dígitos enviado para o seu e-mail.');
+    } catch (err) {
+      console.error('CLERK ERROR:', err);
+      toast.error(clerkErrorMessage(err) || 'Erro ao enviar o código.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -127,12 +151,13 @@ export default function LoginPage() {
         strategy: 'email_code',
         code: otp,
       });
+      console.log('CLERK SUCCESS:', result);
 
-      if (result.status !== 'complete' || !result.createdSessionId) {
+      if (result.status === 'complete' && result.createdSessionId) {
+        await setActive({ session: result.createdSessionId });
+      } else {
         throw new Error('Sessão inválida após verificação.');
       }
-
-      await setActive({ session: result.createdSessionId });
 
       const clerkUser = clerk.user;
       const metadata = (clerkUser?.unsafeMetadata || clerkUser?.publicMetadata || {}) as Record<
@@ -163,6 +188,7 @@ export default function LoginPage() {
       router.refresh();
       return true;
     } catch (err) {
+      console.error('CLERK ERROR:', err);
       toast.error(clerkErrorMessage(err) || 'Código inválido.');
       return false;
     }
@@ -241,10 +267,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={mutation.isPending}
+            disabled={isLoading}
             className="w-full rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
-            {mutation.isPending ? (
+            {isLoading ? (
               <TattooMachineLoader compact label="Enviando código" />
             ) : (
               'Receber código'
