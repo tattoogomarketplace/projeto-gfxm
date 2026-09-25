@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -93,6 +93,7 @@ export default function RegisterPage() {
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
+  const [forceShow, setForceShow] = useState(false);
 
   const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -223,7 +224,12 @@ export default function RegisterPage() {
     await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
   };
 
-  if (!isLoaded) {
+  useEffect(() => {
+    const timer = setTimeout(() => setForceShow(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isLoaded && !forceShow) {
     return (
       <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
         <TattooMachineLoader compact label="Carregando" />
