@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   const {
     register,
-    handleSubmit,
+    getValues,
     formState,
     formState: { errors },
   } = useForm<LoginFormValues>({
@@ -265,7 +265,41 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit, (errors) => { console.error("[DEBUG FORM ERRO INVISÍVEL]:", errors); })} className="space-y-6" noValidate>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            console.log("[DEBUG RAW] 1. Botão clicado! Ignorando validação Zod.");
+            setIsLoading(true);
+
+            try {
+              const formData = getValues() as LoginFormValues & {
+                cpf?: string;
+                password?: string;
+                senha?: string;
+              };
+              console.log("[DEBUG RAW] 2. Dados capturados:", formData);
+
+              console.log("[DEBUG RAW] 3. Disparando para o Clerk...");
+              const result = await signIn.create({
+                identifier: formData.email || formData.cpf,
+                password: formData.password || formData.senha,
+              });
+
+              console.log("[DEBUG RAW] 4. Sucesso Clerk:", result);
+              if (result.status === 'complete') {
+                await setActive({ session: result.createdSessionId });
+                window.location.href = '/dashboard';
+              }
+            } catch (err) {
+              console.error("[DEBUG RAW] 5. Erro no Clerk:", err);
+            } finally {
+              setIsLoading(false);
+              console.log("[DEBUG RAW] 6. Loading destravado.");
+            }
+          }}
+          className="space-y-6"
+          noValidate
+        >
           <div className="space-y-4">
             <Input
               label="E-mail"
