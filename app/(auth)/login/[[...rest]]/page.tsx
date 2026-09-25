@@ -6,23 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useClerk, useSignIn } from '@clerk/nextjs';
-import dynamic from 'next/dynamic';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { getTurnstileSiteKey, isTurnstileEnabled } from '@/components/features/turnstile-guard';
 import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 
-const Turnstile = dynamic(
-  () => import('@marsidev/react-turnstile').then((mod) => mod.Turnstile),
-  { ssr: false }
-);
-
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  turnstileToken: z.string().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -41,8 +33,6 @@ export default function LoginPage() {
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
-  const [token, setToken] = useState<string>();
-  const turnstileSiteKey = getTurnstileSiteKey();
   const [emailForVerification, setEmailForVerification] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(60);
@@ -81,11 +71,6 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      if (isTurnstileEnabled() && !token) {
-        toast.error('Por favor, valide o Turnstile.');
-        return;
-      }
-
       if (!signIn || !setActive) {
         throw new Error('Clerk ainda não está pronto.');
       }
@@ -273,15 +258,6 @@ export default function LoginPage() {
               {...register('email')}
               error={errors.email?.message}
             />
-            {turnstileSiteKey ? (
-              <Turnstile
-                siteKey={turnstileSiteKey}
-                onSuccess={(value) => setToken(value)}
-                onError={() => setToken(undefined)}
-                onExpire={() => setToken(undefined)}
-                onTimeout={() => setToken(undefined)}
-              />
-            ) : null}
           </div>
 
           <button
