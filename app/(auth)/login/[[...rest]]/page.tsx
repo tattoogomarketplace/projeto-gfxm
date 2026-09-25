@@ -48,6 +48,7 @@ export default function LoginPage() {
   const [resendSeconds, setResendSeconds] = useState(60);
   const [resending, setResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forceShow, setForceShow] = useState(false);
 
   const {
     register,
@@ -125,6 +126,11 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => setForceShow(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (!isVerifying || resendSeconds <= 0) return;
     const timer = window.setInterval(() => {
       setResendSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
@@ -197,7 +203,9 @@ export default function LoginPage() {
     }
   };
 
-  if (!isLoaded) {
+  console.log("[DEBUG LOGIN STATE] isLoaded:", isLoaded, "forceShow:", forceShow);
+
+  if (!isLoaded && !forceShow) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
         <TattooMachineLoader compact label="Carregando" />
