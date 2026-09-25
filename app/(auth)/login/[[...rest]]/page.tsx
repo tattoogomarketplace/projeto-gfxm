@@ -44,8 +44,7 @@ export default function LoginPage() {
 
   const {
     register,
-    getValues,
-    formState,
+    handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -73,31 +72,22 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    if (isTurnstileEnabled() && !token) {
-      toast.error('Por favor, valide o Turnstile.');
-      setIsLoading(false);
-      return;
-    }
-
-    console.log("[DEBUG] 1. Início do onSubmit, botão travado");
-    console.log("[DEBUG] 2. Clerk isLoaded:", isLoaded);
     try {
+      if (isTurnstileEnabled() && !token) {
+        toast.error('Por favor, valide o Turnstile.');
+        return;
+      }
+
       if (!signIn || !setActive) {
         throw new Error('Clerk ainda não está pronto.');
       }
 
-      console.log("[DEBUG] 3. Disparando signIn.create...");
       const result = await signIn.create({
         identifier: data.email.trim().toLowerCase(),
       });
-      console.log("[DEBUG] 4. Resposta do signIn.create:", result);
-      console.log("[DEBUG] 5. Status:", result?.status);
-      console.log('CLERK SUCCESS:', result);
 
       if (result.status === 'complete') {
-        console.log("[DEBUG] 6. Disparando setActive...");
         await setActive({ session: result.createdSessionId });
-        console.log("[DEBUG] 7. setActive concluído, redirecionando");
         window.location.href = '/dashboard';
         return;
       }
@@ -110,23 +100,19 @@ export default function LoginPage() {
         throw new Error('Login por código de e-mail não está disponível para esta conta.');
       }
 
-      console.log("[DEBUG] 6. Disparando signIn.prepareFirstFactor...");
       await signIn.prepareFirstFactor({
         strategy: 'email_code',
         emailAddressId: emailFactor.emailAddressId,
       });
-      console.log("[DEBUG] 7. Resposta do prepareFirstFactor concluída");
 
       setEmailForVerification(data.email.trim().toLowerCase());
       setIsVerifying(true);
       setResendSeconds(60);
       toast.success('Código de 8 dígitos enviado para o seu e-mail.');
     } catch (err) {
-      console.error("[DEBUG] ERRO CAPTURADO NO CATCH:", err);
       console.error('CLERK ERROR:', err);
       toast.error(clerkErrorMessage(err) || 'Erro ao enviar o código.');
     } finally {
-      console.log("[DEBUG] FINALLY ACIONADO, botão destravado");
       setIsLoading(false);
     }
   };
@@ -163,7 +149,6 @@ export default function LoginPage() {
         strategy: 'email_code',
         code: otp,
       });
-      console.log('CLERK SUCCESS:', result);
 
       if (result.status === 'complete' && result.createdSessionId) {
         await setActive({ session: result.createdSessionId });
@@ -204,8 +189,6 @@ export default function LoginPage() {
       return false;
     }
   };
-
-  console.log("[DEBUG ZOD LIVEDATA] Erros atuais:", formState.errors);
 
   if (!isLoaded) {
     return (
@@ -257,26 +240,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#121212] px-4">
-      <button
-        type="button"
-        style={{ background: 'red', color: 'white', padding: '20px', zIndex: 9999, position: 'relative', width: '100%', fontSize: '20px', fontWeight: 'bold' }}
-        onClick={async (e) => {
-          e.preventDefault();
-          console.log("[EMERGENCIA] 1. Botão isolado clicado!");
-          try {
-            console.log("[EMERGENCIA] 2. Disparando Clerk...");
-            const result = await signIn.create({
-              identifier: "teste@teste.com",
-              password: "senha",
-            });
-            console.log("[EMERGENCIA] 3. Resposta Clerk:", result);
-          } catch (err) {
-            console.error("[EMERGENCIA] 4. ERRO CLERK CAPTURADO:", err);
-          }
-        }}
-      >
-        {'\u{1F525}'} TESTE DIRETO CLERK {'\u{1F525}'}
-      </button>
       <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
@@ -285,7 +248,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
         </div>
 
-        <form className="space-y-6" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           <div className="space-y-4">
             <Input
               label="E-mail"
@@ -299,35 +262,8 @@ export default function LoginPage() {
           </div>
 
           <button
-            type="button"
+            type="submit"
             disabled={isLoading}
-            onClick={async (e) => {
-              e.preventDefault();
-              console.log("[DEBUG FATAL] 1. Clique interceptado direto no botão!");
-              setIsLoading(true);
-              try {
-                const formData = getValues() as LoginFormValues & {
-                  cpf?: string;
-                  password?: string;
-                  senha?: string;
-                };
-                console.log("[DEBUG FATAL] 2. Dados capturados:", formData);
-                const result = await signIn.create({
-                  identifier: formData.email || formData.cpf,
-                  password: formData.password || formData.senha,
-                });
-                console.log("[DEBUG FATAL] 3. Resposta Clerk:", result);
-                if (result.status === 'complete') {
-                  await setActive({ session: result.createdSessionId });
-                  window.location.href = '/dashboard';
-                }
-              } catch (err) {
-                console.error("[DEBUG FATAL] 4. ERRO CLERK:", err);
-              } finally {
-                setIsLoading(false);
-                console.log("[DEBUG FATAL] 5. UI destravada.");
-              }
-            }}
             className="w-full rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (

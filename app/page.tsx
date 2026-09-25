@@ -17,10 +17,14 @@ export default function Home() {
     }
   };
 
-  const handleAcceptTerms = () => {
-    localStorage.setItem('termsAccepted', 'true');
-    setShowTerms(false);
-    router.push('/login');
+  const handleAcceptTerms = async () => {
+    try {
+      localStorage.setItem('termsAccepted', 'true');
+      setShowTerms(false);
+      router.push('/login');
+    } catch (error) {
+      console.error('Falha ao aceitar termos:', error);
+    }
   };
 
   return (

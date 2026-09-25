@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TERMS_TEXT } from '@/lib/terms';
@@ -16,48 +14,27 @@ export default function TermsPage() {
   const [loading, setLoading] = useState(false);
   const [canAccept, setCanAccept] = useState(false);
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, role } = useAuthStore();
 
-  const persistAceite = async (userId: string) => {
-    const supabase = createClient();
-    const { error: rpcError } = await supabase.rpc('aceitar_termos');
-    if (!rpcError) return;
-
-    const { error: updateError } = await supabase
-      .from('perfis')
-      .update({ has_seen_welcome_notice: true })
-      .eq('id', userId);
-
-    if (!updateError) return;
-
+  const persistAceite = async () => {
+    localStorage.setItem('termsAccepted', 'true');
+    if (!user?.id) return;
     try {
       await api.post('/api/auth/aceite-termos');
     } catch {
-      throw new Error(rpcError.message || updateError.message || 'Falha ao persistir aceite.');
+      return;
     }
   };
 
   const handleAccept = async () => {
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
-      const userId = sessionData.user?.id || user?.id;
-      if (sessionError || !userId) {
-        throw new Error('Sessao expirada. Faca login novamente.');
+      await persistAceite();
+      if (user?.id) {
+        router.push(dashboardPathForRole(role));
+      } else {
+        router.push('/login');
       }
-
-      await persistAceite(userId);
-
-      const { data: perfil } = await supabase
-        .from('perfis')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const role = perfil?.role || (sessionData.user?.user_metadata?.role as string) || 'cliente';
-      router.push(dashboardPathForRole(role));
-      router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao aceitar termos.';
       console.error('Falha ao aceitar termos:', error);
@@ -82,11 +59,10 @@ export default function TermsPage() {
         >
           {TERMS_TEXT}
         </div>
-        <NeonButton onClick={handleAccept} disabled={loading || !canAccept} className="w-full">
+        <NeonButton type="button" onClick={handleAccept} disabled={loading || !canAccept} className="w-full">
           {loading ? <TattooMachineLoader compact label="Processando" /> : canAccept ? 'Confirmar e Prosseguir' : 'Leia até o final para aceitar'}
         </NeonButton>
       </div>
     </div>
   );
 }
-

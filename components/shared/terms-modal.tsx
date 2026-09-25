@@ -7,11 +7,23 @@ import { TERMS_TEXT } from '@/lib/terms';
 interface TermsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAccept: () => void;
+  onAccept: () => void | Promise<void>;
 }
 
 export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
   const [canAccept, setCanAccept] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+
+  const handleAccept = async () => {
+    if (isAccepting || !canAccept) return;
+    setIsAccepting(true);
+    try {
+      await Promise.resolve(onAccept());
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -40,15 +52,16 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
             </div>
             <div className="flex gap-4">
               <button
-                disabled={!canAccept}
-                onClick={onAccept}
+                type="button"
+                disabled={!canAccept || isAccepting}
+                onClick={handleAccept}
                 className={`flex-1 font-bold py-3 rounded-xl transition-all ${
-                  canAccept 
+                  canAccept && !isAccepting
                     ? 'bg-amber-500 hover:bg-amber-600 text-black' 
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 }`}
               >
-                {canAccept ? 'Aceito os Termos' : 'Leia até o final para aceitar'}
+                {isAccepting ? 'Processando...' : canAccept ? 'Aceito os Termos' : 'Leia até o final para aceitar'}
               </button>
             </div>
           </motion.div>
