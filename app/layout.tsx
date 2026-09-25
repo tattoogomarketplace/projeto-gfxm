@@ -4,7 +4,6 @@ import { ptBR } from "@clerk/localizations";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
@@ -58,18 +57,16 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         </head>
         <body className="font-sans antialiased h-full overflow-hidden">
-          <ErrorBoundary>
-            <Providers>
-              <ThemeProvider>
-                <PwaRegister />
-                <main className="h-full w-full overflow-y-auto env-safe-area">
-                  <div className="max-w-app mx-auto min-h-full">
-                    {children}
-                  </div>
-                </main>
-              </ThemeProvider>
-            </Providers>
-          </ErrorBoundary>
+          <Providers>
+            <ThemeProvider>
+              <PwaRegister />
+              <main className="h-full w-full overflow-y-auto env-safe-area">
+                <div className="max-w-app mx-auto min-h-full">
+                  {children}
+                </div>
+              </main>
+            </ThemeProvider>
+          </Providers>
         </body>
       </html>
     </ClerkProvider>

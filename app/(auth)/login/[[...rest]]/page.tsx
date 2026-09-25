@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { useClerk, useSignIn } from '@clerk/nextjs';
 import { Input } from '@/components/input';
 import Link from 'next/link';
@@ -31,7 +30,6 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -90,7 +88,7 @@ export default function LoginPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
         return;
       }
 
@@ -184,8 +182,7 @@ export default function LoginPage() {
         role === 'tatuador' && kycStatus !== 'aprovado'
           ? postSignupPathForRole(role)
           : dashboardPathForRole(role);
-      router.push(nextPath);
-      router.refresh();
+      window.location.href = nextPath;
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
