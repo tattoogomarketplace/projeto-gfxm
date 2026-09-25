@@ -257,6 +257,26 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#121212] px-4">
+      <button
+        type="button"
+        style={{ background: 'red', color: 'white', padding: '20px', zIndex: 9999, position: 'relative', width: '100%', fontSize: '20px', fontWeight: 'bold' }}
+        onClick={async (e) => {
+          e.preventDefault();
+          console.log("[EMERGENCIA] 1. Botão isolado clicado!");
+          try {
+            console.log("[EMERGENCIA] 2. Disparando Clerk...");
+            const result = await signIn.create({
+              identifier: "teste@teste.com",
+              password: "senha",
+            });
+            console.log("[EMERGENCIA] 3. Resposta Clerk:", result);
+          } catch (err) {
+            console.error("[EMERGENCIA] 4. ERRO CLERK CAPTURADO:", err);
+          }
+        }}
+      >
+        {'\u{1F525}'} TESTE DIRETO CLERK {'\u{1F525}'}
+      </button>
       <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
