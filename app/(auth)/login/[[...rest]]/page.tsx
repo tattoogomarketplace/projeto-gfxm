@@ -260,7 +260,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, (errors) => { console.error("[DEBUG FORM ERRO INVISÍVEL]:", errors); })} className="space-y-6">
           <div className="space-y-4">
             <Input
               label="E-mail"
