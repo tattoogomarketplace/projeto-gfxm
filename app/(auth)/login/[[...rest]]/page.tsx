@@ -16,6 +16,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
+  turnstileToken: z.string().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -44,6 +45,7 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    formState,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -202,6 +204,8 @@ export default function LoginPage() {
       return false;
     }
   };
+
+  console.log("[DEBUG ZOD LIVEDATA] Erros atuais:", formState.errors);
 
   if (!isLoaded) {
     return (
