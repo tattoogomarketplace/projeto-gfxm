@@ -53,6 +53,7 @@ enum EstudioConviteStatus {
 
 model Perfil {
   id                             String     @id @db.Uuid
+  clerk_id                       String?    @unique
   email                          String
   nome                           String?
   cpf                            String?    @unique(map: "perfis_cpf_unique_idx")

@@ -55,6 +55,7 @@
     "sharp": "^0.35.3",
     "socket.io": "^4.8.3",
     "sonner": "^2.0.8",
+    "svix": "^2.5.0",
     "tailwind-merge": "^3.6.0",
     "validator": "^13.15.35",
     "zod": "^4.4.3",
