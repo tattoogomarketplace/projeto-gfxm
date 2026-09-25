@@ -76,18 +76,25 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
+    console.log("[DEBUG] 1. Início do onSubmit, botão travado");
+    console.log("[DEBUG] 2. Clerk isLoaded:", isLoaded);
     try {
       if (!signIn || !setActive) {
         throw new Error('Clerk ainda não está pronto.');
       }
 
+      console.log("[DEBUG] 3. Disparando signIn.create...");
       const result = await signIn.create({
         identifier: data.email.trim().toLowerCase(),
       });
+      console.log("[DEBUG] 4. Resposta do signIn.create:", result);
+      console.log("[DEBUG] 5. Status:", result?.status);
       console.log('CLERK SUCCESS:', result);
 
       if (result.status === 'complete') {
+        console.log("[DEBUG] 6. Disparando setActive...");
         await setActive({ session: result.createdSessionId });
+        console.log("[DEBUG] 7. setActive concluído, redirecionando");
         window.location.href = '/dashboard';
         return;
       }
@@ -100,19 +107,23 @@ export default function LoginPage() {
         throw new Error('Login por código de e-mail não está disponível para esta conta.');
       }
 
+      console.log("[DEBUG] 6. Disparando signIn.prepareFirstFactor...");
       await signIn.prepareFirstFactor({
         strategy: 'email_code',
         emailAddressId: emailFactor.emailAddressId,
       });
+      console.log("[DEBUG] 7. Resposta do prepareFirstFactor concluída");
 
       setEmailForVerification(data.email.trim().toLowerCase());
       setIsVerifying(true);
       setResendSeconds(60);
       toast.success('Código de 8 dígitos enviado para o seu e-mail.');
     } catch (err) {
+      console.error("[DEBUG] ERRO CAPTURADO NO CATCH:", err);
       console.error('CLERK ERROR:', err);
       toast.error(clerkErrorMessage(err) || 'Erro ao enviar o código.');
     } finally {
+      console.log("[DEBUG] FINALLY ACIONADO, botão destravado");
       setIsLoading(false);
     }
   };
