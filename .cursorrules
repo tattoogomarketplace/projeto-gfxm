@@ -13,11 +13,11 @@ Não quero suposições. Quero que você leia os arquivos (Componentes, Páginas
 AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 
 ### 1. MICRO-INTERAÇÕES, ÁUDIO E ANIMAÇÃO (REF: VÍDEO 1000164234.mp4)
-- [ ] VALIDAÇÃO REAL: A animação principal está travada e SÓ inicia após a promise do Supabase (ex: verificação do OTP de 6 dígitos) retornar status 200 de sucesso?
+- [ ] VALIDAÇÃO REAL: A animação principal está travada e SÓ inicia após a promise do Clerk (verificação do OTP de 6 dígitos) retornar status 200 de sucesso?
 - [ ] ANIMAÇÃO DA MÁQUINA DE TATUAR: O código aciona o comportamento de um "fullstack sênior animado", exibindo visualmente uma máquina de tatuagem em pleno funcionamento, ligada, tatuando os 6 dígitos numéricos na tela?
 - [ ] SINCRONIA SENSORIAL (ÁUDIO + UI): Existe o controle exato de milissegundos sincronizando o arquivo de áudio (o barulho contínuo da máquina de tatuagem batendo) com a renderização/desenho individual de cada número sendo "tatuado" na tela?
 - [ ] SOM DE SAÍDA E CONCLUSÃO: O áudio de sucesso/conclusão é disparado com precisão logo após a renderização do 6º dígito e o desligamento da máquina?
-- [ ] ESTADO DE ERRO (UI/UX): Se o OTP falhar no banco, existe uma animação de "Shake" (tremor) nos inputs com feedback visual vermelho?
+- [ ] ESTADO DE ERRO (UI/UX): Se o OTP falhar na verificação, existe uma animação de "Shake" (tremor) nos inputs com feedback visual vermelho?
 
 ### 2. POLIMENTO MOBILE-FIRST E PREPARAÇÃO PARA APK
 - [ ] AUTO-SUBMIT OTP: O fluxo faz o auto-submit (envio automático) no exato momento em que o 6º dígito é preenchido, eliminando a necessidade de apertar um botão de "Confirmar"?
@@ -30,7 +30,7 @@ AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 ### 3. AUTENTICAÇÃO E SEGURANÇA (CISO)
 - [ ] PII MASKING: O mascaramento de dados sensíveis (CPF, E-mails, Banco) está ativo com a função `***.123.456-**` nas UIs aplicáveis?
 - [ ] MODAL DE TERMOS DE USO: O z-index é 9999 forçando bloqueio no primeiro acesso, e o botão Neon Orange de aceite SÓ é ativado após o usuário fazer o scroll completo da leitura?
-- [ ] RLS (ROW LEVEL SECURITY): As políticas RLS do banco estão configuradas para blindar o vazamento de dados entre os perfis de Tatuador, Cliente e Estúdio?
+- [ ] SEGURANÇA DE DADOS: O Prisma e a API garantem a blindagem de vazamento de dados entre os perfis de Tatuador, Cliente e Estúdio, com validações no Backend (`server.cjs` / Route Handlers) antes de qualquer query no Neon DB?
 
 ### 4. PAINÉIS E REGRAS DE NEGÓCIO (RBAC)
 - [ ] PAINEL DO CLIENTE: O layout contém Feed de Inspiração? A função de curtir usa "Optimistic UI" (Cor Laranja imediata no click)? 
@@ -43,14 +43,12 @@ AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 - [ ] FILTRO DE TOXICIDADE: O filtro contra palavras de baixo calão está ativo nas funções de envio do chat?
 
 ### 6. MOTOR FINANCEIRO E GATEWAY (LÓGICA BLINDADA E TAXAS)
-- [ ] LÓGICA DE CHECKOUT E TAXAS (UI/UX): A interface do carrinho possui estado gerenciando a forma de pagamento selecionada? Regra Estrita: Se "PIX", o valor cobrado do cliente é exato (TattooGo absorve a taxa de transação). Se "Cartão de Crédito", a interface DEVE recalcular o total dinamicamente, repassando/embutindo a taxa do gateway e os juros diretamente no valor final do cliente, com um aviso visual transparente?
-- [ ] SEGURANÇA DE PAGAMENTO (BACKEND): O frontend envia estritamente a intenção (`servico_id`, `metodo_pagamento`) e NUNCA os valores financeiros calculados? O recálculo de taxas de cartão e a geração de links/payloads ocorrem de forma 100% blindada via Backend (Edge Functions no Supabase / Route Handlers integrados no `server.cjs`)?
-- [ ] IDEMPOTÊNCIA (CALÇÃO 25%): A lógica de cobrança de sinal via Pix/Cartão possui chaves de idempotência únicas (UUID por transação) para garantir que oscilações de rede não gerem cobrança dupla no cartão do cliente?
-- [ ] MATEMÁTICA DE SPLIT (WEBHOOK): A divisão dos valores é executada baseada em 100% do **Valor Líquido** original do serviço (ignorando os acréscimos do cartão pagos pelo cliente), e segue a condicional exata abaixo?
-  - **Cenário Autônomo:** Tatuador (90%), Plataforma TattooGo (9%), Fundo de Reserva (1%).
-  - **Cenário Estúdio:** Tatuador (88%), Plataforma TattooGo (8%), Estúdio (3%), Fundo de Reserva (1%).
+- [ ] LÓGICA DE CHECKOUT E TAXAS (UI/UX): A interface do carrinho possui estado gerenciando a forma de pagamento selecionada? Regra Estrita: Se "PIX", o valor cobrado do cliente é exato. Se "Cartão de Crédito", a interface DEVE recalcular o total dinamicamente, repassando a taxa do gateway diretamente no valor final com aviso visual transparente?
+- [ ] SEGURANÇA DE PAGAMENTO (BACKEND): O frontend envia estritamente a intenção (`servico_id`, `metodo_pagamento`) e NUNCA os valores calculados? O recálculo e payloads ocorrem de forma 100% blindada via Route Handlers no Next.js + Express?
+- [ ] IDEMPOTÊNCIA (CALÇÃO 25%): A lógica de cobrança possui chaves de idempotência únicas para garantir que oscilações de rede não gerem cobrança dupla?
+- [ ] MATEMÁTICA DE SPLIT (WEBHOOK): A divisão dos valores é executada baseada em 100% do Valor Líquido original do serviço (ignorando os acréscimos do cartão), seguindo a proporção exata Autônomo (90/9/1) ou Estúdio (88/8/3/1)?
 - [ ] CONSISTÊNCIA DE DB: O status da tabela `agendamentos` só é alterado de "pendente" para "pago" EXCLUSIVAMENTE após a webhook do gateway retornar o evento de sucesso para o backend?
-- [ ] CANCELAMENTO SEGURO COM REAUTENTICAÇÃO OTP (MÁQUINA DE TATUAR): O processo de cancelamento exige obrigatoriamente a inserção de e-mail e senha seguidos de verificação por código OTP. Esta tela de OTP de cancelamento **DEVE reutilizar exatamente o mesmo componente/layout imersivo de cadastro** (com a animação da máquina de tatuagem desenhando os números na tela, áudio contínuo sincronizado, haptic feedback e som de conclusão ao validar o status 200 do Supabase). Além disso, valida o prazo: se cancelado com mais de 3 dias, executa o fluxo OTP e cancela; se for menos de 3 dias, a UI bloqueia e direciona para "Contatar Suporte".
+- [ ] CANCELAMENTO SEGURO COM REAUTENTICAÇÃO OTP: O cancelamento exige inserção de e-mail/senha e verificação OTP de 6 dígitos. A tela de OTP reutiliza o layout imersivo da máquina de tatuagem (status 200 do Clerk). Regra de 3 dias de antecedência aplicada na UI.
 
 ### 7. DESIGN SYSTEM E UI/UX (APPLE-TIER)
 - [ ] FUNDO GLOBAL: O background global está estritamente configurado como Deep Graphite (#121212)?
@@ -62,8 +60,6 @@ AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 - [ ] O arquivo de configuração do Next.js contém os Headers de segurança obrigatórios (X-Frame-Options: DENY, X-Content-Type-Options: nosniff)?
 
 ### 9. ESTADO, OFFLINE-FIRST E OBSERVABILIDADE 
-- [ ] OFFLINE-FIRST E CACHE: O app possui estratégia de cache local (ex: Service Workers para PWA ou persistência de estado) para manter o Feed e os Chats recentes visualizáveis mesmo em oscilações de rede (3G/4G instável)?
-- [ ] TRATAMENTO DE ERROS GLOBAL: Existe uma camada de Error Boundaries (React) acoplada a um logger global para evitar "telas brancas" (crash silencioso) no celular do usuário sem o devido aviso ou fallback visual?
-- [ ] VALIDAÇÃO DE AMBIENTE E .ENV: O arquivo de configurações verifica rigorosamente se todas as variáveis de ambiente e chaves de API (Supabase, Stripe/MercadoPago) estão preenchidas no `.env` no momento do build, travando o processo de compilação do APK se faltar alguma?
-
-Gere o relatório rigoroso respondendo a cada tópico. Identifique qualquer gargalo que possa quebrar a experiência imersiva na hora de gerar a build do APK.
+- [ ] OFFLINE-FIRST E CACHE: O app possui estratégia de cache local para manter Feed e Chats recentes visualizáveis em rede instável?
+- [ ] TRATAMENTO DE ERROS GLOBAL: Existe uma camada de Error Boundaries acoplada a um logger global para evitar crash silencioso no app?
+- [ ] VALIDAÇÃO DE AMBIENTE E .ENV: O sistema verifica rigorosamente se todas as variáveis de ambiente e chaves de API estão preenchidas no `.env` no momento do build?
