@@ -1,8 +1,6 @@
 const sharp = require("sharp");
-const validator = require("validator");
 const { prisma } = require("./prisma.service.cjs");
 const { moderateTattooImage } = require("./gemini.service.cjs");
-const { cacheDel } = require("./cache.service.cjs");
 
 async function prepareImage(imagemBase64) {
   const imagemLimpa = imagemBase64.includes(",") ? imagemBase64.split(",")[1] : imagemBase64;
@@ -17,7 +15,7 @@ async function prepareImage(imagemBase64) {
   };
 }
 
-async function uploadValidatedPortfolio({ user, accessToken, artistaId, titulo, estilo, imagemBase64 }) {
+async function uploadValidatedPortfolio({ user, accessToken, artistaId, imagemBase64 }) {
   if (artistaId !== user.id) {
     const error = new Error("Artista inválido.");
     error.status = 403;

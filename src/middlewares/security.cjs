@@ -1,6 +1,5 @@
 const cors = require("cors");
 const helmet = require("helmet");
-const hpp = require("hpp");
 
 function applySecurity(app) {
   app.set("trust proxy", 1);

@@ -1,4 +1,5 @@
-function errorHandler(err, req, res, _next) {
+function errorHandler(err, req, res, next) {
+  void next;
   if (req.log) {
     req.log.error({ err }, "Unhandled API error");
   }

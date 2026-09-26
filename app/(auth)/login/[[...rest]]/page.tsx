@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useClerk, useSignIn } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
@@ -29,6 +30,7 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -81,7 +83,8 @@ export default function LoginPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
+        router.refresh();
         return;
       }
 
@@ -179,7 +182,8 @@ export default function LoginPage() {
         role === 'tatuador' && kycStatus !== 'aprovado'
           ? postSignupPathForRole(role)
           : dashboardPathForRole(role);
-      window.location.href = nextPath;
+      router.push(nextPath);
+      router.refresh();
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
