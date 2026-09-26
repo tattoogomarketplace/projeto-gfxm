@@ -101,7 +101,7 @@ export default function LoginPage() {
       setEmailForVerification(data.email.trim().toLowerCase());
       setIsVerifying(true);
       setResendSeconds(60);
-      toast.success('Código de 8 dígitos enviado para o seu e-mail.');
+      toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
       console.error('CLERK ERROR:', err);
       toast.error(clerkErrorMessage(err) || 'Erro ao enviar o código.');
@@ -188,8 +188,6 @@ export default function LoginPage() {
     }
   };
 
-  console.log("[DEBUG LOGIN STATE] isLoaded:", isLoaded, "forceShow:", forceShow);
-
   if (!isLoaded && !forceShow) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
@@ -207,15 +205,15 @@ export default function LoginPage() {
               Verificação <span className="text-orange-500">OTP</span>
             </h1>
             <p className="mt-2 text-sm text-zinc-400">
-              Digite o código de 8 dígitos enviado para {emailForVerification}
+              Digite o código de 6 dígitos enviado para {emailForVerification}
             </p>
           </div>
-          <TattooOTPInput onComplete={handleVerifyOtp} length={8} />
+          <TattooOTPInput onComplete={handleVerifyOtp} length={6} />
           <button
             type="button"
             onClick={handleResendOtp}
             disabled={resendSeconds > 0 || resending}
-            className="w-full text-center text-sm font-semibold text-orange-500 disabled:text-zinc-500 disabled:cursor-not-allowed hover:underline"
+            className="flex min-h-[44px] w-full items-center justify-center text-center text-sm font-semibold text-orange-500 disabled:text-zinc-500 disabled:cursor-not-allowed hover:underline"
           >
             {resending
               ? 'Reenviando...'
@@ -229,9 +227,9 @@ export default function LoginPage() {
               setIsVerifying(false);
               setEmailForVerification('');
             }}
-            className="w-full text-center text-sm text-zinc-500 hover:text-orange-500"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-zinc-800 text-sm font-semibold text-zinc-400 transition-colors hover:border-orange-500 hover:text-orange-500"
           >
-            Usar outro e-mail
+            Voltar
           </button>
         </div>
       </div>
@@ -246,6 +244,7 @@ export default function LoginPage() {
             TattooGo <span className="text-orange-500">MK</span>
           </h1>
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
+          <p className="mt-1 text-xs text-zinc-600">Enviaremos um código de 6 dígitos para o seu e-mail.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
@@ -263,12 +262,12 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
               <TattooMachineLoader compact label="Enviando código" />
             ) : (
-              'Receber código'
+              'Entrar'
             )}
           </button>
         </form>

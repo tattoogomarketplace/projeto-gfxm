@@ -7,7 +7,7 @@ import { useTattooMachine } from '@/hooks/use-tattoo-machine';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 
-const OTP_LENGTH = 8;
+const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SEC = 60;
 
 const ERROR_COPY = {
@@ -102,10 +102,17 @@ export function TattooOTPVerification({
 
     if (value.length > 1) {
       const pasteData = value.replace(/\D/g, '').slice(0, OTP_LENGTH).split('');
+      if (code.every((d) => d === '') && pasteData.length > 0) {
+        startTattooing();
+        playTattoo();
+      }
       const padded = [...pasteData, ...Array(OTP_LENGTH - pasteData.length).fill('')];
       setCode(padded);
+      if (pasteData.length > 0) triggerHaptic('light');
       if (pasteData.length === OTP_LENGTH) {
         completeVerification(pasteData.join(''));
+      } else if (pasteData.length > 0) {
+        inputs.current[Math.min(pasteData.length, OTP_LENGTH - 1)]?.focus();
       }
       return;
     }
@@ -124,7 +131,7 @@ export function TattooOTPVerification({
       triggerHaptic('light');
       if (index < OTP_LENGTH - 1) inputs.current[index + 1]?.focus();
     }
-    if (newCode.join('').length === OTP_LENGTH) {
+    if (newCode.every((d) => d !== '')) {
       completeVerification(newCode.join(''));
     }
   };
@@ -168,6 +175,8 @@ export function TattooOTPVerification({
                 type="text"
                 maxLength={1}
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                aria-label={`Dígito ${i + 1} de ${OTP_LENGTH}`}
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}

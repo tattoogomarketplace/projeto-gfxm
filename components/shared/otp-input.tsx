@@ -9,7 +9,7 @@ interface OtpInputProps {
   isLoading?: boolean;
 }
 
-export function OtpInput({ length = 8, onComplete, isLoading }: OtpInputProps) {
+export function OtpInput({ length = 6, onComplete, isLoading }: OtpInputProps) {
   const [otp, setOtp] = useState<string[]>(Array(length).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -55,7 +55,9 @@ export function OtpInput({ length = 8, onComplete, isLoading }: OtpInputProps) {
           ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
+          autoComplete="one-time-code"
           maxLength={1}
+          aria-label={`Dígito ${index + 1} de ${length}`}
           value={digit}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}

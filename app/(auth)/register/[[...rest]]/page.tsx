@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
-      toast.success('Código de 8 dígitos enviado para o seu e-mail.');
+      toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
       toast.error(clerkErrorMessage(err));
     } finally {
@@ -246,8 +246,18 @@ export default function RegisterPage() {
       <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
         <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
-          <p className="text-zinc-400 text-center mb-8">Digite o código de 8 dígitos enviado para {emailForVerification}</p>
+          <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
           <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} userRole={userRole} />
+          <button
+            type="button"
+            onClick={() => {
+              setIsVerifying(false);
+              setEmailForVerification('');
+            }}
+            className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-lg border border-zinc-800 text-sm font-semibold text-zinc-400 transition-colors hover:border-orange-500 hover:text-orange-500"
+          >
+            Voltar
+          </button>
         </div>
       </div>
     );
@@ -282,6 +292,7 @@ export default function RegisterPage() {
             label="Nome completo"
             type="text"
             autoComplete="name"
+            placeholder="Seu nome completo"
             {...register('nome')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={errors.nome?.message}
@@ -289,6 +300,7 @@ export default function RegisterPage() {
           <Input
             label="E-mail"
             type="email"
+            placeholder="seu@email.com"
             {...register('email')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={errors.email?.message}
@@ -297,6 +309,7 @@ export default function RegisterPage() {
             label="Senha"
             type="password"
             autoComplete="new-password"
+            placeholder="Mínimo 8 caracteres"
             {...register('password')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={errors.password?.message}
@@ -306,6 +319,7 @@ export default function RegisterPage() {
             label="Confirmar senha"
             type="password"
             autoComplete="new-password"
+            placeholder="Repita a senha"
             {...register('confirmPassword')}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
             error={
@@ -317,6 +331,7 @@ export default function RegisterPage() {
             label="CPF"
             inputMode="numeric"
             autoComplete="off"
+            placeholder="000.000.000-00"
             {...register('cpf', {
               onChange: (e) => {
                 const formatted = formatCpf(e.target.value);
@@ -379,7 +394,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !cpfIsValid}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
+            className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? <TattooMachineLoader compact label="Processando" /> : 'Cadastrar'}
           </button>

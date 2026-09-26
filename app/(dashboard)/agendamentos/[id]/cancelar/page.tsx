@@ -60,7 +60,7 @@ export default function CancelarAgendamentoPage() {
             <p className="text-zinc-400 mb-8">Esta ação exige confirmação de segurança via OTP.</p>
             <button 
               onClick={iniciarCancelamento}
-              className="w-full bg-neon-orange text-white font-bold py-3 rounded-lg"
+              className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 text-black font-bold py-3 rounded-lg"
             >
               Iniciar Cancelamento
             </button>
@@ -68,7 +68,7 @@ export default function CancelarAgendamentoPage() {
         ) : (
           <>
             <h2 className="text-xl font-bold mb-4 text-center">Confirme o Cancelamento</h2>
-            <TattooOTPInput onComplete={handleVerify} length={8} />
+            <TattooOTPInput onComplete={handleVerify} length={6} />
           </>
         )}
       </GlassContainer>

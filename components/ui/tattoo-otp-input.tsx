@@ -16,7 +16,7 @@ interface TattooOTPInputProps {
  * TATTOOGO MK - COMPONENTE DE INPUT DE OTP "MÁQUINA DE TATUAR"
  * Unifica a lógica de entrada, animação de escrita e feedback sensorial.
  */
-export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }: TattooOTPInputProps) {
+export function TattooOTPInput({ onComplete, length = 6, userRole = 'cliente' }: TattooOTPInputProps) {
   const [digits, setDigits] = useState<string[]>(Array(length).fill(''));
   const [error, setError] = useState(false);
   const [message, setMessage] = useState('');
@@ -37,10 +37,24 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
   }, [stopTattoo, stopTattooing]);
 
   const handleInput = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1);
+    if (value.length > 1) {
+      const pasteData = value.replace(/\D/g, '').slice(0, length).split('');
+      if (digits.every((d) => d === '') && pasteData.length > 0) {
+        startTattooing();
+        playTattoo();
+      }
+      const padded = [...pasteData, ...Array(length - pasteData.length).fill('')];
+      setDigits(padded);
+      if (pasteData.length > 0) triggerHaptic('light');
+      if (pasteData.length === length) {
+        handleSubmit(pasteData.join(''));
+      } else if (pasteData.length > 0) {
+        inputRefs.current[Math.min(pasteData.length, length - 1)]?.focus();
+      }
+      return;
+    }
     if (!/^\d*$/.test(value)) return;
 
-    // Sincronia: Start no primeiro dígito
     if (digits.every(d => d === '') && value !== '') {
       startTattooing();
       playTattoo();
@@ -50,10 +64,9 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
     newDigits[index] = value;
     setDigits(newDigits);
 
-    // Haptic por dígito (Padrão Apple-Tier)
     if (value !== '') {
       triggerHaptic('light');
-      inputRefs.current[index + 1]?.focus();
+      if (index < length - 1) inputRefs.current[index + 1]?.focus();
     }
 
     if (newDigits.every(d => d !== '')) {
@@ -105,6 +118,8 @@ export function TattooOTPInput({ onComplete, length = 8, userRole = 'cliente' }:
           ref={(el: HTMLInputElement | null) => { inputRefs.current[index] = el; }}
           type="text"
           maxLength={1}
+          autoComplete="one-time-code"
+          aria-label={`Dígito ${index + 1} de ${length}`}
           value={digit}
           onChange={(e) => handleInput(index, e.target.value)}
           onKeyDown={(e) => {
