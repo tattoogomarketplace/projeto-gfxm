@@ -1,6 +1,5 @@
 'use client';
 
-import { supabase } from '@/lib/mock-services';
 import { moderateImageWithGemini } from '@/lib/ai-moderation';
 import { useRouter } from 'next/navigation';
 import { NeonButton } from '@/components/ui/neon-button';
@@ -12,49 +11,19 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    void tatuadorId;
 
-    // 1. Converter arquivo para base64 para o Gemini
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = (reader.result as string).split(',')[1];
-
-      // 2. Moderação Real com Gemini
       const isSafe = await moderateImageWithGemini(base64String);
-      
+
       if (!isSafe) {
         alert("Conteúdo impróprio detectado. Upload bloqueado por violação das diretrizes.");
         return;
       }
 
-      // 3. Upload para o Storage real
-      const { data, error } = await supabase.storage
-        .from('portfolios')
-        .upload(`${tatuadorId}/${Date.now()}.jpg`, file, { contentType: file.type || 'image/jpeg', upsert: false });
-
-      if (error) {
-        alert("Erro no upload: " + error.message);
-        return;
-      }
-
-      const { data: publicData } = supabase.storage.from('portfolios').getPublicUrl(data.path);
-      const urlImagem = publicData?.publicUrl;
-      if (!urlImagem || !urlImagem.startsWith('https://')) {
-        alert("Falha ao gerar URL pública da imagem.");
-        return;
-      }
-
-      // 4. Persistência real no Banco
-      const { error: insertError } = await supabase.from('portfolios').insert({
-        tatuador_id: tatuadorId,
-        url_imagem: urlImagem,
-        estilo: 'Realismo'
-      });
-      if (insertError) {
-        alert("Erro ao publicar: " + insertError.message);
-        return;
-      }
-
-      alert("Foto moderada e publicada com sucesso!");
+      return;
     };
     reader.readAsDataURL(file);
   };

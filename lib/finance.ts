@@ -1,6 +1,3 @@
-// Lógica de Split Idempotente
-import { processPaymentMock } from '@/lib/mock-services';
-
 export const calculateSplits = (valorTotal: number, tipo: 'solo' | 'estudio') => {
   const plataformaTax = tipo === 'solo' ? 0.09 : 0.08;
   const estudioTax = tipo === 'solo' ? 0 : 0.03;
@@ -20,10 +17,8 @@ export const generateIdempotencyKey = (agendamentoId: string, version: number) =
 };
 
 export const handleSinalPayment = async (agendamentoId: string, valorTotal: number) => {
-  const result = await processPaymentMock(agendamentoId, valorTotal);
-  if (result.success) {
-    // Atualiza o estado no banco
-    alert("Pagamento simulado com sucesso!");
-  }
+  void agendamentoId;
+  void valorTotal;
+  return { success: false, transactionId: null };
 };
 

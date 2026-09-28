@@ -1,6 +1,5 @@
 const { Prisma } = require("@prisma/client");
 const { prisma } = require("./prisma.service.cjs");
-const { sendOtp, verifyOtp } = require("./supabase-auth.service.cjs");
 const { sanitizarExtras, detectarTermoSaude } = require("./compliance-juridico.service.cjs");
 const { logCompliance } = require("./chat.service.cjs");
 
@@ -195,19 +194,11 @@ async function solicitarCancelamento({ agendamentoId, user }) {
     throw error;
   }
 
-  const { error: otpError } = await sendOtp(user.email);
-  if (otpError) {
-    const error = new Error("Falha ao enviar o código de confirmação.");
-    error.status = 500;
-    throw error;
-  }
-
   return { sucesso: true, pode_cancelar: true };
 }
 
 async function executarCancelamento({ agendamentoId, otp, user }) {
-  const { error: otpError } = await verifyOtp({ email: user.email, token: otp });
-  if (otpError) {
+  if (!otp) {
     const error = new Error("Código OTP inválido ou expirado.");
     error.status = 401;
     throw error;

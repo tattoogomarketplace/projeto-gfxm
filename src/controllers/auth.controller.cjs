@@ -3,14 +3,14 @@ const { aceitarTermos, verificarDuplicidade } = require("../services/perfil.serv
 async function register(_req, res) {
   return res.status(501).json({
     sucesso: false,
-    erro: "Fase 1: autenticacao Supabase desativada. Clerk entra na Fase 2.",
+    erro: "Autenticacao migrada para Clerk. Use o fluxo de login da aplicacao.",
   });
 }
 
 async function login(_req, res) {
   return res.status(501).json({
     sucesso: false,
-    erro: "Fase 1: autenticacao Supabase desativada. Clerk entra na Fase 2.",
+    erro: "Autenticacao migrada para Clerk. Use o fluxo de login da aplicacao.",
   });
 }
 

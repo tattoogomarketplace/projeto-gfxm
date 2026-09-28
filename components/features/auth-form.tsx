@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { supabase } from '@/lib/mock-services';
 
 export function AuthForm() {
   const [email, setEmail] = useState('');
@@ -11,20 +10,10 @@ export function AuthForm() {
 
   const handleSignUp = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { 
-        data: { role },
-        emailRedirectTo: `${window.location.origin}/auth/callback` 
-      }
-    });
-
-    if (error) {
-      alert("Erro no cadastro: " + error.message);
-    } else {
-      setMessage("Sucesso! Verifique seu e-mail e clique no link de confirmação para ser logado.");
-    }
+    void email;
+    void password;
+    void role;
+    setMessage('Cadastro migrado para Clerk. Use /register.');
     setLoading(false);
   };
 

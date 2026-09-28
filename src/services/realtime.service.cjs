@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { getUserFromToken } = require("./supabase-auth.service.cjs");
+const { getUserFromToken } = require("./clerk-auth.service.cjs");
 const { logger } = require("../config/logger.cjs");
 
 let io = null;

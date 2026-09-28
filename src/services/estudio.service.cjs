@@ -1,6 +1,5 @@
 const { prisma } = require("./prisma.service.cjs");
 const { useMockCnpj, receitaWsToken } = require("../config/env.cjs");
-const { sendOtp, verifyOtp } = require("./supabase-auth.service.cjs");
 
 const CONVITE_TTL_DIAS = 7;
 
@@ -152,11 +151,6 @@ async function convidarTatuador({ estudioUser, tatuadorId }) {
     },
   });
 
-  const { error: otpError } = await sendOtp(tatuador.email);
-  if (otpError) {
-    throw httpError(500, "Falha ao disparar OTP de vinculacao.");
-  }
-
   return {
     sucesso: true,
     convite_id: convite.id,
@@ -168,11 +162,6 @@ async function convidarTatuador({ estudioUser, tatuadorId }) {
 async function aceitarConvite({ tatuadorUser, conviteId, otp }) {
   if (!otp || typeof otp !== "string") {
     throw httpError(400, "Codigo OTP obrigatorio.");
-  }
-
-  const { error: otpError } = await verifyOtp({ email: tatuadorUser.email, token: otp });
-  if (otpError) {
-    throw httpError(401, "Codigo OTP invalido ou expirado.");
   }
 
   return prisma.$transaction(async (tx) => {

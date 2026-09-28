@@ -1,4 +1,4 @@
-const { getUserFromToken, extractBearerToken } = require("../services/supabase-auth.service.cjs");
+const { getUserFromToken, extractBearerToken } = require("../services/clerk-auth.service.cjs");
 const { prisma } = require("../services/prisma.service.cjs");
 
 async function requireAuth(req, res, next) {
