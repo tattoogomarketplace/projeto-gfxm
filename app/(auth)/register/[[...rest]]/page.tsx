@@ -169,8 +169,16 @@ export default function RegisterPage() {
 
         await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       } catch (error) {
+        const clerkErr = error as { errors?: { longMessage?: string; message?: string }[] };
+        if (clerkErr.errors && clerkErr.errors.length > 0) {
+          const exactMessage = clerkErr.errors[0].longMessage || clerkErr.errors[0].message;
+          console.error('MOTIVO EXATO DO CLERK:', exactMessage);
+          setValidationError(exactMessage || 'Erro de validação');
+        } else {
+          console.error('ERRO DESCONHECIDO DO CLERK:', error);
+          setValidationError('Erro de validação');
+        }
         setMachineFailed(true);
-        setValidationError('Erro de validação');
         throw error;
       }
 
@@ -179,8 +187,9 @@ export default function RegisterPage() {
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
       setMachineFailed(true);
-      setValidationError('Erro de validação');
-      toast.error(clerkErrorMessage(err));
+      const clerkMsg = clerkErrorMessage(err);
+      setValidationError((prev) => (prev && prev !== 'Erro de validação' ? prev : clerkMsg || 'Erro de validação'));
+      toast.error(clerkMsg);
     } finally {
       setLoading(false);
     }
