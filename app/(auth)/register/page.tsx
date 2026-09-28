@@ -167,7 +167,7 @@ export default function RegisterPage() {
           },
         });
 
-        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        await signUp.prepareVerification({ strategy: 'email_code' });
       } catch (error) {
         const clerkErr = error as { errors?: { longMessage?: string; message?: string }[] };
         if (clerkErr.errors && clerkErr.errors.length > 0) {
@@ -242,7 +242,7 @@ export default function RegisterPage() {
     if (!signUp) {
       throw new Error('Clerk ainda não está pronto.');
     }
-    await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+    await signUp.prepareVerification({ strategy: 'email_code' });
   };
 
   useEffect(() => {
