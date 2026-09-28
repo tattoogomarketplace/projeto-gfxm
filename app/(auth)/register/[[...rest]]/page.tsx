@@ -299,8 +299,19 @@ export default function RegisterPage() {
           onSubmit={handleSubmit(onSubmit, () => {
             toast.error('Revise os campos do cadastro para continuar.');
           })}
-          className="space-y-4"
+          className="relative space-y-4"
         >
+          <div
+            id="clerk-captcha"
+            style={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              opacity: 0.01,
+              pointerEvents: 'none',
+              zIndex: -10,
+            }}
+          />
           <RoleSelector
             value={roleValue}
             onChange={(role) => {
