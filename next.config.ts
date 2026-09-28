@@ -7,18 +7,6 @@ const nextConfig: NextConfig = {
     allowedDevOrigins: ['*.monkeycode-ai.live', '**.monkeycode-ai.live'],
     images: {
       minimumCacheTTL: 86400,
-      remotePatterns: [
-        {
-          protocol: 'https',
-          hostname: '*.supabase.co',
-          pathname: '/storage/v1/object/public/**',
-        },
-        {
-          protocol: 'https',
-          hostname: '*.supabase.in',
-          pathname: '/storage/v1/object/public/**',
-        },
-      ],
     },
   async rewrites() {
     return {
