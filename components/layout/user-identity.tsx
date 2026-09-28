@@ -49,7 +49,7 @@ export function UserIdentity() {
 
   return (
     <Link
-      href="/perfil"
+      href="/dashboard/perfil"
       className="flex min-h-11 min-w-11 items-center gap-2 rounded-full px-2 text-right transition-colors hover:bg-white/5"
       aria-label="Abrir meu perfil"
     >

@@ -1,60 +1,35 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { supabase } from '@/lib/mock-services';
-import { PortfolioUpload } from '@/components/features/portfolio-upload';
-import { ChatBox } from '@/components/features/chat/chat-box';
-import { OptimizedImage } from '@/components/ui/optimized-image';
 
-type PortfolioItem = { id: string; url_imagem: string };
+import { useAgendamentos } from '@/hooks/use-agendamentos';
+import { GlassContainer } from '@/components/ui/glass-container';
 
 export default function TatuadorDashboard() {
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
-  const [userId, setUserId] = useState<string>('me');
-
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) return;
-      setUserId(user.id);
-      const { data } = await supabase.from('portfolios').select('id, url_imagem').eq('tatuador_id', user.id);
-      setPortfolio(data || []);
-    }
-    load();
-  }, []);
+  const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 p-6 bg-[#121212] min-h-screen text-white">
-      <header>
-        <h1 className="text-3xl font-bold text-amber-500">Painel do Artista</h1>
-        <p className="text-zinc-400">Gerencie seus agendamentos, chat e portfólio.</p>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Gestão de Portfólio / Agendamentos */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 h-125">
-          <h2 className="text-lg font-semibold text-white mb-4">Agenda do Dia</h2>
-          <PortfolioUpload tatuadorId={userId} />
-
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            {portfolio.map((item) => (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: 1.05 }}
-                className="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800"
-              >
-                <OptimizedImage src={item.url_imagem} alt="Tattoo" className="w-full h-40" />
-              </motion.div>
-            ))}
-          </div>
+    <div className="p-8 text-white min-h-screen bg-graphite">
+      <h1 className="text-2xl font-bold mb-6">Gestão de Agendamentos</h1>
+      
+      {isLoading ? (
+        <div className="space-y-4">
+          <div className="h-24 bg-graphite-200 animate-pulse rounded-xl" />
         </div>
-
-        {/* Chat com Moderação de IA */}
-        <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-white mb-4">Chat com Clientes</h2>
-          <ChatBox />
+      ) : (
+        <div className="grid gap-4">
+          {agendamentos?.map((ag) => (
+            <GlassContainer key={ag.id} className="p-4 border-l-4 border-neon-orange">
+              <div className="flex justify-between items-center">
+                <h2 className="font-bold">Cliente ID: {ag.cliente_id.slice(0, 8)}...</h2>
+                <span className="text-neon-orange uppercase text-xs font-bold">{ag.status}</span>
+              </div>
+              <p className="text-sm mt-2">Data: {new Date(ag.data_hora).toLocaleString()}</p>
+            </GlassContainer>
+          ))}
+          {(!agendamentos || agendamentos.length === 0) && (
+            <p className="text-zinc-400">Nenhum agendamento pendente.</p>
+          )}
         </div>
-      </div>
-    </motion.div>
+      )}
+    </div>
   );
 }
