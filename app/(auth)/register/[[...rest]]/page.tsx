@@ -94,6 +94,8 @@ export default function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
   const [forceShow, setForceShow] = useState(false);
+  const [machineFailed, setMachineFailed] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -132,6 +134,8 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
+    setMachineFailed(false);
+    setValidationError('');
     setUserRole(data.role);
     const emailNorm = data.email.trim().toLowerCase();
     const cpfDigits = onlyCpfDigits(data.cpf);
@@ -147,27 +151,35 @@ export default function RegisterPage() {
         }
       }
 
-      await signUp.create({
-        emailAddress: emailNorm,
-        password: data.password,
-        unsafeMetadata: {
-          role: data.role,
-          full_name: data.nome,
-          nome: data.nome,
-          cpf: cpfDigits,
-          data_nascimento: data.dataNascimento,
-          accepted_terms: acceptedTerms,
-          responsavel_nome: data.responsavelNome || '',
-          responsavel_cpf: data.responsavelCpf ? onlyCpfDigits(data.responsavelCpf) : '',
-        },
-      });
+      try {
+        await signUp.create({
+          emailAddress: emailNorm,
+          password: data.password,
+          unsafeMetadata: {
+            role: data.role,
+            full_name: data.nome,
+            nome: data.nome,
+            cpf: cpfDigits,
+            data_nascimento: data.dataNascimento,
+            accepted_terms: acceptedTerms,
+            responsavel_nome: data.responsavelNome || '',
+            responsavel_cpf: data.responsavelCpf ? onlyCpfDigits(data.responsavelCpf) : '',
+          },
+        });
 
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      } catch (error) {
+        setMachineFailed(true);
+        setValidationError('Erro de validação');
+        throw error;
+      }
 
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
+      setMachineFailed(true);
+      setValidationError('Erro de validação');
       toast.error(clerkErrorMessage(err));
     } finally {
       setLoading(false);
@@ -391,12 +403,27 @@ export default function RegisterPage() {
             </label>
           </div>
 
+          {machineFailed ? (
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-red-600/40 bg-red-950/30 p-4">
+              <TattooMachineLoader compact failed label="Erro de validação" />
+              <p className="text-center text-sm font-semibold text-red-400">
+                {validationError || 'Erro de validação'}
+              </p>
+            </div>
+          ) : null}
+
           <button
             type="submit"
             disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !cpfIsValid}
             className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
-            {loading ? <TattooMachineLoader compact label="Processando" /> : 'Cadastrar'}
+            {loading ? (
+              <TattooMachineLoader compact label="Processando" />
+            ) : machineFailed ? (
+              <TattooMachineLoader compact failed label="Erro de validação" />
+            ) : (
+              'Cadastrar'
+            )}
           </button>
         </form>
 
