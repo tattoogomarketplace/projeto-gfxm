@@ -21,6 +21,8 @@ import { normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redire
 import { useAuthStore } from '@/hooks/use-auth-store';
 import api from '@/lib/api';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 const registerSchema = z
   .object({
     nome: z.string().min(2, 'Informe seu nome real'),
@@ -142,7 +144,7 @@ export default function RegisterPage() {
     const cpfDigits = onlyCpfDigits(data.cpf);
     try {
       try {
-        await api.post('/api/auth/check-duplicidade', { email: emailNorm, cpf: cpfDigits });
+        await api.post(`${API_URL}/api/auth/check-duplicidade`, { email: emailNorm, cpf: cpfDigits });
       } catch (dupErr: unknown) {
         const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
         const statusCode = axiosErr.response?.status;
