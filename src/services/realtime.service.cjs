@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const { getUserFromToken } = require("./clerk-auth.service.cjs");
 const { logger } = require("../config/logger.cjs");
+const { corsOptions } = require("../middlewares/security.cjs");
 
 let io = null;
 
@@ -10,7 +11,7 @@ function roomForUser(userId) {
 
 function attachRealtime(httpServer) {
   io = new Server(httpServer, {
-    cors: { origin: true, credentials: true },
+    cors: corsOptions,
     path: "/socket.io",
   });
 

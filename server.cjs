@@ -12,7 +12,7 @@ const { app, logger } = require("./src/app.cjs");
 const { attachRealtime } = require("./src/services/realtime.service.cjs");
 const { expirarMutexVencidos } = require("./src/services/agendamento.service.cjs");
 
-const PORT = port || 3001;
+const PORT = process.env.PORT || port || 3001;
 const server = http.createServer(app);
 
 attachRealtime(server);

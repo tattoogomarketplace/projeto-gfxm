@@ -14,6 +14,7 @@ require("./config/env.cjs");
 const app = express();
 
 applySecurity(app);
+app.get("/", (req, res) => res.status(200).send("TattooGo Backend Online"));
 app.use(pinoHttp({ logger }));
 app.use(express.json({ limit: "10mb" }));
 app.use(hpp());

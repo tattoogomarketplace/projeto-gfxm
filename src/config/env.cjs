@@ -11,6 +11,29 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+function collectAllowedOrigins() {
+  const origins = [
+    "https://projeto-gfxm.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+  ];
+
+  const extra = [process.env.FRONTEND_URL, process.env.CORS_ORIGIN, process.env.ALLOWED_ORIGINS]
+    .filter(Boolean)
+    .join(",");
+
+  for (const item of extra.split(",")) {
+    const origin = item.trim().replace(/\/$/, "");
+    if (origin && !origins.includes(origin)) {
+      origins.push(origin);
+    }
+  }
+
+  return origins;
+}
+
 module.exports = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: process.env.PORT || 3001,
@@ -19,4 +42,5 @@ module.exports = {
   receitaWsToken: process.env.RECEITA_WS_TOKEN,
   useMockCnpj: process.env.USE_MOCK_CNPJ === "true",
   databaseUrl: process.env.DATABASE_URL,
+  allowedOrigins: collectAllowedOrigins(),
 };
