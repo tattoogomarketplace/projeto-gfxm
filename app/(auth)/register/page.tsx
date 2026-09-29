@@ -151,38 +151,24 @@ export default function RegisterPage() {
         }
       }
 
-      try {
-        const createdSignUp = await signUp.create({
-          emailAddress: emailNorm,
-          password: data.password,
-          unsafeMetadata: {
-            role: data.role,
-            full_name: data.nome,
-            nome: data.nome,
-            cpf: cpfDigits,
-            data_nascimento: data.dataNascimento,
-            accepted_terms: acceptedTerms,
-            responsavel_nome: data.responsavelNome || '',
-            responsavel_cpf: data.responsavelCpf ? onlyCpfDigits(data.responsavelCpf) : '',
-          },
-        });
+      const createdSignUp = await signUp.create({
+        emailAddress: emailNorm,
+        password: data.password,
+        unsafeMetadata: {
+          role: data.role,
+          full_name: data.nome,
+          nome: data.nome,
+          cpf: cpfDigits,
+          data_nascimento: data.dataNascimento,
+          accepted_terms: acceptedTerms,
+          responsavel_nome: data.responsavelNome || '',
+          responsavel_cpf: data.responsavelCpf ? onlyCpfDigits(data.responsavelCpf) : '',
+        },
+      });
 
-        await createdSignUp.prepareEmailAddressVerification({
-          strategy: 'email_code',
-        });
-      } catch (error) {
-        const clerkErr = error as { errors?: { longMessage?: string; message?: string }[] };
-        if (clerkErr.errors && clerkErr.errors.length > 0) {
-          const exactMessage = clerkErr.errors[0].longMessage || clerkErr.errors[0].message;
-          console.error('MOTIVO EXATO DO CLERK:', exactMessage);
-          setValidationError(exactMessage || 'Erro de validação');
-        } else {
-          console.error('ERRO DESCONHECIDO DO CLERK:', error);
-          setValidationError('Erro de validação');
-        }
-        setMachineFailed(true);
-        throw error;
-      }
+      await createdSignUp.prepareEmailAddressVerification({
+        strategy: 'email_code',
+      });
 
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
@@ -252,21 +238,13 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!isLoaded && !forceShow) {
-    return (
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+  return (
+    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+      {!isLoaded && !forceShow ? (
         <TattooMachineLoader compact label="Carregando" />
-      </div>
-    );
-  }
-
-  if (showWelcome) {
-    return <WelcomeGate role={userRole} />;
-  }
-
-  if (isVerifying) {
-    return (
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+      ) : showWelcome ? (
+        <WelcomeGate role={userRole} />
+      ) : isVerifying ? (
         <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
@@ -282,12 +260,7 @@ export default function RegisterPage() {
             Voltar
           </button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+      ) : (
       <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-xl">
         <h1 className="text-2xl font-bold mb-6 text-center">Cadastro <span className="text-orange-500">TattooGo MK</span></h1>
 
@@ -303,7 +276,6 @@ export default function RegisterPage() {
           })}
           className="relative space-y-4"
         >
-          <div id="clerk-captcha"></div>
           <RoleSelector
             value={roleValue}
             onChange={(role) => {
@@ -443,6 +415,8 @@ export default function RegisterPage() {
           Já é da elite? <Link href="/login" className="text-orange-500 hover:underline">Faça login</Link>
         </p>
       </div>
+      )}
+      <div id="clerk-captcha"></div>
     </div>
   );
 }
