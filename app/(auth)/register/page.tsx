@@ -151,7 +151,7 @@ export default function RegisterPage() {
         }
       }
 
-      const createdSignUp = await signUp.create({
+      await signUp.create({
         emailAddress: emailNorm,
         password: data.password,
         unsafeMetadata: {
@@ -166,7 +166,7 @@ export default function RegisterPage() {
         },
       });
 
-      await createdSignUp.prepareEmailAddressVerification({
+      await signUp.prepareVerification({
         strategy: 'email_code',
       });
 
@@ -189,7 +189,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code: token });
+      const result = await signUp.attemptVerification({ strategy: 'email_code', code: token });
 
       if (result.status !== 'complete' || !result.createdSessionId) {
         throw new Error('Sessão inválida após verificação.');
