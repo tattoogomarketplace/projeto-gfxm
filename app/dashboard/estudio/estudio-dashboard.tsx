@@ -2,6 +2,7 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import type { Agendamento } from '@/lib/types/database';
 
 export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
@@ -25,7 +26,7 @@ export default function EstudioDashboard() {
           
           <div className="mt-6">
             <h3 className="font-bold mb-4">Visão Geral dos Artistas</h3>
-            {agendamentos?.map((ag) => (
+            {agendamentos?.map((ag: Agendamento) => (
               <div key={ag.id} className="text-sm border-b border-white/10 py-2">
                 Artista ID: {ag.tatuador_id.slice(0, 8)}... | Status: {ag.status}
               </div>

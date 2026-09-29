@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
+import { useUser } from '@clerk/nextjs';
 
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   const [bank, setBank] = useState('');
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const { user } = useUser();
 
   const handleSave = async () => {
     setLoading(true);
@@ -20,22 +19,22 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
       last4: digits.slice(-4) || bank.slice(-4),
     };
 
-    const { data: sessionData } = await supabase.auth.getUser();
-    const userId = sessionData.user?.id;
-    if (!userId) {
+    if (!user) {
       toast.error('Sessao expirada. Faca login novamente.');
       setLoading(false);
       return;
     }
 
-    const { error } = await supabase
-      .from('perfis')
-      .update({ bank_account: payload })
-      .eq('id', userId)
-      .eq('role', role);
-
-    if (error) toast.error('Erro ao salvar conta.');
-    else toast.success('Conta bancária registrada com segurança.');
+    try {
+      await user.updateMetadata({
+        unsafeMetadata: {
+          bank_account: payload,
+        },
+      });
+      toast.success('Conta bancária registrada com segurança.');
+    } catch {
+      toast.error('Erro ao salvar conta.');
+    }
     setLoading(false);
   };
 

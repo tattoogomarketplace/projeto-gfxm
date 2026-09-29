@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
@@ -22,6 +21,8 @@ function authHeaders() {
 
 export default function PerfilPage() {
   const router = useRouter();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const storedUser = useAuthStore((s) => s.user);
@@ -34,34 +35,31 @@ export default function PerfilPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      if (cancelled) return;
-
-      const fullName = resolveFullName(user.user_metadata, storedUser?.fullName || '');
-      setEmail(user.email ?? '');
-      setNome(fullName);
-      setUser({
-        id: user.id,
-        email: user.email ?? '',
-        fullName,
-      });
-      setLoading(false);
+    if (!isLoaded) return;
+    if (!isSignedIn || !user) {
+      router.push('/login');
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [router, setUser, storedUser?.fullName]);
+    const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+    const fullName = resolveFullName(
+      {
+        full_name: metadata.full_name as string | undefined,
+        nome: metadata.nome as string | undefined,
+        name: user.fullName || undefined,
+      },
+      storedUser?.fullName || user.fullName || ''
+    );
+    const emailAddress = user.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
+    setEmail(emailAddress);
+    setNome(fullName);
+    setUser({
+      id: user.id,
+      email: emailAddress,
+      fullName,
+    });
+    setLoading(false);
+  }, [isLoaded, isSignedIn, user, router, setUser, storedUser?.fullName, storedUser?.email]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();
@@ -72,17 +70,23 @@ export default function PerfilPage() {
 
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.updateUser({
-        data: { full_name: nextName, nome: nextName },
+      if (!user) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+      const parts = nextName.split(/\s+/);
+      await user.update({
+        firstName: parts[0],
+        lastName: parts.slice(1).join(' ') || undefined,
       });
-      if (error) throw error;
-
-      const user = data.user;
-      await supabase.from('perfis').update({ nome: nextName }).eq('id', user.id);
+      await user.updateMetadata({
+        unsafeMetadata: {
+          full_name: nextName,
+          nome: nextName,
+        },
+      });
       setUser({
         id: user.id,
-        email: user.email ?? email,
+        email: user.primaryEmailAddress?.emailAddress ?? email,
         fullName: nextName,
       });
       toast.success('Nome atualizado com sucesso.');
@@ -105,8 +109,7 @@ export default function PerfilPage() {
         throw new Error(payload.erro || 'Falha ao desativar a conta.');
       }
 
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      await clerk.signOut();
       localStorage.removeItem('tattoogo_token');
       clearAuth();
       toast.success('Conta oculta. Seu histórico permanece protegido.');

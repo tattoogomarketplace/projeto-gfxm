@@ -8,7 +8,7 @@ import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
 import { getCachedFeed } from '@/lib/catalogo';
-import type { ArtistaResumo, FeedItem } from '@/lib/types/database';
+import type { Agendamento, ArtistaResumo, FeedItem } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
 
 export default function ClienteDashboard() {
@@ -40,7 +40,7 @@ export default function ClienteDashboard() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {agendamentos?.map((ag) => (
+               {agendamentos?.map((ag: Agendamento) => (
                 <GlassContainer key={ag.id} className="p-4 min-h-11">
                   <h2 className="font-bold text-neon-orange">{ag.status}</h2>
                   <p className="text-sm">Data: {new Date(ag.data_hora).toLocaleDateString()}</p>

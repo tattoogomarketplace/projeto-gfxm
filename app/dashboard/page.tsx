@@ -1,34 +1,27 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
-import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { useUser } from '@clerk/nextjs';
+import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { useAuthStore } from '@/hooks/use-auth-store';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const storedRole = useAuthStore((s) => s.role);
 
   useEffect(() => {
-    async function checkRole() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('perfis')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const role = profile?.role || user.user_metadata?.role || 'cliente';
-      router.push(dashboardPathForRole(role));
+    if (!isLoaded) return;
+    if (!isSignedIn || !user) {
+      router.push('/login');
+      return;
     }
-    checkRole();
-  }, [router]);
+
+    const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+    const role = normalizeAppRole((metadata.role as string) || storedRole);
+    router.push(dashboardPathForRole(role));
+  }, [isLoaded, isSignedIn, user, storedRole, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950">
@@ -36,4 +29,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

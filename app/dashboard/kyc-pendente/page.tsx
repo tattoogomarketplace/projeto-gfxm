@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
+import { useUser } from '@clerk/nextjs';
 import { KYCForm } from '@/components/features/kyc-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 
 type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
 
@@ -32,56 +31,35 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
 
 export default function KycPendentePage() {
   const router = useRouter();
+  const { isLoaded, isSignedIn, user } = useUser();
   const [userId, setUserId] = useState<string | null>(null);
   const [status, setStatus] = useState<KycStatus>('pendente');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const supabase = createClient();
-      const { data: sessionData } = await supabase.auth.getUser();
-      const user = sessionData.user;
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      const { data: perfil } = await supabase
-        .from('perfis')
-        .select('id, role, kyc_status, deleted_at')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (!perfil || perfil.deleted_at) {
-        router.push('/login');
-        return;
-      }
-
-      if (perfil.role !== 'tatuador') {
-        router.push(dashboardPathForRole(perfil.role));
-        return;
-      }
-
-      const kyc = (perfil.kyc_status || 'pendente') as KycStatus;
-      if (kyc === 'aprovado') {
-        router.push('/dashboard/tatuador');
-        return;
-      }
-
-      setUserId(user.id);
-      setStatus(kyc);
-      setLoading(false);
+    if (!isLoaded) return;
+    if (!isSignedIn || !user) {
+      router.push('/login');
+      return;
     }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+    const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+    const role = normalizeAppRole(metadata.role as string);
+    if (role !== 'tatuador') {
+      router.push(dashboardPathForRole(role));
+      return;
+    }
+
+    const kyc = (metadata.kyc_status as KycStatus) || 'pendente';
+    if (kyc === 'aprovado') {
+      router.push('/dashboard/tatuador');
+      return;
+    }
+
+    setUserId(user.id);
+    setStatus(kyc);
+    setLoading(false);
+  }, [isLoaded, isSignedIn, user, router]);
 
   if (loading) {
     return (

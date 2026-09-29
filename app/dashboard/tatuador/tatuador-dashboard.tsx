@@ -2,6 +2,7 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import type { Agendamento } from '@/lib/types/database';
 
 export default function TatuadorDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
@@ -16,7 +17,7 @@ export default function TatuadorDashboard() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {agendamentos?.map((ag) => (
+          {agendamentos?.map((ag: Agendamento) => (
             <GlassContainer key={ag.id} className="p-4 border-l-4 border-neon-orange">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold">Cliente ID: {ag.cliente_id.slice(0, 8)}...</h2>

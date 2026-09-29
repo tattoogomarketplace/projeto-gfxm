@@ -7,7 +7,8 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useClerk, useSignUp } from '@clerk/nextjs';
+import { useClerk } from '@clerk/nextjs';
+import { useSignUp } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { WelcomeGate } from '@/components/features/welcome-gate';
@@ -230,7 +231,7 @@ export default function RegisterPage() {
     if (!signUp) {
       throw new Error('Clerk ainda não está pronto.');
     }
-    await signUp.verifications.sendEmailCode();
+    await signUp.prepareVerification({ strategy: 'email_code' });
   };
 
   useEffect(() => {

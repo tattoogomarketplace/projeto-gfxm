@@ -1,7 +1,9 @@
+import type { Agendamento } from '@/lib/types/database';
+
 type NovoAgendamento = { tatuador_id: string; data_hora: string; valor_total: number };
 
 export const agendamentoService = {
-  async getAgendamentos() {
+  async getAgendamentos(): Promise<Agendamento[]> {
     return [];
   },
 

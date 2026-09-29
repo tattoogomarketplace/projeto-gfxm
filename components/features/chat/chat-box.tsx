@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 
 interface Message {
@@ -14,68 +13,48 @@ interface Message {
   remetente_id?: string;
 }
 
+interface ChatHistoryRow {
+  id: string;
+  remetente_id: string;
+  destinatario_id?: string;
+  mensagem: string;
+  bloqueada?: boolean;
+}
+
 export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { isLoaded, isSignedIn, user } = useUser();
 
   useEffect(() => {
-    const supabase = createClient();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-
     async function boot() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!isLoaded || !isSignedIn || !user) return;
       setUserId(user.id);
 
       const peer = destinatarioId;
       if (!peer) return;
 
-      const { data } = await supabase
-        .from('mensagens_chat')
-        .select('id, remetente_id, destinatario_id, mensagem, created_at')
-        .or(`and(remetente_id.eq.${user.id},destinatario_id.eq.${peer}),and(remetente_id.eq.${peer},destinatario_id.eq.${user.id})`)
-        .eq('bloqueada', false)
-        .order('created_at', { ascending: true })
-        .limit(100);
-
-      if (data) {
-        setMessages(data.map((m) => ({
-          id: m.id,
-          sender: m.remetente_id === user.id ? 'user' : 'peer',
-          text: m.mensagem,
-          remetente_id: m.remetente_id,
-        })));
-      }
-
-      channel = supabase
-        .channel(`chat:${[user.id, peer].sort().join(':')}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'mensagens_chat' },
-          (payload) => {
-            const row = payload.new as { id: string; remetente_id: string; destinatario_id: string; mensagem: string; bloqueada?: boolean };
-            const involved = (row.remetente_id === user.id && row.destinatario_id === peer)
-              || (row.remetente_id === peer && row.destinatario_id === user.id);
-            if (!involved || row.bloqueada) return;
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === row.id)) return prev;
-              return [...prev, {
-                id: row.id,
-                sender: row.remetente_id === user.id ? 'user' : 'peer',
-                text: row.mensagem,
-                remetente_id: row.remetente_id,
-              }];
-            });
-          }
-        )
-        .subscribe();
+      const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+      const res = await fetch(`/api/chat/historico?interlocutor_id=${encodeURIComponent(peer)}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) return;
+      const json = await res.json().catch(() => ({}));
+      const data = (json.data || []) as ChatHistoryRow[];
+      setMessages(data.map((m: ChatHistoryRow) => ({
+        id: m.id,
+        sender: m.remetente_id === user.id ? 'user' : 'peer',
+        text: m.mensagem,
+        remetente_id: m.remetente_id,
+      })));
     }
 
     boot();
-    return () => { if (channel) supabase.removeChannel(channel); };
-  }, [destinatarioId]);
+  }, [destinatarioId, isLoaded, isSignedIn, user]);
 
   const sendMessage = async () => {
     if (!input.trim() || !userId || !destinatarioId) return;
@@ -87,7 +66,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
       return;
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       remetente_id: userId,
       destinatario_id: destinatarioId,
       mensagem: input,
@@ -126,7 +105,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   return (
     <div className="flex flex-col w-full h-150 bg-[#121212] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map(m => (
+        {messages.map((m: Message) => (
           <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] p-3 rounded-lg ${m.sender === 'user' ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
               {m.text}
@@ -150,4 +129,3 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
     </div>
   );
 }
-

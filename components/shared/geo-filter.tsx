@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
 import { getCachedCidades } from '@/lib/catalogo';
 
 export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => {
@@ -19,30 +17,7 @@ export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => 
           setLoading(false);
           return;
         }
-
-        const supabase = createClient();
-        const { data, error: supabaseError } = await supabase
-          .from('perfis')
-          .select('cidade, estado')
-          .in('role', ['tatuador', 'estudio'])
-          .not('cidade', 'is', null)
-          .not('estado', 'is', null)
-          .order('cidade')
-          .limit(1000);
-
-        if (supabaseError) throw supabaseError;
-
-        if (data) {
-          const unique = Array.from(
-            new Map(
-              (data as { cidade: string; estado: string }[]).map((item) => [
-                `${item.cidade}-${item.estado}`,
-                item,
-              ])
-            ).values()
-          );
-          setLocais(unique);
-        }
+        setLocais([]);
       } catch (err) {
         console.error("Erro ao buscar cidades:", err);
         setError("Não foi possível carregar as cidades.");
@@ -70,4 +45,3 @@ export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => 
     </select>
   );
 };
-

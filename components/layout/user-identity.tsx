@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-// TODO: Migrar lógica para Prisma e Clerk
-// import { createClient } from '@/lib/supabase';
+import { useUser } from '@clerk/nextjs';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { resolveDisplayName, resolveFullName } from '@/lib/utils/display-name';
 import { normalizeAppRole } from '@/lib/utils/auth-redirect';
@@ -12,36 +11,24 @@ export function UserIdentity() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
 
   useEffect(() => {
     if (user?.fullName) return;
+    if (!isLoaded || !isSignedIn || !clerkUser) return;
 
-    let cancelled = false;
-    async function loadIdentity() {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      const sessionUser = data.user;
-      if (!sessionUser || cancelled) return;
-
-      const { data: profile } = await supabase
-        .from('perfis')
-        .select('role')
-        .eq('id', sessionUser.id)
-        .maybeSingle();
-
-      setUser({
-        id: sessionUser.id,
-        email: sessionUser.email ?? '',
-        fullName: resolveFullName(sessionUser.user_metadata),
-      });
-      setRole(normalizeAppRole(profile?.role || (sessionUser.user_metadata?.role as string)));
-    }
-
-    loadIdentity();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.fullName, setUser, setRole]);
+    const metadata = (clerkUser.unsafeMetadata || clerkUser.publicMetadata || {}) as Record<string, unknown>;
+    setUser({
+      id: clerkUser.id,
+      email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+      fullName: resolveFullName({
+        full_name: metadata.full_name as string | undefined,
+        nome: metadata.nome as string | undefined,
+        name: clerkUser.fullName || undefined,
+      }),
+    });
+    setRole(normalizeAppRole(metadata.role as string));
+  }, [user?.fullName, isLoaded, isSignedIn, clerkUser, setUser, setRole]);
 
   const displayName = resolveDisplayName(
     user?.fullName ? { full_name: user.fullName } : undefined
