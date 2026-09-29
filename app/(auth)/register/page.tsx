@@ -192,13 +192,21 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const result = await signUp.attemptVerification({ strategy: 'email_code', code: token });
+      const completeSignUp = await signUp.attemptVerification({ strategy: 'email_code', code: token });
 
-      if (result.status !== 'complete' || !result.createdSessionId) {
+      if (completeSignUp.status !== 'complete' || !completeSignUp.createdSessionId) {
         throw new Error('Sessão inválida após verificação.');
       }
 
-      await setActive({ session: result.createdSessionId });
+      await setActive({
+        session: completeSignUp.createdSessionId,
+        navigate: async ({ session }) => {
+          if (session?.currentTask) {
+            return;
+          }
+          router.push('/');
+        },
+      });
 
       const clerkUser = clerk.user;
       const metadata = (clerkUser?.unsafeMetadata || clerkUser?.publicMetadata || {}) as Record<
@@ -210,7 +218,7 @@ export default function RegisterPage() {
       );
 
       setUser({
-        id: clerkUser?.id || result.createdSessionId,
+        id: clerkUser?.id || completeSignUp.createdSessionId,
         email: clerkUser?.primaryEmailAddress?.emailAddress ?? emailForVerification,
         fullName:
           (metadata.full_name as string) ||
