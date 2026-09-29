@@ -48,7 +48,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={ptBR}>
+    <ClerkProvider
+      localization={ptBR}
+      signInUrl="/login"
+      signUpUrl="/register"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+      afterSignOutUrl="/"
+    >
       <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
         <head>
           <meta name="theme-color" content="#121212" />
