@@ -416,7 +416,6 @@ export default function RegisterPage() {
         </p>
       </div>
       )}
-      <div id="clerk-captcha"></div>
     </div>
   );
 }
