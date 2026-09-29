@@ -152,7 +152,7 @@ export default function RegisterPage() {
       }
 
       try {
-        await signUp.create({
+        const createdSignUp = await signUp.create({
           emailAddress: emailNorm,
           password: data.password,
           unsafeMetadata: {
@@ -167,7 +167,9 @@ export default function RegisterPage() {
           },
         });
 
-        await signUp.verifications.sendEmailCode();
+        await createdSignUp.prepareEmailAddressVerification({
+          strategy: 'email_code',
+        });
       } catch (error) {
         const clerkErr = error as { errors?: { longMessage?: string; message?: string }[] };
         if (clerkErr.errors && clerkErr.errors.length > 0) {
@@ -301,17 +303,7 @@ export default function RegisterPage() {
           })}
           className="relative space-y-4"
         >
-          <div
-            id="clerk-captcha"
-            style={{
-              position: 'absolute',
-              width: '1px',
-              height: '1px',
-              opacity: 0.01,
-              pointerEvents: 'none',
-              zIndex: -10,
-            }}
-          />
+          <div id="clerk-captcha"></div>
           <RoleSelector
             value={roleValue}
             onChange={(role) => {
