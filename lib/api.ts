@@ -22,12 +22,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('tattoogo_token');
-        // URL absoluta: o roteador do Next não está disponível em interceptors do axios.
-        window.location.href = new URL('/login', window.location.origin).toString();
-      }
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('tattoogo_token');
     }
     return Promise.reject(error);
   }

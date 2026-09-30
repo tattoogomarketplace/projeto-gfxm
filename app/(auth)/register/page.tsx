@@ -17,7 +17,7 @@ import { PasswordStrengthBar } from '@/components/features/password-strength-bar
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
-import { normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
+import { normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import api from '@/lib/api';
 
@@ -145,14 +145,15 @@ export default function RegisterPage() {
     try {
       try {
         await api.post(`${API_URL}/api/auth/check-duplicidade`, { email: emailNorm, cpf: cpfDigits });
-      } catch (dupErr: unknown) {
-        const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
-        const statusCode = axiosErr.response?.status;
-        const message = axiosErr.response?.data?.erro || 'E-mail ou CPF já cadastrado.';
-        if (statusCode === 409 || statusCode === 400) {
-          throw new Error(message);
-        }
-      }
+       } catch (dupErr: unknown) {
+         console.error(dupErr);
+         const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
+         const statusCode = axiosErr.response?.status;
+         const message = axiosErr.response?.data?.erro || 'E-mail ou CPF já cadastrado.';
+         if (statusCode === 409 || statusCode === 400) {
+           throw new Error(message);
+         }
+       }
 
       await signUp.create({
         emailAddress: emailNorm,
@@ -176,12 +177,13 @@ export default function RegisterPage() {
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
-    } catch (err) {
-      setMachineFailed(true);
-      const clerkMsg = clerkErrorMessage(err);
-      setValidationError((prev) => (prev && prev !== 'Erro de validação' ? prev : clerkMsg || 'Erro de validação'));
-      toast.error(clerkMsg);
-    } finally {
+     } catch (err) {
+       console.error(err);
+       setMachineFailed(true);
+       const clerkMsg = clerkErrorMessage(err);
+       setValidationError((prev) => (prev && prev !== 'Erro de validação' ? prev : clerkMsg || 'Erro de validação'));
+       toast.error(clerkMsg);
+     } finally {
       setLoading(false);
     }
   };
@@ -229,9 +231,9 @@ export default function RegisterPage() {
       setRole(resolvedRole);
 
       setShowWelcome(true);
-      router.push(postSignupPathForRole(resolvedRole));
-      router.refresh();
+      router.push('/');
     } catch (err) {
+      console.error(err);
       setLoading(false);
       throw err;
     }
