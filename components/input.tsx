@@ -27,7 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={resolvedType}
             className={cn(
-              "flex h-12 w-full rounded-lg border border-graphite-200 bg-graphite-50 px-4 py-2 text-sm text-foreground transition-all duration-200 placeholder:text-muted/50 focus:border-amber focus:outline-none focus:ring-1 focus:ring-amber disabled:cursor-not-allowed disabled:opacity-50",
+              "relative z-0 flex h-12 w-full rounded-lg border border-graphite-200 bg-graphite-50 px-4 py-2 text-sm text-foreground transition-all duration-200 placeholder:text-muted/50 focus:border-amber focus:outline-none focus:ring-1 focus:ring-amber disabled:cursor-not-allowed disabled:opacity-50",
               isPassword && "pr-12",
               error && "border-red-500 focus:ring-red-500",
               className
@@ -40,7 +40,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               type="button"
               tabIndex={-1}
               onClick={() => setShowPassword((visible) => !visible)}
-              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-zinc-500 transition-colors hover:text-orange-500"
+              className="absolute inset-y-0 right-0 z-20 flex w-12 cursor-pointer items-center justify-center text-zinc-500 pointer-events-auto transition-colors hover:text-orange-500"
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
