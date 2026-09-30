@@ -13,6 +13,8 @@ for (const envVar of requiredEnvVars) {
 
 function collectAllowedOrigins() {
   const origins = [
+    "https://www.tattoogomk.com.br",
+    "https://tattoogomk.com.br",
     "https://projeto-gfxm.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
