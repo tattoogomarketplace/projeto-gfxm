@@ -16,6 +16,11 @@ type ClerkUnsafeMetadata = {
   full_name?: string;
   nome?: string;
   cpf?: string;
+  cnpj?: string;
+  data_nascimento?: string;
+  responsavel_nome?: string;
+  responsavel_cpf?: string;
+  accepted_terms?: boolean | string;
 };
 
 type ClerkUserCreatedData = {
@@ -48,6 +53,29 @@ function resolveNome(data: ClerkUserCreatedData): string | null {
 function resolveCpf(data: ClerkUserCreatedData): string | null {
   const digits = String(data.unsafe_metadata?.cpf || '').replace(/\D/g, '');
   return digits.length === 11 ? digits : null;
+}
+
+function resolveCnpj(data: ClerkUserCreatedData, role: AppRole): string | null {
+  if (role !== 'estudio') return null;
+  const digits = String(data.unsafe_metadata?.cnpj || '').replace(/\D/g, '');
+  return digits.length === 14 ? digits : null;
+}
+
+function resolveOptionalText(value: unknown): string | null {
+  const trimmed = String(value || '').trim();
+  return trimmed || null;
+}
+
+function resolveResponsavelCpf(data: ClerkUserCreatedData): string | null {
+  const digits = String(data.unsafe_metadata?.responsavel_cpf || '').replace(/\D/g, '');
+  return digits.length === 11 ? digits : null;
+}
+
+function resolveAcceptedTerms(data: ClerkUserCreatedData): boolean {
+  const value = data.unsafe_metadata?.accepted_terms;
+  if (value === true) return true;
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'true' || normalized === 't' || normalized === '1';
 }
 
 function resolveRole(data: ClerkUserCreatedData): AppRole {
@@ -104,14 +132,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, duplicated: true }, { status: 200 });
   }
 
+  const role = resolveRole(data);
+
   await prisma.perfil.create({
     data: {
       id: randomUUID(),
       clerk_id: clerkId,
       email,
       nome: resolveNome(data),
-      role: resolveRole(data),
+      role,
       cpf: resolveCpf(data),
+      cnpj: resolveCnpj(data, role),
+      data_nascimento: resolveOptionalText(data.unsafe_metadata?.data_nascimento),
+      responsavel_nome: resolveOptionalText(data.unsafe_metadata?.responsavel_nome),
+      responsavel_cpf: resolveResponsavelCpf(data),
+      accepted_terms: resolveAcceptedTerms(data),
     },
   });
 

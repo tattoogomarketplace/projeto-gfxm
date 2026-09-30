@@ -64,6 +64,10 @@ model Perfil {
   cidade                         String?
   estado                         String?
   cnpj                           String?
+  data_nascimento                String?
+  responsavel_nome               String?
+  responsavel_cpf                String?
+  accepted_terms                 Boolean    @default(false)
   agendamentos_pendentes_repasse Int        @default(0)
   agenda_bloqueada               Boolean    @default(false)
   studio_id                      String?    @db.Uuid
