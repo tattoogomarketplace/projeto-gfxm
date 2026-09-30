@@ -14,9 +14,9 @@ export default function RegisterPage() {
             variables: {
               colorPrimary: '#f97316',
               colorBackground: '#09090b',
-              colorInputText: '#ffffff',
+              colorInput: '#18181b',
               colorText: '#ffffff',
-              colorTextSecondary: '#a1a1aa',
+              colorTextOnPrimaryBackground: '#000000',
               borderRadius: '0.75rem',
             },
             elements: {
