@@ -17,6 +17,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
+  password: z.string().min(1, 'Informe sua senha'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -80,6 +81,7 @@ export default function LoginPage() {
 
       const result = await signIn.create({
         identifier: data.email.trim().toLowerCase(),
+        password: data.password,
       });
 
       if (result.status === 'complete') {
@@ -249,7 +251,6 @@ export default function LoginPage() {
             TattooGo <span className="text-orange-500">MK</span>
           </h1>
           <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
-          <p className="mt-1 text-xs text-zinc-600">Enviaremos um código de 6 dígitos para o seu e-mail.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
@@ -262,6 +263,15 @@ export default function LoginPage() {
               {...register('email')}
               error={errors.email?.message}
             />
+            <Input
+              label="Senha"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Sua senha"
+              className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+              {...register('password')}
+              error={errors.password?.message}
+            />
           </div>
 
           <button
@@ -270,7 +280,7 @@ export default function LoginPage() {
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
-              <TattooMachineLoader compact label="Enviando código" />
+              <TattooMachineLoader compact label="Entrando" />
             ) : (
               'Entrar'
             )}
