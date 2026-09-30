@@ -407,6 +407,10 @@ export default function RegisterPage() {
             </div>
           ) : null}
 
+          <div className="my-4 min-h-[65px] w-full flex justify-center items-center">
+            <div id="clerk-captcha" />
+          </div>
+
           <button
             type="submit"
             disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !cpfIsValid}
