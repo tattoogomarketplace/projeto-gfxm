@@ -247,6 +247,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+      <div
+        id="clerk-captcha"
+        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+      ></div>
       {isActivating ? (
         <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
           <TattooMachineLoader label="Ativando conta e preparando sua máquina..." />
