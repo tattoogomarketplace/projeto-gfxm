@@ -246,7 +246,10 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+    <div className="min-h-screen bg-[#121212] flex flex-col items-center justify-center p-6 text-white">
+      <div className="my-4 min-h-[65px] w-full flex justify-center items-center">
+        <div id="clerk-captcha" />
+      </div>
       {isActivating ? (
         <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
           <TattooMachineLoader label="Ativando conta e preparando sua máquina..." />
@@ -406,10 +409,6 @@ export default function RegisterPage() {
               </p>
             </div>
           ) : null}
-
-          <div className="my-4 min-h-[65px] w-full flex justify-center items-center">
-            <div id="clerk-captcha" />
-          </div>
 
           <button
             type="submit"
