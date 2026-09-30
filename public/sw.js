@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'tattoogo-mk-v1';
+const CACHE_VERSION = 'tattoogo-mk-v2';
 const SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const IMAGE_CACHE = CACHE_VERSION + '-images';
@@ -47,6 +47,18 @@ self.addEventListener('fetch', function (event) {
   var url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  var bypassAuthAndApi =
+    url.pathname.indexOf('/login') === 0 ||
+    url.pathname.indexOf('/register') === 0 ||
+    url.pathname.indexOf('/sign-in') === 0 ||
+    url.pathname.indexOf('/sign-up') === 0 ||
+    url.pathname.indexOf('/api/') === 0 ||
+    url.hostname.indexOf('clerk.accounts.dev') !== -1 ||
+    url.hostname.indexOf('clerk.services') !== -1 ||
+    url.hostname.indexOf('clerk.com') !== -1;
+
+  if (bypassAuthAndApi) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, SHELL_CACHE, '/offline.html'));
     return;
@@ -77,7 +89,11 @@ function networkFirst(request, cacheName, fallbackUrl) {
     }).catch(function () {
       return cache.match(request).then(function (cached) {
         if (cached) return cached;
-        if (fallbackUrl) return caches.match(fallbackUrl);
+        if (fallbackUrl) {
+          return caches.match(fallbackUrl).then(function (fallback) {
+            return fallback || new Response('Offline', { status: 503, statusText: 'Offline' });
+          });
+        }
         return new Response('Offline', { status: 503, statusText: 'Offline' });
       });
     });
@@ -90,7 +106,9 @@ function cacheFirst(request, cacheName) {
       if (cached) return cached;
       return fetch(request).then(function (response) {
         if (response && response.ok) cache.put(request, response.clone());
-        return response;
+        return response || new Response('Offline', { status: 503, statusText: 'Offline' });
+      }).catch(function () {
+        return new Response('Offline', { status: 503, statusText: 'Offline' });
       });
     });
   });
@@ -101,9 +119,9 @@ function staleWhileRevalidate(request, cacheName) {
     return cache.match(request).then(function (cached) {
       var network = fetch(request).then(function (response) {
         if (response && response.ok) cache.put(request, response.clone());
-        return response;
+        return response || cached || new Response('Offline', { status: 503, statusText: 'Offline' });
       }).catch(function () {
-        return cached;
+        return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
       });
       return cached || network;
     });

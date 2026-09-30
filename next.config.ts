@@ -39,13 +39,38 @@ if (isDev) {
   const withPWA = require('@ducanh2912/next-pwa').default({
     dest: 'public',
     cacheOnFrontEndNav: true,
-    aggressiveFrontEndNavCaching: true,
+    aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
     disable: false,
     fallbacks: { document: '/offline.html' },
+    extendDefaultRuntimeCaching: true,
     workboxOptions: {
       skipWaiting: true,
       clientsClaim: true,
+      navigateFallbackDenylist: [
+        /^\/register/,
+        /^\/login/,
+        /^\/sign-in/,
+        /^\/sign-up/,
+        /^\/api\//,
+        /clerk\.accounts\.dev/,
+        /clerk\.services/,
+        /clerk\.com/,
+      ],
+      runtimeCaching: [
+        {
+          urlPattern: /\/(login|register|sign-in|sign-up)(\/.*)?$/,
+          handler: 'NetworkOnly',
+        },
+        {
+          urlPattern: /\/api\/.*/,
+          handler: 'NetworkOnly',
+        },
+        {
+          urlPattern: /^https?:\/\/([^/]+\.)?(clerk\.accounts\.dev|clerk\.services|clerk\.com)(\/.*)?$/,
+          handler: 'NetworkOnly',
+        },
+      ],
     },
   });
   module.exports = withPWA(nextConfig);
