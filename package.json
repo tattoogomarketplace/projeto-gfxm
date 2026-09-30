@@ -6,7 +6,7 @@
     "dev": "concurrently -k -n next,express -c cyan,magenta \"npm run dev:next\" \"npm run dev:api\"",
     "dev:next": "next dev -H 0.0.0.0 -p 3000",
     "dev:api": "node server.cjs",
-    "build": "prisma generate && next build",
+    "build": "npx prisma generate && npx prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
