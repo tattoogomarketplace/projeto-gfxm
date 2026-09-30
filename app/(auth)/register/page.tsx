@@ -6,7 +6,6 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <SignUp
           routing="hash"
-          path="/register"
           signInUrl="/login"
           fallbackRedirectUrl="/dashboard"
           forceRedirectUrl="/dashboard"
