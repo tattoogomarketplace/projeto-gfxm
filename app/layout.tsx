@@ -64,6 +64,7 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         </head>
         <body className="font-sans antialiased h-full overflow-hidden">
+          <div id="clerk-captcha" className="hidden" />
           <Providers>
             <ThemeProvider>
               <PwaRegister />
