@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { useSignUp } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
@@ -17,7 +16,7 @@ import { PasswordStrengthBar } from '@/components/features/password-strength-bar
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
-import { normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import api from '@/lib/api';
 
@@ -85,7 +84,6 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -99,6 +97,7 @@ export default function RegisterPage() {
   const [forceShow, setForceShow] = useState(false);
   const [machineFailed, setMachineFailed] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
 
   const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -202,12 +201,6 @@ export default function RegisterPage() {
 
       await setActive({
         session: completeSignUp.createdSessionId,
-        navigate: async ({ session }) => {
-          if (session?.currentTask) {
-            return;
-          }
-          router.push('/');
-        },
       });
 
       const clerkUser = clerk.user;
@@ -230,8 +223,9 @@ export default function RegisterPage() {
       });
       setRole(resolvedRole);
 
-      setShowWelcome(true);
-      router.push('/');
+      setIsActivating(true);
+      await new Promise((resolve) => window.setTimeout(resolve, 1200));
+      window.location.href = dashboardPathForRole(resolvedRole);
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -253,7 +247,11 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
-      {!isLoaded && !forceShow ? (
+      {isActivating ? (
+        <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
+          <TattooMachineLoader label="Ativando conta e preparando sua máquina..." />
+        </div>
+      ) : !isLoaded && !forceShow ? (
         <TattooMachineLoader compact label="Carregando" />
       ) : showWelcome ? (
         <WelcomeGate role={userRole} />

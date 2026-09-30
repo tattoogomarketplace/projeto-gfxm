@@ -43,7 +43,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
   return (
     <div className="space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Eu sou</p>
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Seleção de perfil">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Seleção de perfil">
         {ROLES.map((role) => {
           const selected = value === role.value;
           const Icon = role.icon;
@@ -59,7 +59,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
                 onChange(role.value);
               }}
               className={cn(
-                'flex min-h-11 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200',
+                'flex min-h-11 flex-col items-center gap-1.5 rounded-xl border p-4 text-center transition-all duration-200',
                 'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
                 selected
                   ? 'border-orange-500 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
@@ -78,7 +78,7 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
               >
                 {role.label}
               </span>
-              <span className="hidden text-[9px] leading-tight text-zinc-500 sm:block">
+              <span className="text-xs leading-tight text-zinc-500">
                 {role.description}
               </span>
             </button>
