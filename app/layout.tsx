@@ -52,8 +52,8 @@ export default function RootLayout({
       localization={ptBR}
       signInUrl="/login"
       signUpUrl="/register"
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
       afterSignOutUrl="/"
     >
       <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
