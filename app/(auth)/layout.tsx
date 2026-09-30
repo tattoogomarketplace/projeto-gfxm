@@ -3,10 +3,5 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <div id="clerk-captcha" />
-      {children}
-    </>
-  );
+  return children;
 }
