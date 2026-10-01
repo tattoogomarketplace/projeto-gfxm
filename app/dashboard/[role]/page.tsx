@@ -1,35 +1,33 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
+import { parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveDisplayName } from '@/lib/utils/display-name';
-import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 
 interface DashboardPageProps {
   params: Promise<{ role: string }>;
 }
 
-export default async function DashboardPage({ params }: DashboardPageProps) {
+export default async function DashboardRolePage({ params }: DashboardPageProps) {
   const { role } = await params;
+  const expectedRole = parseAppRole(role);
+  if (!expectedRole) {
+    redirect('/dashboard');
+  }
+
+  const perfil = await requireDashboardPerfil(expectedRole);
   const user = await currentUser();
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-  const userRole = normalizeAppRole(metadata.role as string);
-  if (userRole !== role) {
-    redirect(dashboardPathForRole(userRole));
-  }
+  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-white capitalize">Painel do {role}</h1>
+      <h1 className="text-3xl font-bold text-white capitalize">Painel do {perfil.role}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="h-40 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
           <p className="text-zinc-400">Bem-vindo, {resolveDisplayName({
-            full_name: (metadata.full_name as string) || user.firstName || undefined,
-            nome: metadata.nome as string | undefined,
-          })}</p>
+            full_name: (metadata.full_name as string) || user?.firstName || undefined,
+            nome: (metadata.nome as string) || perfil.nome || undefined,
+          }, 'Artista', perfil.nome)}</p>
         </div>
       </div>
     </div>

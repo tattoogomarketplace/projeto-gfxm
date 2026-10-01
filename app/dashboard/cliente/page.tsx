@@ -1,12 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import ClienteDashboard from './cliente-dashboard';
 
 export default async function ClienteDashboardPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect('/login');
-  }
-
+  await requireDashboardPerfil('cliente');
   return <ClienteDashboard />;
 }

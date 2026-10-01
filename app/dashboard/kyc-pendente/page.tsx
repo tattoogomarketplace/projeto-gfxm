@@ -39,26 +39,61 @@ export default function KycPendentePage() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn || !user) {
-      router.push('/login');
       return;
     }
 
-    const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-    const role = normalizeAppRole(metadata.role as string);
-    if (role !== 'tatuador') {
-      router.push(dashboardPathForRole(role));
-      return;
-    }
+    let cancelled = false;
 
-    const kyc = (metadata.kyc_status as KycStatus) || 'pendente';
-    if (kyc === 'aprovado') {
-      router.push('/dashboard/tatuador');
-      return;
-    }
+    const hydrate = async () => {
+      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+      try {
+        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
+        if (cancelled) return;
+        if (response.status === 401) return;
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.needsOnboarding || !payload?.perfil) {
+          router.replace('/dashboard/onboarding');
+          return;
+        }
+        const role = normalizeAppRole(payload.perfil.role || (metadata.role as string));
+        if (role !== 'tatuador') {
+          router.replace(dashboardPathForRole(role));
+          return;
+        }
+        const kyc = (payload.perfil.kyc_status as KycStatus) || 'pendente';
+        if (kyc === 'aprovado') {
+          router.replace('/dashboard/tatuador');
+          return;
+        }
+        setUserId(user.id);
+        setStatus(kyc);
+        setLoading(false);
+        return;
+      } catch {
+        if (cancelled) return;
+      }
 
-    setUserId(user.id);
-    setStatus(kyc);
-    setLoading(false);
+      const role = normalizeAppRole(metadata.role as string);
+      if (role !== 'tatuador') {
+        router.replace(dashboardPathForRole(role));
+        return;
+      }
+
+      const kyc = (metadata.kyc_status as KycStatus) || 'pendente';
+      if (kyc === 'aprovado') {
+        router.replace('/dashboard/tatuador');
+        return;
+      }
+
+      setUserId(user.id);
+      setStatus(kyc);
+      setLoading(false);
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, user, router]);
 
   if (loading) {

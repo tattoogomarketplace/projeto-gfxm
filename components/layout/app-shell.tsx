@@ -42,6 +42,8 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const hideTabs = pathname.startsWith('/dashboard/onboarding');
+
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
       <header
@@ -61,14 +63,16 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
             <UserIdentity />
           </div>
         </div>
-        <div className="px-4 pb-3">
-          <SegmentedControl
-            options={TABS}
-            value={activeTab}
-            onChange={handleTabChange}
-            ariaLabel="Navegação principal"
-          />
-        </div>
+        {hideTabs ? null : (
+          <div className="px-4 pb-3">
+            <SegmentedControl
+              options={TABS}
+              value={activeTab}
+              onChange={handleTabChange}
+              ariaLabel="Navegação principal"
+            />
+          </div>
+        )}
       </header>
 
       <div className="flex-1 overflow-y-auto overscroll-y-contain pb-6">

@@ -1,12 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import EstudioDashboard from './estudio-dashboard';
 
 export default async function EstudioDashboardPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect('/login');
-  }
-
+  await requireDashboardPerfil('estudio');
   return <EstudioDashboard />;
 }

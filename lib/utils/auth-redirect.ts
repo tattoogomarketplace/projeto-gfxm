@@ -2,11 +2,17 @@ export type AppRole = 'cliente' | 'tatuador' | 'estudio';
 
 const ALLOWED_ROLES: AppRole[] = ['cliente', 'tatuador', 'estudio'];
 
-export function normalizeAppRole(role?: string | null): AppRole {
+export const ONBOARDING_PATH = '/dashboard/onboarding';
+
+export function parseAppRole(role?: string | null): AppRole | null {
   if (role && ALLOWED_ROLES.includes(role as AppRole)) {
     return role as AppRole;
   }
-  return 'cliente';
+  return null;
+}
+
+export function normalizeAppRole(role?: string | null): AppRole {
+  return parseAppRole(role) ?? 'cliente';
 }
 
 export function dashboardPathForRole(role?: string | null): string {

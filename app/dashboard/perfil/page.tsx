@@ -8,6 +8,7 @@ import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 
@@ -37,28 +38,49 @@ export default function PerfilPage() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn || !user) {
-      router.push('/login');
       return;
     }
 
-    const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-    const fullName = resolveFullName(
-      {
-        full_name: metadata.full_name as string | undefined,
-        nome: metadata.nome as string | undefined,
-        name: user.fullName || undefined,
-      },
-      storedUser?.fullName || user.fullName || ''
-    );
-    const emailAddress = user.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
-    setEmail(emailAddress);
-    setNome(fullName);
-    setUser({
-      id: user.id,
-      email: emailAddress,
-      fullName,
-    });
-    setLoading(false);
+    let cancelled = false;
+
+    const hydrate = async () => {
+      try {
+        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
+        if (cancelled) return;
+        if (response.status === 401) return;
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.needsOnboarding || !payload?.perfil) {
+          router.replace(ONBOARDING_PATH);
+          return;
+        }
+      } catch {
+        if (cancelled) return;
+      }
+
+      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+      const fullName = resolveFullName(
+        {
+          full_name: metadata.full_name as string | undefined,
+          nome: metadata.nome as string | undefined,
+          name: user.fullName || undefined,
+        },
+        storedUser?.fullName || user.fullName || ''
+      );
+      const emailAddress = user.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
+      setEmail(emailAddress);
+      setNome(fullName);
+      setUser({
+        id: user.id,
+        email: emailAddress,
+        fullName,
+      });
+      setLoading(false);
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, user, router, setUser, storedUser?.fullName, storedUser?.email]);
 
   const handleSaveName = async () => {
