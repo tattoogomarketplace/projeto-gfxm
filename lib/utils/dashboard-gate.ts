@@ -1,6 +1,10 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { ensurePerfilFromClerk, type LocalPerfil } from '@/lib/services/ensure-perfil';
+import {
+  ensurePerfilFromClerk,
+  findPerfilByClerkId,
+  type LocalPerfil,
+} from '@/lib/services/ensure-perfil';
 import {
   dashboardPathForRole,
   ONBOARDING_PATH,
@@ -15,23 +19,29 @@ type GateResult = {
 };
 
 export async function requireDashboardSession(): Promise<GateResult> {
-  const user = await currentUser();
-  if (!user) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect('/login');
   }
 
-  const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+  const user = await currentUser().catch(() => null);
+  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
   const role = parseAppRole(metadata.role as string | undefined);
 
-  let perfil = null;
+  let perfil: LocalPerfil | null = null;
   try {
-    perfil = await ensurePerfilFromClerk(user, role);
+    if (user) {
+      perfil = await ensurePerfilFromClerk(user, role);
+    }
+    if (!perfil) {
+      perfil = await findPerfilByClerkId(userId);
+    }
   } catch {
     perfil = null;
   }
 
   return {
-    clerkId: user.id,
+    clerkId: userId,
     perfil,
     role: parseAppRole(perfil?.role || role),
   };
@@ -40,12 +50,8 @@ export async function requireDashboardSession(): Promise<GateResult> {
 export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<LocalPerfil> {
   const { perfil, role } = await requireDashboardSession();
 
-  if (!perfil || !role) {
+  if (!perfil || perfil.deleted_at || !role) {
     redirect(ONBOARDING_PATH);
-  }
-
-  if (perfil.deleted_at) {
-    redirect('/login');
   }
 
   if (expectedRole && role !== expectedRole) {

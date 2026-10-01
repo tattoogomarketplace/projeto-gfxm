@@ -1,13 +1,13 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { randomUUID } from 'crypto';
-import { NextResponse } from 'next/server';
-import { Webhook } from 'svix';
-import { prisma } from '@/lib/prisma';
-import { normalizeAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { NextResponse, type NextRequest } from 'next/server';
+import { verifyWebhook } from '@clerk/nextjs/webhooks';
+import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
+import { normalizeAppRole, parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 type ClerkEmailAddress = {
+  id?: string;
   email_address?: string;
 };
 
@@ -27,128 +27,68 @@ type ClerkUserCreatedData = {
   id?: string;
   first_name?: string | null;
   last_name?: string | null;
+  primary_email_address_id?: string | null;
   email_addresses?: ClerkEmailAddress[];
   unsafe_metadata?: ClerkUnsafeMetadata;
+  public_metadata?: ClerkUnsafeMetadata;
 };
 
-type ClerkWebhookEvent = {
-  type?: string;
-  data?: ClerkUserCreatedData;
-};
-
-function resolveNome(data: ClerkUserCreatedData): string | null {
-  const metadata = data.unsafe_metadata || {};
-  const fromMetadata = String(metadata.full_name || metadata.nome || '').trim();
-  if (fromMetadata) return fromMetadata;
-
-  const fromClerk = [data.first_name, data.last_name]
-    .map((part) => String(part || '').trim())
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-
-  return fromClerk || null;
-}
-
-function resolveCpf(data: ClerkUserCreatedData): string | null {
-  const digits = String(data.unsafe_metadata?.cpf || '').replace(/\D/g, '');
-  return digits.length === 11 ? digits : null;
-}
-
-function resolveCnpj(data: ClerkUserCreatedData, role: AppRole): string | null {
-  if (role !== 'estudio') return null;
-  const digits = String(data.unsafe_metadata?.cnpj || '').replace(/\D/g, '');
-  return digits.length === 14 ? digits : null;
-}
-
-function resolveOptionalText(value: unknown): string | null {
-  const trimmed = String(value || '').trim();
-  return trimmed || null;
-}
-
-function resolveResponsavelCpf(data: ClerkUserCreatedData): string | null {
-  const digits = String(data.unsafe_metadata?.responsavel_cpf || '').replace(/\D/g, '');
-  return digits.length === 11 ? digits : null;
-}
-
-function resolveAcceptedTerms(data: ClerkUserCreatedData): boolean {
-  const value = data.unsafe_metadata?.accepted_terms;
-  if (value === true) return true;
-  const normalized = String(value || '').trim().toLowerCase();
-  return normalized === 'true' || normalized === 't' || normalized === '1';
+function resolveEmail(data: ClerkUserCreatedData): string {
+  const addresses = data.email_addresses || [];
+  const primary = addresses.find((item) => item.id && item.id === data.primary_email_address_id);
+  return String(primary?.email_address || addresses[0]?.email_address || '')
+    .trim()
+    .toLowerCase();
 }
 
 function resolveRole(data: ClerkUserCreatedData): AppRole {
-  return normalizeAppRole(data.unsafe_metadata?.role);
+  const metadata = data.unsafe_metadata || data.public_metadata || {};
+  return parseAppRole(metadata.role) ?? normalizeAppRole(metadata.role);
 }
 
-export async function POST(request: Request) {
-  const secret = process.env.CLERK_WEBHOOK_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: 'Webhook secret ausente.' }, { status: 400 });
-  }
-
-  const payload = await request.text();
-  const svixId = request.headers.get('svix-id');
-  const svixTimestamp = request.headers.get('svix-timestamp');
-  const svixSignature = request.headers.get('svix-signature');
-
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json({ error: 'Headers Svix ausentes.' }, { status: 400 });
-  }
-
-  let event: ClerkWebhookEvent;
+export async function POST(request: NextRequest) {
+  let event: { type?: string; data?: ClerkUserCreatedData };
   try {
-    const webhook = new Webhook(secret);
-    event = webhook.verify(payload, {
-      'svix-id': svixId,
-      'svix-timestamp': svixTimestamp,
-      'svix-signature': svixSignature,
-    }) as unknown as ClerkWebhookEvent;
+    event = (await verifyWebhook(request, {
+      signingSecret: process.env.CLERK_WEBHOOK_SIGNING_SECRET || process.env.CLERK_WEBHOOK_SECRET,
+    })) as { type?: string; data?: ClerkUserCreatedData };
   } catch {
     return NextResponse.json({ error: 'Assinatura Svix inválida.' }, { status: 400 });
   }
 
-  if (event.type !== 'user.created') {
+  if (event.type !== 'user.created' && event.type !== 'user.updated') {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
   const data = event.data || {};
   const clerkId = String(data.id || '').trim();
-  const email = String(data.email_addresses?.[0]?.email_address || '')
-    .trim()
-    .toLowerCase();
+  const email = resolveEmail(data);
 
-  if (!clerkId || !email) {
-    return NextResponse.json({ error: 'Payload Clerk incompleto.' }, { status: 400 });
+  if (!clerkId) {
+    return NextResponse.json({ received: true, skipped: 'missing_clerk_id' }, { status: 200 });
   }
 
-  const existing = await prisma.perfil.findUnique({
-    where: { clerk_id: clerkId },
-    select: { id: true },
-  });
-
-  if (existing) {
-    return NextResponse.json({ received: true, duplicated: true }, { status: 200 });
-  }
-
+  const metadata = data.unsafe_metadata || data.public_metadata || {};
   const role = resolveRole(data);
 
-  await prisma.perfil.create({
-    data: {
-      id: randomUUID(),
-      clerk_id: clerkId,
-      email,
-      nome: resolveNome(data),
-      role,
-      cpf: resolveCpf(data),
-      cnpj: resolveCnpj(data, role),
-      data_nascimento: resolveOptionalText(data.unsafe_metadata?.data_nascimento),
-      responsavel_nome: resolveOptionalText(data.unsafe_metadata?.responsavel_nome),
-      responsavel_cpf: resolveResponsavelCpf(data),
-      accepted_terms: resolveAcceptedTerms(data),
-    },
-  });
+  try {
+    await ensurePerfilFromClerk(
+      {
+        id: clerkId,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        primaryEmailAddress: email ? { emailAddress: email } : null,
+        emailAddresses: (data.email_addresses || [])
+          .map((item) => ({ emailAddress: item.email_address || null }))
+          .filter((item) => item.emailAddress),
+        unsafeMetadata: metadata,
+        publicMetadata: data.public_metadata || {},
+      },
+      role
+    );
+  } catch {
+    return NextResponse.json({ received: true, deferred: true }, { status: 200 });
+  }
 
   return NextResponse.json({ received: true }, { status: 200 });
 }
