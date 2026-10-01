@@ -21,7 +21,7 @@ type GateResult = {
 export async function requireDashboardSession(): Promise<GateResult> {
   const { userId } = await auth();
   if (!userId) {
-    redirect('/login');
+    redirect(ONBOARDING_PATH);
   }
 
   const user = await currentUser().catch(() => null);

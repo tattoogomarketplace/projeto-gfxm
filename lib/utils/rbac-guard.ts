@@ -7,6 +7,6 @@ export const checkAccess = async (
 ): Promise<AccessResult> => {
   void requiredRole;
   const { userId } = await auth();
-  if (!userId) return { allowed: false, redirect: '/login' };
+  if (!userId) return { allowed: false, redirect: '/dashboard/onboarding' };
   return { allowed: true };
 };
