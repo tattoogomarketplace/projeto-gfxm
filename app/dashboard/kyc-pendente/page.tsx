@@ -38,9 +38,7 @@ export default function KycPendentePage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn || !user) {
-      return;
-    }
+    if (!isSignedIn || !user) return;
 
     let cancelled = false;
 

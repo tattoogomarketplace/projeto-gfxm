@@ -7,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// Interceptor para injetar o token JWT
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('tattoogo_token');
@@ -18,7 +17,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para tratar erros globais (Ex: 401 Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
