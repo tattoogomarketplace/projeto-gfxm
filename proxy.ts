@@ -1,9 +1,11 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
-const isClerkWebhook = createRouteMatcher(['/api/webhooks/clerk']);
+const CLERK_WEBHOOK_PATH = '/api/webhooks/clerk';
 
 export default clerkMiddleware(async (_auth, req) => {
-  if (isClerkWebhook(req)) return;
+  // O webhook do Clerk é autenticado por assinatura Svix na própria Route
+  // Handler, portanto não participa do fluxo de sessão do middleware.
+  if (req.nextUrl.pathname === CLERK_WEBHOOK_PATH) return;
 });
 
 export const config = {

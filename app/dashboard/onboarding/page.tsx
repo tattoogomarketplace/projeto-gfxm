@@ -19,6 +19,7 @@ export default function DashboardOnboardingPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
+  const [lockedRole, setLockedRole] = useState<RegisterRole | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -28,6 +29,13 @@ export default function DashboardOnboardingPage() {
     let cancelled = false;
 
     const bootstrap = async () => {
+      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+      const metadataRole = parseAppRole(metadata.role as string);
+      if (metadataRole && !cancelled) {
+        setLockedRole(metadataRole);
+        setLocalRole(metadataRole);
+      }
+
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (response.status === 401) {
@@ -44,10 +52,6 @@ export default function DashboardOnboardingPage() {
           );
           return;
         }
-
-        const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-        const metadataRole = parseAppRole(metadata.role as string);
-        if (metadataRole) setLocalRole(metadataRole);
       } catch {
         toast.error('Não foi possível carregar seu perfil. Tente novamente.');
       } finally {
@@ -68,18 +72,19 @@ export default function DashboardOnboardingPage() {
     }
 
     setSaving(true);
+    const submitRole = lockedRole ?? role;
     try {
       await user.updateMetadata({
         unsafeMetadata: {
           ...(user.unsafeMetadata || {}),
-          role,
+          role: submitRole,
         },
       });
 
       const response = await fetch('/api/perfil/ensure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ role: submitRole }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -95,8 +100,8 @@ export default function DashboardOnboardingPage() {
           user.fullName ||
           '',
       });
-      setRole(role);
-      router.replace(postSignupPathForRole(role));
+      setRole(submitRole);
+      router.replace(postSignupPathForRole(submitRole));
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao concluir o onboarding.');
@@ -126,7 +131,7 @@ export default function DashboardOnboardingPage() {
       </header>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <RoleSelector value={role} onChange={setLocalRole} />
+        <RoleSelector value={role} onChange={setLocalRole} lockedRole={lockedRole} />
         <button
           type="button"
           onClick={handleContinue}

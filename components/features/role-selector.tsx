@@ -1,6 +1,6 @@
 'use client';
 
-import { User, PenTool, Building2 } from 'lucide-react';
+import { User, PenTool, Building2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 
@@ -35,10 +35,12 @@ const ROLES: Array<{
 type RoleSelectorProps = {
   value: RegisterRole;
   onChange: (role: RegisterRole) => void;
+  lockedRole?: RegisterRole | null;
 };
 
-export function RoleSelector({ value, onChange }: RoleSelectorProps) {
+export function RoleSelector({ value, onChange, lockedRole = null }: RoleSelectorProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const isLocked = Boolean(lockedRole);
 
   return (
     <div className="space-y-2">
@@ -46,6 +48,8 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Seleção de perfil">
         {ROLES.map((role) => {
           const selected = value === role.value;
+          const disabled = isLocked && role.value !== lockedRole;
+          const isLockedOption = isLocked && role.value === lockedRole;
           const Icon = role.icon;
           return (
             <button
@@ -53,23 +57,30 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-disabled={disabled}
+              disabled={disabled}
               onClick={() => {
-                if (selected) return;
+                if (disabled || selected) return;
                 triggerHaptic('light');
                 onChange(role.value);
               }}
               className={cn(
                 'flex min-h-11 flex-col items-center gap-1.5 rounded-xl border p-4 text-center transition-all duration-200',
-                'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
                 selected
                   ? 'border-orange-500 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
-                  : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700'
+                  : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700',
+                disabled && 'cursor-not-allowed opacity-35 grayscale'
               )}
             >
-              <Icon
-                className={cn('h-4 w-4', selected ? 'text-orange-500' : 'text-zinc-500')}
-                strokeWidth={2}
-              />
+              {isLockedOption ? (
+                <Lock className="h-4 w-4 text-orange-500" strokeWidth={2} />
+              ) : (
+                <Icon
+                  className={cn('h-4 w-4', selected ? 'text-orange-500' : 'text-zinc-500')}
+                  strokeWidth={2}
+                />
+              )}
               <span
                 className={cn(
                   'text-[11px] font-bold uppercase tracking-wide',
@@ -85,6 +96,12 @@ export function RoleSelector({ value, onChange }: RoleSelectorProps) {
           );
         })}
       </div>
+      {isLocked ? (
+        <p className="flex items-center gap-1.5 text-[11px] leading-relaxed text-zinc-500">
+          <Lock className="h-3 w-3" strokeWidth={2} />
+          Perfil definido no cadastro. Por segurança, esta escolha não pode ser alterada.
+        </p>
+      ) : null}
     </div>
   );
 }

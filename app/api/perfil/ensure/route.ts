@@ -1,28 +1,71 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
-import { parseAppRole } from '@/lib/utils/auth-redirect';
+import {
+  ensurePerfilFromClerk,
+  findPerfilByClerkId,
+  type LocalPerfil,
+} from '@/lib/services/ensure-perfil';
+import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+
+type ClerkUser = Awaited<ReturnType<typeof currentUser>>;
+
+type SessionContext = {
+  userId: string | null;
+  user: ClerkUser;
+  metadataRole: AppRole | null;
+};
+
+/**
+ * Estabelece a sessão a partir do token (auth) e, de forma defensiva, tenta
+ * enriquecer com os metadados do usuário Clerk (currentUser). O gate de
+ * autenticação é o `auth()` — leve, síncrono com o JWT e o padrão do App
+ * Router — enquanto `currentUser()` é apenas complementar. Isso evita que uma
+ * falha transitória da Backend API derrube a sessão com um 401 indevido.
+ */
+async function resolveSession(): Promise<SessionContext> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { userId: null, user: null, metadataRole: null };
+  }
+
+  let user: ClerkUser = null;
+  try {
+    user = await currentUser();
+  } catch {
+    user = null;
+  }
+
+  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
+  return { userId, user, metadataRole: parseAppRole(metadata.role as string | undefined) };
+}
+
+function perfilResponse(perfil: LocalPerfil) {
+  return {
+    id: perfil.id,
+    email: perfil.email,
+    nome: perfil.nome,
+    role: perfil.role,
+    kyc_status: perfil.kyc_status,
+  };
+}
 
 export async function GET() {
-  const user = await currentUser();
-  if (!user) {
+  const { userId, user, metadataRole } = await resolveSession();
+  if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-  const role = parseAppRole(metadata.role as string | undefined);
-
-  let perfil;
+  let perfil: LocalPerfil | null = null;
   try {
-    perfil = await ensurePerfilFromClerk(user, role);
+    perfil = await findPerfilByClerkId(userId);
+    if (!perfil && user) {
+      perfil = await ensurePerfilFromClerk(user, metadataRole);
+    }
   } catch {
-    return NextResponse.json(
-      { sucesso: true, perfil: null, needsOnboarding: true },
-      { status: 200 }
-    );
+    perfil = null;
   }
 
   if (!perfil) {
@@ -42,19 +85,13 @@ export async function GET() {
   return NextResponse.json({
     sucesso: true,
     needsOnboarding: false,
-    perfil: {
-      id: perfil.id,
-      email: perfil.email,
-      nome: perfil.nome,
-      role: perfil.role,
-      kyc_status: perfil.kyc_status,
-    },
+    perfil: perfilResponse(perfil),
   });
 }
 
 export async function POST(request: Request) {
-  const user = await currentUser();
-  if (!user) {
+  const { userId, user, metadataRole } = await resolveSession();
+  if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
@@ -66,10 +103,37 @@ export async function POST(request: Request) {
   }
 
   const requestedRole = parseAppRole(body.role);
-  const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-  const metadataRole = parseAppRole(metadata.role as string | undefined);
-  const role = requestedRole || metadataRole;
 
+  let existing: LocalPerfil | null = null;
+  try {
+    existing = await findPerfilByClerkId(userId);
+  } catch {
+    existing = null;
+  }
+
+  if (existing?.deleted_at) {
+    return NextResponse.json(
+      { sucesso: false, erro: 'Conta desativada.', perfil: null },
+      { status: 403 }
+    );
+  }
+
+  // Fonte de verdade do papel: o perfil já persistido no banco tem prioridade
+  // absoluta; na primeira criação vale o papel escolhido no cadastro (metadata).
+  const authoritativeRole = existing?.role ?? metadataRole;
+
+  if (authoritativeRole && requestedRole && requestedRole !== authoritativeRole) {
+    return NextResponse.json(
+      {
+        sucesso: false,
+        erro: 'O perfil é definido no cadastro e não pode ser alterado.',
+        role: authoritativeRole,
+      },
+      { status: 403 }
+    );
+  }
+
+  const role = authoritativeRole ?? requestedRole;
   if (!role) {
     return NextResponse.json(
       { sucesso: false, erro: 'Selecione um perfil para continuar.', needsOnboarding: true },
@@ -77,12 +141,25 @@ export async function POST(request: Request) {
     );
   }
 
-  let perfil;
-  try {
-    perfil = await ensurePerfilFromClerk(user, role);
-  } catch {
-    perfil = null;
+  let perfil: LocalPerfil | null = existing;
+  if (!perfil) {
+    if (!user) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          erro: 'Não foi possível validar sua conta agora. Tente novamente.',
+          needsOnboarding: true,
+        },
+        { status: 409 }
+      );
+    }
+    try {
+      perfil = await ensurePerfilFromClerk(user, role);
+    } catch {
+      perfil = null;
+    }
   }
+
   if (!perfil) {
     return NextResponse.json(
       { sucesso: false, erro: 'Não foi possível criar o perfil local.', needsOnboarding: true },
@@ -93,12 +170,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     sucesso: true,
     needsOnboarding: false,
-    perfil: {
-      id: perfil.id,
-      email: perfil.email,
-      nome: perfil.nome,
-      role: perfil.role,
-      kyc_status: perfil.kyc_status,
-    },
+    perfil: perfilResponse(perfil),
   });
 }
