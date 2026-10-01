@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tattoogomk.com.br"),
   title: "TattooGo MK | O Marketplace da Tatuagem",
   description:
     "Encontre os melhores artistas e estúdios da sua região. Agende a sua sessão com segurança, gerencie a sua agenda e impulsione a sua arte.",
