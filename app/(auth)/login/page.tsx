@@ -7,7 +7,6 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useClerk } from '@clerk/nextjs';
 import { useSignIn } from '@clerk/nextjs/legacy';
-import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
@@ -32,7 +31,6 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -43,6 +41,7 @@ export default function LoginPage() {
   const [resending, setResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   const {
     register,
@@ -86,8 +85,7 @@ export default function LoginPage() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push('/dashboard');
-        router.refresh();
+        setRedirectTo('/dashboard');
         return;
       }
 
@@ -120,6 +118,12 @@ export default function LoginPage() {
     const timer = setTimeout(() => setForceShow(true), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (redirectTo) {
+      window.location.href = redirectTo;
+    }
+  }, [redirectTo]);
 
   useEffect(() => {
     if (!isVerifying || resendSeconds <= 0) return;
@@ -185,8 +189,7 @@ export default function LoginPage() {
         role === 'tatuador' && kycStatus !== 'aprovado'
           ? postSignupPathForRole(role)
           : dashboardPathForRole(role);
-      router.push(nextPath);
-      router.refresh();
+      setRedirectTo(nextPath);
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
