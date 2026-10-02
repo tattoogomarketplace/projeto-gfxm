@@ -99,8 +99,14 @@ export async function POST(request: NextRequest) {
     );
 
     if (!perfil) {
-      console.error('[clerk-webhook] perfil não persistido', { clerkId, email, role });
-      return NextResponse.json({ error: 'perfil_nao_persistido' }, { status: 500 });
+      // Payload sem e-mail/papel não é reconciliável: respondemos 422 (erro de
+      // dados, não falha de servidor) para evitar loops de retry com HTTP 500.
+      console.warn('[clerk-webhook] perfil não persistido (dados insuficientes)', {
+        clerkId,
+        email: email || null,
+        role,
+      });
+      return NextResponse.json({ error: 'perfil_nao_persistido' }, { status: 422 });
     }
 
     return NextResponse.json({ received: true, perfilId: perfil.id }, { status: 200 });

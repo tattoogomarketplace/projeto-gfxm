@@ -110,6 +110,34 @@ export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil 
   });
 }
 
+type PrismaUniqueError = { code?: string; meta?: { target?: unknown } };
+
+function asUniqueConstraintError(error: unknown): PrismaUniqueError | null {
+  if (error && typeof error === 'object' && (error as PrismaUniqueError).code === 'P2002') {
+    return error as PrismaUniqueError;
+  }
+  return null;
+}
+
+function uniqueTargetIncludes(error: PrismaUniqueError, field: string): boolean {
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return target.some((item) => String(item).toLowerCase().includes(field));
+  }
+  if (typeof target === 'string') {
+    return target.toLowerCase().includes(field);
+  }
+  return false;
+}
+
+/**
+ * Persiste (cria ou atualiza) o perfil local a partir dos dados do Clerk.
+ *
+ * A gravação usa `upsert` pela chave única `clerk_id`, tornando a operação
+ * idempotente: entregas duplicadas de webhook ou pequenas divergências de
+ * campos nunca lançam erro fatal. Conflitos de unicidade em `email`/`cpf`
+ * (colunas opcionais) são reconciliados sem estourar a rota com HTTP 500.
+ */
 export async function ensurePerfilFromClerk(
   source: ClerkProfileSource,
   roleOverride?: string | null
@@ -117,70 +145,127 @@ export async function ensurePerfilFromClerk(
   const clerkId = String(source.id || '').trim();
   if (!clerkId) return null;
 
-  const existing = await findPerfilByClerkId(clerkId);
-  if (existing) {
-    if (!existing.deleted_at) return existing;
-    return prisma.perfil.update({
-      where: { id: existing.id },
-      data: {
-        deleted_at: null,
-        email: resolveEmail(source) || existing.email,
-        nome: resolveNome(source) ?? existing.nome,
-      },
-      select: PERFIL_SELECT,
-    });
-  }
-
-  const email = resolveEmail(source);
-  if (!email) return null;
-
   const metadata = metadataOf(source);
-  const role = parseAppRole(roleOverride || (metadata.role as string | undefined));
-  if (!role) return null;
+  const email = resolveEmail(source);
+  const nome = resolveNome(source);
+  const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
 
-  const payload = {
+  const existing = await findPerfilByClerkId(clerkId);
+
+  const cpf = resolveCpf(source);
+  const cnpj = role ? resolveCnpj(source, role) : null;
+  const dataNascimento = optionalText(metadata.data_nascimento);
+  const responsavelNome = optionalText(metadata.responsavel_nome);
+  const responsavelCpf = resolveResponsavelCpf(source);
+  const acceptedTerms = resolveAcceptedTerms(source);
+
+  // Atualização não destrutiva: só sobrescreve um campo quando o payload traz
+  // valor, preservando dados já persistidos em divergências de webhook.
+  const sharedUpdate = {
+    deleted_at: null,
+    ...(email ? { email } : {}),
+    ...(nome ? { nome } : {}),
+    ...(role ? { role } : {}),
+    ...(cnpj ? { cnpj } : {}),
+    ...(dataNascimento ? { data_nascimento: dataNascimento } : {}),
+    ...(responsavelNome ? { responsavel_nome: responsavelNome } : {}),
+    ...(responsavelCpf ? { responsavel_cpf: responsavelCpf } : {}),
+    ...(acceptedTerms ? { accepted_terms: true } : {}),
+  };
+  const updateData = cpf ? { ...sharedUpdate, cpf } : sharedUpdate;
+
+  const createData = (cpfValue: string | null) => ({
+    id: randomUUID(),
     clerk_id: clerkId,
     email,
-    nome: resolveNome(source),
-    role,
-    cpf: resolveCpf(source),
-    cnpj: resolveCnpj(source, role),
-    data_nascimento: optionalText(metadata.data_nascimento),
-    responsavel_nome: optionalText(metadata.responsavel_nome),
-    responsavel_cpf: resolveResponsavelCpf(source),
-    accepted_terms: resolveAcceptedTerms(source),
-  };
-
-  const byEmail = await prisma.perfil.findFirst({
-    where: { email },
-    select: PERFIL_SELECT,
+    nome,
+    role: role ?? 'cliente',
+    cpf: cpfValue,
+    cnpj,
+    data_nascimento: dataNascimento,
+    responsavel_nome: responsavelNome,
+    responsavel_cpf: responsavelCpf,
+    accepted_terms: acceptedTerms,
   });
 
-  if (byEmail) {
-    if (byEmail.clerk_id && byEmail.clerk_id !== clerkId) return null;
+  // Um perfil novo exige papel e e-mail definidos (preserva o onboarding). Um
+  // registro já existente pode ser reativado/atualizado mesmo sem um deles.
+  if (!existing && (!role || !email)) {
+    return null;
+  }
+
+  // Sem e-mail não é possível criar (coluna NOT NULL + única); nesse caso só
+  // atualizamos o registro já vinculado ao clerk_id.
+  if (!email) {
     return prisma.perfil.update({
-      where: { id: byEmail.id },
-      data: {
-        clerk_id: clerkId,
-        nome: payload.nome ?? byEmail.nome,
-        role,
-        deleted_at: null,
-        ...(payload.cpf ? { cpf: payload.cpf } : {}),
-      },
+      where: { id: existing!.id },
+      data: updateData,
       select: PERFIL_SELECT,
     });
   }
 
   try {
-    return await prisma.perfil.create({
-      data: {
-        id: randomUUID(),
-        ...payload,
-      },
+    return await prisma.perfil.upsert({
+      where: { clerk_id: clerkId },
+      create: createData(cpf),
+      update: updateData,
       select: PERFIL_SELECT,
     });
   } catch (error) {
-    console.error('[ensure-perfil] falha ao criar perfil', { clerkId, email, role, error });
+    const uniqueError = asUniqueConstraintError(error);
+    if (!uniqueError) {
+      console.error('[ensure-perfil] falha inesperada ao persistir perfil', {
+        clerkId,
+        email,
+        role,
+        error,
+      });
+      return findPerfilByClerkId(clerkId);
+    }
+
+    console.warn('[ensure-perfil] conflito de unicidade; reconciliando perfil', {
+      clerkId,
+      email,
+      target: uniqueError.meta?.target,
+    });
+
+    if (uniqueTargetIncludes(uniqueError, 'email')) {
+      const byEmail = await prisma.perfil.findUnique({
+        where: { email },
+        select: PERFIL_SELECT,
+      });
+
+      if (!byEmail) return findPerfilByClerkId(clerkId);
+      if (byEmail.clerk_id && byEmail.clerk_id !== clerkId) return null;
+
+      return prisma.perfil.update({
+        where: { id: byEmail.id },
+        data: { ...updateData, clerk_id: clerkId },
+        select: PERFIL_SELECT,
+      });
+    }
+
+    if (uniqueTargetIncludes(uniqueError, 'cpf')) {
+      // CPF já pertence a outro perfil: persistimos o restante sem o campo
+      // conflitante para não violar a constraint única opcional.
+      try {
+        return await prisma.perfil.upsert({
+          where: { clerk_id: clerkId },
+          create: createData(null),
+          update: sharedUpdate,
+          select: PERFIL_SELECT,
+        });
+      } catch (retryError) {
+        console.error('[ensure-perfil] falha ao reconciliar conflito de cpf', {
+          clerkId,
+          email,
+          role,
+          retryError,
+        });
+        return findPerfilByClerkId(clerkId);
+      }
+    }
+
     return findPerfilByClerkId(clerkId);
   }
 }
