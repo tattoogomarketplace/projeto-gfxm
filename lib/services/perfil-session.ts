@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { headers } from 'next/headers';
 import { verifyToken } from '@clerk/backend';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
@@ -261,6 +262,18 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
 }
 
 /**
+ * Mesma resolução de sessão das rotas `/api/perfil/*`, alimentada pelos
+ * headers da RSC (cookies + Authorization). Evita o split-brain em que o
+ * `auth()` do layout falha, o cliente autentica no `/api/perfil/ensure` e os
+ * dois lados se devolvem em loop entre onboarding e o painel.
+ */
+export async function resolvePerfilSessionFromIncomingRequest(): Promise<PerfilSession> {
+  const incoming = await headers();
+  const request = new Request('http://localhost', { headers: incoming });
+  return resolvePerfilSession(request);
+}
+
+/**
  * Monta uma fonte de perfil a partir SEMPRE do `userId` autenticado (auth()),
  * enriquecida com o usuário Clerk quando disponível. Isso desacopla o
  * auto-provisionamento de `currentUser()`: mesmo que a Backend API falhe, o
@@ -289,12 +302,14 @@ export function buildProfileSource(userId: string, user: ClerkUser): ClerkProfil
  * nome da coluna persistida no banco.
  */
 export function perfilResponse(perfil: LocalPerfil) {
+  const onboardingCompleted = perfil.has_seen_welcome_notice === true;
   return {
     id: perfil.id,
     email: perfil.email,
     nome: perfil.nome,
     role: perfil.role,
     kyc_status: perfil.kyc_status,
-    onboarding_completed: perfil.has_seen_welcome_notice,
+    has_seen_welcome_notice: onboardingCompleted,
+    onboarding_completed: onboardingCompleted,
   };
 }

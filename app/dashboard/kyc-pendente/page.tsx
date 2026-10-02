@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { KYCForm } from '@/components/features/kyc-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { dashboardPathForRole, isOnboardingComplete, normalizeAppRole } from '@/lib/utils/auth-redirect';
 
 type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
 
@@ -53,7 +53,7 @@ export default function KycPendentePage() {
         if (cancelled) return;
         if (response.status === 401) return;
         const payload = await response.json().catch(() => ({}));
-        if (payload?.needsOnboarding || !payload?.perfil) {
+        if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           router.replace('/dashboard/onboarding');
           return;
         }

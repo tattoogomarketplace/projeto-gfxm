@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   dashboardPathForRole,
+  isOnboardingComplete,
   ONBOARDING_PATH,
   parseAppRole,
   postSignupPathForRole,
@@ -39,7 +40,7 @@ export default function DashboardPage() {
         if (payload?.autenticado === false) {
           return;
         }
-        if (payload?.needsOnboarding || !payload?.perfil) {
+        if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           redirected.current = true;
           router.replace(ONBOARDING_PATH);
           return;

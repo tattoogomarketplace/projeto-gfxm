@@ -14,7 +14,7 @@ import {
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
-import { parseAppRole } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
 
 /**
  * Conclui o onboarding de forma idempotente.
@@ -105,17 +105,12 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!perfil.has_seen_welcome_notice) {
+  if (!isOnboardingComplete(perfil)) {
     const updated = await markOnboardingCompleted(userId);
     if (updated) perfil = updated;
   }
 
-  // O flag devolvido reflete o estado REALMENTE persistido no banco. Um 200 com
-  // `onboarding_completed` forçado a `true` recriava o loop: o layout do painel
-  // lia `has_seen_welcome_notice === false` e devolvia o usuário ao onboarding.
-  // Se a marcação não persistiu, falhamos explicitamente para o cliente exibir
-  // o erro e permanecer na tela, em vez de navegar para um loop de redirect.
-  const onboardingCompleted = perfil.has_seen_welcome_notice === true;
+  const onboardingCompleted = isOnboardingComplete(perfil);
   if (!onboardingCompleted) {
     return NextResponse.json(
       {

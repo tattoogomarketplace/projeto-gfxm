@@ -8,7 +8,7 @@ import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 
@@ -57,7 +57,7 @@ export default function PerfilPage() {
           return;
         }
         const payload = await response.json().catch(() => ({}));
-        if (payload?.needsOnboarding || !payload?.perfil) {
+        if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           router.replace(ONBOARDING_PATH);
           return;
         }

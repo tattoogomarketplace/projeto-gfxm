@@ -13,7 +13,7 @@ import {
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
-import { parseAppRole } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
 
 export async function GET(request: Request) {
   const { userId, user, metadataRole } = await resolvePerfilSession(request);
@@ -63,9 +63,11 @@ export async function GET(request: Request) {
     );
   }
 
+  const onboardingCompleted = isOnboardingComplete(perfil);
   return NextResponse.json({
     sucesso: true,
-    needsOnboarding: false,
+    needsOnboarding: !onboardingCompleted,
+    onboarding_completed: onboardingCompleted,
     perfil: perfilResponse(perfil),
   });
 }
@@ -139,9 +141,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const onboardingCompleted = isOnboardingComplete(perfil);
   return NextResponse.json({
     sucesso: true,
-    needsOnboarding: false,
+    needsOnboarding: !onboardingCompleted,
+    onboarding_completed: onboardingCompleted,
     perfil: perfilResponse(perfil),
   });
 }

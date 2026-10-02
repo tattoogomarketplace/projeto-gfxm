@@ -11,6 +11,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import {
   dashboardPathForRole,
+  isOnboardingComplete,
   parseAppRole,
   postSignupPathForRole,
   type AppRole,
@@ -85,11 +86,7 @@ export default function DashboardOnboardingPage() {
           setRole(existingRole);
         }
 
-        // Só sai do onboarding quando o banco confirma a conclusão. Ter um
-        // papel salvo não basta: o guard do layout devolveria o usuário para cá
-        // e criaria o loop. O flag é a única fonte de verdade.
-        if (existingRole && payload?.perfil?.onboarding_completed === true && !cancelled) {
-          router.refresh();
+        if (existingRole && isOnboardingComplete(payload?.perfil) && !cancelled) {
           router.replace(destinationForRole(existingRole, payload?.perfil?.kyc_status));
           return;
         }
@@ -146,9 +143,7 @@ export default function DashboardOnboardingPage() {
       // Só navegamos quando o banco confirma a persistência do flag. Confiar no
       // HTTP 200 sem verificar o estado real recriava o loop: o layout devolvia
       // ao onboarding porque `has_seen_welcome_notice` continuava `false`.
-      const persistedCompleted =
-        payload?.onboarding_completed === true ||
-        payload?.perfil?.onboarding_completed === true;
+      const persistedCompleted = isOnboardingComplete(payload?.perfil) || payload?.onboarding_completed === true;
       if (!persistedCompleted) {
         throw new Error(
           payload?.erro || 'Não foi possível concluir o cadastro. Tente novamente.'
@@ -189,11 +184,7 @@ export default function DashboardOnboardingPage() {
       });
       setRole(persistedRole);
 
-      // O refresh PRECISA vir antes do push: se `router.refresh()` roda depois
-      // da navegação, ele revalida a árvore antiga (onboarding) e o usuário
-      // "volta" para cá — o loop relatado de ver o painel por um instante.
-      router.refresh();
-      router.push(destinationForRole(persistedRole, persistedKyc));
+      router.replace(destinationForRole(persistedRole, persistedKyc));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Falha ao concluir o onboarding.';
       toast.error(message);

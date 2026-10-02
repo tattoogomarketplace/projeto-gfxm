@@ -1,12 +1,14 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
+import { buildProfileSource, resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
 import {
   dashboardPathForRole,
+  isOnboardingComplete,
+  LOGIN_PATH,
   ONBOARDING_PATH,
   parseAppRole,
   type AppRole,
@@ -19,22 +21,16 @@ type GateResult = {
 };
 
 export async function requireDashboardSession(): Promise<GateResult> {
-  const { userId } = await auth();
+  const { userId, user, metadataRole } = await resolvePerfilSessionFromIncomingRequest();
   if (!userId) {
-    redirect(ONBOARDING_PATH);
+    redirect(LOGIN_PATH);
   }
-
-  const user = await currentUser().catch(() => null);
-  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
-  const role = parseAppRole(metadata.role as string | undefined);
 
   let perfil: LocalPerfil | null = null;
   try {
-    if (user) {
-      perfil = await ensurePerfilFromClerk(user, role);
-    }
+    perfil = await findPerfilByClerkId(userId);
     if (!perfil) {
-      perfil = await findPerfilByClerkId(userId);
+      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
     }
   } catch {
     perfil = null;
@@ -43,21 +39,14 @@ export async function requireDashboardSession(): Promise<GateResult> {
   return {
     clerkId: userId,
     perfil,
-    role: parseAppRole(perfil?.role || role),
+    role: parseAppRole(perfil?.role || metadataRole),
   };
 }
 
 export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<LocalPerfil> {
   const { perfil, role } = await requireDashboardSession();
 
-  if (!perfil || perfil.deleted_at || !role) {
-    redirect(ONBOARDING_PATH);
-  }
-
-  // Espelho da trava do layout: o painel só é liberado após o onboarding ser
-  // confirmado no banco. Reforça o bloqueio mesmo que a rota seja acessada
-  // diretamente pela URL.
-  if (!perfil.has_seen_welcome_notice) {
+  if (!perfil || perfil.deleted_at || !role || !isOnboardingComplete(perfil)) {
     redirect(ONBOARDING_PATH);
   }
 

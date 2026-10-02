@@ -3,6 +3,29 @@ export type AppRole = 'cliente' | 'tatuador' | 'estudio';
 const ALLOWED_ROLES: AppRole[] = ['cliente', 'tatuador', 'estudio'];
 
 export const ONBOARDING_PATH = '/dashboard/onboarding';
+export const LOGIN_PATH = '/login';
+
+type OnboardingFlagSource = {
+  has_seen_welcome_notice?: boolean | null;
+  onboarding_completed?: boolean | null;
+  deleted_at?: Date | string | null;
+} | null | undefined;
+
+/**
+ * Fonte única de verdade para "onboarding concluído".
+ * O banco persiste `has_seen_welcome_notice`; a API expõe o alias
+ * `onboarding_completed`. Qualquer um dos dois em `true` libera o painel.
+ * Conta ausente, soft-deleted ou flag falso = onboarding obrigatório.
+ */
+export function isOnboardingComplete(perfil: OnboardingFlagSource): boolean {
+  if (!perfil || perfil.deleted_at) return false;
+  return perfil.has_seen_welcome_notice === true || perfil.onboarding_completed === true;
+}
+
+export function isOnboardingPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
+}
 
 export function parseAppRole(role?: string | null): AppRole | null {
   if (role && ALLOWED_ROLES.includes(role as AppRole)) {
