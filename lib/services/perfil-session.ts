@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { verifyToken } from '@clerk/backend';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import type { ClerkProfileSource, LocalPerfil } from '@/lib/services/ensure-perfil';
@@ -9,6 +11,42 @@ export type PerfilSession = {
   user: ClerkUser;
   metadataRole: AppRole | null;
 };
+
+const SESSION_COOKIE = '__session';
+
+/**
+ * O Clerk deriva o sufixo dos cookies do publishable key:
+ * `base64url(SHA1(publishableKey)).slice(0, 8)` — ex.: `__session_Ob3hTssd`.
+ * Cookies sem sufixo (`__session`) são legado/instância anterior e podem
+ * coexistir com os sufixados, fazendo o heurístico `usesSuffixedCookies()` do
+ * Clerk escolher o token de uma instância que não corresponde ao secret key da
+ * produção. Calcular o sufixo esperado permite priorizar o cookie correto.
+ */
+function getInstanceCookieSuffix(): string | null {
+  const publishableKey =
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) return null;
+  return createHash('sha1')
+    .update(publishableKey)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .slice(0, 8);
+}
+
+function parseCookieHeader(header: string | null): Record<string, string> {
+  const cookies: Record<string, string> = {};
+  if (!header) return cookies;
+  for (const part of header.split(';')) {
+    const separator = part.indexOf('=');
+    if (separator === -1) continue;
+    const name = part.slice(0, separator).trim();
+    const value = part.slice(separator + 1).trim();
+    if (!name) continue;
+    cookies[name] = value;
+  }
+  return cookies;
+}
 
 /**
  * Resumo seguro da autenticação da requisição para logs de diagnóstico.
@@ -38,6 +76,7 @@ export function describeRequestAuth(request?: Request): Record<string, unknown> 
       : 'ausente',
     cookieNames,
     cookieCount: cookieNames.length,
+    instanceSuffix: getInstanceCookieSuffix() ?? 'ausente',
   };
 }
 
@@ -64,6 +103,69 @@ async function resolveUserIdFromRequest(request: Request): Promise<string | null
     });
   }
   return null;
+}
+
+/**
+ * Resolve o usuário verificando criptograficamente (`verifyToken`) o token de
+ * sessão presente na requisição, sem depender do heurístico de cookie sufixado
+ * do Clerk nem da propagação de headers pelo middleware.
+ *
+ * Ordem: Bearer renovado pelo cliente, cookie sufixado da instância
+ * configurada, demais `__session_*` e, por fim, o `__session` legado. Testamos
+ * TODOS os candidatos porque a produção carrega cookies duplicados de
+ * instâncias distintas; o primeiro que validar com `CLERK_SECRET_KEY` é a
+ * sessão real. Nenhum valor de token é exposto em log.
+ */
+async function resolveUserIdFromTokenCandidates(
+  request: Request
+): Promise<{ userId: string | null; tried: string[]; source: string | null; suffix: string | null }> {
+  const suffix = getInstanceCookieSuffix();
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  const tried: string[] = [];
+  const candidates: Array<{ source: string; token: string }> = [];
+
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    candidates.push({ source: 'authorization', token: authHeader.slice('Bearer '.length) });
+  }
+
+  const cookies = parseCookieHeader(request.headers.get('cookie'));
+  const preferred = suffix ? `${SESSION_COOKIE}_${suffix}` : null;
+  const sessionCookieNames = Object.keys(cookies)
+    .filter((name) => name === SESSION_COOKIE || name.startsWith(`${SESSION_COOKIE}_`))
+    .sort((a, b) => {
+      if (a === preferred) return -1;
+      if (b === preferred) return 1;
+      if (a === SESSION_COOKIE) return 1;
+      if (b === SESSION_COOKIE) return -1;
+      return 0;
+    });
+
+  const seenTokens = new Set<string>();
+  for (const name of sessionCookieNames) {
+    const token = cookies[name];
+    if (!token || seenTokens.has(token)) continue;
+    seenTokens.add(token);
+    candidates.push({ source: name, token });
+  }
+
+  if (!secretKey) {
+    return { userId: null, tried, source: null, suffix };
+  }
+
+  for (const candidate of candidates) {
+    tried.push(candidate.source);
+    try {
+      const payload = await verifyToken(candidate.token, { secretKey });
+      if (payload?.sub) {
+        return { userId: payload.sub, tried, source: candidate.source, suffix };
+      }
+    } catch {
+      // Candidato inválido ou de outra instância: tenta o próximo.
+    }
+  }
+
+  return { userId: null, tried, source: null, suffix };
 }
 
 /**
@@ -99,6 +201,29 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
     rawResolved = Boolean(userId);
   }
 
+  // 3) Verificação criptográfica direta dos candidatos de token (Bearer +
+  //    cookies `__session`/`__session_<suffix>`). Resolve a duplicidade de
+  //    cookies de instâncias distintas e independe do middleware.
+  let tokenTried: string[] = [];
+  let tokenSource: string | null = null;
+  let instanceSuffix: string | null = null;
+  if (!userId && request) {
+    const verified = await resolveUserIdFromTokenCandidates(request);
+    userId = verified.userId;
+    tokenTried = verified.tried;
+    tokenSource = verified.source;
+    instanceSuffix = verified.suffix;
+    if (userId && !middlewareUserId && !rawResolved) {
+      // O middleware e o authenticateRequest falharam, mas a verificação
+      // direta do token/cookie recuperou a sessão. Útil para confirmar em
+      // produção qual instância/cookie é a fonte de verdade.
+      console.warn('[perfil-session] sessão recuperada via verificação direta', {
+        tokenSource,
+        instanceSuffix: instanceSuffix ?? 'ausente',
+      });
+    }
+  }
+
   if (!userId) {
     // Diagnóstico agressivo: ponto exato em que a sessão se perde. Logamos o
     // suficiente para saber se o problema é header, cookie ou middleware —
@@ -108,6 +233,9 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
       middlewareAuthUserId: middlewareUserId ? 'presente' : 'ausente',
       authThrew,
       rawAuthenticateRequest: rawResolved ? 'presente' : 'ausente',
+      tokenCandidatesTried: tokenTried,
+      instanceSuffix: instanceSuffix ?? 'ausente',
+      secretKeyConfigured: Boolean(process.env.CLERK_SECRET_KEY),
     });
     return { userId: null, user: null, metadataRole: null };
   }
