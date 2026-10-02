@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
+import { getWelcomeContent } from '@/components/features/welcome-gate';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import {
   dashboardPathForRole,
@@ -20,15 +22,23 @@ export default function DashboardOnboardingPage() {
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
   const [lockedRole, setLockedRole] = useState<RegisterRole | null>(null);
+  const [completedRole, setCompletedRole] = useState<RegisterRole | null>(null);
+  const completedRef = useRef<RegisterRole | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) return;
+    if (!isLoaded) return;
 
     let cancelled = false;
 
     const bootstrap = async () => {
+      if (!isSignedIn || !user) {
+        router.replace('/login');
+        setChecking(false);
+        return;
+      }
+
       const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
       const metadataRole = parseAppRole(metadata.role as string);
       if (metadataRole && !cancelled) {
@@ -39,11 +49,13 @@ export default function DashboardOnboardingPage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (response.status === 401) {
+          router.replace('/login');
           return;
         }
         const payload = await response.json().catch(() => ({}));
         const existingRole = parseAppRole(payload?.perfil?.role);
         if (existingRole && !cancelled) {
+          setLockedRole(existingRole);
           setRole(existingRole);
           router.replace(
             existingRole === 'tatuador' && payload?.perfil?.kyc_status !== 'aprovado'
@@ -71,15 +83,20 @@ export default function DashboardOnboardingPage() {
       return;
     }
 
-    setSaving(true);
     const submitRole = lockedRole ?? role;
+
+    setSaving(true);
     try {
-      await user.updateMetadata({
-        unsafeMetadata: {
-          ...(user.unsafeMetadata || {}),
-          role: submitRole,
-        },
-      });
+      // Se o papel já veio do cadastro, ele é imutável: não regravamos metadados
+      // (evita rotacionar o token de sessão e derrubar a requisição com 401).
+      if (!lockedRole) {
+        await user.updateMetadata({
+          unsafeMetadata: {
+            ...(user.unsafeMetadata || {}),
+            role: submitRole,
+          },
+        });
+      }
 
       const response = await fetch('/api/perfil/ensure', {
         method: 'POST',
@@ -101,8 +118,8 @@ export default function DashboardOnboardingPage() {
           '',
       });
       setRole(submitRole);
-      router.replace(postSignupPathForRole(submitRole));
-      router.refresh();
+      completedRef.current = submitRole;
+      setCompletedRole(submitRole);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao concluir o onboarding.');
     } finally {
@@ -110,10 +127,44 @@ export default function DashboardOnboardingPage() {
     }
   };
 
+  const handleEnterDashboard = () => {
+    const target = completedRef.current ?? completedRole;
+    if (!target) return;
+    router.replace(postSignupPathForRole(target));
+    router.refresh();
+  };
+
   if (!isLoaded || checking || !isSignedIn) {
     return (
       <div className="flex min-h-full items-center justify-center p-10">
         <TattooMachineLoader label="Preparando seu perfil" />
+      </div>
+    );
+  }
+
+  if (completedRole) {
+    const content = getWelcomeContent(completedRole);
+    return (
+      <div className="mx-auto flex min-h-full max-w-lg flex-col items-center justify-center space-y-6 p-4 text-center text-white sm:p-6">
+        <div className="flex h-28 w-28 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
+          <Sparkles className="h-10 w-10 text-orange-500" strokeWidth={1.5} />
+        </div>
+        <header className="space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">
+            Perfil criado
+          </p>
+          <h1 className="text-2xl font-bold">{content.title}</h1>
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
+            {content.subtitle}
+          </p>
+        </header>
+        <button
+          type="button"
+          onClick={handleEnterDashboard}
+          className="flex min-h-11 w-full max-w-sm items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
+        >
+          {content.cta}
+        </button>
       </div>
     );
   }

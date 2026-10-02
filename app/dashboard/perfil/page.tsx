@@ -36,6 +36,12 @@ export default function PerfilPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace('/login');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn || !user) return;
 
@@ -45,7 +51,10 @@ export default function PerfilPage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (response.status === 401) return;
+        if (response.status === 401 || !isSignedIn) {
+          router.replace('/login');
+          return;
+        }
         const payload = await response.json().catch(() => ({}));
         if (payload?.needsOnboarding || !payload?.perfil) {
           router.replace(ONBOARDING_PATH);

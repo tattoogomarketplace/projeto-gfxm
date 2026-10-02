@@ -4,15 +4,23 @@ import { useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
+import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { UserIdentity } from '@/components/layout/user-identity';
+import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { cn } from '@/lib/utils';
 
-const TABS: { value: AppTab; label: string }[] = [
-  { value: 'portfolio', label: 'Portfólio' },
+const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
+  { value: 'portfolio', label: primaryLabel },
   { value: 'agendar', label: 'Agendar' },
   { value: 'chat', label: 'Chat' },
 ];
+
+const TABS_BY_ROLE: Record<AppRole, { value: AppTab; label: string }[]> = {
+  cliente: baseTabs('Galeria'),
+  tatuador: baseTabs('Portfólio'),
+  estudio: baseTabs('Portfólio'),
+};
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -25,8 +33,33 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const searchParams = useSearchParams();
   const activeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const role = useAuthStore((s) => s.role);
+  const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRole = async () => {
+      try {
+        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = await response.json().catch(() => ({}));
+        const parsedRole = parseAppRole(payload?.perfil?.role);
+        if (parsedRole && !cancelled) {
+          setRole(parsedRole);
+        }
+      } catch {
+        // Sem perfil sincronizado, a navegação por abas permanece oculta.
+      }
+    };
+
+    void loadRole();
+    return () => {
+      cancelled = true;
+    };
+  }, [setRole]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -63,10 +96,10 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
             <UserIdentity />
           </div>
         </div>
-        {hideTabs ? null : (
+        {hideTabs || !role ? null : (
           <div className="px-4 pb-3">
             <SegmentedControl
-              options={TABS}
+              options={TABS_BY_ROLE[role]}
               value={activeTab}
               onChange={handleTabChange}
               ariaLabel="Navegação principal"

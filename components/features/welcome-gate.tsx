@@ -3,34 +3,49 @@ import { motion } from 'framer-motion';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { postSignupPathForRole } from '@/lib/utils/auth-redirect';
+import { postSignupPathForRole, type AppRole } from '@/lib/utils/auth-redirect';
+
+export type WelcomeContent = {
+  title: string;
+  subtitle: string;
+  cta: string;
+};
+
+export function getWelcomeContent(role: AppRole): WelcomeContent {
+  if (role === 'cliente') {
+    return {
+      title: 'Sua primeira ou próxima arte te espera',
+      subtitle: 'Conectando você aos melhores artistas. Inspire-se, encontre o traço perfeito.',
+      cta: 'Minha Jornada na Pele',
+    };
+  }
+  if (role === 'estudio') {
+    return {
+      title: 'Gestão master conectada.',
+      subtitle: 'A agenda do seu império está online. Homologue artistas e acompanhe o split.',
+      cta: 'Entrar no Atelier Digital',
+    };
+  }
+  return {
+    title: 'Bancada montada e máquina regulada!',
+    subtitle: 'Hora de eternizar sua arte e organizar seu dia. Veja agendamentos e gerencie pagamentos.',
+    cta: 'Entrar no Atelier Digital',
+  };
+}
 
 interface WelcomeGateProps {
-  role: 'cliente' | 'tatuador' | 'estudio';
+  role: AppRole;
 }
 
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const router = useRouter();
   const destination = postSignupPathForRole(role);
+  const content = getWelcomeContent(role);
 
   useEffect(() => {
     router.push(destination);
     router.refresh();
   }, [destination, router]);
-
-  const content = role === 'cliente' ? {
-    title: 'Sua primeira ou próxima arte te espera',
-    subtitle: 'Conectando você aos melhores artistas. Inspire-se, encontre o traço perfeito.',
-    cta: 'Minha Jornada na Pele'
-  } : role === 'estudio' ? {
-    title: 'Gestão master conectada.',
-    subtitle: 'A agenda do seu império está online. Homologue artistas e acompanhe o split.',
-    cta: 'Entrar no Atelier Digital'
-  } : {
-    title: 'Bancada montada e máquina regulada!',
-    subtitle: 'Hora de eternizar sua arte e organizar seu dia. Veja agendamentos e gerencie pagamentos.',
-    cta: 'Entrar no Atelier Digital'
-  };
 
   return (
     <motion.div 
