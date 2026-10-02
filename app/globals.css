@@ -91,6 +91,27 @@
   .tattoo-machine-shake {
     animation: tattoo-shake 0.22s ease-in-out infinite;
   }
+
+  .screen-fade-in {
+    animation: screen-fade-in 240ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-fade-in {
+    animation: none;
+  }
+}
+
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes tattoo-buzz {

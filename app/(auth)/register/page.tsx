@@ -91,6 +91,7 @@ export default function RegisterPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState('');
@@ -144,6 +145,8 @@ export default function RegisterPage() {
     const emailNorm = data.email.trim().toLowerCase();
     const cpfDigits = onlyCpfDigits(data.cpf);
     try {
+      setLoadingText('Verificando seus dados...');
+
       try {
         await api.post(`${API_URL}/api/auth/check-duplicidade`, { email: emailNorm, cpf: cpfDigits });
        } catch (dupErr: unknown) {
@@ -156,6 +159,7 @@ export default function RegisterPage() {
          }
        }
 
+      setLoadingText('Preparando perfil...');
       await signUp.create({
         emailAddress: emailNorm,
         password: data.password,
@@ -171,10 +175,12 @@ export default function RegisterPage() {
         },
       });
 
+      setLoadingText('Gerando segurança...');
       await signUp.prepareVerification({
         strategy: 'email_code',
       });
 
+      setLoadingText('Enviando código...');
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
@@ -186,6 +192,7 @@ export default function RegisterPage() {
        toast.error(clerkMsg);
      } finally {
       setLoading(false);
+      setLoadingText('');
     }
   };
 
@@ -267,7 +274,7 @@ export default function RegisterPage() {
       ) : showWelcome ? (
         <WelcomeGate role={userRole} />
       ) : isVerifying ? (
-        <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
+        <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
           <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} userRole={userRole} />
@@ -283,7 +290,7 @@ export default function RegisterPage() {
           </button>
         </div>
       ) : (
-      <div className="w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-xl">
+      <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-xl">
         <h1 className="text-2xl font-bold mb-6 text-center">Cadastro <span className="text-orange-500">TattooGo MK</span></h1>
 
         {status === 'menor_14' && (
@@ -424,7 +431,7 @@ export default function RegisterPage() {
             className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? (
-              <TattooMachineLoader compact label="Processando" />
+              <TattooMachineLoader compact label={loadingText || 'Processando'} />
             ) : machineFailed ? (
               <TattooMachineLoader compact failed label="Erro de validação" />
             ) : (
