@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
@@ -31,6 +31,7 @@ function destinationForRole(role: AppRole, kycStatus?: string | null): string {
 export default function DashboardOnboardingPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
@@ -113,9 +114,18 @@ export default function DashboardOnboardingPage() {
     submitting.current = true;
     setSaving(true);
     try {
+      // O Clerk só renova o token em requisições GET; para garantir que o POST
+      // chegue autenticado, enviamos o token de sessão atual no header
+      // Authorization, além do cookie (credentials: 'include').
+      const token = await getToken().catch(() => null);
       const response = await fetch('/api/perfil/onboarding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ role: submitRole }),
       });
       const payload = await response.json().catch(() => ({}));
@@ -192,9 +202,6 @@ export default function DashboardOnboardingPage() {
           <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
         </div>
         <header className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">
-            Bem-vindo(a) ao TattooGo MK
-          </p>
           <h1 className="text-2xl font-bold uppercase tracking-wide">
             {firstName ? `Bem-vindo(a), ${firstName}` : 'Bem-vindo(a)'}
           </h1>

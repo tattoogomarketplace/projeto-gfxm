@@ -17,8 +17,32 @@ export type PerfilSession = {
  * Router — enquanto `currentUser()` é apenas complementar. Isso evita que uma
  * falha transitória da Backend API derrube a sessão com um 401 indevido.
  */
-export async function resolvePerfilSession(): Promise<PerfilSession> {
-  const { userId } = await auth();
+export async function resolvePerfilSession(request?: Request): Promise<PerfilSession> {
+  let userId: string | null = null;
+  try {
+    ({ userId } = await auth());
+  } catch {
+    // `auth()` lança quando o middleware Clerk não está presente/combina com a
+    // rota; tratamos como sessão ausente e tentamos a verificação explícita.
+    userId = null;
+  }
+
+  // Fallback para requisições não-GET (ex.: POST do onboarding): o Clerk só
+  // renova o token da sessão em GETs, então um POST pode chegar sem cookie
+  // válido mesmo com o GET funcionando. Verificamos o token de sessão enviado
+  // pelo cliente no header `Authorization: Bearer <token>`.
+  if (!userId && request) {
+    try {
+      const client = await clerkClient();
+      const requestState = await client.authenticateRequest(request);
+      if (requestState.status === 'signed-in') {
+        userId = requestState.toAuth().userId ?? null;
+      }
+    } catch {
+      userId = null;
+    }
+  }
+
   if (!userId) {
     return { userId: null, user: null, metadataRole: null };
   }

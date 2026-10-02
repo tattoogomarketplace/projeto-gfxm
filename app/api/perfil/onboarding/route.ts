@@ -26,7 +26,7 @@ import { parseAppRole } from '@/lib/utils/auth-redirect';
  * duplicam registros nem deixam o usuário preso em loop de redirecionamento.
  */
 export async function POST(request: Request) {
-  const { userId, user, metadataRole } = await resolvePerfilSession();
+  const { userId, user, metadataRole } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }

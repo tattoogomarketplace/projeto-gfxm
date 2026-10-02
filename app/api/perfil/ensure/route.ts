@@ -14,8 +14,8 @@ import {
 } from '@/lib/services/perfil-session';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 
-export async function GET() {
-  const { userId, user, metadataRole } = await resolvePerfilSession();
+export async function GET(request: Request) {
+  const { userId, user, metadataRole } = await resolvePerfilSession(request);
   if (!userId) {
     // Estado esperado na hidratação inicial do cliente (sessão Clerk ainda não
     // propagada). Respondemos 200 sem perfil para evitar 401s espúrios nos logs
@@ -59,7 +59,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { userId, user, metadataRole } = await resolvePerfilSession();
+  const { userId, user, metadataRole } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
