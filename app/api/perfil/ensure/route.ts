@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/ensure-perfil';
 import {
   buildProfileSource,
+  describeRequestAuth,
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
@@ -17,12 +18,23 @@ import { parseAppRole } from '@/lib/utils/auth-redirect';
 export async function GET(request: Request) {
   const { userId, user, metadataRole } = await resolvePerfilSession(request);
   if (!userId) {
-    // Estado esperado na hidratação inicial do cliente (sessão Clerk ainda não
-    // propagada). Respondemos 200 sem perfil para evitar 401s espúrios nos logs
-    // da Vercel e não registrar erro onde não existe falha real.
+    // Diagnóstico explícito: NÃO mascaramos mais a queda de sessão com 200.
+    // Retornar 401 força o cliente a saber, já no carregamento da página, que o
+    // servidor não resolveu a sessão — exatamente o sintoma que antecede o 401
+    // do POST. O 200 anterior escondia a causa raiz e mantinha o usuário na UI.
+    console.error('[perfil/ensure] 401 - sessão não resolvida no GET', {
+      ...describeRequestAuth(request),
+      method: request.method,
+    });
     return NextResponse.json(
-      { sucesso: true, autenticado: false, perfil: null, needsOnboarding: false },
-      { status: 200 }
+      {
+        sucesso: false,
+        autenticado: false,
+        erro: 'Não autenticado.',
+        perfil: null,
+        needsOnboarding: false,
+      },
+      { status: 401 }
     );
   }
 

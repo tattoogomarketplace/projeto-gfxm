@@ -10,6 +10,7 @@ import {
 } from '@/lib/services/ensure-perfil';
 import {
   buildProfileSource,
+  describeRequestAuth,
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
@@ -28,6 +29,17 @@ import { parseAppRole } from '@/lib/utils/auth-redirect';
 export async function POST(request: Request) {
   const { userId, user, metadataRole } = await resolvePerfilSession(request);
   if (!userId) {
+    // Diagnóstico agressivo no ponto exato do 401. Registra o que a Vercel
+    // recebeu (header/cookies) e o que o `resolvePerfilSession` conseguiu
+    // resolver. Nunca imprime o Bearer nem o conteúdo dos cookies.
+    console.error('[perfil/onboarding] 401 - sessão não resolvida no POST', {
+      ...describeRequestAuth(request),
+      method: request.method,
+      contentType: request.headers.get('content-type'),
+      origin: request.headers.get('origin'),
+      referer: request.headers.get('referer'),
+      userAgent: request.headers.get('user-agent'),
+    });
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 

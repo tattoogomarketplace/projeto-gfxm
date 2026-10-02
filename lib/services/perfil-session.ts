@@ -11,6 +11,37 @@ export type PerfilSession = {
 };
 
 /**
+ * Resumo seguro da autenticação da requisição para logs de diagnóstico.
+ *
+ * NUNCA expõe o valor do Bearer nem o conteúdo dos cookies (credenciais de
+ * sessão). Publica apenas o que é decisivo para sabermos o que a Vercel está
+ * recebendo/descartando: presença e formato do header, nomes dos cookies e o
+ * status do `auth()` resolvido pelo middleware.
+ */
+export function describeRequestAuth(request?: Request): Record<string, unknown> {
+  const authHeader = request?.headers.get('authorization') ?? null;
+  const cookieHeader = request?.headers.get('cookie') ?? null;
+  const cookieNames = cookieHeader
+    ? cookieHeader
+        .split(';')
+        .map((part) => part.split('=')[0]?.trim())
+        .filter((name): name is string => Boolean(name))
+    : [];
+
+  return {
+    authorization: authHeader
+      ? {
+          scheme: authHeader.split(' ')[0] ?? 'desconhecido',
+          length: authHeader.length,
+          jwtShape: authHeader.split('.').length === 3,
+        }
+      : 'ausente',
+    cookieNames,
+    cookieCount: cookieNames.length,
+  };
+}
+
+/**
  * Valida a sessão a partir da requisição crua como fallback.
  *
  * Não removemos mais o header `Authorization`: o cliente envia um Bearer
@@ -27,8 +58,10 @@ async function resolveUserIdFromRequest(request: Request): Promise<string | null
     if (requestState.isAuthenticated) {
       return requestState.toAuth().userId ?? null;
     }
-  } catch {
-    // Token inválido/ausente: o chamador decide o próximo passo.
+  } catch (error) {
+    console.error('[perfil-session] authenticateRequest lançou', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   return null;
 }
@@ -44,24 +77,38 @@ async function resolveUserIdFromRequest(request: Request): Promise<string | null
  */
 export async function resolvePerfilSession(request?: Request): Promise<PerfilSession> {
   let userId: string | null = null;
+  let middlewareUserId: string | null = null;
+  let authThrew: string | null = null;
 
   // 1) Fonte primária: `auth()` do middleware, que processa o Bearer renovado e
   //    o cookie pela mesma via usada nas requisições GET.
   try {
-    ({ userId } = await auth());
-  } catch {
+    ({ userId: middlewareUserId } = await auth());
+  } catch (error) {
     // `auth()` lança quando o middleware Clerk não está presente/combina com a
     // rota; tratamos como sessão ausente e tentamos a requisição crua.
-    userId = null;
+    authThrew = error instanceof Error ? error.message : String(error);
   }
+  userId = middlewareUserId;
 
   // 2) Fallback explícito para a requisição crua quando não há contexto de
   //    middleware (ex.: execução fora do App Router).
+  let rawResolved = false;
   if (!userId && request) {
     userId = await resolveUserIdFromRequest(request);
+    rawResolved = Boolean(userId);
   }
 
   if (!userId) {
+    // Diagnóstico agressivo: ponto exato em que a sessão se perde. Logamos o
+    // suficiente para saber se o problema é header, cookie ou middleware —
+    // SEM nunca imprimir o token/cookie (credenciais de sessão).
+    console.error('[perfil-session] sessão NÃO resolvida (401)', {
+      ...describeRequestAuth(request),
+      middlewareAuthUserId: middlewareUserId ? 'presente' : 'ausente',
+      authThrew,
+      rawAuthenticateRequest: rawResolved ? 'presente' : 'ausente',
+    });
     return { userId: null, user: null, metadataRole: null };
   }
 
