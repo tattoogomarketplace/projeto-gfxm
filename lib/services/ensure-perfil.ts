@@ -118,7 +118,18 @@ export async function ensurePerfilFromClerk(
   if (!clerkId) return null;
 
   const existing = await findPerfilByClerkId(clerkId);
-  if (existing) return existing;
+  if (existing) {
+    if (!existing.deleted_at) return existing;
+    return prisma.perfil.update({
+      where: { id: existing.id },
+      data: {
+        deleted_at: null,
+        email: resolveEmail(source) || existing.email,
+        nome: resolveNome(source) ?? existing.nome,
+      },
+      select: PERFIL_SELECT,
+    });
+  }
 
   const email = resolveEmail(source);
   if (!email) return null;
@@ -141,24 +152,23 @@ export async function ensurePerfilFromClerk(
   };
 
   const byEmail = await prisma.perfil.findFirst({
-    where: { email, deleted_at: null },
+    where: { email },
     select: PERFIL_SELECT,
   });
 
-  if (byEmail && !byEmail.clerk_id) {
+  if (byEmail) {
+    if (byEmail.clerk_id && byEmail.clerk_id !== clerkId) return null;
     return prisma.perfil.update({
       where: { id: byEmail.id },
       data: {
         clerk_id: clerkId,
         nome: payload.nome ?? byEmail.nome,
         role,
+        deleted_at: null,
+        ...(payload.cpf ? { cpf: payload.cpf } : {}),
       },
       select: PERFIL_SELECT,
     });
-  }
-
-  if (byEmail?.clerk_id && byEmail.clerk_id !== clerkId) {
-    return null;
   }
 
   try {
@@ -169,12 +179,8 @@ export async function ensurePerfilFromClerk(
       },
       select: PERFIL_SELECT,
     });
-  } catch {
-    const byClerk = await findPerfilByClerkId(clerkId);
-    if (byClerk) return byClerk;
-    return prisma.perfil.findFirst({
-      where: { email, deleted_at: null },
-      select: PERFIL_SELECT,
-    });
+  } catch (error) {
+    console.error('[ensure-perfil] falha ao criar perfil', { clerkId, email, role, error });
+    return findPerfilByClerkId(clerkId);
   }
 }

@@ -47,13 +47,23 @@ function resolveRole(data: ClerkUserCreatedData): AppRole {
 }
 
 export async function POST(request: NextRequest) {
+  const signingSecret =
+    process.env.CLERK_WEBHOOK_SIGNING_SECRET || process.env.CLERK_WEBHOOK_SECRET;
+
+  if (!signingSecret) {
+    console.error('[clerk-webhook] CLERK_WEBHOOK_SIGNING_SECRET ausente.');
+    return NextResponse.json({ error: 'webhook_secret_missing' }, { status: 500 });
+  }
+
   let event: { type?: string; data?: ClerkUserCreatedData };
   try {
-    event = (await verifyWebhook(request, {
-      signingSecret: process.env.CLERK_WEBHOOK_SIGNING_SECRET || process.env.CLERK_WEBHOOK_SECRET,
-    })) as { type?: string; data?: ClerkUserCreatedData };
-  } catch {
-    return NextResponse.json({ error: 'Assinatura Svix inválida.' }, { status: 400 });
+    event = (await verifyWebhook(request, { signingSecret })) as {
+      type?: string;
+      data?: ClerkUserCreatedData;
+    };
+  } catch (error) {
+    console.error('[clerk-webhook] assinatura Svix inválida.', error);
+    return NextResponse.json({ error: 'assinatura_svix_invalida' }, { status: 400 });
   }
 
   if (event.type !== 'user.created' && event.type !== 'user.updated') {
@@ -65,14 +75,15 @@ export async function POST(request: NextRequest) {
   const email = resolveEmail(data);
 
   if (!clerkId) {
-    return NextResponse.json({ received: true, skipped: 'missing_clerk_id' }, { status: 200 });
+    console.error('[clerk-webhook] payload sem id', { type: event.type });
+    return NextResponse.json({ error: 'missing_clerk_id' }, { status: 422 });
   }
 
   const metadata = data.unsafe_metadata || data.public_metadata || {};
   const role = resolveRole(data);
 
   try {
-    await ensurePerfilFromClerk(
+    const perfil = await ensurePerfilFromClerk(
       {
         id: clerkId,
         firstName: data.first_name,
@@ -86,9 +97,20 @@ export async function POST(request: NextRequest) {
       },
       role
     );
-  } catch {
-    return NextResponse.json({ received: true, deferred: true }, { status: 200 });
-  }
 
-  return NextResponse.json({ received: true }, { status: 200 });
+    if (!perfil) {
+      console.error('[clerk-webhook] perfil não persistido', { clerkId, email, role });
+      return NextResponse.json({ error: 'perfil_nao_persistido' }, { status: 500 });
+    }
+
+    return NextResponse.json({ received: true, perfilId: perfil.id }, { status: 200 });
+  } catch (error) {
+    console.error('[clerk-webhook] falha ao sincronizar perfil', {
+      clerkId,
+      email,
+      role,
+      error,
+    });
+    return NextResponse.json({ error: 'sync_failed' }, { status: 500 });
+  }
 }

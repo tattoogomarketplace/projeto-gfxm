@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import {
   ensurePerfilFromClerk,
@@ -36,6 +36,15 @@ async function resolveSession(): Promise<SessionContext> {
     user = await currentUser();
   } catch {
     user = null;
+  }
+
+  if (!user) {
+    try {
+      const client = await clerkClient();
+      user = await client.users.getUser(userId);
+    } catch {
+      user = null;
+    }
   }
 
   const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
