@@ -39,6 +39,7 @@ export default function DashboardOnboardingPage() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const submitting = useRef(false);
 
   useEffect(() => {
@@ -64,7 +65,10 @@ export default function DashboardOnboardingPage() {
         if (!isLoaded || !isSignedIn || !user) {
           return;
         }
-        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
+        const response = await fetch('/api/perfil/ensure', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
         if (cancelled) return;
         if (response.status === 401) {
           router.replace('/login');
@@ -106,6 +110,7 @@ export default function DashboardOnboardingPage() {
   const handleAdvance = async () => {
     if (submitting.current) return;
     if (!isLoaded || !isSignedIn || !user) {
+      setErrorMessage('Sessão ainda sincronizando. Aguarde um instante e tente novamente.');
       toast.error('Sessão ainda sincronizando. Aguarde um instante.');
       return;
     }
@@ -113,10 +118,12 @@ export default function DashboardOnboardingPage() {
     const submitRole = lockedRole ?? role;
     submitting.current = true;
     setSaving(true);
+    setErrorMessage(null);
     try {
       // O Clerk só renova o token em requisições GET; para garantir que o POST
       // chegue autenticado, enviamos o token de sessão atual no header
-      // Authorization, além do cookie (credentials: 'include').
+      // Authorization, além do cookie (credentials: 'include'). No servidor o
+      // cookie de sessão é a fonte de verdade e o Bearer atua como fallback.
       const token = await getToken().catch(() => null);
       const response = await fetch('/api/perfil/onboarding', {
         method: 'POST',
@@ -130,7 +137,11 @@ export default function DashboardOnboardingPage() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload.erro || 'Falha ao concluir o cadastro.');
+        const message =
+          response.status === 401
+            ? 'Sua sessão expirou. Recarregue a página e tente novamente.'
+            : payload.erro || 'Falha ao concluir o cadastro.';
+        throw new Error(message);
       }
 
       const persistedRole = parseAppRole(payload?.perfil?.role) ?? submitRole;
@@ -173,9 +184,13 @@ export default function DashboardOnboardingPage() {
       router.refresh();
       router.push(destinationForRole(persistedRole, persistedKyc));
     } catch (err) {
-      submitting.current = false;
-      toast.error(err instanceof Error ? err.message : 'Falha ao concluir o onboarding.');
+      const message = err instanceof Error ? err.message : 'Falha ao concluir o onboarding.';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
+      // Sempre devolve o botão ao estado ativo: tanto no erro (o usuário pode
+      // tentar novamente) quanto em navegações que não desmontam o componente.
+      submitting.current = false;
       setSaving(false);
     }
   };
@@ -215,8 +230,25 @@ export default function DashboardOnboardingPage() {
       </div>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <RoleSelector value={role} onChange={setLocalRole} lockedRole={lockedRole} />
+        <RoleSelector
+          value={role}
+          onChange={(nextRole) => {
+            setLocalRole(nextRole);
+            setErrorMessage(null);
+          }}
+          lockedRole={lockedRole}
+        />
       </section>
+
+      {errorMessage ? (
+        <p
+          role="alert"
+          aria-live="assertive"
+          className="rounded-xl border border-red-600/40 bg-red-950/30 p-3 text-center text-sm font-semibold text-red-400"
+        >
+          {errorMessage}
+        </p>
+      ) : null}
 
       <button
         type="button"

@@ -11,16 +11,20 @@ export type PerfilSession = {
 };
 
 /**
- * Valida a sessão a partir do header `Authorization: Bearer <token>` e, caso
- * ele falhe, repete a validação ignorando o header para que o cookie de sessão
- * — a mesma fonte de verdade das requisições GET — seja validado.
+ * Valida a sessão explicitamente a partir da requisição crua.
  *
- * O Clerk dá prioridade absoluta ao token do header sobre o cookie: quando o
- * token está expirado/rotacionado, ele marca a requisição como deslogada e
- * IGNORA o cookie válido. Era exatamente esse o sintoma "GET autentica, POST
- * retorna 401", já que apenas o POST envia o header. Remover o header no
- * fallback devolve a autenticação ao cookie, sem abrir mão da verificação
- * explícita do token quando ele é válido.
+ * O Clerk concede prioridade absoluta ao header `Authorization` sobre o cookie
+ * de sessão: quando o header está presente, o token do cookie sequer é
+ * consultado (`authenticateRequest` -> `authenticateRequestWithTokenInHeader`).
+ * Um token expirado/rotacionado — cenário comum após `updateMetadata`, refresh
+ * de aba ou clock skew — marcava a requisição como deslogada e descartava o
+ * cookie válido. Era esse o sintoma "GET autentica, POST retorna 401", já que
+ * apenas o POST enviava o header.
+ *
+ * Correção: a fonte de verdade passa a ser SEMPRE o cookie de sessão (o mesmo
+ * consumido pelo `auth()` nas requisições GET). O Bearer só é aceito como
+ * fallback, para clientes que legitimamente não carregam cookie, e nunca pode
+ * vetar uma sessão por cookie válida.
  */
 async function resolveUserIdFromRequest(request: Request): Promise<string | null> {
   const verify = async (candidate: Request): Promise<string | null> => {
@@ -38,18 +42,23 @@ async function resolveUserIdFromRequest(request: Request): Promise<string | null
     return null;
   };
 
-  const fromHeader = await verify(request);
-  if (fromHeader) return fromHeader;
+  // 1) Cookie de sessão primeiro. Removemos o header `Authorization` para
+  //    impedir que um Bearer inválido tenha prioridade sobre o cookie válido.
+  //    Como o Clerk curto-circuita no header, sem removê-lo o cookie nunca
+  //    seria avaliado.
+  if (request.headers.has('cookie')) {
+    const headers = new Headers(request.headers);
+    headers.delete('authorization');
+    const cookieOnlyRequest = new Request(request.url, {
+      method: request.method,
+      headers,
+    });
+    const fromCookie = await verify(cookieOnlyRequest);
+    if (fromCookie) return fromCookie;
+  }
 
-  const headers = new Headers(request.headers);
-  headers.delete('authorization');
-  if (!headers.has('cookie')) return null;
-
-  const cookieOnlyRequest = new Request(request.url, {
-    method: request.method,
-    headers,
-  });
-  return verify(cookieOnlyRequest);
+  // 2) Fallback explícito para o token do header quando não há cookie válido.
+  return verify(request);
 }
 
 /**
@@ -69,9 +78,9 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
     userId = null;
   }
 
-  // Fallback para requisições que enviam o token no header (ex.: POST do
-  // onboarding). O fluxo prioriza a validação explícita do Bearer e recorre ao
-  // cookie de sessão quando o token não é aceito.
+  // Fallback explícito quando o `auth()` do middleware não resolveu a sessão
+  // (ex.: POST que envia um Bearer expirado). A resolução prioriza o cookie de
+  // sessão e só usa o token do header se o cookie não autenticar.
   if (!userId && request) {
     userId = await resolveUserIdFromRequest(request);
   }
