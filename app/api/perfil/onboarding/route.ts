@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
+  markOnboardingCompleted,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
 import {
@@ -14,50 +15,16 @@ import {
 } from '@/lib/services/perfil-session';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 
-export async function GET() {
-  const { userId, user, metadataRole } = await resolvePerfilSession();
-  if (!userId) {
-    // Estado esperado na hidratação inicial do cliente (sessão Clerk ainda não
-    // propagada). Respondemos 200 sem perfil para evitar 401s espúrios nos logs
-    // da Vercel e não registrar erro onde não existe falha real.
-    return NextResponse.json(
-      { sucesso: true, autenticado: false, perfil: null, needsOnboarding: false },
-      { status: 200 }
-    );
-  }
-
-  let perfil: LocalPerfil | null = null;
-  try {
-    perfil = await findPerfilByClerkId(userId);
-    if (!perfil) {
-      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
-    }
-  } catch (error) {
-    console.error('[perfil/ensure] auto-provisionamento falhou', { userId, error });
-    perfil = null;
-  }
-
-  if (!perfil) {
-    return NextResponse.json(
-      { sucesso: true, perfil: null, needsOnboarding: true },
-      { status: 200 }
-    );
-  }
-
-  if (perfil.deleted_at) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Conta desativada.', perfil: null },
-      { status: 403 }
-    );
-  }
-
-  return NextResponse.json({
-    sucesso: true,
-    needsOnboarding: false,
-    perfil: perfilResponse(perfil),
-  });
-}
-
+/**
+ * Conclui o onboarding de forma idempotente.
+ *
+ * 1. Garante que o perfil local existe (cria a partir do Clerk se necessário).
+ * 2. Avança o status persistido marcando `has_seen_welcome_notice = true`
+ *    (exposto ao cliente como `onboarding_completed`).
+ *
+ * Como a operação é idempotente, cliques repetidos ou retries de rede nunca
+ * duplicam registros nem deixam o usuário preso em loop de redirecionamento.
+ */
 export async function POST(request: Request) {
   const { userId, user, metadataRole } = await resolvePerfilSession();
   if (!userId) {
@@ -87,10 +54,9 @@ export async function POST(request: Request) {
     );
   }
 
-  // Fonte de verdade do papel: o perfil já persistido no banco tem prioridade
-  // absoluta; na primeira criação vale o papel escolhido no cadastro (metadata).
+  // O papel persistido tem prioridade absoluta; na primeira criação vale o
+  // papel escolhido no cadastro/seleção (metadata ou corpo da requisição).
   const authoritativeRole = existing?.role ?? metadataRole;
-
   if (authoritativeRole && requestedRole && requestedRole !== authoritativeRole) {
     return NextResponse.json(
       {
@@ -103,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   const role = authoritativeRole ?? requestedRole;
-  if (!role) {
+  if (!existing && !role) {
     return NextResponse.json(
       { sucesso: false, erro: 'Selecione um perfil para continuar.', needsOnboarding: true },
       { status: 400 }
@@ -115,7 +81,7 @@ export async function POST(request: Request) {
     try {
       perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), role);
     } catch (error) {
-      console.error('[perfil/ensure] criação falhou', { userId, role, error });
+      console.error('[perfil/onboarding] criação falhou', { userId, role, error });
       perfil = null;
     }
   }
@@ -127,9 +93,14 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!perfil.has_seen_welcome_notice) {
+    perfil = (await markOnboardingCompleted(userId)) ?? perfil;
+  }
+
   return NextResponse.json({
     sucesso: true,
     needsOnboarding: false,
+    onboarding_completed: true,
     perfil: perfilResponse(perfil),
   });
 }

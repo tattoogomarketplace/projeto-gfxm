@@ -9,6 +9,7 @@ export type LocalPerfil = {
   nome: string | null;
   role: AppRole;
   kyc_status: string;
+  has_seen_welcome_notice: boolean;
   deleted_at: Date | null;
 };
 
@@ -42,6 +43,7 @@ const PERFIL_SELECT = {
   nome: true,
   role: true,
   kyc_status: true,
+  has_seen_welcome_notice: true,
   deleted_at: true,
 } as const;
 
@@ -121,6 +123,30 @@ export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil 
   });
 }
 
+/**
+ * Marca o onboarding como concluído de forma idempotente.
+ *
+ * O schema não possui uma coluna dedicada `onboarding_completed`; o marco
+ * durável já existente é `has_seen_welcome_notice` (boolean NOT NULL). Ele é
+ * exposto na API como `onboarding_completed`, evitando uma migração arriscada
+ * no Neon. Se o perfil já estiver marcado, nenhuma escrita extra é feita.
+ */
+export async function markOnboardingCompleted(clerkId: string): Promise<LocalPerfil | null> {
+  try {
+    return await prisma.perfil.update({
+      where: { clerk_id: clerkId },
+      data: { has_seen_welcome_notice: true },
+      select: PERFIL_SELECT,
+    });
+  } catch (error) {
+    console.error('[ensure-perfil] falha ao marcar onboarding como concluído', {
+      clerkId,
+      error,
+    });
+    return findPerfilByClerkId(clerkId);
+  }
+}
+
 type PrismaUniqueError = { code?: string; meta?: { target?: unknown } };
 
 function asUniqueConstraintError(error: unknown): PrismaUniqueError | null {
@@ -162,23 +188,26 @@ export async function ensurePerfilFromClerk(
   const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
 
   const existing = await findPerfilByClerkId(clerkId);
-  const effectiveRole: AppRole | null = role ?? existing?.role ?? null;
+  // O papel persistido é a fonte de verdade; metadados só definem o papel na
+  // criação. Isso impede que um metadado divergente normalize o KYC errado.
+  const effectiveRole: AppRole | null = existing?.role ?? role ?? null;
 
   const cpf = resolveCpf(source);
-  const cnpj = role ? resolveCnpj(source, role) : null;
+  const cnpj = effectiveRole ? resolveCnpj(source, effectiveRole) : null;
   const dataNascimento = optionalText(metadata.data_nascimento);
   const responsavelNome = optionalText(metadata.responsavel_nome);
   const responsavelCpf = resolveResponsavelCpf(source);
   const acceptedTerms = resolveAcceptedTerms(source);
 
   // Atualização não destrutiva: só sobrescreve um campo quando o payload traz
-  // valor, preservando dados já persistidos em divergências de webhook. O único
-  // ajuste proativo é normalizar o KYC de clientes (nunca bloqueante).
+  // valor, preservando dados já persistidos em divergências de webhook. O papel
+  // é imutável após a criação (evita "role flapping" e loops de redirecionamento
+  // entre painéis). O único ajuste proativo é normalizar o KYC de clientes.
   const sharedUpdate = {
     deleted_at: null,
     ...(email ? { email } : {}),
     ...(nome ? { nome } : {}),
-    ...(role ? { role } : {}),
+    ...(!existing && role ? { role } : {}),
     ...(cnpj ? { cnpj } : {}),
     ...(dataNascimento ? { data_nascimento: dataNascimento } : {}),
     ...(responsavelNome ? { responsavel_nome: responsavelNome } : {}),

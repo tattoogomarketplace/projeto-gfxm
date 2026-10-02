@@ -90,25 +90,33 @@ export default function DashboardOnboardingPage() {
 
     setSaving(true);
     try {
-      // Se o papel já veio do cadastro, ele é imutável: não regravamos metadados
-      // (evita rotacionar o token de sessão e derrubar a requisição com 401).
-      if (!lockedRole) {
-        await user.updateMetadata({
-          unsafeMetadata: {
-            ...(user.unsafeMetadata || {}),
-            role: submitRole,
-          },
-        });
-      }
-
-      const response = await fetch('/api/perfil/ensure', {
+      const response = await fetch('/api/perfil/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: submitRole }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload.erro || 'Falha ao criar o perfil local.');
+        throw new Error(payload.erro || 'Falha ao concluir o cadastro.');
+      }
+
+      const persistedRole = parseAppRole(payload?.perfil?.role) ?? submitRole;
+
+      // Sincroniza os metadados APENAS depois de persistir o perfil.
+      // `updateMetadata` rotaciona o token de sessão: se executado antes do
+      // POST, derrubava a requisição com 401 e prendia o usuário no onboarding.
+      // Uma falha aqui é inofensiva — o papel já está no banco e é a fonte de verdade.
+      if (!lockedRole) {
+        try {
+          await user.updateMetadata({
+            unsafeMetadata: {
+              ...(user.unsafeMetadata || {}),
+              role: persistedRole,
+            },
+          });
+        } catch {
+          // metadado é complementar; não bloqueia a entrada no painel
+        }
       }
 
       setUser({
@@ -120,9 +128,9 @@ export default function DashboardOnboardingPage() {
           user.fullName ||
           '',
       });
-      setRole(submitRole);
-      completedRef.current = submitRole;
-      setCompletedRole(submitRole);
+      setRole(persistedRole);
+      completedRef.current = persistedRole;
+      setCompletedRole(persistedRole);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao concluir o onboarding.');
     } finally {
@@ -136,6 +144,18 @@ export default function DashboardOnboardingPage() {
     router.replace(postSignupPathForRole(target));
     router.refresh();
   };
+
+  // Após o perfil ser persistido, avança automaticamente para o painel do papel
+  // (cliente/tatuador/estúdio). O botão permanece como saída manual imediata.
+  useEffect(() => {
+    if (!completedRole) return;
+    const destination = postSignupPathForRole(completedRole);
+    const timer = window.setTimeout(() => {
+      router.replace(destination);
+      router.refresh();
+    }, 1600);
+    return () => window.clearTimeout(timer);
+  }, [completedRole, router]);
 
   if (!isLoaded || checking || !isSignedIn) {
     return (
