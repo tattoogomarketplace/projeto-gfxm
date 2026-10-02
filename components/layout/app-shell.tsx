@@ -77,8 +77,15 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   };
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
-  const hideTabs = isOnboarding;
-  const headerTitle = role ? ROLE_EXPERIENCE[role].dashboard.title : title;
+  // Configurações globais não pertencem ao contexto de nenhum papel: escondemos
+  // as abas (Galeria/Agendar/Chat) para não exibir uma aba ativa enganosa.
+  const isProfileSettings = pathname.startsWith('/dashboard/perfil');
+  const hideTabs = isOnboarding || isProfileSettings;
+  const headerTitle = isProfileSettings
+    ? 'Minha Jornada'
+    : role
+      ? ROLE_EXPERIENCE[role].dashboard.title
+      : title;
 
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
