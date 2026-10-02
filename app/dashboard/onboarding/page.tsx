@@ -202,16 +202,17 @@ export default function DashboardOnboardingPage() {
     }
   };
 
+  const effectiveRole = lockedRole ?? role;
+  const content = getRoleExperience(effectiveRole).onboarding;
+
   if (!isLoaded || checking || !isSignedIn) {
     return (
       <div className="flex min-h-full items-center justify-center p-10">
-        <TattooMachineLoader label="Preparando seu perfil" />
+        <TattooMachineLoader label={content.activating} />
       </div>
     );
   }
 
-  const effectiveRole = lockedRole ?? role;
-  const content = getRoleExperience(effectiveRole).onboarding;
   const firstName =
     (profileName || (user?.unsafeMetadata?.full_name as string) || user?.firstName || '')
       .trim()

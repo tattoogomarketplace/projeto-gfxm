@@ -16,6 +16,12 @@ export type RoleOnboardingExperience = {
   badge: string;
   journey: RoleJourney;
   cta: string;
+  /**
+   * Texto exibido durante a ativação da conta / carregamento do perfil. É
+   * dirigido ao papel persistido para manter a narrativa coerente do primeiro
+   * contato até a entrada no painel.
+   */
+  activating: string;
 };
 
 export type RoleDashboardExperience = {
@@ -49,6 +55,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         future: 'Conectamos você aos melhores artistas para encontrar o traço perfeito.',
       },
       cta: 'Minha Jornada na Pele',
+      activating: 'Ativando sua conta e preparando sua jornada...',
     },
     dashboard: {
       title: 'Minha Jornada',
@@ -68,6 +75,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         future: 'Eternize sua arte, organize o dia e gerencie seus recebimentos.',
       },
       cta: 'Entrar no Atelier Digital',
+      activating: 'Ativando sua conta e regulando sua máquina...',
     },
     dashboard: {
       title: 'Atelier Digital',
@@ -87,6 +95,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         future: 'Homologue artistas e acompanhe o split do seu império.',
       },
       cta: 'Entrar no Atelier Digital',
+      activating: 'Ativando sua conta e conectando seu estúdio...',
     },
     dashboard: {
       title: 'Métricas do Estúdio',

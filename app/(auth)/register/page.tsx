@@ -18,6 +18,7 @@ import { RoleSelector, type RegisterRole } from '@/components/features/role-sele
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import api from '@/lib/api';
 
@@ -267,7 +268,7 @@ export default function RegisterPage() {
       ></div>
       {isActivating ? (
         <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
-          <TattooMachineLoader label="Ativando conta e preparando sua máquina..." />
+          <TattooMachineLoader label={getRoleExperience(userRole).onboarding.activating} />
         </div>
       ) : !isLoaded && !forceShow ? (
         <TattooMachineLoader compact label="Carregando" />
