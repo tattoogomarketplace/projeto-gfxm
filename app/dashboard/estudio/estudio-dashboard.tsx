@@ -2,14 +2,18 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
+
+const EXPERIENCE = getRoleExperience('estudio').dashboard;
 
 export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
     <div className="p-8 text-white min-h-screen bg-graphite">
-      <h1 className="text-2xl font-bold mb-6">Métricas do Estúdio</h1>
+      <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
+      <p className="mb-6 text-sm text-zinc-400">{EXPERIENCE.subtitle}</p>
       
       {isLoading ? (
         <div className="space-y-4">

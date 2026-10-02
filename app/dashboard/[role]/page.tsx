@@ -2,6 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import { resolveDisplayName } from '@/lib/utils/display-name';
 
 interface DashboardPageProps {
@@ -16,12 +17,16 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
   }
 
   const perfil = await requireDashboardPerfil(expectedRole);
+  const experience = getRoleExperience(perfil.role);
   const user = await currentUser();
   const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-white capitalize">Painel do {perfil.role}</h1>
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-white">{experience.dashboard.title}</h1>
+        <p className="text-sm text-zinc-400">{experience.dashboard.subtitle}</p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="h-40 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
           <p className="text-zinc-400">Bem-vindo, {resolveDisplayName({

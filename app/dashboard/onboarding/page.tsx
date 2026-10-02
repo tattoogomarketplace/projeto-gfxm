@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
-import { getWelcomeContent } from '@/components/features/welcome-gate';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import {
@@ -31,7 +31,6 @@ function destinationForRole(role: AppRole, kycStatus?: string | null): string {
 export default function DashboardOnboardingPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
@@ -117,18 +116,18 @@ export default function DashboardOnboardingPage() {
     submitting.current = true;
     setSaving(true);
     try {
-      // O Clerk só renova o token em requisições GET; para garantir que o POST
-      // chegue autenticado, enviamos o token de sessão atual no header
-      // Authorization, além do cookie (credentials: 'include'). No servidor o
-      // cookie de sessão é a fonte de verdade e o Bearer atua como fallback.
-      const token = await getToken().catch(() => null);
+      // O cookie de sessão httpOnly é a ÚNICA fonte de verdade da autenticação.
+      // Não enviamos `Authorization: Bearer`: o Clerk dá prioridade absoluta ao
+      // header e um token rotacionado pelo `getToken()` marcaria a requisição
+      // como deslogada, descartando um cookie válido (causa do 401). Com
+      // `credentials: 'include'` o POST usa exatamente o mesmo caminho de
+      // autenticação por cookie que os GETs já comprovadamente usam.
       const response = await fetch('/api/perfil/onboarding', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ role: submitRole }),
       });
@@ -139,6 +138,18 @@ export default function DashboardOnboardingPage() {
             ? 'Sua sessão expirou. Recarregue a página e tente novamente.'
             : payload.erro || 'Falha ao concluir o cadastro.';
         throw new Error(message);
+      }
+
+      // Só navegamos quando o banco confirma a persistência do flag. Confiar no
+      // HTTP 200 sem verificar o estado real recriava o loop: o layout devolvia
+      // ao onboarding porque `has_seen_welcome_notice` continuava `false`.
+      const persistedCompleted =
+        payload?.onboarding_completed === true ||
+        payload?.perfil?.onboarding_completed === true;
+      if (!persistedCompleted) {
+        throw new Error(
+          payload?.erro || 'Não foi possível concluir o cadastro. Tente novamente.'
+        );
       }
 
       const persistedRole = parseAppRole(payload?.perfil?.role) ?? submitRole;
@@ -200,7 +211,7 @@ export default function DashboardOnboardingPage() {
   }
 
   const effectiveRole = lockedRole ?? role;
-  const content = getWelcomeContent(effectiveRole);
+  const content = getRoleExperience(effectiveRole).onboarding;
   const firstName =
     (profileName || (user?.unsafeMetadata?.full_name as string) || user?.firstName || '')
       .trim()
@@ -214,13 +225,17 @@ export default function DashboardOnboardingPage() {
         </div>
         <header className="space-y-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-            Bem-vindo ao TattooGo MK
+            {content.badge}
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+            {content.journey.past}
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {firstName ? `Olá, ${firstName}!` : 'Olá!'}
           </h1>
+          <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
-            {content.subtitle}
+            {content.journey.future}
           </p>
         </header>
       </div>
@@ -243,7 +258,7 @@ export default function DashboardOnboardingPage() {
             disabled={saving}
             className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
           >
-            {saving ? <TattooMachineLoader compact label="Preparando" /> : 'Avançar'}
+            {saving ? <TattooMachineLoader compact label="Preparando" /> : content.cta}
           </button>
         </div>
       </div>

@@ -62,27 +62,36 @@ async function resolveUserIdFromRequest(request: Request): Promise<string | null
 }
 
 /**
- * Estabelece a sessão a partir do token (auth) e, de forma defensiva, tenta
- * enriquecer com os metadados do usuário Clerk (currentUser). O gate de
- * autenticação é o `auth()` — leve, síncrono com o JWT e o padrão do App
- * Router — enquanto `currentUser()` é apenas complementar. Isso evita que uma
- * falha transitória da Backend API derrube a sessão com um 401 indevido.
+ * Estabelece a sessão priorizando SEMPRE o cookie de sessão da requisição crua
+ * (`resolveUserIdFromRequest`), que remove o header `Authorization` antes de
+ * validar. Sem isso, um Bearer expirado/rotacionado teria prioridade absoluta
+ * no Clerk e derrubaria uma sessão por cookie válida — a causa raiz do 401 no
+ * POST do onboarding. O `auth()` do middleware entra apenas como fallback para
+ * chamadas sem `Request`, e `currentUser()` é complementar (enriquece o perfil
+ * sem poder vetar a autenticação já resolvida).
  */
 export async function resolvePerfilSession(request?: Request): Promise<PerfilSession> {
   let userId: string | null = null;
-  try {
-    ({ userId } = await auth());
-  } catch {
-    // `auth()` lança quando o middleware Clerk não está presente/combina com a
-    // rota; tratamos como sessão ausente e tentamos a verificação explícita.
-    userId = null;
+
+  // 1) Cookie de sessão primeiro, SEMPRE. É o mesmo caminho que o `auth()` usa
+  //    nas requisições GET e a única fonte de verdade confiável. Resolver o
+  //    cookie antes de `auth()` impede que um Bearer expirado/rotacionado no
+  //    header tenha prioridade e derrube uma sessão por cookie válida.
+  if (request) {
+    userId = await resolveUserIdFromRequest(request);
   }
 
-  // Fallback explícito quando o `auth()` do middleware não resolveu a sessão
-  // (ex.: POST que envia um Bearer expirado). A resolução prioriza o cookie de
-  // sessão e só usa o token do header se o cookie não autenticar.
-  if (!userId && request) {
-    userId = await resolveUserIdFromRequest(request);
+  // 2) Fallback para o `auth()` do middleware quando não há requisição explícita
+  //    ou o cookie não autenticou. Mantém o comportamento idiomático do App
+  //    Router para chamadas server-side sem `Request` cru.
+  if (!userId) {
+    try {
+      ({ userId } = await auth());
+    } catch {
+      // `auth()` lança quando o middleware Clerk não está presente/combina com a
+      // rota; tratamos como sessão ausente.
+      userId = null;
+    }
   }
 
   if (!userId) {

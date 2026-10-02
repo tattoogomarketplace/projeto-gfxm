@@ -4,34 +4,7 @@ import { NeonButton } from '@/components/ui/neon-button';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { postSignupPathForRole, type AppRole } from '@/lib/utils/auth-redirect';
-
-export type WelcomeContent = {
-  title: string;
-  subtitle: string;
-  cta: string;
-};
-
-export function getWelcomeContent(role: AppRole): WelcomeContent {
-  if (role === 'cliente') {
-    return {
-      title: 'Sua primeira ou próxima arte te espera',
-      subtitle: 'Conectando você aos melhores artistas. Inspire-se, encontre o traço perfeito.',
-      cta: 'Minha Jornada na Pele',
-    };
-  }
-  if (role === 'estudio') {
-    return {
-      title: 'Gestão master conectada.',
-      subtitle: 'A agenda do seu império está online. Homologue artistas e acompanhe o split.',
-      cta: 'Entrar no Atelier Digital',
-    };
-  }
-  return {
-    title: 'Bancada montada e máquina regulada!',
-    subtitle: 'Hora de eternizar sua arte e organizar seu dia. Veja agendamentos e gerencie pagamentos.',
-    cta: 'Entrar no Atelier Digital',
-  };
-}
+import { getRoleExperience } from '@/lib/content/role-experience';
 
 interface WelcomeGateProps {
   role: AppRole;
@@ -40,7 +13,7 @@ interface WelcomeGateProps {
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const router = useRouter();
   const destination = postSignupPathForRole(role);
-  const content = getWelcomeContent(role);
+  const content = getRoleExperience(role).onboarding;
 
   useEffect(() => {
     router.push(destination);
@@ -56,8 +29,10 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       <div className="w-32 h-32 bg-zinc-900 rounded-full mb-8 flex items-center justify-center border border-zinc-800 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
         <span className="text-4xl">✨</span>
       </div>
-      <h1 className="text-3xl font-bold text-white mb-2">{content.title}</h1>
-      <p className="text-zinc-400 mb-8 max-w-sm">{content.subtitle}</p>
+      <p className="mb-2 text-xs uppercase tracking-[0.3em] text-orange-500">{content.badge}</p>
+      <p className="mb-1 text-sm text-zinc-500">{content.journey.past}</p>
+      <h1 className="text-3xl font-bold text-white mb-2">{content.journey.present}</h1>
+      <p className="text-zinc-400 mb-8 max-w-sm">{content.journey.future}</p>
       <NeonButton
         type="button"
         onClick={() => {

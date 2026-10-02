@@ -8,6 +8,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { UserIdentity } from '@/components/layout/user-identity';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { cn } from '@/lib/utils';
 
 const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
@@ -17,9 +18,9 @@ const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
 ];
 
 const TABS_BY_ROLE: Record<AppRole, { value: AppTab; label: string }[]> = {
-  cliente: baseTabs('Galeria'),
-  tatuador: baseTabs('Portfólio'),
-  estudio: baseTabs('Portfólio'),
+  cliente: baseTabs(ROLE_EXPERIENCE.cliente.dashboard.primaryTab),
+  tatuador: baseTabs(ROLE_EXPERIENCE.tatuador.dashboard.primaryTab),
+  estudio: baseTabs(ROLE_EXPERIENCE.estudio.dashboard.primaryTab),
 };
 
 interface AppShellProps {
@@ -77,6 +78,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
   const hideTabs = isOnboarding;
+  const headerTitle = role ? ROLE_EXPERIENCE[role].dashboard.title : title;
 
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
@@ -87,7 +89,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         )}
       >
         <div className="flex min-h-11 items-center justify-between px-4 pb-3">
-          <h1 className="text-[17px] font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-[17px] font-semibold tracking-tight">{headerTitle}</h1>
           <div className="flex items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-zinc-300">

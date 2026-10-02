@@ -8,8 +8,11 @@ import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
 import { getCachedFeed } from '@/lib/catalogo';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento, ArtistaResumo, FeedItem } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
+
+const EXPERIENCE = getRoleExperience('cliente').dashboard;
 
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
@@ -32,7 +35,8 @@ export default function ClienteDashboard() {
     <div className="p-4 sm:p-6 text-white min-h-full bg-graphite">
       {activeTab === 'agendar' && (
         <>
-          <h1 className="text-2xl font-bold mb-6">Seus Agendamentos</h1>
+          <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
+          <p className="mb-6 text-sm text-zinc-400">{EXPERIENCE.subtitle}</p>
           {isLoading ? (
             <div className="space-y-4">
               <div className="h-24 bg-graphite-200 animate-pulse rounded-xl" />
