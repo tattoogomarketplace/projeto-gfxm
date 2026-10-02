@@ -36,6 +36,9 @@ export default function DashboardPage() {
         }
 
         const payload = await response.json().catch(() => ({}));
+        if (payload?.autenticado === false) {
+          return;
+        }
         if (payload?.needsOnboarding || !payload?.perfil) {
           redirected.current = true;
           router.replace(ONBOARDING_PATH);

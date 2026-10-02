@@ -17,7 +17,8 @@ CREATE TYPE public.kyc_status AS ENUM (
   'pendente',
   'em_analise',
   'aprovado',
-  'rejeitado'
+  'rejeitado',
+  'nao_aplicavel'
 );
 
 CREATE TYPE public.agendamento_status AS ENUM (
@@ -145,7 +146,18 @@ BEGIN
   );
 
   INSERT INTO public.perfis (id, email, nome, cpf, role, kyc_status, has_seen_welcome_notice)
-  VALUES (NEW.id, v_email, v_nome, v_cpf, v_role, 'pendente'::public.kyc_status, v_terms)
+  VALUES (
+    NEW.id,
+    v_email,
+    v_nome,
+    v_cpf,
+    v_role,
+    CASE
+      WHEN v_role = 'cliente' THEN 'nao_aplicavel'::public.kyc_status
+      ELSE 'pendente'::public.kyc_status
+    END,
+    v_terms
+  )
   ON CONFLICT (id) DO UPDATE
     SET
       email = EXCLUDED.email,
@@ -353,7 +365,7 @@ CREATE POLICY "perfis_insert_own"
   WITH CHECK (
     id = (SELECT auth.uid())
     AND role = 'cliente'
-    AND kyc_status = 'pendente'
+    AND kyc_status = 'nao_aplicavel'
   );
 
 CREATE POLICY "perfis_update_own_safe_fields"

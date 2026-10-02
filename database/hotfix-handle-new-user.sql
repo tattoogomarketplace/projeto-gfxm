@@ -50,7 +50,18 @@ BEGIN
   );
 
   INSERT INTO public.perfis (id, email, nome, cpf, role, kyc_status, has_seen_welcome_notice)
-  VALUES (NEW.id, v_email, v_nome, v_cpf, v_role, 'pendente'::public.kyc_status, v_terms)
+  VALUES (
+    NEW.id,
+    v_email,
+    v_nome,
+    v_cpf,
+    v_role,
+    CASE
+      WHEN v_role = 'cliente' THEN 'nao_aplicavel'::public.kyc_status
+      ELSE 'pendente'::public.kyc_status
+    END,
+    v_terms
+  )
   ON CONFLICT (id) DO UPDATE
     SET
       email = EXCLUDED.email,

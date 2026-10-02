@@ -18,7 +18,7 @@ export interface Perfil {
   nome?: string | null;
   cpf?: string | null;
   role: 'cliente' | 'tatuador' | 'estudio';
-  kyc_status: 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
+  kyc_status: 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
   has_seen_welcome_notice?: boolean;
   bank_account?: BankAccount | string | null;
   cidade?: string;

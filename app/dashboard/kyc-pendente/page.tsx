@@ -8,7 +8,7 @@ import { KYCForm } from '@/components/features/kyc-form';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 
-type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado';
+type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
 
 const COPY: Record<KycStatus, { title: string; body: string }> = {
   pendente: {
@@ -26,6 +26,10 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
   aprovado: {
     title: 'KYC aprovado',
     body: 'Sua bancada está liberada. Redirecionando para o painel do artista.',
+  },
+  nao_aplicavel: {
+    title: 'Verificação não aplicável',
+    body: 'A verificação KYC é exclusiva de tatuadores e estúdios. Redirecionando para o seu painel.',
   },
 };
 

@@ -20,6 +20,7 @@ enum KycStatus {
   em_analise
   aprovado
   rejeitado
+  nao_aplicavel
 
   @@map("kyc_status")
 }

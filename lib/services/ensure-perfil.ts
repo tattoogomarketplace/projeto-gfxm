@@ -103,6 +103,17 @@ function resolveAcceptedTerms(source: ClerkProfileSource): boolean {
   return normalized === 'true' || normalized === 't' || normalized === '1';
 }
 
+type KycStatusValue = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
+
+/**
+ * O KYC é exigência exclusiva de profissionais (tatuador/estúdio). Clientes não
+ * passam por verificação documental e recebem um status não bloqueante, evitando
+ * que fiquem presos em 'pendente'.
+ */
+function resolveKycStatusForRole(role: AppRole | null): KycStatusValue {
+  return role === 'cliente' ? 'nao_aplicavel' : 'pendente';
+}
+
 export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil | null> {
   return prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
@@ -151,6 +162,7 @@ export async function ensurePerfilFromClerk(
   const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
 
   const existing = await findPerfilByClerkId(clerkId);
+  const effectiveRole: AppRole | null = role ?? existing?.role ?? null;
 
   const cpf = resolveCpf(source);
   const cnpj = role ? resolveCnpj(source, role) : null;
@@ -160,7 +172,8 @@ export async function ensurePerfilFromClerk(
   const acceptedTerms = resolveAcceptedTerms(source);
 
   // Atualização não destrutiva: só sobrescreve um campo quando o payload traz
-  // valor, preservando dados já persistidos em divergências de webhook.
+  // valor, preservando dados já persistidos em divergências de webhook. O único
+  // ajuste proativo é normalizar o KYC de clientes (nunca bloqueante).
   const sharedUpdate = {
     deleted_at: null,
     ...(email ? { email } : {}),
@@ -171,6 +184,7 @@ export async function ensurePerfilFromClerk(
     ...(responsavelNome ? { responsavel_nome: responsavelNome } : {}),
     ...(responsavelCpf ? { responsavel_cpf: responsavelCpf } : {}),
     ...(acceptedTerms ? { accepted_terms: true } : {}),
+    ...(effectiveRole === 'cliente' ? { kyc_status: 'nao_aplicavel' as const } : {}),
   };
   const updateData = cpf ? { ...sharedUpdate, cpf } : sharedUpdate;
 
@@ -180,6 +194,7 @@ export async function ensurePerfilFromClerk(
     email,
     nome,
     role: role ?? 'cliente',
+    kyc_status: resolveKycStatusForRole(role ?? 'cliente'),
     cpf: cpfValue,
     cnpj,
     data_nascimento: dataNascimento,

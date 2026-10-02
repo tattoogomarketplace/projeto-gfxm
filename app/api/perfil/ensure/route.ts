@@ -88,7 +88,13 @@ function perfilResponse(perfil: LocalPerfil) {
 export async function GET() {
   const { userId, user, metadataRole } = await resolveSession();
   if (!userId) {
-    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+    // Estado esperado na hidratação inicial do cliente (sessão Clerk ainda não
+    // propagada). Respondemos 200 sem perfil para evitar 401s espúrios nos logs
+    // da Vercel e não registrar erro onde não existe falha real.
+    return NextResponse.json(
+      { sucesso: true, autenticado: false, perfil: null, needsOnboarding: false },
+      { status: 200 }
+    );
   }
 
   let perfil: LocalPerfil | null = null;
