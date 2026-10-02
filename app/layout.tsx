@@ -21,6 +21,23 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  openGraph: {
+    title: "TattooGo MK | O Marketplace da Tatuagem",
+    description:
+      "Encontre os melhores artistas e estúdios da sua região. Agende a sua sessão com segurança, gerencie a sua agenda e impulsione a sua arte.",
+    url: "https://tattoogomk.com.br",
+    siteName: "TattooGo MK",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Capa TattooGo MK",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
