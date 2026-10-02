@@ -39,7 +39,6 @@ export default function DashboardOnboardingPage() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const submitting = useRef(false);
 
   useEffect(() => {
@@ -110,7 +109,6 @@ export default function DashboardOnboardingPage() {
   const handleAdvance = async () => {
     if (submitting.current) return;
     if (!isLoaded || !isSignedIn || !user) {
-      setErrorMessage('Sessão ainda sincronizando. Aguarde um instante e tente novamente.');
       toast.error('Sessão ainda sincronizando. Aguarde um instante.');
       return;
     }
@@ -118,7 +116,6 @@ export default function DashboardOnboardingPage() {
     const submitRole = lockedRole ?? role;
     submitting.current = true;
     setSaving(true);
-    setErrorMessage(null);
     try {
       // O Clerk só renova o token em requisições GET; para garantir que o POST
       // chegue autenticado, enviamos o token de sessão atual no header
@@ -185,7 +182,6 @@ export default function DashboardOnboardingPage() {
       router.push(destinationForRole(persistedRole, persistedKyc));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Falha ao concluir o onboarding.';
-      setErrorMessage(message);
       toast.error(message);
     } finally {
       // Sempre devolve o botão ao estado ativo: tanto no erro (o usuário pode
@@ -211,7 +207,7 @@ export default function DashboardOnboardingPage() {
       .split(/\s+/)[0] ?? '';
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col space-y-8 overflow-y-auto p-4 pb-32 text-white sm:p-6 sm:pb-32">
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col space-y-8 p-4 pb-40 text-white sm:p-6 sm:pb-40">
       <div className="flex flex-col items-center space-y-4 pt-4 text-center">
         <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
           <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
@@ -234,30 +230,23 @@ export default function DashboardOnboardingPage() {
           value={role}
           onChange={(nextRole) => {
             setLocalRole(nextRole);
-            setErrorMessage(null);
           }}
           lockedRole={lockedRole}
         />
       </section>
 
-      {errorMessage ? (
-        <p
-          role="alert"
-          aria-live="assertive"
-          className="rounded-xl border border-red-600/40 bg-red-950/30 p-3 text-center text-sm font-semibold text-red-400"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={handleAdvance}
-        disabled={saving}
-        className="mt-auto flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
-      >
-        {saving ? <TattooMachineLoader compact label="Preparando" /> : 'Avançar'}
-      </button>
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-app p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6">
+          <button
+            type="button"
+            onClick={handleAdvance}
+            disabled={saving}
+            className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
+          >
+            {saving ? <TattooMachineLoader compact label="Preparando" /> : 'Avançar'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

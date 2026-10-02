@@ -32,7 +32,6 @@
     margin: 0;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
-    overscroll-behavior-y: none;
     transition: background-color 160ms ease, color 160ms ease;
   }
 

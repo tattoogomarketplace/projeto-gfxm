@@ -109,7 +109,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto overscroll-y-contain pb-6">
+      <div className="flex-1 pb-6">
         {children}
       </div>
     </div>
