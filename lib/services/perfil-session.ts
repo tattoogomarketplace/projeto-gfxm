@@ -11,87 +11,54 @@ export type PerfilSession = {
 };
 
 /**
- * Valida a sessão explicitamente a partir da requisição crua.
+ * Valida a sessão a partir da requisição crua como fallback.
  *
- * O Clerk concede prioridade absoluta ao header `Authorization` sobre o cookie
- * de sessão: quando o header está presente, o token do cookie sequer é
- * consultado (`authenticateRequest` -> `authenticateRequestWithTokenInHeader`).
- * Um token expirado/rotacionado — cenário comum após `updateMetadata`, refresh
- * de aba ou clock skew — marcava a requisição como deslogada e descartava o
- * cookie válido. Era esse o sintoma "GET autentica, POST retorna 401", já que
- * apenas o POST enviava o header.
- *
- * Correção: a fonte de verdade passa a ser SEMPRE o cookie de sessão (o mesmo
- * consumido pelo `auth()` nas requisições GET). O Bearer só é aceito como
- * fallback, para clientes que legitimamente não carregam cookie, e nunca pode
- * vetar uma sessão por cookie válida.
+ * Não removemos mais o header `Authorization`: o cliente envia um Bearer
+ * sempre renovado (`getToken({ skipCache: true })`), então o Clerk deve
+ * processá-lo normalmente. Esta via só é acionada quando o `auth()` do
+ * middleware não consegue resolver a sessão (contexto ausente/incompatível).
  */
 async function resolveUserIdFromRequest(request: Request): Promise<string | null> {
-  const verify = async (candidate: Request): Promise<string | null> => {
-    try {
-      const client = await clerkClient();
-      const requestState = await client.authenticateRequest(candidate, {
-        acceptsToken: 'session_token',
-      });
-      if (requestState.isAuthenticated) {
-        return requestState.toAuth().userId ?? null;
-      }
-    } catch {
-      // Token inválido/ausente: o chamador decide o próximo passo.
-    }
-    return null;
-  };
-
-  // 1) Cookie de sessão primeiro. Removemos o header `Authorization` para
-  //    impedir que um Bearer inválido tenha prioridade sobre o cookie válido.
-  //    Como o Clerk curto-circuita no header, sem removê-lo o cookie nunca
-  //    seria avaliado.
-  if (request.headers.has('cookie')) {
-    const headers = new Headers(request.headers);
-    headers.delete('authorization');
-    const cookieOnlyRequest = new Request(request.url, {
-      method: request.method,
-      headers,
+  try {
+    const client = await clerkClient();
+    const requestState = await client.authenticateRequest(request, {
+      acceptsToken: 'session_token',
     });
-    const fromCookie = await verify(cookieOnlyRequest);
-    if (fromCookie) return fromCookie;
+    if (requestState.isAuthenticated) {
+      return requestState.toAuth().userId ?? null;
+    }
+  } catch {
+    // Token inválido/ausente: o chamador decide o próximo passo.
   }
-
-  // 2) Fallback explícito para o token do header quando não há cookie válido.
-  return verify(request);
+  return null;
 }
 
 /**
- * Estabelece a sessão priorizando SEMPRE o cookie de sessão da requisição crua
- * (`resolveUserIdFromRequest`), que remove o header `Authorization` antes de
- * validar. Sem isso, um Bearer expirado/rotacionado teria prioridade absoluta
- * no Clerk e derrubaria uma sessão por cookie válida — a causa raiz do 401 no
- * POST do onboarding. O `auth()` do middleware entra apenas como fallback para
- * chamadas sem `Request`, e `currentUser()` é complementar (enriquece o perfil
- * sem poder vetar a autenticação já resolvida).
+ * Estabelece a sessão pelo `auth()` do Clerk, idioma canônico do App Router:
+ * ele resolve com prioridade o header `Authorization` (o Bearer recém-emitido
+ * pelo cliente) e cai para o cookie de sessão. Assim a mutação permanece
+ * autenticada mesmo quando o cookie é descartado (mobile/proxy), sem depender
+ * do header-stripping anterior. A requisição crua é apenas fallback para
+ * quando o middleware não fornece contexto; `currentUser()` enriquece o perfil
+ * sem poder vetar a autenticação já resolvida.
  */
 export async function resolvePerfilSession(request?: Request): Promise<PerfilSession> {
   let userId: string | null = null;
 
-  // 1) Cookie de sessão primeiro, SEMPRE. É o mesmo caminho que o `auth()` usa
-  //    nas requisições GET e a única fonte de verdade confiável. Resolver o
-  //    cookie antes de `auth()` impede que um Bearer expirado/rotacionado no
-  //    header tenha prioridade e derrube uma sessão por cookie válida.
-  if (request) {
-    userId = await resolveUserIdFromRequest(request);
+  // 1) Fonte primária: `auth()` do middleware, que processa o Bearer renovado e
+  //    o cookie pela mesma via usada nas requisições GET.
+  try {
+    ({ userId } = await auth());
+  } catch {
+    // `auth()` lança quando o middleware Clerk não está presente/combina com a
+    // rota; tratamos como sessão ausente e tentamos a requisição crua.
+    userId = null;
   }
 
-  // 2) Fallback para o `auth()` do middleware quando não há requisição explícita
-  //    ou o cookie não autenticou. Mantém o comportamento idiomático do App
-  //    Router para chamadas server-side sem `Request` cru.
-  if (!userId) {
-    try {
-      ({ userId } = await auth());
-    } catch {
-      // `auth()` lança quando o middleware Clerk não está presente/combina com a
-      // rota; tratamos como sessão ausente.
-      userId = null;
-    }
+  // 2) Fallback explícito para a requisição crua quando não há contexto de
+  //    middleware (ex.: execução fora do App Router).
+  if (!userId && request) {
+    userId = await resolveUserIdFromRequest(request);
   }
 
   if (!userId) {

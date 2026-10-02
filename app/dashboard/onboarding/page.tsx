@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
@@ -31,6 +31,7 @@ function destinationForRole(role: AppRole, kycStatus?: string | null): string {
 export default function DashboardOnboardingPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
@@ -116,18 +117,20 @@ export default function DashboardOnboardingPage() {
     submitting.current = true;
     setSaving(true);
     try {
-      // O cookie de sessão httpOnly é a ÚNICA fonte de verdade da autenticação.
-      // Não enviamos `Authorization: Bearer`: o Clerk dá prioridade absoluta ao
-      // header e um token rotacionado pelo `getToken()` marcaria a requisição
-      // como deslogada, descartando um cookie válido (causa do 401). Com
-      // `credentials: 'include'` o POST usa exatamente o mesmo caminho de
-      // autenticação por cookie que os GETs já comprovadamente usam.
+      // Enviamos um Bearer SEMPRE renovado (`skipCache: true`). O `getToken()`
+      // com cache podia devolver um token rotacionado pelo `updateMetadata` e
+      // derrubar a requisição (401); forçando o fetch do token atual o header
+      // passa a ser uma fonte de autenticação confiável. Mantemos o cookie via
+      // `credentials: 'include'` como caminho complementar, cobrindo ambientes
+      // onde o cookie é descartado (mobile/proxy) e o header não chega.
+      const token = await getToken({ skipCache: true });
       const response = await fetch('/api/perfil/onboarding', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ role: submitRole }),
       });
