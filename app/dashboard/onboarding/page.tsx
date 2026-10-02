@@ -4,16 +4,29 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { getWelcomeContent } from '@/components/features/welcome-gate';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import {
   dashboardPathForRole,
   parseAppRole,
   postSignupPathForRole,
+  type AppRole,
 } from '@/lib/utils/auth-redirect';
+
+/**
+ * Destino do papel após concluir o onboarding. Tatuadores ainda sem KYC
+ * aprovado vão para o fluxo de documentos; clientes e estúdios entram direto
+ * no painel canônico.
+ */
+function destinationForRole(role: AppRole, kycStatus?: string | null): string {
+  if (role === 'tatuador' && kycStatus !== 'aprovado') {
+    return postSignupPathForRole(role);
+  }
+  return dashboardPathForRole(role);
+}
 
 export default function DashboardOnboardingPage() {
   const router = useRouter();
@@ -22,10 +35,9 @@ export default function DashboardOnboardingPage() {
   const setRole = useAuthStore((s) => s.setRole);
   const [role, setLocalRole] = useState<RegisterRole>('cliente');
   const [lockedRole, setLockedRole] = useState<RegisterRole | null>(null);
-  const [completedRole, setCompletedRole] = useState<RegisterRole | null>(null);
-  const completedRef = useRef<RegisterRole | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -51,7 +63,8 @@ export default function DashboardOnboardingPage() {
           return;
         }
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
-        if (isLoaded && response.status === 401) {
+        if (cancelled) return;
+        if (response.status === 401) {
           router.replace('/login');
           return;
         }
@@ -60,11 +73,10 @@ export default function DashboardOnboardingPage() {
         if (existingRole && !cancelled) {
           setLockedRole(existingRole);
           setRole(existingRole);
-          router.replace(
-            existingRole === 'tatuador' && payload?.perfil?.kyc_status !== 'aprovado'
-              ? postSignupPathForRole(existingRole)
-              : dashboardPathForRole(existingRole)
-          );
+          // Invalida o cache do App Router antes de sair do onboarding para
+          // que o painel reidrate o perfil recém-persistido.
+          router.refresh();
+          router.replace(destinationForRole(existingRole, payload?.perfil?.kyc_status));
           return;
         }
       } catch {
@@ -80,14 +92,15 @@ export default function DashboardOnboardingPage() {
     };
   }, [isLoaded, isSignedIn, user, router, setRole]);
 
-  const handleContinue = async () => {
+  const handleAdvance = async () => {
+    if (submitting.current) return;
     if (!isLoaded || !isSignedIn || !user) {
       toast.error('Sessão ainda sincronizando. Aguarde um instante.');
       return;
     }
 
     const submitRole = lockedRole ?? role;
-
+    submitting.current = true;
     setSaving(true);
     try {
       const response = await fetch('/api/perfil/onboarding', {
@@ -101,6 +114,7 @@ export default function DashboardOnboardingPage() {
       }
 
       const persistedRole = parseAppRole(payload?.perfil?.role) ?? submitRole;
+      const persistedKyc = payload?.perfil?.kyc_status as string | undefined;
 
       // Sincroniza os metadados APENAS depois de persistir o perfil.
       // `updateMetadata` rotaciona o token de sessão: se executado antes do
@@ -129,33 +143,19 @@ export default function DashboardOnboardingPage() {
           '',
       });
       setRole(persistedRole);
-      completedRef.current = persistedRole;
-      setCompletedRole(persistedRole);
+
+      // O refresh PRECISA vir antes do push: se `router.refresh()` roda depois
+      // da navegação, ele revalida a árvore antiga (onboarding) e o usuário
+      // "volta" para cá — o loop relatado de ver o painel por um instante.
+      router.refresh();
+      router.push(destinationForRole(persistedRole, persistedKyc));
     } catch (err) {
+      submitting.current = false;
       toast.error(err instanceof Error ? err.message : 'Falha ao concluir o onboarding.');
     } finally {
       setSaving(false);
     }
   };
-
-  const handleEnterDashboard = () => {
-    const target = completedRef.current ?? completedRole;
-    if (!target) return;
-    router.replace(postSignupPathForRole(target));
-    router.refresh();
-  };
-
-  // Após o perfil ser persistido, avança automaticamente para o painel do papel
-  // (cliente/tatuador/estúdio). O botão permanece como saída manual imediata.
-  useEffect(() => {
-    if (!completedRole) return;
-    const destination = postSignupPathForRole(completedRole);
-    const timer = window.setTimeout(() => {
-      router.replace(destination);
-      router.refresh();
-    }, 1600);
-    return () => window.clearTimeout(timer);
-  }, [completedRole, router]);
 
   if (!isLoaded || checking || !isSignedIn) {
     return (
@@ -165,54 +165,35 @@ export default function DashboardOnboardingPage() {
     );
   }
 
-  if (completedRole) {
-    const content = getWelcomeContent(completedRole);
-    return (
-      <div className="mx-auto flex min-h-full max-w-lg flex-col items-center justify-center space-y-6 p-4 text-center text-white sm:p-6">
-        <div className="flex h-28 w-28 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
-          <Sparkles className="h-10 w-10 text-orange-500" strokeWidth={1.5} />
+  const effectiveRole = lockedRole ?? role;
+  const content = getWelcomeContent(effectiveRole);
+
+  return (
+    <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center space-y-6 p-4 text-white sm:p-6">
+      <div className="flex flex-col items-center space-y-4 text-center">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
+          <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
         </div>
         <header className="space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">
-            Perfil criado
+            Bem-vindo ao TattooGo MK
           </p>
           <h1 className="text-2xl font-bold">{content.title}</h1>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
             {content.subtitle}
           </p>
         </header>
-        <button
-          type="button"
-          onClick={handleEnterDashboard}
-          className="flex min-h-11 w-full max-w-sm items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
-        >
-          {content.cta}
-        </button>
       </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center space-y-6 p-4 sm:p-6 text-white">
-      <header className="space-y-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">
-          Completar cadastro
-        </p>
-        <h1 className="text-2xl font-bold">Como você vai usar o TattooGo MK?</h1>
-        <p className="text-sm leading-relaxed text-zinc-400">
-          Sua conta Clerk já está ativa. Falta só criar o perfil local para liberar o painel.
-        </p>
-      </header>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <RoleSelector value={role} onChange={setLocalRole} lockedRole={lockedRole} />
         <button
           type="button"
-          onClick={handleContinue}
+          onClick={handleAdvance}
           disabled={saving}
           className="mt-6 flex min-h-11 w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
         >
-          {saving ? <TattooMachineLoader compact label="Criando perfil" /> : 'Continuar para o painel'}
+          {saving ? <TattooMachineLoader compact label="Preparando" /> : 'Avançar'}
         </button>
       </section>
     </div>
