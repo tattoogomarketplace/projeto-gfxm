@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "TattooGo MK",
   },
+  twitter: {
+    card: "summary_large_image",
+  },
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
