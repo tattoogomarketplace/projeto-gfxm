@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
+  type ClerkProfileSource,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
@@ -51,6 +52,29 @@ async function resolveSession(): Promise<SessionContext> {
   return { userId, user, metadataRole: parseAppRole(metadata.role as string | undefined) };
 }
 
+/**
+ * Monta uma fonte de perfil a partir SEMPRE do `userId` autenticado (auth()),
+ * enriquecida com o usuário Clerk quando disponível. Isso desacopla o
+ * auto-provisionamento de `currentUser()`: mesmo que a Backend API falhe, o
+ * `clerk_id` continua garantido e o upsert pode ser tentado.
+ */
+function buildProfileSource(userId: string, user: ClerkUser): ClerkProfileSource {
+  return {
+    id: userId,
+    firstName: user?.firstName ?? null,
+    lastName: user?.lastName ?? null,
+    fullName: user?.fullName ?? null,
+    primaryEmailAddress: user?.primaryEmailAddress
+      ? { emailAddress: user.primaryEmailAddress.emailAddress }
+      : null,
+    emailAddresses: (user?.emailAddresses ?? []).map((item) => ({
+      emailAddress: item.emailAddress ?? null,
+    })),
+    unsafeMetadata: (user?.unsafeMetadata ?? {}) as Record<string, unknown>,
+    publicMetadata: (user?.publicMetadata ?? {}) as Record<string, unknown>,
+  };
+}
+
 function perfilResponse(perfil: LocalPerfil) {
   return {
     id: perfil.id,
@@ -70,10 +94,11 @@ export async function GET() {
   let perfil: LocalPerfil | null = null;
   try {
     perfil = await findPerfilByClerkId(userId);
-    if (!perfil && user) {
-      perfil = await ensurePerfilFromClerk(user, metadataRole);
+    if (!perfil) {
+      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
     }
-  } catch {
+  } catch (error) {
+    console.error('[perfil/ensure] auto-provisionamento falhou', { userId, error });
     perfil = null;
   }
 
@@ -152,19 +177,10 @@ export async function POST(request: Request) {
 
   let perfil: LocalPerfil | null = existing;
   if (!perfil) {
-    if (!user) {
-      return NextResponse.json(
-        {
-          sucesso: false,
-          erro: 'Não foi possível validar sua conta agora. Tente novamente.',
-          needsOnboarding: true,
-        },
-        { status: 409 }
-      );
-    }
     try {
-      perfil = await ensurePerfilFromClerk(user, role);
-    } catch {
+      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), role);
+    } catch (error) {
+      console.error('[perfil/ensure] criação falhou', { userId, role, error });
       perfil = null;
     }
   }
