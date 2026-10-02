@@ -75,7 +75,8 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const hideTabs = pathname.startsWith('/dashboard/onboarding');
+  const isOnboarding = pathname.startsWith('/dashboard/onboarding');
+  const hideTabs = isOnboarding;
 
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
@@ -93,7 +94,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
-            <UserIdentity />
+            {isOnboarding ? null : <UserIdentity />}
           </div>
         </div>
         {hideTabs || !role ? null : (

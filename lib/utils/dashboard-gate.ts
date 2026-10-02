@@ -54,6 +54,13 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
     redirect(ONBOARDING_PATH);
   }
 
+  // Espelho da trava do layout: o painel só é liberado após o onboarding ser
+  // confirmado no banco. Reforça o bloqueio mesmo que a rota seja acessada
+  // diretamente pela URL.
+  if (!perfil.has_seen_welcome_notice) {
+    redirect(ONBOARDING_PATH);
+  }
+
   if (expectedRole && role !== expectedRole) {
     redirect(dashboardPathForRole(role));
   }
