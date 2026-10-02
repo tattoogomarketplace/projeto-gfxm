@@ -201,11 +201,13 @@ export default function DashboardOnboardingPage() {
         <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
           <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
         </div>
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold uppercase tracking-wide">
-            {firstName ? `Bem-vindo(a), ${firstName}` : 'Bem-vindo(a)'}
+        <header className="space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
+            Bem-vindo ao TattooGo MK
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {firstName ? `Olá, ${firstName}!` : 'Olá!'}
           </h1>
-          <p className="text-sm font-semibold text-orange-400">{content.title}</p>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
             {content.subtitle}
           </p>

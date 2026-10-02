@@ -11,6 +11,48 @@ export type PerfilSession = {
 };
 
 /**
+ * Valida a sessão a partir do header `Authorization: Bearer <token>` e, caso
+ * ele falhe, repete a validação ignorando o header para que o cookie de sessão
+ * — a mesma fonte de verdade das requisições GET — seja validado.
+ *
+ * O Clerk dá prioridade absoluta ao token do header sobre o cookie: quando o
+ * token está expirado/rotacionado, ele marca a requisição como deslogada e
+ * IGNORA o cookie válido. Era exatamente esse o sintoma "GET autentica, POST
+ * retorna 401", já que apenas o POST envia o header. Remover o header no
+ * fallback devolve a autenticação ao cookie, sem abrir mão da verificação
+ * explícita do token quando ele é válido.
+ */
+async function resolveUserIdFromRequest(request: Request): Promise<string | null> {
+  const verify = async (candidate: Request): Promise<string | null> => {
+    try {
+      const client = await clerkClient();
+      const requestState = await client.authenticateRequest(candidate, {
+        acceptsToken: 'session_token',
+      });
+      if (requestState.isAuthenticated) {
+        return requestState.toAuth().userId ?? null;
+      }
+    } catch {
+      // Token inválido/ausente: o chamador decide o próximo passo.
+    }
+    return null;
+  };
+
+  const fromHeader = await verify(request);
+  if (fromHeader) return fromHeader;
+
+  const headers = new Headers(request.headers);
+  headers.delete('authorization');
+  if (!headers.has('cookie')) return null;
+
+  const cookieOnlyRequest = new Request(request.url, {
+    method: request.method,
+    headers,
+  });
+  return verify(cookieOnlyRequest);
+}
+
+/**
  * Estabelece a sessão a partir do token (auth) e, de forma defensiva, tenta
  * enriquecer com os metadados do usuário Clerk (currentUser). O gate de
  * autenticação é o `auth()` — leve, síncrono com o JWT e o padrão do App
@@ -27,20 +69,11 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
     userId = null;
   }
 
-  // Fallback para requisições não-GET (ex.: POST do onboarding): o Clerk só
-  // renova o token da sessão em GETs, então um POST pode chegar sem cookie
-  // válido mesmo com o GET funcionando. Verificamos o token de sessão enviado
-  // pelo cliente no header `Authorization: Bearer <token>`.
+  // Fallback para requisições que enviam o token no header (ex.: POST do
+  // onboarding). O fluxo prioriza a validação explícita do Bearer e recorre ao
+  // cookie de sessão quando o token não é aceito.
   if (!userId && request) {
-    try {
-      const client = await clerkClient();
-      const requestState = await client.authenticateRequest(request);
-      if (requestState.status === 'signed-in') {
-        userId = requestState.toAuth().userId ?? null;
-      }
-    } catch {
-      userId = null;
-    }
+    userId = await resolveUserIdFromRequest(request);
   }
 
   if (!userId) {
