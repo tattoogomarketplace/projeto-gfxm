@@ -47,8 +47,11 @@ export default function DashboardOnboardingPage() {
       }
 
       try {
+        if (!isLoaded || !isSignedIn || !user) {
+          return;
+        }
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
-        if (response.status === 401) {
+        if (isLoaded && response.status === 401) {
           router.replace('/login');
           return;
         }
@@ -78,7 +81,7 @@ export default function DashboardOnboardingPage() {
   }, [isLoaded, isSignedIn, user, router, setRole]);
 
   const handleContinue = async () => {
-    if (!user) {
+    if (!isLoaded || !isSignedIn || !user) {
       toast.error('Sessão ainda sincronizando. Aguarde um instante.');
       return;
     }

@@ -48,10 +48,11 @@ export default function PerfilPage() {
     let cancelled = false;
 
     const hydrate = async () => {
+      if (!isLoaded || !isSignedIn) return;
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (response.status === 401 || !isSignedIn) {
+        if (isLoaded && (response.status === 401 || !isSignedIn)) {
           router.replace('/login');
           return;
         }
