@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 /**
@@ -68,4 +68,35 @@ export async function generatePresignedUrl(
 export function buildPublicUrl(fileKey: string): string {
   const base = (process.env.R2_PUBLIC_URL ?? '').replace(/\/+$/, '');
   return `${base}/${fileKey}`;
+}
+
+export type R2ObjectPayload = {
+  body: Uint8Array;
+  contentType: string | null;
+  contentLength: number;
+};
+
+/**
+ * Lê um objeto do bucket via API S3 (credenciais do servidor), permitindo
+ * consumir documentos mesmo em bucket privado e sem expor a chave no cliente.
+ * O chamador é responsável por validar a chave antes de invocar.
+ */
+export async function fetchR2Object(fileKey: string): Promise<R2ObjectPayload> {
+  if (!R2_BUCKET) {
+    throw new Error('R2_BUCKET_NAME não configurado.');
+  }
+
+  const command = new GetObjectCommand({ Bucket: R2_BUCKET, Key: fileKey });
+  const response = await r2Client.send(command);
+
+  if (!response.Body) {
+    throw new Error('Objeto do R2 sem corpo.');
+  }
+
+  const body = await response.Body.transformToByteArray();
+  return {
+    body,
+    contentType: response.ContentType ?? null,
+    contentLength: response.ContentLength ?? body.byteLength,
+  };
 }
