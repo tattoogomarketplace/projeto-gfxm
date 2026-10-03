@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -103,6 +103,7 @@ export default function RegisterPage() {
   const [machineFailed, setMachineFailed] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isActivating, setIsActivating] = useState(false);
+  const nextPathRef = useRef<string | null>(null);
 
   useRedirectIfAuthenticated(!isVerifying && !showWelcome && !isActivating && !loading);
 
@@ -204,7 +205,6 @@ export default function RegisterPage() {
     if (!signUp || !setActive) {
       throw new Error('Clerk ainda não está pronto.');
     }
-    setLoading(true);
     try {
       const completeSignUp = await signUp.attemptVerification({ strategy: 'email_code', code: token });
 
@@ -235,18 +235,10 @@ export default function RegisterPage() {
           '',
       });
       setRole(resolvedRole);
-
-      setIsActivating(true);
-      await new Promise((resolve) => window.setTimeout(resolve, 1200));
-      try {
-        router.push(dashboardPathForRole(resolvedRole));
-        router.refresh();
-      } catch (err) {
-        console.error('Session activation error:', err);
-      }
+      nextPathRef.current = dashboardPathForRole(resolvedRole);
+      return true;
     } catch (err) {
       console.error(err);
-      setLoading(false);
       throw err;
     }
   };
@@ -281,7 +273,22 @@ export default function RegisterPage() {
         <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
-          <TattooOTPVerification onVerify={handleVerifyOtp} onResend={handleResendOtp} userRole={userRole} />
+          <TattooOTPVerification
+            onVerify={handleVerifyOtp}
+            onResend={handleResendOtp}
+            userRole={userRole}
+            onSuccess={() => {
+              const nextPath = nextPathRef.current;
+              if (!nextPath) return;
+              setIsActivating(true);
+              try {
+                router.push(nextPath);
+                router.refresh();
+              } catch (err) {
+                console.error('Session activation error:', err);
+              }
+            }}
+          />
           <button
             type="button"
             onClick={() => {

@@ -43,8 +43,7 @@ export default function CancelarAgendamentoPage() {
       });
 
       if (!response.ok) return false;
-    toast.success('Agendamento cancelado com sucesso.');
-    router.push('/dashboard');
+      toast.success('Agendamento cancelado com sucesso.');
       return true;
     } catch {
       return false;
@@ -68,7 +67,11 @@ export default function CancelarAgendamentoPage() {
         ) : (
           <>
             <h2 className="text-xl font-bold mb-4 text-center">Confirme o Cancelamento</h2>
-            <TattooOTPInput onComplete={handleVerify} length={6} />
+            <TattooOTPInput
+              onComplete={handleVerify}
+              onSuccess={() => router.push('/dashboard')}
+              length={6}
+            />
           </>
         )}
       </GlassContainer>

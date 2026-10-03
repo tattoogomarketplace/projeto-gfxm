@@ -9,10 +9,10 @@ export const useHapticFeedback = () => {
     // Verificação de segurança para execução apenas em ambiente de browser/mobile
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       const patterns = {
-        light: 10,
-        medium: 30,
-        heavy: 60,
-        success: [30, 50, 30] // Padrão "conclusão" de máquina
+        light: 50,
+        medium: 50,
+        heavy: [200, 100, 200],
+        success: [30, 50, 30],
       };
 
       navigator.vibrate(patterns[type]);

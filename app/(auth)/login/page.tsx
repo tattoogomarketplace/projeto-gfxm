@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,7 +10,7 @@ import { useSignIn } from '@clerk/nextjs/legacy';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import Link from 'next/link';
-import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
+import { OtpInput } from '@/components/ui/otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -45,6 +45,7 @@ export default function LoginPage() {
   const [resending, setResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
+  const nextPathRef = useRef<string | null>(null);
 
   useRedirectIfAuthenticated(!isVerifying && !isLoading);
 
@@ -199,16 +200,10 @@ export default function LoginPage() {
       setRole(role);
 
       toast.success('Bem-vindo de volta à elite!');
-      const nextPath =
+      nextPathRef.current =
         role === 'tatuador' && kycStatus !== 'aprovado'
           ? postSignupPathForRole(role)
           : dashboardPathForRole(role);
-      try {
-        router.push(nextPath);
-        router.refresh();
-      } catch (err) {
-        console.error('Session activation error:', err);
-      }
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
@@ -237,7 +232,20 @@ export default function LoginPage() {
               Digite o código de 6 dígitos enviado para {emailForVerification}
             </p>
           </div>
-          <TattooOTPInput onComplete={handleVerifyOtp} length={6} />
+          <OtpInput
+            onComplete={handleVerifyOtp}
+            onSuccess={() => {
+              const nextPath = nextPathRef.current;
+              if (!nextPath) return;
+              try {
+                router.push(nextPath);
+                router.refresh();
+              } catch (err) {
+                console.error('Session activation error:', err);
+              }
+            }}
+            length={6}
+          />
           <button
             type="button"
             onClick={handleResendOtp}
