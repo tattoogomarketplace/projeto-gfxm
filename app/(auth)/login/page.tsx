@@ -15,6 +15,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
+import { enforceSingleSession } from '@/app/actions/auth-actions';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -90,6 +91,11 @@ export default function LoginPage() {
       if (result.status === 'complete') {
         try {
           await setActive({ session: result.createdSessionId });
+          try {
+            await enforceSingleSession(result.createdSessionId ?? undefined);
+          } catch (err) {
+            console.error('Single-session enforcement error:', err);
+          }
           router.push('/dashboard');
           router.refresh();
         } catch (err) {
@@ -163,6 +169,11 @@ export default function LoginPage() {
 
       if (result.status === 'complete' && result.createdSessionId) {
         await setActive({ session: result.createdSessionId });
+        try {
+          await enforceSingleSession(result.createdSessionId);
+        } catch (err) {
+          console.error('Single-session enforcement error:', err);
+        }
       } else {
         throw new Error('Sessão inválida após verificação.');
       }

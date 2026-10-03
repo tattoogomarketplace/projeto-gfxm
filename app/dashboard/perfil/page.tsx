@@ -132,7 +132,7 @@ export default function PerfilPage() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      clearClientSession();
+      clearClientSession({ intentional: true });
       await clerk.signOut({ redirectUrl: '/login' });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao sair da conta.');
@@ -152,8 +152,8 @@ export default function PerfilPage() {
         throw new Error(payload.erro || 'Falha ao desativar a conta.');
       }
 
+      clearClientSession({ intentional: true });
       await clerk.signOut();
-      clearClientSession();
       toast.success('Conta oculta. Seu histórico permanece protegido.');
       router.push('/login');
       router.refresh();
