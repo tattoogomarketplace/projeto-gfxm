@@ -25,6 +25,14 @@ enum KycStatus {
   @@map("kyc_status")
 }
 
+enum StatusResponsavel {
+  pendente
+  aprovado
+  dispensado
+
+  @@map("status_responsavel")
+}
+
 enum AgendamentoStatus {
   rascunho
   aguardando_sinal
@@ -68,6 +76,8 @@ model Perfil {
   data_nascimento                String?
   responsavel_nome               String?
   responsavel_cpf                String?
+  responsavel_email              String?
+  status_responsavel             StatusResponsavel @default(dispensado)
   accepted_terms                 Boolean    @default(false)
   agendamentos_pendentes_repasse Int        @default(0)
   agenda_bloqueada               Boolean    @default(false)
