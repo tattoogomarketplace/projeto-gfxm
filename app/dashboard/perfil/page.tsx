@@ -177,25 +177,40 @@ export default function PerfilPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6 text-white">
-      <header className="glass-panel rounded-3xl p-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">Meu Perfil</p>
-        <h1 className="mt-2 text-2xl font-bold">{nome || 'Artista'}</h1>
-        <p className="mt-1 text-sm text-zinc-400">{maskEmail(email)}</p>
+      <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent p-5 backdrop-blur-md transition-colors hover:border-orange-500/40">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
+        />
+        <div className="relative flex items-center gap-3">
+          <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-lg font-bold uppercase text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.3)]">
+            {(nome || email || 'A').trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+              Meu Perfil
+            </p>
+            <h1 className="mt-0.5 truncate bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              {nome || 'Artista'}
+            </h1>
+            <p className="mt-1 truncate text-sm text-zinc-400">{maskEmail(email)}</p>
+          </div>
+        </div>
       </header>
 
-      <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <h2 className="text-lg font-bold">Editar nome</h2>
+      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
+        <h2 className="text-lg font-bold text-orange-400">Editar nome</h2>
         <Input
           label="Nome real"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+          className="border-white/10 bg-zinc-900 focus:ring-orange-500"
         />
         <button
           type="button"
           onClick={handleSaveName}
           disabled={saving}
-          className="min-h-11 w-full rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
+          className="min-h-11 w-full rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
         >
           {saving ? <TattooMachineLoader compact label="Salvando" /> : 'Salvar nome'}
         </button>
@@ -203,7 +218,7 @@ export default function PerfilPage() {
 
       <PasswordChangeForm />
 
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950 p-6">
+      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
             <Settings className="h-5 w-5" strokeWidth={1.75} />
@@ -236,25 +251,25 @@ export default function PerfilPage() {
         </button>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <h2 className="text-lg font-bold">Sessão</h2>
+      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
+        <h2 className="text-lg font-bold text-orange-400">Sessão</h2>
         <button
           type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="min-h-11 w-full rounded-lg border border-orange-500/50 py-3 font-bold text-orange-400 transition-all hover:bg-orange-500/10 active:scale-95 disabled:opacity-50"
+          className="min-h-11 w-full rounded-xl border border-orange-500/50 py-3 font-bold text-orange-400 transition-all hover:border-orange-500 hover:bg-orange-500/10 active:scale-95 disabled:opacity-50"
         >
           {loggingOut ? <TattooMachineLoader compact label="Saindo" /> : 'Sair da Conta'}
         </button>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-red-900/40 bg-red-950/20 p-6">
+      <section className="space-y-4 rounded-xl border border-red-900/50 bg-red-950/20 p-4 transition-all hover:border-red-500/40">
         <h2 className="text-lg font-bold text-red-400">Excluir conta</h2>
         {!confirmDelete ? (
           <button
             type="button"
             onClick={() => setConfirmDelete(true)}
-            className="min-h-11 w-full rounded-lg border border-red-500/50 py-3 font-bold text-red-400 transition-all hover:bg-red-500/10 active:scale-95"
+            className="min-h-11 w-full rounded-xl border border-red-500/50 py-3 font-bold text-red-400 transition-all hover:border-red-500 hover:bg-red-500/10 active:scale-95"
           >
             Excluir conta
           </button>
@@ -265,7 +280,7 @@ export default function PerfilPage() {
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="min-h-11 rounded-lg border border-zinc-700 font-bold text-zinc-300"
+                className="min-h-11 rounded-xl border border-zinc-700 font-bold text-zinc-300"
               >
                 Cancelar
               </button>
@@ -273,7 +288,7 @@ export default function PerfilPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="min-h-11 rounded-lg bg-red-600 font-bold text-white disabled:opacity-50"
+                className="min-h-11 rounded-xl bg-red-600 font-bold text-white disabled:opacity-50"
               >
                 {deleting ? <TattooMachineLoader compact label="Ocultando" /> : 'Confirmar'}
               </button>

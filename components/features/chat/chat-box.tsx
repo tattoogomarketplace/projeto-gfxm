@@ -104,7 +104,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
 
   return (
     <div className="tattoo-wallpaper flex flex-col w-full h-150 bg-[#09090b] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-32 space-y-4">
         {messages.map((m: Message) => (
           <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] p-3 rounded-lg ${m.sender === 'user' ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
