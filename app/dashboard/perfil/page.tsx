@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { ChevronRight, FileText, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
@@ -16,17 +16,10 @@ import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 export default function PerfilPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
   const storedUser = useAuthStore((s) => s.user);
@@ -145,11 +138,29 @@ export default function PerfilPage() {
   };
 
   const handleDelete = async () => {
+    if (deleting) return;
     setDeleting(true);
     try {
+      // Renova o token de sessão do Clerk (skipCache) e envia como Bearer. O
+      // token antigo em localStorage (`tattoogo_token`) NÃO é uma credencial
+      // Clerk e fazia o backend rejeitar a requisição com 401.
+      let token: string | null = null;
+      try {
+        token = await getToken({ skipCache: true });
+      } catch {
+        token = null;
+      }
+
+      // Deletamos a conta no backend e SÓ encerramos a sessão após o 200 OK.
+      // Encerrar antes deixava a requisição sem credencial e resultava em 401.
       const response = await fetch('/api/perfil/desativar', {
         method: 'POST',
-        headers: authHeaders(),
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -157,7 +168,11 @@ export default function PerfilPage() {
       }
 
       clearClientSession({ intentional: true });
-      await clerk.signOut();
+      try {
+        await clerk.signOut();
+      } catch {
+        // O usuário já foi removido no Clerk; a limpeza local é suficiente.
+      }
       toast.success('Conta oculta. Seu histórico permanece protegido.');
       router.push('/login');
       router.refresh();
