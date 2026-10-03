@@ -11,6 +11,11 @@ export type LocalPerfil = {
   kyc_status: string;
   has_seen_welcome_notice: boolean;
   deleted_at: Date | null;
+  /**
+   * Campo calculado (não persistido): sinaliza que o perfil retornado foi
+   * reativado a partir de uma conta soft-deleted dona do CPF informado.
+   */
+  reactivated?: boolean;
 };
 
 type ClerkMetadata = {
@@ -119,6 +124,21 @@ function resolveKycStatusForRole(role: AppRole | null): KycStatusValue {
 export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil | null> {
   return prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
+    select: PERFIL_SELECT,
+  });
+}
+
+/**
+ * Localiza o perfil dono de um CPF, INCLUINDO contas soft-deleted
+ * (`deleted_at != null`). É a base da reativação inteligente: um CPF é
+ * globalmente único (constraint `perfis_cpf_unique_idx`), então precisamos
+ * recuperar o registro original antes de tentar inseri-lo novamente.
+ */
+export async function findPerfilByCpf(cpf: string): Promise<LocalPerfil | null> {
+  const digits = onlyDigits(cpf);
+  if (digits.length !== 11) return null;
+  return prisma.perfil.findUnique({
+    where: { cpf: digits },
     select: PERFIL_SELECT,
   });
 }
@@ -246,6 +266,64 @@ export async function ensurePerfilFromClerk(
       data: updateData,
       select: PERFIL_SELECT,
     });
+  }
+
+  // Reativação inteligente (soft-delete): o CPF é único globalmente, então um
+  // cadastro novo cujo CPF pertence a uma conta excluída NÃO deve colidir com
+  // a constraint `perfis_cpf_unique_idx`. Reaproveitamos o MESMO registro
+  // (preservando `id`, históricos e relações) e o reativamos com o novo e-mail
+  // do Clerk. Se o CPF já estiver ATIVO em outra conta e o e-mail divergir,
+  // mantemos a rejeição padrão (CPF já em uso).
+  if (!existing && cpf) {
+    const cpfOwner = await findPerfilByCpf(cpf);
+    if (cpfOwner) {
+      const sameEmail = String(cpfOwner.email || '').trim().toLowerCase() === email;
+      if (cpfOwner.deleted_at === null && !sameEmail) {
+        console.warn('[ensure-perfil] CPF ativo pertencente a outra conta; rejeitando', {
+          clerkId,
+          cpfOwnerId: cpfOwner.id,
+        });
+        return null;
+      }
+
+      try {
+        const reactivatedPerfil = await prisma.perfil.update({
+          where: { id: cpfOwner.id },
+          data: {
+            // Reativação não destrutiva: preserva papel, KYC, nome e histórico
+            // do dono original do CPF. Apenas religa o registro ao novo login
+            // do Clerk e restaura o estado ativo com o novo e-mail.
+            clerk_id: clerkId,
+            email,
+            deleted_at: null,
+            agenda_bloqueada: false,
+          },
+          select: PERFIL_SELECT,
+        });
+
+        console.warn('[ensure-perfil] perfil reativado a partir de conta soft-deleted', {
+          clerkId,
+          perfilId: reactivatedPerfil.id,
+        });
+
+        return {
+          ...reactivatedPerfil,
+          reactivated: cpfOwner.deleted_at !== null,
+        };
+      } catch (error) {
+        // E-mail novo já em uso por outro perfil ativo: rejeição padrão.
+        const reactivationError = asUniqueConstraintError(error);
+        if (reactivationError && uniqueTargetIncludes(reactivationError, 'email')) {
+          return null;
+        }
+        console.error('[ensure-perfil] falha ao reativar perfil soft-deleted', {
+          clerkId,
+          cpfOwnerId: cpfOwner.id,
+          error,
+        });
+        return findPerfilByClerkId(clerkId);
+      }
+    }
   }
 
   try {

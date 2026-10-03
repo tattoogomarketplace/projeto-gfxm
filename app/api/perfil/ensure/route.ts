@@ -66,6 +66,7 @@ export async function GET(request: Request) {
   const onboardingCompleted = isOnboardingComplete(perfil);
   return NextResponse.json({
     sucesso: true,
+    reactivated: perfil.reactivated === true,
     needsOnboarding: !onboardingCompleted,
     onboarding_completed: onboardingCompleted,
     perfil: perfilResponse(perfil),
@@ -144,6 +145,7 @@ export async function POST(request: Request) {
   const onboardingCompleted = isOnboardingComplete(perfil);
   return NextResponse.json({
     sucesso: true,
+    reactivated: perfil.reactivated === true,
     needsOnboarding: !onboardingCompleted,
     onboarding_completed: onboardingCompleted,
     perfil: perfilResponse(perfil),
