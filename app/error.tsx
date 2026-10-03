@@ -19,7 +19,7 @@ export default function GlobalRootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[app] falha de renderização', error);
+    console.error("FATAL CRASH:", error);
   }, [error]);
 
   return (
@@ -34,6 +34,7 @@ export default function GlobalRootError({
       <p className="mt-2 max-w-xs text-sm leading-relaxed text-zinc-400">
         Não conseguimos carregar a aplicação agora. Tente novamente em instantes.
       </p>
+      <p className="mt-3 max-w-md break-words text-red-500">{error.message}</p>
       <button
         type="button"
         onClick={reset}

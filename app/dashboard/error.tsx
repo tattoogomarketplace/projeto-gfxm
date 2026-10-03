@@ -19,7 +19,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[dashboard] falha de renderização', error);
+    console.error("FATAL CRASH:", error);
   }, [error]);
 
   return (
@@ -41,6 +41,7 @@ export default function DashboardError({
             Não conseguimos carregar esta área agora. Tente novamente — seus dados
             permanecem seguros.
           </p>
+          <p className="mt-2 break-words text-red-500">{error.message}</p>
         </div>
         <button
           type="button"
