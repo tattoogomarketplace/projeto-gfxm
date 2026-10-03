@@ -28,6 +28,36 @@ const ALLOWED_TYPES = new Set([
   'application/pdf',
 ]);
 
+const CONTENT_TYPE_BY_EXT: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  heic: 'image/heic',
+  heif: 'image/heif',
+  pdf: 'application/pdf',
+};
+
+/** iOS/Android frequentemente entregam `file.type` vazio; inferimos pela extensão. */
+function resolveUploadContentType(file: File): string {
+  if (file.type && ALLOWED_TYPES.has(file.type)) {
+    return file.type === 'image/jpg' ? 'image/jpeg' : file.type;
+  }
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return CONTENT_TYPE_BY_EXT[ext] ?? '';
+}
+
+function describeUploadFailure(err: unknown): string {
+  if (err instanceof TypeError) {
+    const raw = err.message || '';
+    if (/load failed|failed to fetch|networkerror/i.test(raw)) {
+      return 'Falha de rede ao enviar o arquivo para o storage. Tente novamente.';
+    }
+  }
+  return err instanceof Error ? err.message : 'Falha no envio do documento.';
+}
+
 const STATUS_UI: Record<
   KycStatusValue,
   { label: string; tone: string; icon: typeof CheckCircle2 }
@@ -98,7 +128,8 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       setExtractedName(null);
       setConfidence(null);
 
-      if (!ALLOWED_TYPES.has(file.type)) {
+      const contentType = resolveUploadContentType(file);
+      if (!contentType || !ALLOWED_TYPES.has(contentType)) {
         setError('Envie um PDF ou imagem (JPG, PNG, WEBP, HEIC).');
         return;
       }
@@ -117,7 +148,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+            body: JSON.stringify({ fileName: file.name, contentType }),
           },
           tokenFn
         );
@@ -128,16 +159,30 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           erro?: string;
         };
         if (!presignRes.ok || !presign.presignedUrl || !presign.fileKey) {
+          console.error('[kyc-upload] presign recusado', {
+            status: presignRes.status,
+            erro: presign.erro,
+          });
           throw new Error(presign.erro || 'Não foi possível preparar o upload.');
         }
 
         setPhase('uploading');
+        // Content-Type DEVE ser idêntico ao assinado na URL. Qualquer header
+        // extra (Authorization, credentials) quebra a assinatura e o CORS do
+        // R2, o que o Safari reporta como TypeError "Load failed".
         const putRes = await fetch(presign.presignedUrl, {
           method: 'PUT',
-          headers: { 'Content-Type': file.type },
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          headers: { 'Content-Type': contentType },
           body: file,
         });
         if (!putRes.ok) {
+          console.error('[kyc-upload] PUT R2 falhou', {
+            status: putRes.status,
+            statusText: putRes.statusText,
+          });
           throw new Error('Falha ao enviar o arquivo para o storage.');
         }
 
@@ -151,7 +196,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
             body: JSON.stringify({
               fileKey: presign.fileKey,
               publicUrl: presign.publicUrl,
-              contentType: file.type,
+              contentType,
             }),
           },
           tokenFn
@@ -180,7 +225,8 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           toast.message('Documento recebido e em análise.');
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Falha no envio do documento.';
+        console.error('[kyc-upload] rejeição de rede', err);
+        const message = describeUploadFailure(err);
         setError(message);
         toast.error(message);
       } finally {

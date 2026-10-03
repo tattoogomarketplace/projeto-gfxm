@@ -16,10 +16,17 @@ const R2_BUCKET = process.env.R2_BUCKET_NAME ?? '';
 export const r2Client = new S3Client({
   region: 'auto',
   endpoint: R2_ENDPOINT,
+  forcePathStyle: true,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
   },
+  // SDK v3.729+ assina checksums (x-amz-checksum-crc32) por padrão. O PUT
+  // do browser não envia esses headers → 403 SignatureDoesNotMatch, que o
+  // Safari mascara como TypeError "Load failed" quando o CORS do R2 oculta
+  // o status. WHEN_REQUIRED alinha a assinatura ao Content-Type do cliente.
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 export type PresignedUpload = {
