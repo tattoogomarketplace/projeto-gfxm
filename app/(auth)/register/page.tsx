@@ -295,6 +295,13 @@ export default function RegisterPage() {
         </div>
       ) : (
       <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-xl">
+        <Link
+          href="/login"
+          className="-ml-2 mb-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-orange-500"
+        >
+          <span aria-hidden="true">&lt;</span>
+          Voltar
+        </Link>
         <h1 className="text-2xl font-bold mb-6 text-center">Cadastro <span className="text-orange-500">TattooGo MK</span></h1>
 
         {status === 'menor_14' && (
