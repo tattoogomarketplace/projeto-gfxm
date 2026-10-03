@@ -6,6 +6,9 @@ import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
   markOnboardingCompleted,
+  reactivateSoftDeletedPerfilByCpf,
+  resolveCpf,
+  resolveEmail,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
 import {
@@ -90,11 +93,39 @@ export async function POST(request: Request) {
 
   let perfil: LocalPerfil | null = existing;
   if (!perfil) {
-    try {
-      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), role);
-    } catch (error) {
-      console.error('[perfil/onboarding] criação falhou', { userId, role, error });
-      perfil = null;
+    const source = buildProfileSource(userId, user);
+
+    // Reativação inteligente: se o CPF informado pertence a uma conta
+    // soft-deleted, reabilitamos o MESMO registro (preservando histórico e
+    // relações) em vez de tentar criar um novo e esbarrar na constraint única
+    // do CPF, o que devolvia um 409 indevido no onboarding.
+    const cpf = resolveCpf(source);
+    if (cpf) {
+      const outcome = await reactivateSoftDeletedPerfilByCpf({
+        cpf,
+        newClerkId: userId,
+        newEmail: resolveEmail(source),
+      });
+
+      if (outcome.status === 'active_conflict') {
+        return NextResponse.json(
+          { sucesso: false, erro: 'Este CPF já está em uso.', needsOnboarding: true },
+          { status: 409 }
+        );
+      }
+
+      if (outcome.status === 'reactivated') {
+        perfil = outcome.perfil;
+      }
+    }
+
+    if (!perfil) {
+      try {
+        perfil = await ensurePerfilFromClerk(source, role);
+      } catch (error) {
+        console.error('[perfil/onboarding] criação falhou', { userId, role, error });
+        perfil = null;
+      }
     }
   }
 

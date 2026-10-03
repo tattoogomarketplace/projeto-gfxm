@@ -65,7 +65,7 @@ function metadataOf(source: ClerkProfileSource): ClerkMetadata {
   return (source.unsafeMetadata || source.publicMetadata || {}) as ClerkMetadata;
 }
 
-function resolveEmail(source: ClerkProfileSource): string {
+export function resolveEmail(source: ClerkProfileSource): string {
   return String(
     source.primaryEmailAddress?.emailAddress ||
       source.emailAddresses?.[0]?.emailAddress ||
@@ -87,7 +87,7 @@ function resolveNome(source: ClerkProfileSource): string | null {
   return fromClerk || null;
 }
 
-function resolveCpf(source: ClerkProfileSource): string | null {
+export function resolveCpf(source: ClerkProfileSource): string | null {
   const digits = onlyDigits(metadataOf(source).cpf);
   return digits.length === 11 ? digits : null;
 }
@@ -141,6 +141,82 @@ export async function findPerfilByCpf(cpf: string): Promise<LocalPerfil | null> 
     where: { cpf: digits },
     select: PERFIL_SELECT,
   });
+}
+
+export type PerfilReactivationOutcome =
+  | { status: 'reactivated'; perfil: LocalPerfil }
+  | { status: 'active_conflict' }
+  | { status: 'not_applicable' }
+  | { status: 'error' };
+
+/**
+ * Reativação inteligente de conta soft-deleted via CPF.
+ *
+ * O CPF é globalmente único (`perfis_cpf_unique_idx`). Quando um novo login do
+ * Clerk informa um CPF que pertence a uma conta com `deleted_at != null`,
+ * reaproveitamos o MESMO registro (preservando `id`, papel, KYC e histórico)
+ * em vez de inserir um novo e colidir com a constraint. Se o CPF já estiver
+ * ATIVO em outra conta e o e-mail divergir, devolvemos `active_conflict`
+ * (rejeição padrão: CPF já em uso).
+ *
+ * É idempotente e centraliza a regra para uso tanto no funil
+ * `ensurePerfilFromClerk` quanto na rota de onboarding.
+ */
+export async function reactivateSoftDeletedPerfilByCpf(params: {
+  cpf: string;
+  newClerkId: string;
+  newEmail: string;
+}): Promise<PerfilReactivationOutcome> {
+  const cpfOwner = await findPerfilByCpf(params.cpf);
+  if (!cpfOwner) return { status: 'not_applicable' };
+
+  const email = String(params.newEmail || '').trim().toLowerCase();
+  const sameEmail = String(cpfOwner.email || '').trim().toLowerCase() === email;
+  if (cpfOwner.deleted_at === null && !sameEmail) {
+    console.warn('[ensure-perfil] CPF ativo pertencente a outra conta; rejeitando', {
+      newClerkId: params.newClerkId,
+      cpfOwnerId: cpfOwner.id,
+    });
+    return { status: 'active_conflict' };
+  }
+
+  try {
+    const perfil = await prisma.perfil.update({
+      where: { id: cpfOwner.id },
+      data: {
+        // Reativação não destrutiva: preserva papel, KYC, nome e histórico do
+        // dono original do CPF. Apenas religa o registro ao novo login do Clerk
+        // e restaura o estado ativo com o novo e-mail.
+        clerk_id: params.newClerkId,
+        email,
+        deleted_at: null,
+        agenda_bloqueada: false,
+      },
+      select: PERFIL_SELECT,
+    });
+
+    console.warn('[ensure-perfil] perfil reativado a partir de conta soft-deleted', {
+      newClerkId: params.newClerkId,
+      perfilId: perfil.id,
+    });
+
+    return {
+      status: 'reactivated',
+      perfil: { ...perfil, reactivated: cpfOwner.deleted_at !== null },
+    };
+  } catch (error) {
+    // E-mail novo já em uso por outro perfil ativo: rejeição padrão.
+    const uniqueError = asUniqueConstraintError(error);
+    if (uniqueError && uniqueTargetIncludes(uniqueError, 'email')) {
+      return { status: 'active_conflict' };
+    }
+    console.error('[ensure-perfil] falha ao reativar perfil soft-deleted', {
+      newClerkId: params.newClerkId,
+      cpfOwnerId: cpfOwner.id,
+      error,
+    });
+    return { status: 'error' };
+  }
 }
 
 /**
@@ -270,59 +346,19 @@ export async function ensurePerfilFromClerk(
 
   // Reativação inteligente (soft-delete): o CPF é único globalmente, então um
   // cadastro novo cujo CPF pertence a uma conta excluída NÃO deve colidir com
-  // a constraint `perfis_cpf_unique_idx`. Reaproveitamos o MESMO registro
-  // (preservando `id`, históricos e relações) e o reativamos com o novo e-mail
-  // do Clerk. Se o CPF já estiver ATIVO em outra conta e o e-mail divergir,
-  // mantemos a rejeição padrão (CPF já em uso).
+  // a constraint `perfis_cpf_unique_idx`. A regra vive em
+  // `reactivateSoftDeletedPerfilByCpf` (reaproveitada pela rota de onboarding).
   if (!existing && cpf) {
-    const cpfOwner = await findPerfilByCpf(cpf);
-    if (cpfOwner) {
-      const sameEmail = String(cpfOwner.email || '').trim().toLowerCase() === email;
-      if (cpfOwner.deleted_at === null && !sameEmail) {
-        console.warn('[ensure-perfil] CPF ativo pertencente a outra conta; rejeitando', {
-          clerkId,
-          cpfOwnerId: cpfOwner.id,
-        });
-        return null;
-      }
-
-      try {
-        const reactivatedPerfil = await prisma.perfil.update({
-          where: { id: cpfOwner.id },
-          data: {
-            // Reativação não destrutiva: preserva papel, KYC, nome e histórico
-            // do dono original do CPF. Apenas religa o registro ao novo login
-            // do Clerk e restaura o estado ativo com o novo e-mail.
-            clerk_id: clerkId,
-            email,
-            deleted_at: null,
-            agenda_bloqueada: false,
-          },
-          select: PERFIL_SELECT,
-        });
-
-        console.warn('[ensure-perfil] perfil reativado a partir de conta soft-deleted', {
-          clerkId,
-          perfilId: reactivatedPerfil.id,
-        });
-
-        return {
-          ...reactivatedPerfil,
-          reactivated: cpfOwner.deleted_at !== null,
-        };
-      } catch (error) {
-        // E-mail novo já em uso por outro perfil ativo: rejeição padrão.
-        const reactivationError = asUniqueConstraintError(error);
-        if (reactivationError && uniqueTargetIncludes(reactivationError, 'email')) {
-          return null;
-        }
-        console.error('[ensure-perfil] falha ao reativar perfil soft-deleted', {
-          clerkId,
-          cpfOwnerId: cpfOwner.id,
-          error,
-        });
-        return findPerfilByClerkId(clerkId);
-      }
+    const outcome = await reactivateSoftDeletedPerfilByCpf({
+      cpf,
+      newClerkId: clerkId,
+      newEmail: email,
+    });
+    if (outcome.status === 'active_conflict') {
+      return null;
+    }
+    if (outcome.status === 'reactivated') {
+      return outcome.perfil;
     }
   }
 
