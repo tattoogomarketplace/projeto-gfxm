@@ -46,8 +46,10 @@ export default function DashboardOnboardingPage() {
     if (!isLoaded) return;
 
     let cancelled = false;
+    /** Teto de tentativas da corrida pós-OTP (evita loader infinito). */
+    const MAX_ATTEMPTS = 40;
 
-    const bootstrap = async () => {
+    const bootstrap = async (attempt = 0) => {
       if (!isSignedIn || !user) {
         router.replace('/login');
         setChecking(false);
@@ -61,21 +63,38 @@ export default function DashboardOnboardingPage() {
         setLocalRole(metadataRole);
       }
 
-      try {
-        if (!isLoaded || !isSignedIn || !user) {
+      const retry = () => {
+        if (cancelled || attempt >= MAX_ATTEMPTS) {
+          if (!cancelled) setChecking(false);
           return;
         }
+        window.setTimeout(() => {
+          if (!cancelled) void bootstrap(attempt + 1);
+        }, 1500);
+      };
+
+      try {
         const response = await fetch('/api/perfil/ensure', {
           cache: 'no-store',
           credentials: 'include',
         });
         if (cancelled) return;
-        // 401 com sessão Clerk viva = token ainda travado/inicializando.
-        // Permanece no onboarding customizado em vez de ir ao login.
+
+        // 401 com sessão Clerk viva = token travado/inicializando. Mantém o
+        // loader e tenta de novo — não renderiza o formulário ainda.
         if (response.status === 401) {
+          retry();
           return;
         }
+
         const payload = await response.json().catch(() => ({}));
+
+        // Perfil ainda sendo criado (corrida pós-OTP): não renderiza os children.
+        if (!payload?.perfil) {
+          retry();
+          return;
+        }
+
         const existingRole = parseAppRole(payload?.perfil?.role);
         const existingName = (payload?.perfil?.nome as string | undefined) ?? null;
 
@@ -91,10 +110,11 @@ export default function DashboardOnboardingPage() {
           router.replace(destinationForRole(existingRole, payload?.perfil?.kyc_status));
           return;
         }
-      } catch {
-        toast.error('Não foi possível carregar seu perfil. Tente novamente.');
-      } finally {
+
+        // Perfil resolvido: agora sim liberamos a UI do onboarding.
         if (!cancelled) setChecking(false);
+      } catch {
+        retry();
       }
     };
 

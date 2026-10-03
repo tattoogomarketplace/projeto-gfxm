@@ -21,48 +21,40 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = (await headers()).get('x-pathname') ?? '';
+  const isOnboarding = isOnboardingPath(pathname);
 
   let perfil: LocalPerfil | null = null;
   let clerkUserId = '';
+  let authenticated = false;
 
-  if (pathname && !isOnboardingPath(pathname)) {
-    let mustOnboard = false;
-    let perfilMissing = false;
-    let authenticated = false;
+  try {
+    const { userId } = await resolvePerfilSessionFromIncomingRequest();
+    clerkUserId = userId ?? '';
+    authenticated = Boolean(userId);
+  } catch {
+    // Falha ao resolver a sessão: tratamos como não autenticado; o
+    // middleware redireciona quem realmente é anônimo.
+    authenticated = false;
+  }
 
+  if (authenticated) {
     try {
-      const { userId } = await resolvePerfilSessionFromIncomingRequest();
-      clerkUserId = userId ?? '';
-      authenticated = Boolean(userId);
+      perfil = await findPerfilByClerkId(clerkUserId);
     } catch {
-      // Falha ao resolver a sessão: tratamos como não autenticado; o
-      // middleware redireciona quem realmente é anônimo.
-      authenticated = false;
+      // Erro transitório de banco não pode estourar o Error Boundary.
+      perfil = null;
     }
 
-    if (authenticated) {
-      try {
-        perfil = await findPerfilByClerkId(clerkUserId);
-      } catch {
-        // Erro transitório de banco não pode estourar o Error Boundary.
-        perfil = null;
-      }
-
-      if (perfil) {
-        mustOnboard = !isOnboardingComplete(perfil);
-      } else {
-        // Corrida pós-registro: autenticado no Clerk, mas o Perfil ainda não
-        // foi persistido (webhook em processamento) — ou a leitura falhou de
-        // forma transitória. NÃO lançamos erro: delegamos a espera ao cliente,
-        // que pinga o auto-provisionamento e revalida até o registro existir.
-        perfilMissing = true;
-      }
-    }
-
-    if (perfilMissing) {
+    // Corrida pós-OTP: sessão Clerk ativa, mas o `Perfil` ainda está sendo
+    // criado pelo auto-provisionamento. NUNCA renderizamos os children neste
+    // estado — tanto nas rotas do painel quanto no onboarding — para evitar o
+    // null-reference crash. O `ProfileWaiter` faz o polling idempotente e
+    // dispara `router.refresh()` quando o registro fica visível.
+    if (!perfil) {
       return <ProfileWaiter />;
     }
-    if (mustOnboard) {
+
+    if (!isOnboarding && !isOnboardingComplete(perfil)) {
       redirect(ONBOARDING_PATH);
     }
   }
@@ -70,10 +62,12 @@ export default async function DashboardLayout({
   // Bloqueio global de KYC: um tatuador não homologado não acessa NENHUMA rota
   // do painel (Portfólio/Agendar/Chat/Perfil). Como o AppShell com a navegação
   // inferior vive aqui, retornar cedo garante que as abas nem sejam renderizadas.
+  // O onboarding é a exceção: ele precede o KYC e não pode ser bloqueado.
   const isKycPendentePath =
     pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
   if (
     perfil &&
+    !isOnboarding &&
     perfil?.role === 'tatuador' &&
     !isKycApproved(perfil?.kyc_status) &&
     !isKycPendentePath
