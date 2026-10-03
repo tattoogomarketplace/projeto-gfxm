@@ -34,6 +34,7 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -127,6 +128,21 @@ export default function PerfilPage() {
     }
   };
 
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('tattoogo_token');
+      }
+      clearAuth();
+      await clerk.signOut({ redirectUrl: '/login' });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao sair da conta.');
+      setLoggingOut(false);
+    }
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -186,6 +202,21 @@ export default function PerfilPage() {
       </section>
 
       <PasswordChangeForm />
+
+      <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <h2 className="text-lg font-bold">Sessão</h2>
+        <p className="text-sm leading-relaxed text-zinc-400">
+          Encerrar o acesso neste dispositivo. Você precisará entrar novamente.
+        </p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="min-h-11 w-full rounded-lg border border-orange-500/50 py-3 font-bold text-orange-400 transition-all hover:bg-orange-500/10 active:scale-95 disabled:opacity-50"
+        >
+          {loggingOut ? <TattooMachineLoader compact label="Saindo" /> : 'Sair da Conta'}
+        </button>
+      </section>
 
       <section className="space-y-4 rounded-2xl border border-red-900/40 bg-red-950/20 p-6">
         <h2 className="text-lg font-bold text-red-400">Excluir conta</h2>

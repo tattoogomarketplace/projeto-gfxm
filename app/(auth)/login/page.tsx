@@ -14,6 +14,7 @@ import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -43,6 +44,8 @@ export default function LoginPage() {
   const [resending, setResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
+
+  useRedirectIfAuthenticated(!isVerifying && !isLoading);
 
   const {
     register,

@@ -20,6 +20,7 @@ import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import api from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -102,6 +103,8 @@ export default function RegisterPage() {
   const [machineFailed, setMachineFailed] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isActivating, setIsActivating] = useState(false);
+
+  useRedirectIfAuthenticated(!isVerifying && !showWelcome && !isActivating && !loading);
 
   const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
