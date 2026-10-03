@@ -113,32 +113,34 @@ export function StudioIncomingRequests() {
           <p className="text-sm text-zinc-400">Nenhum pedido pendente no momento.</p>
         ) : (
           <ul className="space-y-3">
-            {pendentes.map((pedido) => (
+            {(pendentes ?? []).map((pedido) => (
               <li
-                key={pedido.id}
+                key={pedido?.id ?? pedido?.tatuador?.id}
                 className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-white">{pedido.tatuador.nome || 'Artista'}</p>
+                  <p className="font-semibold text-white">{pedido?.tatuador?.nome || 'Artista'}</p>
                   <p className="text-xs text-zinc-500">
-                    {[pedido.tatuador.cidade, pedido.tatuador.estado].filter(Boolean).join(' / ') ||
+                    {[pedido?.tatuador?.cidade, pedido?.tatuador?.estado].filter(Boolean).join(' / ') ||
                       'Local não informado'}{' '}
-                    · KYC {pedido.tatuador.kyc_status.replace('_', ' ')}
+                    · KYC {(pedido?.tatuador?.kyc_status ?? 'pendente').replace('_', ' ')}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    isLoading={actingId === pedido.id}
-                    onClick={() => void decide(pedido.id, 'reject')}
+                    isLoading={actingId === pedido?.id}
+                    disabled={!pedido?.id}
+                    onClick={() => pedido?.id && void decide(pedido.id, 'reject')}
                   >
                     Recusar
                   </Button>
                   <Button
                     type="button"
-                    isLoading={actingId === pedido.id}
-                    onClick={() => void decide(pedido.id, 'accept')}
+                    isLoading={actingId === pedido?.id}
+                    disabled={!pedido?.id}
+                    onClick={() => pedido?.id && void decide(pedido.id, 'accept')}
                   >
                     Aceitar
                   </Button>
@@ -155,11 +157,11 @@ export function StudioIncomingRequests() {
           <p className="text-sm text-zinc-400">Nenhum artista vinculado ainda.</p>
         ) : (
           <ul className="divide-y divide-white/10">
-            {artistas.map((artista) => (
-              <li key={artista.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-white">{artista.nome}</span>
+            {(artistas ?? []).map((artista) => (
+              <li key={artista?.id ?? artista?.nome} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-white">{artista?.nome ?? 'Artista'}</span>
                 <span className="text-xs uppercase tracking-wider text-zinc-500">
-                  {artista.kyc_status.replace('_', ' ')}
+                  {(artista?.kyc_status ?? 'pendente').replace('_', ' ')}
                 </span>
               </li>
             ))}

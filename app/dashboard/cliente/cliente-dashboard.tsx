@@ -100,9 +100,9 @@ export default function ClienteDashboard() {
               </div>
             ) : (
               <div className="grid gap-4">
-                {agendamentos?.map((ag: Agendamento) => (
+                {agendamentos?.map((ag: Agendamento, index: number) => (
                   <GlassContainer
-                    key={ag.id}
+                    key={ag?.id ?? `agendamento-${index}`}
                     className="group relative min-h-11 overflow-hidden border-white/10 p-4 transition-colors hover:border-orange-500/40"
                   >
                     <div
@@ -111,10 +111,10 @@ export default function ClienteDashboard() {
                     />
                     <div className="relative flex items-center justify-between gap-3">
                       <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-orange-400">
-                        {ag.status}
+                        {ag?.status ?? 'pendente'}
                       </span>
                       <span className="text-xs font-medium text-zinc-400">
-                        {new Date(ag.data_hora).toLocaleDateString()}
+                        {ag?.data_hora ? new Date(ag.data_hora).toLocaleDateString() : '—'}
                       </span>
                     </div>
                   </GlassContainer>
@@ -141,12 +141,14 @@ export default function ClienteDashboard() {
             />
             <GeoFilter onChange={setCidade} />
             <div className="grid grid-cols-2 gap-3">
-              {artistas.map((a) => {
-                const selected = chatPeer === a.id;
+              {(artistas ?? []).map((a) => {
+                const selected = chatPeer === a?.id;
+                const email = a?.email ?? '';
+                const initial = email.trim().charAt(0) || '?';
                 return (
                   <button
-                    key={a.id}
-                    onClick={() => setChatPeer(a.id)}
+                    key={a?.id ?? email}
+                    onClick={() => a?.id && setChatPeer(a.id)}
                     className={cn(
                       'group relative min-h-11 overflow-hidden rounded-xl border p-3 text-left transition-all active:scale-95',
                       selected
@@ -155,15 +157,15 @@ export default function ClienteDashboard() {
                     )}
                   >
                     <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/30 bg-[#1a1a1a] text-sm font-semibold uppercase text-orange-400">
-                      {a.email.charAt(0)}
+                      {initial}
                     </span>
                     <span className="mt-2 block truncate text-sm font-medium text-white">
-                      {a.email}
+                      {email || 'Artista'}
                     </span>
-                    {a.cidade ? (
+                    {a?.cidade ? (
                       <span className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
                         <MapPin className="h-3 w-3" strokeWidth={1.75} />
-                        {a.cidade}/{a.estado}
+                        {a.cidade}/{a?.estado ?? ''}
                       </span>
                     ) : null}
                   </button>
@@ -196,13 +198,13 @@ export default function ClienteDashboard() {
               </GlassContainer>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {feed.map((item) => (
+                {(feed ?? []).map((item) => (
                   <PortfolioCard
-                    key={item.id}
-                    id={item.id}
-                    imageUrl={item.url_imagem}
-                    artistName={item.estilo}
-                    initialLikes={item.likes_count || 0}
+                    key={item?.id ?? item?.url_imagem}
+                    id={item?.id ?? ''}
+                    imageUrl={item?.url_imagem ?? ''}
+                    artistName={item?.estilo ?? ''}
+                    initialLikes={item?.likes_count || 0}
                   />
                 ))}
               </div>

@@ -119,12 +119,12 @@ export function StudioCnpjPanel({
 
       {compliance?.cnpjMasked ? (
         <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
-          <p className="font-semibold text-white">{compliance.razaoSocial || 'Estúdio registrado'}</p>
-          <p className="mt-1 text-zinc-400">{compliance.cnpjMasked}</p>
+          <p className="font-semibold text-white">{compliance?.razaoSocial || 'Estúdio registrado'}</p>
+          <p className="mt-1 text-zinc-400">{compliance?.cnpjMasked}</p>
           <p className="mt-1 text-xs uppercase tracking-wider text-emerald-300">
-            {compliance.statusReceita || 'ativa'}
+            {compliance?.statusReceita || 'ativa'}
           </p>
-          {compliance.enderecoOficial ? (
+          {compliance?.enderecoOficial ? (
             <p className="mt-2 text-xs text-zinc-500">{compliance.enderecoOficial}</p>
           ) : null}
         </div>

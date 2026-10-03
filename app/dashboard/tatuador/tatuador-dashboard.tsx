@@ -22,13 +22,15 @@ export default function TatuadorDashboard() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {agendamentos?.map((ag: Agendamento) => (
-            <GlassContainer key={ag.id} className="p-4 border-l-4 border-neon-orange">
+          {agendamentos?.map((ag: Agendamento, index: number) => (
+            <GlassContainer key={ag?.id ?? `agendamento-${index}`} className="p-4 border-l-4 border-neon-orange">
               <div className="flex justify-between items-center">
-                <h2 className="font-bold">Cliente ID: {ag.cliente_id.slice(0, 8)}...</h2>
-                <span className="text-neon-orange uppercase text-xs font-bold">{ag.status}</span>
+                <h2 className="font-bold">Cliente ID: {(ag?.cliente_id ?? '').slice(0, 8) || '—'}...</h2>
+                <span className="text-neon-orange uppercase text-xs font-bold">{ag?.status ?? 'pendente'}</span>
               </div>
-              <p className="text-sm mt-2">Data: {new Date(ag.data_hora).toLocaleString()}</p>
+              <p className="text-sm mt-2">
+                Data: {ag?.data_hora ? new Date(ag.data_hora).toLocaleString() : '—'}
+              </p>
             </GlassContainer>
           ))}
           {(!agendamentos || agendamentos.length === 0) && (

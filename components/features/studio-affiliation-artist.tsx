@@ -152,9 +152,9 @@ export function StudioAffiliationArtist() {
       {vinculo ? (
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
           <p className="text-xs uppercase tracking-wider text-emerald-300">Vinculado</p>
-          <p className="mt-1 font-semibold text-white">{vinculo.nome}</p>
+          <p className="mt-1 font-semibold text-white">{vinculo?.nome ?? 'Estúdio'}</p>
           <p className="text-xs text-zinc-400">
-            {[vinculo.cidade, vinculo.estado].filter(Boolean).join(' / ') || 'Local não informado'}
+            {[vinculo?.cidade, vinculo?.estado].filter(Boolean).join(' / ') || 'Local não informado'}
           </p>
         </div>
       ) : (
@@ -182,29 +182,29 @@ export function StudioAffiliationArtist() {
 
       {!vinculo && studios.length > 0 ? (
         <ul className="space-y-3">
-          {studios.map((studio) => (
+          {(studios ?? []).map((studio) => (
             <li
-              key={studio.id}
+              key={studio?.id ?? studio?.nome}
               className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3"
             >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 truncate font-semibold text-white">
                   <Building2 className="h-4 w-4 text-amber-500" />
-                  {studio.nome}
+                  {studio?.nome ?? 'Estúdio'}
                 </p>
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-400">
                   <MapPin className="h-3 w-3" />
-                  {[studio.cidade, studio.estado].filter(Boolean).join(' / ') || 'Brasil'}
-                  {studio.cnpjMasked ? ` · ${studio.cnpjMasked}` : ''}
+                  {[studio?.cidade, studio?.estado].filter(Boolean).join(' / ') || 'Brasil'}
+                  {studio?.cnpjMasked ? ` · ${studio.cnpjMasked}` : ''}
                 </p>
               </div>
               <Button
                 type="button"
                 variant="outline"
                 className="shrink-0"
-                isLoading={requestingId === studio.id}
-                disabled={Boolean(requestingId)}
-                onClick={() => void requestLink(studio.id)}
+                isLoading={requestingId === studio?.id}
+                disabled={Boolean(requestingId) || !studio?.id}
+                onClick={() => studio?.id && void requestLink(studio.id)}
               >
                 Solicitar
               </Button>
@@ -216,20 +216,22 @@ export function StudioAffiliationArtist() {
       {pedidos.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Seus pedidos</p>
-          {pedidos.map((pedido) => (
+          {(pedidos ?? []).map((pedido) => (
             <div
-              key={pedido.id}
+              key={pedido?.id ?? pedido?.estudio?.nome}
               className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2 text-sm"
             >
               <div>
-                <p className="font-medium text-white">{pedido.estudio.nome}</p>
-                <p className="text-xs text-zinc-500">{STATUS_LABEL[pedido.status] ?? pedido.status}</p>
+                <p className="font-medium text-white">{pedido?.estudio?.nome ?? 'Estúdio'}</p>
+                <p className="text-xs text-zinc-500">
+                  {STATUS_LABEL[pedido?.status ?? ''] ?? pedido?.status ?? 'pendente'}
+                </p>
               </div>
-              {pedido.status === 'pendente' ? (
+              {pedido?.status === 'pendente' ? (
                 <button
                   type="button"
                   className="min-h-11 text-xs text-zinc-400 underline-offset-4 hover:text-amber-400 hover:underline"
-                  onClick={() => void cancelPedido(pedido.id)}
+                  onClick={() => pedido?.id && void cancelPedido(pedido.id)}
                 >
                   Cancelar
                 </button>

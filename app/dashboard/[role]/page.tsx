@@ -17,7 +17,7 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
   }
 
   const perfil = await requireDashboardPerfil(expectedRole);
-  const experience = getRoleExperience(perfil.role);
+  const experience = getRoleExperience(perfil?.role ?? expectedRole);
   const user = await currentUser();
   const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
 
@@ -31,8 +31,8 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
         <div className="h-40 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
           <p className="text-zinc-400">Bem-vindo, {resolveDisplayName({
             full_name: (metadata.full_name as string) || user?.firstName || undefined,
-            nome: (metadata.nome as string) || perfil.nome || undefined,
-          }, 'Artista', perfil.nome)}</p>
+            nome: (metadata.nome as string) || perfil?.nome || undefined,
+          }, 'Artista', perfil?.nome)}</p>
         </div>
       </div>
     </div>

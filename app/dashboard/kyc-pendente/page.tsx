@@ -64,12 +64,12 @@ export default function KycPendentePage() {
           router.replace('/dashboard/onboarding');
           return;
         }
-        const role = normalizeAppRole(payload.perfil.role || (metadata.role as string));
+        const role = normalizeAppRole(payload?.perfil?.role || (metadata?.role as string));
         if (role !== 'tatuador') {
           router.replace(dashboardPathForRole(role));
           return;
         }
-        const kyc = (payload.perfil.kyc_status as KycStatus) || 'pendente';
+        const kyc = (payload?.perfil?.kyc_status as KycStatus) || 'pendente';
         if (kyc === 'aprovado') {
           router.replace('/dashboard/tatuador');
           return;
@@ -81,13 +81,13 @@ export default function KycPendentePage() {
         if (cancelled) return;
       }
 
-      const role = normalizeAppRole(metadata.role as string);
-      if (role !== 'tatuador') {
-        router.replace(dashboardPathForRole(role));
-        return;
-      }
+      const role = normalizeAppRole(metadata?.role as string);
+        if (role !== 'tatuador') {
+          router.replace(dashboardPathForRole(role));
+          return;
+        }
 
-      const kyc = (metadata.kyc_status as KycStatus) || 'pendente';
+        const kyc = (metadata?.kyc_status as KycStatus) || 'pendente';
       if (kyc === 'aprovado') {
         router.replace('/dashboard/tatuador');
         return;

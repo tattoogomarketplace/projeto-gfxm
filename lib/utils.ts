@@ -5,17 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function maskPII(value: string): string {
-  if (!value) return '';
-  // Remove tudo que não for dígito
-  const digits = value.replace(/\D/g, '');
+export function maskPII(value?: string | null): string {
+  if (value == null || value === '') return '';
+  const raw = String(value);
+  const digits = raw.replace(/\D/g, '');
 
-  // Exemplo para CPF: ***.123.456-**
   if (digits.length === 11) {
     return `***.${digits.substring(3, 6)}.${digits.substring(6, 9)}-**`;
   }
 
-  // Fallback genérico se não for CPF
-  return '***' + value.slice(-4);
+  return '***' + raw.slice(-4);
 }
 

@@ -75,7 +75,7 @@ export default function DashboardPage() {
           return;
         }
 
-        const role = parseAppRole(payload.perfil.role) || metadataRole;
+        const role = parseAppRole(payload?.perfil?.role) || metadataRole;
         if (!role) {
           redirected.current = true;
           router.replace(ONBOARDING_PATH);
@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
         redirected.current = true;
         router.replace(
-          role === 'tatuador' && payload.perfil.kyc_status !== 'aprovado'
+          role === 'tatuador' && payload?.perfil?.kyc_status !== 'aprovado'
             ? postSignupPathForRole(role)
             : dashboardPathForRole(role)
         );

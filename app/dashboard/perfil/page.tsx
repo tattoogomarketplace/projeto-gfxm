@@ -63,20 +63,20 @@ export default function PerfilPage() {
         if (cancelled) return;
       }
 
-      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+      const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
       const fullName = resolveFullName(
         {
-          full_name: metadata.full_name as string | undefined,
-          nome: metadata.nome as string | undefined,
-          name: user.fullName || undefined,
+          full_name: metadata?.full_name as string | undefined,
+          nome: metadata?.nome as string | undefined,
+          name: user?.fullName || undefined,
         },
-        storedUser?.fullName || user.fullName || ''
+        storedUser?.fullName || user?.fullName || ''
       );
-      const emailAddress = user.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
+      const emailAddress = user?.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
       setEmail(emailAddress);
       setNome(fullName);
       setUser({
-        id: user.id,
+        id: user?.id ?? storedUser?.id ?? '',
         email: emailAddress,
         fullName,
       });
@@ -87,7 +87,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, router, setUser, storedUser?.fullName, storedUser?.email]);
+  }, [isLoaded, isSignedIn, user, router, setUser, storedUser?.fullName, storedUser?.email, storedUser?.id]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();
@@ -113,8 +113,8 @@ export default function PerfilPage() {
         },
       });
       setUser({
-        id: user.id,
-        email: user.primaryEmailAddress?.emailAddress ?? email,
+        id: user?.id ?? '',
+        email: user?.primaryEmailAddress?.emailAddress ?? email,
         fullName: nextName,
       });
       toast.success('Nome atualizado com sucesso.');
@@ -199,7 +199,7 @@ export default function PerfilPage() {
         />
         <div className="relative flex items-center gap-3">
           <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-lg font-bold uppercase text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.3)]">
-            {(nome || email || 'A').trim().charAt(0).toUpperCase()}
+            {(nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A'}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">

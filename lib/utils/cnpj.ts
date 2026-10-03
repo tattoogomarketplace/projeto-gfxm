@@ -5,8 +5,8 @@
 
 const CNPJ_LENGTH = 14;
 
-export function onlyCnpjDigits(value: string): string {
-  return String(value || '').replace(/\D/g, '').slice(0, CNPJ_LENGTH);
+export function onlyCnpjDigits(value?: string | null): string {
+  return String(value ?? '').replace(/\D/g, '').slice(0, CNPJ_LENGTH);
 }
 
 export function maskCnpj(value: string | null | undefined): string | null {
@@ -15,7 +15,7 @@ export function maskCnpj(value: string | null | undefined): string | null {
   return `**.***.***/${digits.slice(8, 12)}-**`;
 }
 
-export function formatCnpj(value: string): string {
+export function formatCnpj(value?: string | null): string {
   const digits = onlyCnpjDigits(value);
   if (digits.length <= 2) return digits;
   if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
@@ -38,7 +38,7 @@ function checkDigit(base: string): number {
   return rest < 2 ? 0 : 11 - rest;
 }
 
-export function isValidCnpj(value: string): boolean {
+export function isValidCnpj(value?: string | null): boolean {
   const cnpj = onlyCnpjDigits(value);
   if (cnpj.length !== CNPJ_LENGTH) return false;
   if (/^(\d)\1{13}$/.test(cnpj)) return false;

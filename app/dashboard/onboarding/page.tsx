@@ -54,8 +54,8 @@ export default function DashboardOnboardingPage() {
         return;
       }
 
-      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
-      const metadataRole = parseAppRole(metadata.role as string);
+      const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
+      const metadataRole = parseAppRole((metadata?.role as string) ?? null);
       if (metadataRole && !cancelled) {
         setLockedRole(metadataRole);
         setLocalRole(metadataRole);
@@ -163,7 +163,7 @@ export default function DashboardOnboardingPage() {
         try {
           await user.updateMetadata({
             unsafeMetadata: {
-              ...(user.unsafeMetadata || {}),
+              ...(user?.unsafeMetadata || {}),
               role: persistedRole,
             },
           });
@@ -173,13 +173,13 @@ export default function DashboardOnboardingPage() {
       }
 
       setUser({
-        id: user.id,
-        email: user.primaryEmailAddress?.emailAddress ?? '',
+        id: user?.id ?? '',
+        email: user?.primaryEmailAddress?.emailAddress ?? '',
         fullName:
           persistedName ||
-          (user.unsafeMetadata?.full_name as string) ||
-          (user.unsafeMetadata?.nome as string) ||
-          user.fullName ||
+          (user?.unsafeMetadata?.full_name as string) ||
+          (user?.unsafeMetadata?.nome as string) ||
+          user?.fullName ||
           '',
       });
       setRole(persistedRole);

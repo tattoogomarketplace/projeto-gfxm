@@ -74,11 +74,11 @@ export default async function DashboardLayout({
     pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
   if (
     perfil &&
-    perfil.role === 'tatuador' &&
-    !isKycApproved(perfil.kyc_status) &&
+    perfil?.role === 'tatuador' &&
+    !isKycApproved(perfil?.kyc_status) &&
     !isKycPendentePath
   ) {
-    return <TatuadorKycBlock userId={clerkUserId} status={perfil.kyc_status} />;
+    return <TatuadorKycBlock userId={clerkUserId} status={perfil?.kyc_status} />;
   }
 
   if (isKycPendentePath) {

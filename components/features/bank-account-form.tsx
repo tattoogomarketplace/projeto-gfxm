@@ -11,12 +11,13 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
 
   const handleSave = async () => {
     setLoading(true);
-    const digits = bank.replace(/\D/g, '');
-    const masked = digits.length >= 4 ? `***${digits.slice(-4)}` : `***${bank.slice(-4)}`;
+    const raw = String(bank ?? '');
+    const digits = raw.replace(/\D/g, '');
+    const masked = digits.length >= 4 ? `***${digits.slice(-4)}` : `***${raw.slice(-4) || ''}`;
     const payload = {
       tipo: role,
-      masked,
-      last4: digits.slice(-4) || bank.slice(-4),
+      masked: masked || '***',
+      last4: digits.slice(-4) || raw.slice(-4) || '',
     };
 
     if (!user) {

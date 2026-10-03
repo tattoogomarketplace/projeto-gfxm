@@ -21,8 +21,8 @@ export default async function TatuadorLayout({
 }) {
   const perfil = await requireDashboardPerfil('tatuador');
 
-  if (!isKycApproved(perfil.kyc_status)) {
-    return <TatuadorKycBlock userId={perfil.clerk_id ?? ''} status={perfil.kyc_status} />;
+  if (!isKycApproved(perfil?.kyc_status)) {
+    return <TatuadorKycBlock userId={perfil?.clerk_id ?? ''} status={perfil?.kyc_status} />;
   }
 
   return children;
