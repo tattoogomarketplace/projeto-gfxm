@@ -78,7 +78,7 @@ export default function DashboardAiPage() {
   };
 
   return (
-    <div className="tattoo-wallpaper relative mx-auto flex min-h-0 w-full max-w-app flex-1 flex-col bg-[#09090b]">
+    <div className="tattoo-wallpaper relative mx-auto flex min-h-dvh w-full max-w-app flex-col bg-[#09090b]">
       <AiChatHeader />
 
       <div
