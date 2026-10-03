@@ -201,9 +201,6 @@ export default function PerfilPage() {
 
       <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <h2 className="text-lg font-bold">Sessão</h2>
-        <p className="text-sm leading-relaxed text-zinc-400">
-          Encerrar o acesso neste dispositivo. Você precisará entrar novamente.
-        </p>
         <button
           type="button"
           onClick={handleLogout}
@@ -216,9 +213,6 @@ export default function PerfilPage() {
 
       <section className="space-y-4 rounded-2xl border border-red-900/40 bg-red-950/20 p-6">
         <h2 className="text-lg font-bold text-red-400">Excluir conta</h2>
-        <p className="text-sm leading-relaxed text-zinc-400">
-          A conta some da interface e o acesso é invalidado. Agendamentos e histórico permanecem no banco com exclusão lógica.
-        </p>
         {!confirmDelete ? (
           <button
             type="button"
@@ -229,7 +223,6 @@ export default function PerfilPage() {
           </button>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-red-300">Essa ação oculta sua conta imediatamente. Confirmar?</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
