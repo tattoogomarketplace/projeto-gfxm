@@ -50,8 +50,9 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="group shrink-0 w-full sm:w-[calc(50%-1rem)] bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden shadow-lg transition-all"
+      className="group relative shrink-0 w-full sm:w-[calc(50%-1rem)] bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden shadow-lg transition-all hover:border-orange-500/40 hover:shadow-[0_0_30px_rgba(249,115,22,0.18)]"
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative h-64 w-full overflow-hidden">
         <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
       </div>
@@ -73,7 +74,7 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
               />
             </motion.div>
           </AnimatePresence>
-          <span className="text-zinc-400 font-medium">{likes}</span>
+          <span className={isLiked ? "text-orange-400 font-medium" : "text-zinc-400 font-medium"}>{likes}</span>
         </button>
       </div>
     </motion.div>

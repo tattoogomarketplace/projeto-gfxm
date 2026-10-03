@@ -39,7 +39,7 @@ export function SegmentedControl<T extends string>({
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-xl bg-[#1E1E1E] shadow-[0_8px_24px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        className="pointer-events-none absolute top-1 bottom-1 rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-500/30 to-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         style={{
           width: `calc((100% - 0.5rem) / ${options.length})`,
           transform: `translateX(calc(${activeIndex} * 100%))`,
@@ -63,7 +63,9 @@ export function SegmentedControl<T extends string>({
               'relative z-10 flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3',
               'text-[13px] font-semibold tracking-tight transition-colors duration-200',
               'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
-              selected ? 'text-white' : 'text-zinc-400'
+              selected
+                ? 'text-orange-200 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]'
+                : 'text-zinc-400 hover:text-zinc-200'
             )}
           >
             {option.label}
