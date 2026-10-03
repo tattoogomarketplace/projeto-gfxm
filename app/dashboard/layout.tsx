@@ -70,8 +70,19 @@ export default async function DashboardLayout({
   // Bloqueio global de KYC: um tatuador não homologado não acessa NENHUMA rota
   // do painel (Portfólio/Agendar/Chat/Perfil). Como o AppShell com a navegação
   // inferior vive aqui, retornar cedo garante que as abas nem sejam renderizadas.
-  if (perfil && perfil.role === 'tatuador' && !isKycApproved(perfil.kyc_status)) {
+  const isKycPendentePath =
+    pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
+  if (
+    perfil &&
+    perfil.role === 'tatuador' &&
+    !isKycApproved(perfil.kyc_status) &&
+    !isKycPendentePath
+  ) {
     return <TatuadorKycBlock userId={clerkUserId} status={perfil.kyc_status} />;
+  }
+
+  if (isKycPendentePath) {
+    return children;
   }
 
   return (

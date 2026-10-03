@@ -9,6 +9,12 @@ export function onlyCnpjDigits(value: string): string {
   return String(value || '').replace(/\D/g, '').slice(0, CNPJ_LENGTH);
 }
 
+export function maskCnpj(value: string | null | undefined): string | null {
+  const digits = onlyCnpjDigits(String(value || ''));
+  if (digits.length !== 14) return null;
+  return `**.***.***/${digits.slice(8, 12)}-**`;
+}
+
 export function formatCnpj(value: string): string {
   const digits = onlyCnpjDigits(value);
   if (digits.length <= 2) return digits;

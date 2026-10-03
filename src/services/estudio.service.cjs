@@ -232,10 +232,336 @@ async function aceitarConvite({ tatuadorUser, conviteId, otp }) {
   });
 }
 
+function maskCnpj(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (digits.length !== 14) return null;
+  return `**.***.***/${digits.slice(8, 12)}-**`;
+}
+
+function isVerifiedStudio(row) {
+  if (row.kyc_status === "aprovado") return true;
+  const status = String(row.estudioCompliance?.status_receita || "").toLowerCase();
+  return status.includes("ativ");
+}
+
+function toStudioCard(row) {
+  const razaoSocial = row.estudioCompliance?.razao_social || null;
+  return {
+    id: row.id,
+    nome: row.nome || razaoSocial || "Estúdio",
+    cidade: row.cidade,
+    estado: row.estado,
+    razaoSocial,
+    cnpjMasked: maskCnpj(row.estudioCompliance?.cnpj),
+    verified: isVerifiedStudio(row),
+  };
+}
+
+const ESTUDIO_SELECT = {
+  id: true,
+  nome: true,
+  cidade: true,
+  estado: true,
+  kyc_status: true,
+  estudioCompliance: {
+    select: { razao_social: true, cnpj: true, status_receita: true },
+  },
+};
+
+async function expireStaleInvites() {
+  await prisma.estudioConvite.updateMany({
+    where: {
+      status: "pendente",
+      expires_at: { lte: new Date() },
+      deleted_at: null,
+    },
+    data: { status: "expirado" },
+  });
+}
+
+async function buscarEstudiosVerificados(query) {
+  const q = String(query || "").trim().slice(0, 80);
+  const rows = await prisma.perfil.findMany({
+    where: {
+      role: "estudio",
+      deleted_at: null,
+      AND: [
+        {
+          OR: [
+            { kyc_status: "aprovado" },
+            {
+              estudioCompliance: {
+                is: {
+                  deleted_at: null,
+                  status_receita: { contains: "ativ", mode: "insensitive" },
+                },
+              },
+            },
+          ],
+        },
+        ...(q
+          ? [
+              {
+                OR: [
+                  { nome: { contains: q, mode: "insensitive" } },
+                  { cidade: { contains: q, mode: "insensitive" } },
+                  { estado: { contains: q, mode: "insensitive" } },
+                  {
+                    estudioCompliance: {
+                      is: { razao_social: { contains: q, mode: "insensitive" } },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    },
+    select: ESTUDIO_SELECT,
+    orderBy: { nome: "asc" },
+    take: 20,
+  });
+  return rows.filter(isVerifiedStudio).map(toStudioCard);
+}
+
+async function solicitarAfiliacao({ tatuadorUser, estudioId }) {
+  if (!estudioId) throw httpError(400, "Estúdio inválido.");
+
+  const [tatuador, estudio] = await Promise.all([
+    prisma.perfil.findFirst({
+      where: { id: tatuadorUser.id, deleted_at: null, role: "tatuador" },
+      select: { id: true, studio_id: true },
+    }),
+    prisma.perfil.findFirst({
+      where: { id: estudioId, deleted_at: null, role: "estudio" },
+      select: ESTUDIO_SELECT,
+    }),
+  ]);
+
+  if (!tatuador) throw httpError(404, "Perfil de tatuador não encontrado.");
+  if (!estudio || !isVerifiedStudio(estudio)) {
+    throw httpError(404, "Estúdio não encontrado ou ainda não verificado.");
+  }
+  if (tatuador.studio_id) throw httpError(409, "Você já está vinculado a um estúdio.");
+
+  await expireStaleInvites();
+
+  const existing = await prisma.estudioConvite.findFirst({
+    where: {
+      estudio_id: estudio.id,
+      tatuador_id: tatuador.id,
+      status: "pendente",
+      deleted_at: null,
+    },
+    select: { id: true, expires_at: true },
+  });
+  if (existing) {
+    return { convite_id: existing.id, expires_at: existing.expires_at, reused: true };
+  }
+
+  const convite = await prisma.estudioConvite.create({
+    data: {
+      estudio_id: estudio.id,
+      tatuador_id: tatuador.id,
+      status: "pendente",
+      expires_at: new Date(Date.now() + CONVITE_TTL_DIAS * 24 * 60 * 60 * 1000),
+    },
+    select: { id: true, expires_at: true },
+  });
+  return { convite_id: convite.id, expires_at: convite.expires_at, reused: false };
+}
+
+async function listarAfiliacao({ user }) {
+  await expireStaleInvites();
+
+  if (user.role === "tatuador") {
+    const tatuador = await prisma.perfil.findFirst({
+      where: { id: user.id, deleted_at: null },
+      select: { studio: { select: ESTUDIO_SELECT } },
+    });
+    const pedidos = await prisma.estudioConvite.findMany({
+      where: { tatuador_id: user.id, deleted_at: null },
+      select: {
+        id: true,
+        status: true,
+        expires_at: true,
+        created_at: true,
+        estudio: { select: ESTUDIO_SELECT },
+      },
+      orderBy: { created_at: "desc" },
+      take: 30,
+    });
+    return {
+      role: "tatuador",
+      vinculo: tatuador?.studio ? toStudioCard(tatuador.studio) : null,
+      pedidos: pedidos.map((item) => ({
+        id: item.id,
+        status: item.status,
+        expires_at: item.expires_at,
+        created_at: item.created_at,
+        estudio: toStudioCard(item.estudio),
+      })),
+    };
+  }
+
+  if (user.role === "estudio") {
+    const [pedidos, artistas, compliance] = await Promise.all([
+      prisma.estudioConvite.findMany({
+        where: { estudio_id: user.id, deleted_at: null },
+        select: {
+          id: true,
+          status: true,
+          expires_at: true,
+          created_at: true,
+          tatuador: {
+            select: { id: true, nome: true, cidade: true, estado: true, kyc_status: true },
+          },
+        },
+        orderBy: { created_at: "desc" },
+        take: 50,
+      }),
+      prisma.estudioTatuador.findMany({
+        where: { estudio_id: user.id, status_vinculo: "ativo", deleted_at: null },
+        select: {
+          tatuador: {
+            select: { id: true, nome: true, cidade: true, estado: true, kyc_status: true },
+          },
+        },
+        take: 100,
+      }),
+      prisma.estudioCompliance.findFirst({
+        where: { id: user.id, deleted_at: null },
+        select: {
+          cnpj: true,
+          razao_social: true,
+          endereco_oficial: true,
+          status_receita: true,
+        },
+      }),
+    ]);
+
+    return {
+      role: "estudio",
+      pendentes: pedidos.filter((item) => item.status === "pendente"),
+      pedidos,
+      artistas: artistas.map((item) => ({
+        id: item.tatuador.id,
+        nome: item.tatuador.nome || "Artista",
+        cidade: item.tatuador.cidade,
+        estado: item.tatuador.estado,
+        kyc_status: item.tatuador.kyc_status,
+      })),
+      compliance: compliance
+        ? {
+            cnpjMasked: maskCnpj(compliance.cnpj),
+            razaoSocial: compliance.razao_social,
+            enderecoOficial: compliance.endereco_oficial,
+            statusReceita: compliance.status_receita,
+          }
+        : null,
+    };
+  }
+
+  throw httpError(403, "Afiliação disponível apenas para tatuadores e estúdios.");
+}
+
+async function decidirAfiliacao({ user, conviteId, action }) {
+  if (!conviteId) throw httpError(400, "Pedido inválido.");
+  if (!["accept", "reject", "cancel"].includes(action)) {
+    throw httpError(400, "Ação inválida.");
+  }
+
+  await expireStaleInvites();
+
+  return prisma.$transaction(async (tx) => {
+    const convite = await tx.estudioConvite.findFirst({
+      where: { id: conviteId, deleted_at: null },
+    });
+    if (!convite) throw httpError(404, "Pedido não encontrado.");
+    if (convite.status !== "pendente") throw httpError(409, "Pedido não está mais pendente.");
+
+    const isStudio = user.role === "estudio" && convite.estudio_id === user.id;
+    const isArtist = user.role === "tatuador" && convite.tatuador_id === user.id;
+
+    if (action === "cancel") {
+      if (!isArtist) throw httpError(403, "Apenas o artista pode cancelar este pedido.");
+      const canceled = await tx.estudioConvite.update({
+        where: { id: convite.id },
+        data: { status: "recusado" },
+      });
+      return { sucesso: true, status: canceled.status };
+    }
+
+    if (!isStudio) {
+      throw httpError(403, "Apenas o estúdio destino pode decidir este pedido.");
+    }
+
+    if (action === "reject") {
+      const rejected = await tx.estudioConvite.update({
+        where: { id: convite.id },
+        data: { status: "recusado" },
+      });
+      return { sucesso: true, status: rejected.status };
+    }
+
+    const tatuador = await tx.perfil.findFirst({
+      where: { id: convite.tatuador_id, deleted_at: null },
+      select: { id: true, studio_id: true, role: true },
+    });
+    if (!tatuador || tatuador.role !== "tatuador") {
+      throw httpError(404, "Tatuador não encontrado.");
+    }
+    if (tatuador.studio_id && tatuador.studio_id !== convite.estudio_id) {
+      throw httpError(409, "Tatuador já vinculado a outro estúdio.");
+    }
+
+    await tx.perfil.update({
+      where: { id: tatuador.id },
+      data: { studio_id: convite.estudio_id },
+    });
+
+    await tx.estudioTatuador.upsert({
+      where: {
+        estudio_id_tatuador_id: {
+          estudio_id: convite.estudio_id,
+          tatuador_id: tatuador.id,
+        },
+      },
+      update: { status_vinculo: "ativo", deleted_at: null },
+      create: {
+        estudio_id: convite.estudio_id,
+        tatuador_id: tatuador.id,
+        status_vinculo: "ativo",
+      },
+    });
+
+    await tx.estudioConvite.updateMany({
+      where: {
+        tatuador_id: tatuador.id,
+        status: "pendente",
+        id: { not: convite.id },
+        deleted_at: null,
+      },
+      data: { status: "expirado" },
+    });
+
+    const accepted = await tx.estudioConvite.update({
+      where: { id: convite.id },
+      data: { status: "aceito", accepted_at: new Date() },
+    });
+
+    return { sucesso: true, status: accepted.status, studio_id: convite.estudio_id };
+  });
+}
+
 module.exports = {
   validarCnpj,
   validarCNPJMatematico,
   convidarTatuador,
   aceitarConvite,
+  buscarEstudiosVerificados,
+  solicitarAfiliacao,
+  listarAfiliacao,
+  decidirAfiliacao,
   CONVITE_TTL_DIAS,
 };

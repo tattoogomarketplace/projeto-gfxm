@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { KYCForm } from '@/components/features/kyc-form';
+import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, isOnboardingComplete, normalizeAppRole } from '@/lib/utils/auth-redirect';
 
-type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
+type KycStatus = KycStatusValue;
 
 const COPY: Record<KycStatus, { title: string; body: string }> = {
   pendente: {
@@ -17,11 +17,11 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
   },
   em_analise: {
     title: 'Documentos em análise',
-    body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode complementar o CNPJ abaixo se necessário.',
+    body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
   },
   rejeitado: {
     title: 'KYC rejeitado',
-    body: 'Houve inconsistência nos documentos. Revise o CNPJ e reenvie para nova análise.',
+    body: 'Houve inconsistência nos documentos. Envie um documento oficial nítido para nova análise.',
   },
   aprovado: {
     title: 'KYC aprovado',
@@ -36,7 +36,6 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
 export default function KycPendentePage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
-  const [userId, setUserId] = useState<string | null>(null);
   const [status, setStatus] = useState<KycStatus>('pendente');
   const [loading, setLoading] = useState(true);
 
@@ -75,7 +74,6 @@ export default function KycPendentePage() {
           router.replace('/dashboard/tatuador');
           return;
         }
-        setUserId(user.id);
         setStatus(kyc);
         setLoading(false);
         return;
@@ -95,7 +93,6 @@ export default function KycPendentePage() {
         return;
       }
 
-      setUserId(user.id);
       setStatus(kyc);
       setLoading(false);
     };
@@ -127,7 +124,15 @@ export default function KycPendentePage() {
             <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
             Status: {status.replace('_', ' ')}
           </div>
-          {userId ? <KYCForm userId={userId} /> : null}
+          <ProfessionalKycPanel
+            status={status}
+            onStatusChange={(next) => {
+              setStatus(next);
+              if (next === 'aprovado') {
+                router.replace('/dashboard/tatuador');
+              }
+            }}
+          />
         </div>
         <p className="text-center text-xs text-zinc-500">
           Já homologado?{' '}

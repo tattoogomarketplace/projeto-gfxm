@@ -2,6 +2,7 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
 
@@ -35,6 +36,10 @@ export default function TatuadorDashboard() {
           )}
         </div>
       )}
+
+      <div className="mt-8">
+        <StudioAffiliationArtist />
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ const portfolioRoutes = require("./portfolio.routes.cjs");
 const pagamentoRoutes = require("./pagamento.routes.cjs");
 const agendamentoRoutes = require("./agendamento.routes.cjs");
 const estudioRoutes = require("./estudio.routes.cjs");
+const studiosRoutes = require("./studios.routes.cjs");
 const perfilRoutes = require("./perfil.routes.cjs");
 
 const router = Router();
@@ -17,6 +18,7 @@ router.use("/portfolio", portfolioRoutes);
 router.use("/pagamentos", pagamentoRoutes);
 router.use("/agendamentos", agendamentoRoutes);
 router.use("/estudio", estudioRoutes);
+router.use("/studios", studiosRoutes);
 router.use("/perfil", perfilRoutes);
 
 module.exports = router;

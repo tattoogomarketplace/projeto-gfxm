@@ -1,10 +1,14 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { ShieldAlert } from 'lucide-react';
-import { KYCForm } from '@/components/features/kyc-form';
+import {
+  ProfessionalKycPanel,
+  type KycStatusValue,
+} from '@/components/features/professional-kyc-panel';
 
-export type KycStatus = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
+export type KycStatus = KycStatusValue;
 
 export const KYC_STATUS_COPY: Record<KycStatus, { title: string; body: string }> = {
   pendente: {
@@ -13,11 +17,11 @@ export const KYC_STATUS_COPY: Record<KycStatus, { title: string; body: string }>
   },
   em_analise: {
     title: 'Documentos em análise',
-    body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode complementar o CNPJ abaixo se necessário.',
+    body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
   },
   rejeitado: {
     title: 'KYC rejeitado',
-    body: 'Houve inconsistência nos documentos. Revise o CNPJ e reenvie para nova análise.',
+    body: 'Houve inconsistência nos documentos. Envie um documento oficial nítido para nova análise.',
   },
   aprovado: {
     title: 'KYC aprovado',
@@ -40,8 +44,10 @@ function normalizeStatus(status: string): KycStatus {
  * casca/navegação que o envolva), garante que o usuário não alcance abas,
  * agendamentos ou o perfil enquanto a conta não for aprovada.
  */
-export function TatuadorKycBlock({ userId, status }: { userId: string; status: string }) {
+export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; status: string }) {
+  void _userId;
   const { signOut } = useClerk();
+  const router = useRouter();
   const normalized = normalizeStatus(status);
   const copy = KYC_STATUS_COPY[normalized];
 
@@ -65,11 +71,17 @@ export function TatuadorKycBlock({ userId, status }: { userId: string; status: s
             <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
             Status: {normalized.replace('_', ' ')}
           </div>
-          {userId ? (
-            <div className="mt-6">
-              <KYCForm userId={userId} />
-            </div>
-          ) : null}
+          <div className="mt-6">
+            <ProfessionalKycPanel
+              status={normalized}
+              onStatusChange={(next) => {
+                if (next === 'aprovado') {
+                  router.replace('/dashboard/tatuador');
+                  router.refresh();
+                }
+              }}
+            />
+          </div>
         </div>
         <button
           type="button"

@@ -76,8 +76,9 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
   const isAiChat = pathname.startsWith('/dashboard/ai');
+  const isKycPendente = pathname.startsWith('/dashboard/kyc-pendente');
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
-  const hideTabs = isOnboarding || isAiChat;
+  const hideTabs = isOnboarding || isAiChat || isKycPendente;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
   const selectedTab: AppTab = isProfileSettings

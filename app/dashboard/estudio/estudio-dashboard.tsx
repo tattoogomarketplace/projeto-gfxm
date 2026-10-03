@@ -2,6 +2,7 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { StudioIncomingRequests } from '@/components/features/studio-incoming-requests';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
 
@@ -38,6 +39,10 @@ export default function EstudioDashboard() {
           </div>
         </div>
       )}
+
+      <div className="mt-8">
+        <StudioIncomingRequests />
+      </div>
     </div>
   );
 }
