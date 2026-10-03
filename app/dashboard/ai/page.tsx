@@ -1,12 +1,15 @@
 import { Sparkles } from 'lucide-react';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AiChatHeader } from '@/components/layout/ai-chat-header';
 
 export default async function DashboardAiPage() {
   await requireDashboardPerfil();
 
   return (
-    <div className="screen-fade-in mx-auto flex w-full max-w-app flex-col px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+    <div className="screen-fade-in mx-auto flex w-full max-w-app flex-col pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <AiChatHeader />
+      <div className="flex flex-1 flex-col px-4 pt-4">
       <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
         <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#F97316]/15 blur-2xl" />
         <div className="relative flex items-start gap-3">
@@ -47,6 +50,7 @@ export default async function DashboardAiPage() {
         <div className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/30 bg-[#1a1a1a] text-[#F97316]/70">
           <Sparkles className="h-4 w-4" strokeWidth={1.75} />
         </div>
+      </div>
       </div>
     </div>
   );

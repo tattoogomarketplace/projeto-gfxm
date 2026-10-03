@@ -75,8 +75,9 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   }, [searchParams, setActiveTab]);
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
+  const isAiChat = pathname.startsWith('/dashboard/ai');
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
-  const hideTabs = isOnboarding;
+  const hideTabs = isOnboarding || isAiChat;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
   const selectedTab: AppTab = isProfileSettings
@@ -107,6 +108,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
 
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
+      {isAiChat ? null : (
       <header
         className={cn(
           'sticky top-0 z-40 border-b border-white/5 bg-[color-mix(in_srgb,var(--background)_80%,transparent)] backdrop-blur-xl',
@@ -134,6 +136,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           </div>
         )}
       </header>
+      )}
 
       <div className="flex-1 pb-6">
         {children}
