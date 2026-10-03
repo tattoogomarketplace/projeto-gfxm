@@ -27,6 +27,15 @@ export function isOnboardingPath(pathname: string | null | undefined): boolean {
   return pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
 }
 
+/**
+ * KYC aprovado é o único estado que libera a bancada do profissional. Todos os
+ * demais (`pendente`, `em_analise`, `rejeitado`, `nao_aplicavel`) mantêm o
+ * bloqueio global — a verificação é feita no servidor, não apenas na UI.
+ */
+export function isKycApproved(status?: string | null): boolean {
+  return status === 'aprovado';
+}
+
 export function parseAppRole(role?: string | null): AppRole | null {
   if (role && ALLOWED_ROLES.includes(role as AppRole)) {
     return role as AppRole;
