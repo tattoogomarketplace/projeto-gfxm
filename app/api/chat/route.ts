@@ -1,4 +1,4 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 
@@ -18,23 +18,19 @@ export async function POST(req: Request) {
     });
   }
 
-  const apiKey = process.env.USER_LLM_API_KEY || process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ erro: 'Assistente indisponível. Configure USER_LLM_API_KEY.' }),
+      JSON.stringify({ erro: 'Assistente indisponível. Configure GEMINI_API_KEY.' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
   const { messages } = await req.json();
-  const openai = createOpenAI({
-    apiKey,
-    baseURL: process.env.USER_LLM_BASE_URL || undefined,
-  });
-  const modelId = process.env.USER_LLM_MODEL || 'gpt-4o-mini';
+  const google = createGoogleGenerativeAI({ apiKey });
 
   const result = streamText({
-    model: openai(modelId),
+    model: google('gemini-1.5-flash'),
     system: SYSTEM_PROMPT,
     messages,
   });
