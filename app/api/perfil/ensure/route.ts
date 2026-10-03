@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
+  isIdentityRoleTransitionAllowed,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
 import {
@@ -41,7 +42,17 @@ export async function GET(request: Request) {
   let perfil: LocalPerfil | null = null;
   try {
     perfil = await findPerfilByClerkId(userId);
-    if (!perfil) {
+    const shouldReconcile =
+      !perfil ||
+      Boolean(perfil.deleted_at) ||
+      Boolean(
+        metadataRole &&
+          perfil.role !== metadataRole &&
+          isIdentityRoleTransitionAllowed(perfil.role, metadataRole, {
+            deleted: Boolean(perfil.deleted_at),
+          })
+      );
+    if (shouldReconcile) {
       perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
     }
   } catch (error) {
@@ -58,8 +69,8 @@ export async function GET(request: Request) {
 
   if (perfil.deleted_at) {
     return NextResponse.json(
-      { sucesso: false, erro: 'Conta desativada.', perfil: null },
-      { status: 403 }
+      { sucesso: true, perfil: null, needsOnboarding: true, reactivated: false },
+      { status: 200 }
     );
   }
 
@@ -95,18 +106,18 @@ export async function POST(request: Request) {
     existing = null;
   }
 
-  if (existing?.deleted_at) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Conta desativada.', perfil: null },
-      { status: 403 }
-    );
-  }
+  const authoritativeRole = existing?.deleted_at
+    ? metadataRole
+    : existing?.role ?? metadataRole;
 
-  // Fonte de verdade do papel: o perfil já persistido no banco tem prioridade
-  // absoluta; na primeira criação vale o papel escolhido no cadastro (metadata).
-  const authoritativeRole = existing?.role ?? metadataRole;
-
-  if (authoritativeRole && requestedRole && requestedRole !== authoritativeRole) {
+  if (
+    authoritativeRole &&
+    requestedRole &&
+    requestedRole !== authoritativeRole &&
+    !isIdentityRoleTransitionAllowed(authoritativeRole, requestedRole, {
+      deleted: Boolean(existing?.deleted_at),
+    })
+  ) {
     return NextResponse.json(
       {
         sucesso: false,
@@ -117,7 +128,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const role = authoritativeRole ?? requestedRole;
+  const role = requestedRole ?? authoritativeRole;
   if (!role) {
     return NextResponse.json(
       { sucesso: false, erro: 'Selecione um perfil para continuar.', needsOnboarding: true },
@@ -125,8 +136,16 @@ export async function POST(request: Request) {
     );
   }
 
-  let perfil: LocalPerfil | null = existing;
-  if (!perfil) {
+  let perfil: LocalPerfil | null = existing?.deleted_at ? null : existing;
+  const needsRoleTransition = Boolean(
+    perfil &&
+      requestedRole &&
+      perfil.role !== requestedRole &&
+      isIdentityRoleTransitionAllowed(perfil.role, requestedRole, {
+        deleted: Boolean(perfil.deleted_at),
+      })
+  );
+  if (!perfil || needsRoleTransition) {
     try {
       perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), role);
     } catch (error) {

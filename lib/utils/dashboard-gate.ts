@@ -29,7 +29,16 @@ export async function requireDashboardSession(): Promise<GateResult> {
   let perfil: LocalPerfil | null = null;
   try {
     perfil = await findPerfilByClerkId(userId);
-    if (!perfil) {
+    const shouldReconcile =
+      !perfil ||
+      Boolean(perfil.deleted_at) ||
+      Boolean(
+        metadataRole &&
+          perfil.role !== metadataRole &&
+          parseAppRole(perfil.role) === 'cliente' &&
+          (metadataRole === 'tatuador' || metadataRole === 'estudio')
+      );
+    if (shouldReconcile) {
       perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
     }
   } catch {

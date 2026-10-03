@@ -27,7 +27,7 @@ async function verificarDuplicidade({ email, cpf }) {
     try {
       existing = await prisma.perfil.findFirst({
         where: { OR: orFilters },
-        select: { email: true, cpf: true },
+        select: { email: true, cpf: true, role: true, deleted_at: true },
       });
     } catch (err) {
       const message = String((err && err.message) || "");
@@ -35,7 +35,7 @@ async function verificarDuplicidade({ email, cpf }) {
         existing = emailNorm
           ? await prisma.perfil.findFirst({
               where: { email: emailNorm, deleted_at: null },
-              select: { email: true },
+              select: { email: true, role: true, deleted_at: true },
             })
           : null;
       } else {
@@ -45,6 +45,19 @@ async function verificarDuplicidade({ email, cpf }) {
   }
 
   if (!existing) {
+    if (cpfNorm.length === 11) {
+      const byCpf = await prisma.perfil.findUnique({
+        where: { cpf: cpfNorm },
+        select: { email: true, cpf: true, role: true, deleted_at: true },
+      }).catch(() => null);
+      if (byCpf && byCpf.deleted_at) {
+        return {
+          disponivel: true,
+          reconciliavel: true,
+          transicao: byCpf.role === "cliente" ? "tatuador" : byCpf.role,
+        };
+      }
+    }
     return { disponivel: true };
   }
 

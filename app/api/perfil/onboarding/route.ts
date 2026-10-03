@@ -5,10 +5,12 @@ import { NextResponse } from 'next/server';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
+  isIdentityRoleTransitionAllowed,
   markOnboardingCompleted,
-  reactivateSoftDeletedPerfilByCpf,
+  reconcileIdentityByCpf,
   resolveCpf,
   resolveEmail,
+  resolveNome,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
 import {
@@ -62,17 +64,16 @@ export async function POST(request: Request) {
     existing = null;
   }
 
-  if (existing?.deleted_at) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Conta desativada.', perfil: null },
-      { status: 403 }
-    );
-  }
-
-  // O papel persistido tem prioridade absoluta; na primeira criação vale o
-  // papel escolhido no cadastro/seleção (metadata ou corpo da requisição).
-  const authoritativeRole = existing?.role ?? metadataRole;
-  if (authoritativeRole && requestedRole && requestedRole !== authoritativeRole) {
+  const deletedExisting = Boolean(existing?.deleted_at);
+  const authoritativeRole = deletedExisting ? metadataRole : existing?.role ?? metadataRole;
+  if (
+    authoritativeRole &&
+    requestedRole &&
+    requestedRole !== authoritativeRole &&
+    !isIdentityRoleTransitionAllowed(authoritativeRole, requestedRole, {
+      deleted: deletedExisting,
+    })
+  ) {
     return NextResponse.json(
       {
         sucesso: false,
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const role = authoritativeRole ?? requestedRole;
+  const role = requestedRole ?? authoritativeRole;
   if (!existing && !role) {
     return NextResponse.json(
       { sucesso: false, erro: 'Selecione um perfil para continuar.', needsOnboarding: true },
@@ -91,20 +92,26 @@ export async function POST(request: Request) {
     );
   }
 
-  let perfil: LocalPerfil | null = existing;
-  if (!perfil) {
-    const source = buildProfileSource(userId, user);
+  const source = buildProfileSource(userId, user);
+  let perfil: LocalPerfil | null = deletedExisting ? null : existing;
+  const needsRoleTransition = Boolean(
+    perfil &&
+      requestedRole &&
+      perfil.role !== requestedRole &&
+      isIdentityRoleTransitionAllowed(perfil.role, requestedRole, {
+        deleted: Boolean(perfil.deleted_at),
+      })
+  );
 
-    // Reativação inteligente: se o CPF informado pertence a uma conta
-    // soft-deleted, reabilitamos o MESMO registro (preservando histórico e
-    // relações) em vez de tentar criar um novo e esbarrar na constraint única
-    // do CPF, o que devolvia um 409 indevido no onboarding.
+  if (!perfil || needsRoleTransition) {
     const cpf = resolveCpf(source);
     if (cpf) {
-      const outcome = await reactivateSoftDeletedPerfilByCpf({
+      const outcome = await reconcileIdentityByCpf({
         cpf,
         newClerkId: userId,
         newEmail: resolveEmail(source),
+        requestedRole: role,
+        nome: resolveNome(source),
       });
 
       if (outcome.status === 'active_conflict') {
@@ -114,12 +121,12 @@ export async function POST(request: Request) {
         );
       }
 
-      if (outcome.status === 'reactivated') {
+      if (outcome.status === 'reactivated' || outcome.status === 'transitioned') {
         perfil = outcome.perfil;
       }
     }
 
-    if (!perfil) {
+    if (!perfil || (requestedRole && perfil.role !== requestedRole)) {
       try {
         perfil = await ensurePerfilFromClerk(source, role);
       } catch (error) {

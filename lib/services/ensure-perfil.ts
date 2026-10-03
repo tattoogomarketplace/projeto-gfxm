@@ -75,7 +75,7 @@ export function resolveEmail(source: ClerkProfileSource): string {
     .toLowerCase();
 }
 
-function resolveNome(source: ClerkProfileSource): string | null {
+export function resolveNome(source: ClerkProfileSource): string | null {
   const metadata = metadataOf(source);
   const fromMetadata = optionalText(metadata.full_name || metadata.nome);
   if (fromMetadata) return fromMetadata;
@@ -121,6 +121,53 @@ function resolveKycStatusForRole(role: AppRole | null): KycStatusValue {
   return role === 'cliente' ? 'nao_aplicavel' : 'pendente';
 }
 
+function isProfessionalRole(role: AppRole | null | undefined): boolean {
+  return role === 'tatuador' || role === 'estudio';
+}
+
+/**
+ * Transição de identidade permitida: cliente → tatuador/estúdio.
+ * Conta soft-deleted pode assumir qualquer papel solicitado no novo cadastro.
+ * Demais mudanças (ex.: tatuador → cliente em conta ativa) continuam bloqueadas.
+ */
+export function isIdentityRoleTransitionAllowed(
+  current: AppRole | null | undefined,
+  requested: AppRole | null | undefined,
+  options?: { deleted?: boolean }
+): boolean {
+  if (!requested) return true;
+  if (!current || current === requested) return true;
+  if (options?.deleted) return true;
+  return current === 'cliente' && isProfessionalRole(requested);
+}
+
+function identityRolePatch(
+  current: AppRole,
+  requested: AppRole | null | undefined,
+  wasDeleted: boolean
+): {
+  role?: AppRole;
+  kyc_status?: KycStatusValue;
+  has_seen_welcome_notice?: boolean;
+} {
+  if (!requested || !isIdentityRoleTransitionAllowed(current, requested, { deleted: wasDeleted })) {
+    return {};
+  }
+
+  const roleChanged = current !== requested;
+  const reclaimingProfessional = wasDeleted && isProfessionalRole(requested);
+
+  if (!roleChanged && !reclaimingProfessional) {
+    return wasDeleted ? { role: requested } : {};
+  }
+
+  return {
+    role: requested,
+    kyc_status: resolveKycStatusForRole(requested),
+    ...(roleChanged || wasDeleted ? { has_seen_welcome_notice: false } : {}),
+  };
+}
+
 export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil | null> {
   return prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
@@ -145,34 +192,45 @@ export async function findPerfilByCpf(cpf: string): Promise<LocalPerfil | null> 
 
 export type PerfilReactivationOutcome =
   | { status: 'reactivated'; perfil: LocalPerfil }
+  | { status: 'transitioned'; perfil: LocalPerfil }
   | { status: 'active_conflict' }
   | { status: 'not_applicable' }
   | { status: 'error' };
 
-/**
- * Reativação inteligente de conta soft-deleted via CPF.
- *
- * O CPF é globalmente único (`perfis_cpf_unique_idx`). Quando um novo login do
- * Clerk informa um CPF que pertence a uma conta com `deleted_at != null`,
- * reaproveitamos o MESMO registro (preservando `id`, papel, KYC e histórico)
- * em vez de inserir um novo e colidir com a constraint. Se o CPF já estiver
- * ATIVO em outra conta e o e-mail divergir, devolvemos `active_conflict`
- * (rejeição padrão: CPF já em uso).
- *
- * É idempotente e centraliza a regra para uso tanto no funil
- * `ensurePerfilFromClerk` quanto na rota de onboarding.
- */
-export async function reactivateSoftDeletedPerfilByCpf(params: {
+export type ReconcileIdentityByCpfParams = {
   cpf: string;
   newClerkId: string;
   newEmail: string;
-}): Promise<PerfilReactivationOutcome> {
+  requestedRole?: AppRole | null;
+  nome?: string | null;
+};
+
+/**
+ * Reconciliação de identidade via CPF.
+ *
+ * O CPF é globalmente único (`perfis_cpf_unique_idx`). Quando um novo login do
+ * Clerk informa um CPF que já existe:
+ * - conta soft-deleted: religa `clerk_id` + e-mail, reativa o registro e aplica
+ *   transição de papel (ex.: cliente → tatuador) resetando KYC pendente;
+ * - conta ativa com o mesmo e-mail: permite upgrade cliente → tatuador;
+ * - conta ativa com e-mail divergente: `active_conflict` (CPF já em uso).
+ *
+ * Nunca cria um segundo `Perfil` para o mesmo CPF — evita P2002.
+ */
+export async function reconcileIdentityByCpf(
+  params: ReconcileIdentityByCpfParams
+): Promise<PerfilReactivationOutcome> {
   const cpfOwner = await findPerfilByCpf(params.cpf);
   if (!cpfOwner) return { status: 'not_applicable' };
 
   const email = String(params.newEmail || '').trim().toLowerCase();
+  if (!email) return { status: 'error' };
+
+  const sameClerk = cpfOwner.clerk_id === params.newClerkId;
   const sameEmail = String(cpfOwner.email || '').trim().toLowerCase() === email;
-  if (cpfOwner.deleted_at === null && !sameEmail) {
+  const wasDeleted = cpfOwner.deleted_at !== null;
+
+  if (!wasDeleted && !sameEmail && !sameClerk) {
     console.warn('[ensure-perfil] CPF ativo pertencente a outra conta; rejeitando', {
       newClerkId: params.newClerkId,
       cpfOwnerId: cpfOwner.id,
@@ -180,43 +238,179 @@ export async function reactivateSoftDeletedPerfilByCpf(params: {
     return { status: 'active_conflict' };
   }
 
-  try {
-    const perfil = await prisma.perfil.update({
-      where: { id: cpfOwner.id },
-      data: {
-        // Reativação não destrutiva: preserva papel, KYC, nome e histórico do
-        // dono original do CPF. Apenas religa o registro ao novo login do Clerk
-        // e restaura o estado ativo com o novo e-mail.
-        clerk_id: params.newClerkId,
-        email,
-        deleted_at: null,
-        agenda_bloqueada: false,
-      },
-      select: PERFIL_SELECT,
+  const requested = parseAppRole(params.requestedRole);
+  if (
+    requested &&
+    !isIdentityRoleTransitionAllowed(cpfOwner.role, requested, { deleted: wasDeleted })
+  ) {
+    console.warn('[ensure-perfil] transição de papel via CPF não permitida', {
+      current: cpfOwner.role,
+      requested,
+      cpfOwnerId: cpfOwner.id,
     });
+    return { status: 'active_conflict' };
+  }
 
-    console.warn('[ensure-perfil] perfil reativado a partir de conta soft-deleted', {
+  const rolePatch = identityRolePatch(cpfOwner.role, requested, wasDeleted);
+  const roleChanged = Boolean(rolePatch.role && rolePatch.role !== cpfOwner.role);
+
+  const updatePayload = {
+    clerk_id: params.newClerkId,
+    email,
+    deleted_at: null,
+    agenda_bloqueada: false,
+    ...(params.nome ? { nome: params.nome } : {}),
+    ...rolePatch,
+  };
+
+  try {
+    const perfil = await applyCpfIdentityUpdate(cpfOwner.id, updatePayload);
+
+    console.warn('[ensure-perfil] identidade reconciliada via CPF', {
       newClerkId: params.newClerkId,
       perfilId: perfil.id,
+      previousRole: cpfOwner.role,
+      nextRole: perfil.role,
+      reactivated: wasDeleted,
+      roleChanged,
     });
 
     return {
-      status: 'reactivated',
-      perfil: { ...perfil, reactivated: cpfOwner.deleted_at !== null },
+      status: roleChanged ? 'transitioned' : 'reactivated',
+      perfil: { ...perfil, reactivated: wasDeleted },
     };
   } catch (error) {
-    // E-mail novo já em uso por outro perfil ativo: rejeição padrão.
     const uniqueError = asUniqueConstraintError(error);
     if (uniqueError && uniqueTargetIncludes(uniqueError, 'email')) {
       return { status: 'active_conflict' };
     }
-    console.error('[ensure-perfil] falha ao reativar perfil soft-deleted', {
+    if (uniqueError && uniqueTargetIncludes(uniqueError, 'clerk_id')) {
+      const released = await releaseClerkIdStub(params.newClerkId, cpfOwner.id);
+      if (released) {
+        try {
+          const perfil = await applyCpfIdentityUpdate(cpfOwner.id, updatePayload);
+          return {
+            status: roleChanged ? 'transitioned' : 'reactivated',
+            perfil: { ...perfil, reactivated: wasDeleted },
+          };
+        } catch {
+          return { status: 'error' };
+        }
+      }
+      return { status: 'active_conflict' };
+    }
+    console.error('[ensure-perfil] falha ao reconciliar identidade via CPF', {
       newClerkId: params.newClerkId,
       cpfOwnerId: cpfOwner.id,
       error,
     });
     return { status: 'error' };
   }
+}
+
+async function applyCpfIdentityUpdate(
+  perfilId: string,
+  data: {
+    clerk_id: string;
+    email: string;
+    deleted_at: null;
+    agenda_bloqueada: boolean;
+    nome?: string;
+    role?: AppRole;
+    kyc_status?: KycStatusValue;
+    has_seen_welcome_notice?: boolean;
+  }
+): Promise<LocalPerfil> {
+  return prisma.perfil.update({
+    where: { id: perfilId },
+    data,
+    select: PERFIL_SELECT,
+  });
+}
+
+async function releaseClerkIdStub(clerkId: string, keepPerfilId: string): Promise<boolean> {
+  const stub = await findPerfilByClerkId(clerkId);
+  if (!stub || stub.id === keepPerfilId) return true;
+  try {
+    await prisma.perfil.update({
+      where: { id: stub.id },
+      data: {
+        clerk_id: null,
+        email: `reclaimed.${stub.id}.${Date.now()}@deleted.tattoogo.local`,
+        deleted_at: stub.deleted_at ?? new Date(),
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('[ensure-perfil] falha ao liberar clerk_id do stub', {
+      stubId: stub.id,
+      clerkId,
+      error,
+    });
+    return false;
+  }
+}
+
+/**
+ * Compat: reativação de conta soft-deleted via CPF.
+ * Delega para `reconcileIdentityByCpf` (mesma regra, com transição de papel).
+ */
+export async function reactivateSoftDeletedPerfilByCpf(params: {
+  cpf: string;
+  newClerkId: string;
+  newEmail: string;
+  requestedRole?: AppRole | null;
+  nome?: string | null;
+}): Promise<PerfilReactivationOutcome> {
+  return reconcileIdentityByCpf(params);
+}
+
+/**
+ * Adota o perfil dono do CPF, mesmo se um stub já existir para o clerk_id
+ * atual. Evita P2002 (cpf/clerk_id) ao relinkar em vez de criar um segundo row.
+ */
+async function adoptCpfIdentity(params: {
+  cpf: string;
+  clerkId: string;
+  email: string;
+  nome: string | null;
+  requestedRole: AppRole | null;
+  existing: LocalPerfil | null;
+}): Promise<PerfilReactivationOutcome> {
+  const cpfOwner = await findPerfilByCpf(params.cpf);
+  if (!cpfOwner) return { status: 'not_applicable' };
+  if (params.existing && params.existing.id === cpfOwner.id) {
+    return reconcileIdentityByCpf({
+      cpf: params.cpf,
+      newClerkId: params.clerkId,
+      newEmail: params.email,
+      requestedRole: params.requestedRole,
+      nome: params.nome,
+    });
+  }
+
+  const sameClerk = cpfOwner.clerk_id === params.clerkId;
+  const sameEmail =
+    Boolean(params.email) &&
+    String(cpfOwner.email || '').trim().toLowerCase() === params.email;
+  const wasDeleted = cpfOwner.deleted_at !== null;
+
+  if (!wasDeleted && !sameEmail && !sameClerk) {
+    return { status: 'active_conflict' };
+  }
+
+  if (params.existing && params.existing.id !== cpfOwner.id) {
+    const released = await releaseClerkIdStub(params.clerkId, cpfOwner.id);
+    if (!released) return { status: 'error' };
+  }
+
+  return reconcileIdentityByCpf({
+    cpf: params.cpf,
+    newClerkId: params.clerkId,
+    newEmail: params.email,
+    requestedRole: params.requestedRole,
+    nome: params.nome,
+  });
 }
 
 /**
@@ -284,11 +478,34 @@ export async function ensurePerfilFromClerk(
   const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
 
   const existing = await findPerfilByClerkId(clerkId);
-  // O papel persistido é a fonte de verdade; metadados só definem o papel na
-  // criação. Isso impede que um metadado divergente normalize o KYC errado.
-  const effectiveRole: AppRole | null = existing?.role ?? role ?? null;
-
   const cpf = resolveCpf(source);
+
+  // Identidade pelo CPF tem prioridade sobre um stub criado pelo clerk_id:
+  // religa o registro dono do CPF e evita P2002 + papel travado em 'cliente'.
+  if (cpf) {
+    const reconciled = await adoptCpfIdentity({
+      cpf,
+      clerkId,
+      email,
+      nome,
+      requestedRole: role,
+      existing,
+    });
+    if (reconciled.status === 'active_conflict') return null;
+    if (reconciled.status === 'error') return findPerfilByClerkId(clerkId);
+    if (reconciled.status === 'reactivated' || reconciled.status === 'transitioned') {
+      return reconciled.perfil;
+    }
+  }
+
+  // O papel persistido é a fonte de verdade, salvo transição explícita
+  // cliente → tatuador/estúdio (reconciliação de identidade).
+  const transitionPatch = existing
+    ? identityRolePatch(existing.role, role, existing.deleted_at !== null)
+    : {};
+  const effectiveRole: AppRole | null =
+    (transitionPatch.role as AppRole | undefined) ?? existing?.role ?? role ?? null;
+
   const cnpj = effectiveRole ? resolveCnpj(source, effectiveRole) : null;
   const dataNascimento = optionalText(metadata.data_nascimento);
   const responsavelNome = optionalText(metadata.responsavel_nome);
@@ -296,20 +513,22 @@ export async function ensurePerfilFromClerk(
   const acceptedTerms = resolveAcceptedTerms(source);
 
   // Atualização não destrutiva: só sobrescreve um campo quando o payload traz
-  // valor, preservando dados já persistidos em divergências de webhook. O papel
-  // é imutável após a criação (evita "role flapping" e loops de redirecionamento
-  // entre painéis). O único ajuste proativo é normalizar o KYC de clientes.
+  // valor. Papel só muda via `identityRolePatch` (upgrade cliente → profissional).
   const sharedUpdate = {
     deleted_at: null,
+    agenda_bloqueada: false,
     ...(email ? { email } : {}),
     ...(nome ? { nome } : {}),
     ...(!existing && role ? { role } : {}),
+    ...transitionPatch,
     ...(cnpj ? { cnpj } : {}),
     ...(dataNascimento ? { data_nascimento: dataNascimento } : {}),
     ...(responsavelNome ? { responsavel_nome: responsavelNome } : {}),
     ...(responsavelCpf ? { responsavel_cpf: responsavelCpf } : {}),
     ...(acceptedTerms ? { accepted_terms: true } : {}),
-    ...(effectiveRole === 'cliente' ? { kyc_status: 'nao_aplicavel' as const } : {}),
+    ...(effectiveRole === 'cliente' && !transitionPatch.kyc_status
+      ? { kyc_status: 'nao_aplicavel' as const }
+      : {}),
   };
   const updateData = cpf ? { ...sharedUpdate, cpf } : sharedUpdate;
 
@@ -342,24 +561,6 @@ export async function ensurePerfilFromClerk(
       data: updateData,
       select: PERFIL_SELECT,
     });
-  }
-
-  // Reativação inteligente (soft-delete): o CPF é único globalmente, então um
-  // cadastro novo cujo CPF pertence a uma conta excluída NÃO deve colidir com
-  // a constraint `perfis_cpf_unique_idx`. A regra vive em
-  // `reactivateSoftDeletedPerfilByCpf` (reaproveitada pela rota de onboarding).
-  if (!existing && cpf) {
-    const outcome = await reactivateSoftDeletedPerfilByCpf({
-      cpf,
-      newClerkId: clerkId,
-      newEmail: email,
-    });
-    if (outcome.status === 'active_conflict') {
-      return null;
-    }
-    if (outcome.status === 'reactivated') {
-      return outcome.perfil;
-    }
   }
 
   try {
@@ -403,25 +604,20 @@ export async function ensurePerfilFromClerk(
       });
     }
 
-    if (uniqueTargetIncludes(uniqueError, 'cpf')) {
-      // CPF já pertence a outro perfil: persistimos o restante sem o campo
-      // conflitante para não violar a constraint única opcional.
-      try {
-        return await prisma.perfil.upsert({
-          where: { clerk_id: clerkId },
-          create: createData(null),
-          update: sharedUpdate,
-          select: PERFIL_SELECT,
-        });
-      } catch (retryError) {
-        console.error('[ensure-perfil] falha ao reconciliar conflito de cpf', {
-          clerkId,
-          email,
-          role,
-          retryError,
-        });
-        return findPerfilByClerkId(clerkId);
+    if (uniqueTargetIncludes(uniqueError, 'cpf') && cpf) {
+      const recovered = await adoptCpfIdentity({
+        cpf,
+        clerkId,
+        email,
+        nome,
+        requestedRole: role,
+        existing: await findPerfilByClerkId(clerkId),
+      });
+      if (recovered.status === 'reactivated' || recovered.status === 'transitioned') {
+        return recovered.perfil;
       }
+      if (recovered.status === 'active_conflict') return null;
+      return findPerfilByClerkId(clerkId);
     }
 
     return findPerfilByClerkId(clerkId);

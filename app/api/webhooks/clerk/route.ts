@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
-import { normalizeAppRole, parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 type ClerkEmailAddress = {
   id?: string;
@@ -41,9 +41,9 @@ function resolveEmail(data: ClerkUserCreatedData): string {
     .toLowerCase();
 }
 
-function resolveRole(data: ClerkUserCreatedData): AppRole {
+function resolveRole(data: ClerkUserCreatedData): AppRole | null {
   const metadata = data.unsafe_metadata || data.public_metadata || {};
-  return parseAppRole(metadata.role) ?? normalizeAppRole(metadata.role);
+  return parseAppRole(metadata.role);
 }
 
 export async function POST(request: NextRequest) {
