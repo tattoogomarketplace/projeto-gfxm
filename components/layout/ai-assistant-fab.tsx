@@ -10,7 +10,6 @@ export function AiAssistantFab() {
   const pathname = usePathname();
   const router = useRouter();
   const constraintsRef = useRef<HTMLDivElement>(null);
-  const dragged = useRef(false);
 
   if (pathname.startsWith('/dashboard/onboarding') || pathname.startsWith('/dashboard/ai')) {
     return null;
@@ -32,16 +31,7 @@ export function AiAssistantFab() {
         dragConstraints={constraintsRef}
         dragElastic={0.06}
         dragMomentum={false}
-        onDragStart={() => {
-          dragged.current = false;
-        }}
-        onDrag={(_event, info) => {
-          if (Math.abs(info.offset.y) > 4) dragged.current = true;
-        }}
-        onTap={() => {
-          if (dragged.current) return;
-          router.push('/dashboard/ai');
-        }}
+        onClick={() => router.push('/dashboard/ai')}
         aria-label="Abrir assistente de IA"
         style={{ touchAction: 'none' }}
         className={cn(
