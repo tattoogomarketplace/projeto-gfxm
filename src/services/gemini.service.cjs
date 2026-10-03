@@ -3,7 +3,7 @@ const CircuitBreaker = require("opossum");
 const { geminiApiKey } = require("../config/env.cjs");
 
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
 const runGeminiAI = async (imagemBase64Limpa) => {
   const promptText =

@@ -9,7 +9,7 @@ const SYSTEM_PROMPT =
   'Você é o assistente virtual de elite do TattooGo MK, um marketplace premium de tatuagens. Seu tom é profissional, sofisticado, prestativo e direto. Você ajuda clientes com ideias de estilos (fineline, realismo, old school, etc.), dúvidas sobre cuidados pós-tatuagem e como agendar com os melhores artistas da plataforma. Responda sempre em português do Brasil e seja conciso.';
 
 const GEMINI_ENDPOINT =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
 type ChatRole = 'user' | 'assistant';
 

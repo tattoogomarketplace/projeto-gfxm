@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const moderateImageWithGemini = async (base64Image: string): Promise<boolean> => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
     const prompt = `Você é um moderador de um marketplace de tatuagens. Analise esta imagem.
 Retorne APENAS a palavra 'APROVADO' se for uma tatuagem, um desenho, estúdio ou profissional seguro. 
