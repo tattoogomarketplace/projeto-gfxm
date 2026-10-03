@@ -94,10 +94,15 @@
   .screen-fade-in {
     animation: screen-fade-in 240ms ease-out both;
   }
+
+  .ai-fab-pulse {
+    animation: ai-fab-pulse 2.6s ease-in-out infinite;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen-fade-in {
+  .screen-fade-in,
+  .ai-fab-pulse {
     animation: none;
   }
 }
@@ -166,5 +171,15 @@
   }
   75% {
     transform: translate(2px, -1px);
+  }
+}
+
+@keyframes ai-fab-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.35), 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(249, 115, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }

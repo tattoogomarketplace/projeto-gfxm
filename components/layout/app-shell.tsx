@@ -12,6 +12,7 @@ import {
   type AppRole,
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
+import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
 import { cn } from '@/lib/utils';
 
 const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
@@ -137,6 +138,8 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       <div className="flex-1 pb-6">
         {children}
       </div>
+
+      <AiAssistantFab />
     </div>
   );
 }
