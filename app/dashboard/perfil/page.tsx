@@ -11,6 +11,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
+import { clearClientSession } from '@/lib/utils/session';
 
 function authHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
@@ -25,7 +26,6 @@ export default function PerfilPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
   const storedUser = useAuthStore((s) => s.user);
 
   const [email, setEmail] = useState('');
@@ -132,10 +132,7 @@ export default function PerfilPage() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('tattoogo_token');
-      }
-      clearAuth();
+      clearClientSession();
       await clerk.signOut({ redirectUrl: '/login' });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao sair da conta.');
@@ -156,8 +153,7 @@ export default function PerfilPage() {
       }
 
       await clerk.signOut();
-      localStorage.removeItem('tattoogo_token');
-      clearAuth();
+      clearClientSession();
       toast.success('Conta oculta. Seu histórico permanece protegido.');
       router.push('/login');
       router.refresh();
