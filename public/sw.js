@@ -81,10 +81,23 @@ self.addEventListener('message', function (event) {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
+/**
+ * A response is only safe to persist when it is a complete, successful body.
+ * `response.ok` is true for 206 Partial Content, which would poison the cache
+ * with truncated range bodies, so we require an exact status 200 and a GET.
+ */
+function canCache(request, response) {
+  return (
+    request.method === 'GET' &&
+    !!response &&
+    response.status === 200
+  );
+}
+
 function networkFirst(request, cacheName, fallbackUrl) {
   return caches.open(cacheName).then(function (cache) {
     return fetch(request).then(function (response) {
-      if (response && response.ok) cache.put(request, response.clone());
+      if (canCache(request, response)) cache.put(request, response.clone());
       return response;
     }).catch(function () {
       return cache.match(request).then(function (cached) {
@@ -105,7 +118,7 @@ function cacheFirst(request, cacheName) {
     return cache.match(request).then(function (cached) {
       if (cached) return cached;
       return fetch(request).then(function (response) {
-        if (response && response.ok) cache.put(request, response.clone());
+        if (canCache(request, response)) cache.put(request, response.clone());
         return response || new Response('Offline', { status: 503, statusText: 'Offline' });
       }).catch(function () {
         return new Response('Offline', { status: 503, statusText: 'Offline' });
@@ -118,7 +131,7 @@ function staleWhileRevalidate(request, cacheName) {
   return caches.open(cacheName).then(function (cache) {
     return cache.match(request).then(function (cached) {
       var network = fetch(request).then(function (response) {
-        if (response && response.ok) cache.put(request, response.clone());
+        if (canCache(request, response)) cache.put(request, response.clone());
         return response || cached || new Response('Offline', { status: 503, statusText: 'Offline' });
       }).catch(function () {
         return cached || new Response('Offline', { status: 503, statusText: 'Offline' });

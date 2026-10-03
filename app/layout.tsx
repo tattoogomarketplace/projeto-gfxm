@@ -6,6 +6,8 @@ import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
+import { SessionTaskGuard } from "@/components/layout/session-task-guard";
+import { SESSION_TASK_URLS } from "@/lib/utils/session-tasks";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://tattoogomk.com.br"),
@@ -78,6 +80,7 @@ export default function RootLayout({
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
       afterSignOutUrl="/"
+      taskUrls={SESSION_TASK_URLS}
     >
       <html lang="pt-BR" className="h-full dark" suppressHydrationWarning>
         <head>
@@ -91,6 +94,7 @@ export default function RootLayout({
             <ThemeProvider>
               <PwaRegister />
               <StrictSessionGuard />
+              <SessionTaskGuard />
               <main className="h-full w-full overflow-y-auto env-safe-area">
                 <div className="max-w-app mx-auto min-h-full">
                   {children}

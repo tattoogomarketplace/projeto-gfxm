@@ -31,7 +31,11 @@ const MAX_RETRIES = 3;
 export const useOfflineQueue = create<OfflineQueueState>()(
   persist(
     (set, get) => ({
-      isOnline: typeof navigator === 'undefined' ? true : navigator.onLine,
+      // SSR-safe default: both server and first client render must produce the
+      // same markup. Reading `navigator.onLine` during hydration can flip this
+      // to `false` while the server rendered `true`, triggering React #418.
+      // PwaRegister syncs the real value right after mount.
+      isOnline: true,
       queue: [],
       setOnline: (online) => set({ isOnline: online }),
       enqueue: (type, payload) => {
