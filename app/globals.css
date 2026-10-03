@@ -75,6 +75,16 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .tattoo-wallpaper {
+    background-image:
+      radial-gradient(120% 90% at 50% 0%, rgba(249, 115, 22, 0.06), transparent 60%),
+      radial-gradient(90% 70% at 100% 100%, rgba(249, 115, 22, 0.05), transparent 55%),
+      url("/tattoo-wallpaper.svg");
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-position: center top, right bottom, 0 0;
+    background-size: auto, auto, 200px 200px;
+  }
+
   .tattoo-machine-buzz {
     animation: tattoo-buzz 0.12s linear infinite;
   }
