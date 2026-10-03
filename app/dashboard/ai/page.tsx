@@ -1,15 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
-import { useChat } from 'ai/react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 import { AiChatHeader } from '@/components/layout/ai-chat-header';
 import { cn } from '@/lib/utils';
 
+type ChatRole = 'user' | 'assistant';
+
+type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  content: string;
+};
+
 export default function DashboardAiPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: '/api/chat',
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,11 +26,56 @@ export default function DashboardAiPage() {
     node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const empty = messages.length === 0;
-  const errorMessage = useMemo(() => {
-    if (!error) return null;
-    return error.message || 'Não foi possível falar com o assistente agora.';
-  }, [error]);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: text,
+    };
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setInput('');
+    setErrorMessage(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          messages: nextMessages.map(({ role, content }) => ({ role, content })),
+        }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        content?: string;
+        erro?: string;
+      };
+
+      if (!response.ok || !payload.content) {
+        throw new Error(payload.erro || 'Não foi possível falar com o assistente agora.');
+      }
+
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: payload.content as string,
+        },
+      ]);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Não foi possível falar com o assistente agora.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="relative mx-auto flex min-h-0 w-full max-w-app flex-1 flex-col">
@@ -32,7 +85,7 @@ export default function DashboardAiPage() {
         ref={scrollerRef}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
       >
-        {empty ? (
+        {messages.length === 0 ? (
           <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
             <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#F97316]/15 blur-2xl" />
             <div className="relative flex items-start gap-3">
@@ -92,7 +145,7 @@ export default function DashboardAiPage() {
         <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2">
           <input
             value={input}
-            onChange={handleInputChange}
+            onChange={(event) => setInput(event.currentTarget.value)}
             placeholder="Pergunte sobre estilos, cuidados ou agenda..."
             className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-[#F5F5F5] outline-none placeholder:text-zinc-500"
             autoComplete="off"
