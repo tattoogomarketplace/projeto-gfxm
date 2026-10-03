@@ -23,5 +23,5 @@ export function useRedirectIfAuthenticated(enabled = true): {
     router.replace('/dashboard');
   }, [enabled, isLoaded, isSignedIn, router]);
 
-  return { isLoaded, isSignedIn };
+  return { isLoaded, isSignedIn: !!isSignedIn };
 }
