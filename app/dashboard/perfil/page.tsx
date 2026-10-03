@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useClerk, useUser } from '@clerk/nextjs';
+import { ChevronRight, FileText, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
+import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
@@ -35,6 +38,7 @@ export default function PerfilPage() {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -199,6 +203,39 @@ export default function PerfilPage() {
 
       <PasswordChangeForm />
 
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
+            <Settings className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+              Configurações
+            </h2>
+            <p className="mt-0.5 text-xs text-zinc-400">
+              Preferências e documentos legais da sua conta.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowTerms(true)}
+          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]"
+        >
+          <FileText className="h-5 w-5 min-h-5 min-w-5 text-orange-400" strokeWidth={1.75} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-white">
+              Termos de Uso e Política de Privacidade
+            </span>
+            <span className="mt-0.5 block text-xs text-zinc-500">Versão {TERMS_VERSION}</span>
+          </span>
+          <ChevronRight
+            className="h-4 w-4 min-h-4 min-w-4 text-zinc-500 transition-colors group-hover:text-orange-400"
+            strokeWidth={1.75}
+          />
+        </button>
+      </section>
+
       <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <h2 className="text-lg font-bold">Sessão</h2>
         <button
@@ -244,6 +281,8 @@ export default function PerfilPage() {
           </div>
         )}
       </section>
+
+      <TermsViewerModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </div>
   );
 }

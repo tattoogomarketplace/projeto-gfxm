@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TERMS_TEXT } from '@/lib/terms';
+import { TermsContent } from '@/components/shared/terms-content';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -40,16 +40,16 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
           >
             <h2 className="text-2xl font-bold text-amber-500 mb-4">Termos de Uso Obrigatórios</h2>
             <div
-              className="text-zinc-400 text-sm mb-8 h-64 overflow-y-auto border-b border-zinc-800 pb-4"
-              onScroll={(e) => {
-                const target = e.target as HTMLDivElement;
-                if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
-                  setCanAccept(true);
-                }
-              }}
-            >
-              {TERMS_TEXT}
-            </div>
+            className="text-zinc-400 text-sm mb-8 h-72 overflow-y-auto border-b border-zinc-800 pb-4"
+            onScroll={(e) => {
+              const target = e.target as HTMLDivElement;
+              if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
+                setCanAccept(true);
+              }
+            }}
+          >
+            <TermsContent />
+          </div>
             <div className="flex gap-4">
               <button
                 type="button"
