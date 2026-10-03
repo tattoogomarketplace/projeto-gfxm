@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 
-export type AppTab = 'portfolio' | 'agendar' | 'chat';
+export type AppTab = 'portfolio' | 'agendar' | 'chat' | 'perfil';
 
 interface UiState {
   activeTab: AppTab;

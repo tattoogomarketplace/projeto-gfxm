@@ -7,7 +7,11 @@ import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { UserIdentity } from '@/components/layout/user-identity';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import {
+  dashboardPathForRole,
+  parseAppRole,
+  type AppRole,
+} from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +19,7 @@ const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
   { value: 'portfolio', label: primaryLabel },
   { value: 'agendar', label: 'Agendar' },
   { value: 'chat', label: 'Chat' },
+  { value: 'perfil', label: 'Perfil' },
 ];
 
 const TABS_BY_ROLE: Record<AppRole, { value: AppTab; label: string }[]> = {
@@ -69,23 +74,36 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     }
   }, [searchParams, setActiveTab]);
 
-  const handleTabChange = (tab: AppTab) => {
-    setActiveTab(tab);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', tab);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
-  // Configurações globais não pertencem ao contexto de nenhum papel: escondemos
-  // as abas (Galeria/Agendar/Chat) para não exibir uma aba ativa enganosa.
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
-  const hideTabs = isOnboarding || isProfileSettings;
+  const hideTabs = isOnboarding;
+  // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
+  // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
+  const selectedTab: AppTab = isProfileSettings
+    ? 'perfil'
+    : activeTab === 'perfil'
+      ? 'portfolio'
+      : activeTab;
   const headerTitle = isProfileSettings
     ? 'Minha Jornada'
     : role
       ? ROLE_EXPERIENCE[role].dashboard.title
       : title;
+
+  const handleTabChange = (tab: AppTab) => {
+    // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
+    // papel leem `activeTab` para decidir o conteúdo e 'perfil' os deixaria
+    // em branco). A aba ativa é derivada do pathname.
+    if (tab === 'perfil') {
+      router.push('/dashboard/perfil');
+      return;
+    }
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    const targetPath = role ? dashboardPathForRole(role) : pathname;
+    router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
@@ -110,7 +128,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           <div className="px-4 pb-3">
             <SegmentedControl
               options={TABS_BY_ROLE[role]}
-              value={activeTab}
+              value={selectedTab}
               onChange={handleTabChange}
               ariaLabel="Navegação principal"
             />
