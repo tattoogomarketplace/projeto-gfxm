@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { Sparkles } from 'lucide-react';
 
 /** Intervalo de polling da existência do Perfil. */
@@ -18,9 +19,14 @@ const MAX_ATTEMPTS = 40;
  * cliente: pinga `/api/perfil/ensure` (idempotente, auto-provisiona e devolve o
  * `perfil`) a cada 1,5s e SÓ chama `router.refresh()` quando o perfil existe,
  * revalidando os Server Components sem depender de cache/retry no servidor.
+ *
+ * 401 durante sessão pendente/inicializando (ex.: task Clerk ainda travando o
+ * token) NÃO redireciona nem lança: tratamos como estado de espera e
+ * continuamos o polling até a sessão ficar ativa.
  */
 export function ProfileWaiter() {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const attemptsRef = useRef(0);
   const lastRefreshRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -36,6 +42,14 @@ export function ProfileWaiter() {
         intervalRef.current = null;
       }
     };
+
+    if (isLoaded && !isSignedIn) {
+      stopPolling();
+      router.replace('/login');
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const checkProfile = async () => {
       if (cancelled) return;
@@ -55,12 +69,9 @@ export function ProfileWaiter() {
         });
         if (cancelled) return;
 
-        // Sessão inválida/expirada: não faz sentido continuar aguardando.
-        if (response.status === 401) {
-          stopPolling();
-          router.replace('/login');
-          return;
-        }
+        // Sessão travada/inicializando: o token ainda não autentica a API.
+        // Mantemos o estado de espera em vez de redirecionar ou lançar.
+        if (response.status === 401) return;
 
         if (!response.ok) return;
 
@@ -81,7 +92,7 @@ export function ProfileWaiter() {
           }
         }
       } catch {
-        // Rede instável: a próxima iteração cobre.
+        // Rede instável ou sessão ainda não pronta: a próxima iteração cobre.
       }
     };
 
@@ -92,7 +103,7 @@ export function ProfileWaiter() {
       cancelled = true;
       stopPolling();
     };
-  }, [router, restartKey]);
+  }, [router, restartKey, isLoaded, isSignedIn]);
 
   const handleRetry = useCallback(() => {
     attemptsRef.current = 0;

@@ -70,8 +70,9 @@ export default function DashboardOnboardingPage() {
           credentials: 'include',
         });
         if (cancelled) return;
+        // 401 com sessão Clerk viva = token ainda travado/inicializando.
+        // Permanece no onboarding customizado em vez de ir ao login.
         if (response.status === 401) {
-          router.replace('/login');
           return;
         }
         const payload = await response.json().catch(() => ({}));

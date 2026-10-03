@@ -50,9 +50,14 @@ export default function PerfilPage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (isLoaded && (response.status === 401 || !isSignedIn)) {
+        if (isLoaded && !isSignedIn) {
           router.replace('/login');
           return;
+        }
+        // 401 com sessão Clerk viva = token ainda travado/inicializando.
+        // Hidrata pelos dados do Clerk em vez de redirecionar ou lançar.
+        if (response.status === 401) {
+          throw new Error('session-initializing');
         }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {

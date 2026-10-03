@@ -55,9 +55,10 @@ export default function KycPendentePage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
+        // 401 com sessão Clerk viva = token ainda travado/inicializando.
+        // Cai no fallback por metadata em vez de redirecionar ou lançar.
         if (response.status === 401) {
-          router.replace('/login');
-          return;
+          throw new Error('session-initializing');
         }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {

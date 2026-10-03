@@ -49,12 +49,11 @@ export default function DashboardPage() {
         });
         if (cancelled) return;
 
-        // Sessão expirada/inválida no servidor: o correto é reautenticar, não
-        // ficar preso no loader.
+        // 401 com o cliente Clerk ainda signed-in = sessão travada/inicializando
+        // (task pendente, cookie ainda não ativo). Não redireciona nem lança:
+        // trata como falha transitória e tenta de novo.
         if (response.status === 401) {
-          redirected.current = true;
-          router.replace(LOGIN_PATH);
-          return;
+          throw new Error('session-initializing');
         }
 
         const payload = (await response.json().catch(() => ({}))) as {
