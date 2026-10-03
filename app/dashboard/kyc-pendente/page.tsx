@@ -42,7 +42,12 @@ export default function KycPendentePage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn || !user) return;
+    // Sem sessão não há como resolver o KYC: devolve ao login em vez de manter
+    // o loader de "Verificando KYC" girando para sempre.
+    if (!isSignedIn || !user) {
+      router.replace('/login');
+      return;
+    }
 
     let cancelled = false;
 
@@ -51,7 +56,10 @@ export default function KycPendentePage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (response.status === 401) return;
+        if (response.status === 401) {
+          router.replace('/login');
+          return;
+        }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           router.replace('/dashboard/onboarding');

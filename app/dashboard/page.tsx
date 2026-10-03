@@ -1,10 +1,12 @@
 'use client';
-import { useEffect, useRef } from 'react';
+
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   dashboardPathForRole,
   isOnboardingComplete,
+  LOGIN_PATH,
   ONBOARDING_PATH,
   parseAppRole,
   postSignupPathForRole,
@@ -12,15 +14,27 @@ import {
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
 
+/** Teto de tentativas antes de oferecer retry manual (evita loader infinito). */
+const MAX_ATTEMPTS = 3;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const storedRole = useAuthStore((s) => s.role);
   const redirected = useRef(false);
+  const attemptsRef = useRef(0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || redirected.current) return;
-    if (!isSignedIn || !user) return;
+
+    // Sem sessão Clerk não há o que resolver: manda para o login em vez de
+    // manter o loader girando para sempre (o proxy não protege /dashboard).
+    if (!isSignedIn || !user) {
+      redirected.current = true;
+      router.replace(LOGIN_PATH);
+      return;
+    }
 
     let cancelled = false;
 
@@ -29,17 +43,32 @@ export default function DashboardPage() {
       const metadataRole = parseAppRole((metadata.role as string) || storedRole);
 
       try {
-        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
+        const response = await fetch('/api/perfil/ensure', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
         if (cancelled) return;
 
+        // Sessão expirada/inválida no servidor: o correto é reautenticar, não
+        // ficar preso no loader.
         if (response.status === 401) {
+          redirected.current = true;
+          router.replace(LOGIN_PATH);
           return;
         }
 
-        const payload = await response.json().catch(() => ({}));
+        const payload = (await response.json().catch(() => ({}))) as {
+          autenticado?: boolean;
+          perfil?: { role?: string | null; kyc_status?: string | null; has_seen_welcome_notice?: boolean | null; onboarding_completed?: boolean | null } | null;
+          needsOnboarding?: boolean;
+        };
+
         if (payload?.autenticado === false) {
+          redirected.current = true;
+          router.replace(LOGIN_PATH);
           return;
         }
+
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           redirected.current = true;
           router.replace(ONBOARDING_PATH);
@@ -61,13 +90,24 @@ export default function DashboardPage() {
         );
       } catch {
         if (cancelled || redirected.current) return;
+
+        // Falha de rede transitória: tenta de novo antes de desistir. Sem este
+        // teto o usuário ficaria preso no loader indefinidamente.
+        attemptsRef.current += 1;
+        if (attemptsRef.current < MAX_ATTEMPTS) {
+          window.setTimeout(() => {
+            if (!cancelled && !redirected.current) void resolveDestination();
+          }, 1500);
+          return;
+        }
+
         if (metadataRole) {
           redirected.current = true;
           router.replace(dashboardPathForRole(metadataRole));
           return;
         }
-        redirected.current = true;
-        router.replace(ONBOARDING_PATH);
+
+        setFailed(true);
       }
     };
 
@@ -78,8 +118,23 @@ export default function DashboardPage() {
   }, [isLoaded, isSignedIn, user, storedRole, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-      <TattooMachineLoader label="Conectando ao seu painel" />
+    <div className="flex min-h-screen items-center justify-center bg-[#121212]">
+      {failed ? (
+        <button
+          type="button"
+          onClick={() => {
+            attemptsRef.current = 0;
+            setFailed(false);
+            redirected.current = false;
+            router.refresh();
+          }}
+          className="min-h-11 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
+        >
+          Tentar novamente
+        </button>
+      ) : (
+        <TattooMachineLoader label="Conectando ao seu painel" />
+      )}
     </div>
   );
 }

@@ -22,7 +22,7 @@ const MAX_ATTEMPTS = 40;
 export function ProfileWaiter() {
   const router = useRouter();
   const attemptsRef = useRef(0);
-  const refreshRequestedRef = useRef(false);
+  const lastRefreshRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [exhausted, setExhausted] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
@@ -69,11 +69,14 @@ export function ProfileWaiter() {
           | null;
 
         if (data?.perfil) {
-          // Perfil existe: revalida os Server Components. Mantemos o polling
-          // ativo (sem novo refresh) até o layout desmontar este componente,
-          // cobrindo eventual inconsistência de leitura logo após a escrita.
-          if (!refreshRequestedRef.current) {
-            refreshRequestedRef.current = true;
+          // Perfil existe: revalida os Server Components. O refresh é
+          // re-solicitado (com throttle) enquanto este componente continuar
+          // montado, cobrindo atraso de leitura (réplica) logo após a escrita —
+          // antes, um único refresh que corresse antes da visibilidade do
+          // registro deixava o usuário preso no loader até o reload manual.
+          const now = Date.now();
+          if (now - lastRefreshRef.current >= POLL_INTERVAL_MS) {
+            lastRefreshRef.current = now;
             router.refresh();
           }
         }
@@ -93,7 +96,7 @@ export function ProfileWaiter() {
 
   const handleRetry = useCallback(() => {
     attemptsRef.current = 0;
-    refreshRequestedRef.current = false;
+    lastRefreshRef.current = 0;
     setExhausted(false);
     setRestartKey((key) => key + 1);
   }, []);
