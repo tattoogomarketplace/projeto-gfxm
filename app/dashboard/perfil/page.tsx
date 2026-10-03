@@ -173,7 +173,7 @@ export default function PerfilPage() {
       } catch {
         // O usuário já foi removido no Clerk; a limpeza local é suficiente.
       }
-      toast.success('Conta oculta. Seu histórico permanece protegido.');
+      toast.success('Conta excluída com sucesso.');
       router.push('/login');
       router.refresh();
     } catch (err) {
@@ -305,7 +305,7 @@ export default function PerfilPage() {
                 disabled={deleting}
                 className="min-h-11 rounded-xl bg-red-600 font-bold text-white disabled:opacity-50"
               >
-                {deleting ? <TattooMachineLoader compact label="Ocultando" /> : 'Confirmar'}
+                {deleting ? <TattooMachineLoader compact label="Excluindo" /> : 'Confirmar'}
               </button>
             </div>
           </div>
