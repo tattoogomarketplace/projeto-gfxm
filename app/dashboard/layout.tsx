@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
-import { PerfilBootstrapGate } from '@/components/layout/perfil-bootstrap-gate';
+import { ProfileWaiter } from '@/components/features/profile-waiter';
 import { TatuadorKycBlock } from '@/components/features/tatuador-kyc-block';
 import { findPerfilByClerkId, type LocalPerfil } from '@/lib/services/ensure-perfil';
 import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
@@ -28,26 +28,39 @@ export default async function DashboardLayout({
   if (pathname && !isOnboardingPath(pathname)) {
     let mustOnboard = false;
     let perfilMissing = false;
+    let authenticated = false;
+
     try {
       const { userId } = await resolvePerfilSessionFromIncomingRequest();
       clerkUserId = userId ?? '';
-      if (userId) {
-        perfil = await findPerfilByClerkId(userId);
-        if (perfil) {
-          mustOnboard = !isOnboardingComplete(perfil);
-        } else {
-          // Corrida pós-registro: autenticado no Clerk, mas o Perfil ainda não
-          // foi persistido (webhook em processamento). Não tratamos como
-          // "precisa de onboarding" nem deixamos estourar o Error Boundary:
-          // renderizamos um gate que retenta até o registro existir.
-          perfilMissing = true;
-        }
-      }
+      authenticated = Boolean(userId);
     } catch {
-      mustOnboard = false;
+      // Falha ao resolver a sessão: tratamos como não autenticado; o
+      // middleware redireciona quem realmente é anônimo.
+      authenticated = false;
     }
+
+    if (authenticated) {
+      try {
+        perfil = await findPerfilByClerkId(clerkUserId);
+      } catch {
+        // Erro transitório de banco não pode estourar o Error Boundary.
+        perfil = null;
+      }
+
+      if (perfil) {
+        mustOnboard = !isOnboardingComplete(perfil);
+      } else {
+        // Corrida pós-registro: autenticado no Clerk, mas o Perfil ainda não
+        // foi persistido (webhook em processamento) — ou a leitura falhou de
+        // forma transitória. NÃO lançamos erro: delegamos a espera ao cliente,
+        // que pinga o auto-provisionamento e revalida até o registro existir.
+        perfilMissing = true;
+      }
+    }
+
     if (perfilMissing) {
-      return <PerfilBootstrapGate />;
+      return <ProfileWaiter />;
     }
     if (mustOnboard) {
       redirect(ONBOARDING_PATH);
