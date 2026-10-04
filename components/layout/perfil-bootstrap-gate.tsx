@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
-import { destinationAfterProfileSync } from '@/lib/utils/auth-redirect';
 import { markOnboardingGrace } from '@/lib/utils/session';
 
 const RETRY_DELAY_MS = 1500;
@@ -49,20 +48,11 @@ export function PerfilBootstrapGate() {
             },
           });
           if (cancelled || navigatingRef.current) return;
-          if (response.ok) {
-            const payload = (await response.json().catch(() => null)) as {
-              perfil?: { role?: string | null; kyc_status?: string | null; has_seen_welcome_notice?: boolean | null; onboarding_completed?: boolean | null } | null;
-              needsOnboarding?: boolean;
-            } | null;
-            if (payload?.perfil) {
-              navigatingRef.current = true;
-              markOnboardingGrace();
-              window.location.href = destinationAfterProfileSync(
-                payload.perfil,
-                payload.needsOnboarding
-              );
-              return;
-            }
+          if (response.status === 200) {
+            navigatingRef.current = true;
+            markOnboardingGrace();
+            window.location.href = '/dashboard';
+            return;
           }
         } catch {
           // Falha de rede: a próxima tentativa cobre.

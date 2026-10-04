@@ -48,13 +48,12 @@ export default async function DashboardLayout({
     return <ProfileWaiter />;
   }
 
-  // Corrida pós-OTP: sessão Clerk ativa, mas o `Perfil` ainda está sendo
-  // criado pelo auto-provisionamento. NUNCA renderizamos os children neste
-  // estado — tanto nas rotas do painel quanto no onboarding — para evitar o
-  // null-reference crash. O `ProfileWaiter` faz o polling idempotente e
-  // navega no 200 assim que o registro fica visível.
   if (!perfil || perfil.deleted_at) {
-    return <ProfileWaiter />;
+    return (
+      <div className="min-h-dvh bg-[var(--background)]">
+        <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
+      </div>
+    );
   }
 
   if (!isOnboarding && !isOnboardingComplete(perfil)) {

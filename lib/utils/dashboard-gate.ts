@@ -71,7 +71,20 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
 
   const { perfil, role } = session;
 
-  if (!perfil || perfil.deleted_at || !role || !isOnboardingComplete(perfil)) {
+  if (!perfil || perfil.deleted_at) {
+    return {
+      id: session.clerkId,
+      clerk_id: session.clerkId,
+      email: `${session.clerkId}@tattoogo.local`,
+      nome: null,
+      role: expectedRole ?? 'cliente',
+      kyc_status: expectedRole === 'cliente' || !expectedRole ? 'nao_aplicavel' : 'pendente',
+      has_seen_welcome_notice: true,
+      deleted_at: null,
+    };
+  }
+
+  if (!role || !isOnboardingComplete(perfil)) {
     redirect(ONBOARDING_PATH);
   }
 

@@ -85,9 +85,11 @@ export default function DashboardOnboardingPage() {
         });
         if (cancelled) return;
 
-        // 401/503 com sessão Clerk viva = token ou Prisma ainda sincronizando.
-        // Mantém o loader e tenta de novo — não renderiza o formulário ainda.
-        if (response.status === 401 || !response.ok) {
+        if (response.status === 401) {
+          retry(false);
+          return;
+        }
+        if (!response.ok) {
           retry(true);
           return;
         }

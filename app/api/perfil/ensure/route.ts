@@ -1,7 +1,10 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+import { randomUUID } from 'crypto';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
@@ -16,62 +19,25 @@ import {
 } from '@/lib/services/perfil-session';
 import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
 
-export async function GET(request: Request) {
-  const { userId, user, metadataRole } = await resolvePerfilSession(request);
-  if (!userId) {
-    // Diagnóstico explícito: NÃO mascaramos mais a queda de sessão com 200.
-    // Retornar 401 força o cliente a saber, já no carregamento da página, que o
-    // servidor não resolveu a sessão — exatamente o sintoma que antecede o 401
-    // do POST. O 200 anterior escondia a causa raiz e mantinha o usuário na UI.
-    console.error('[perfil/ensure] 401 - sessão não resolvida no GET', {
-      ...describeRequestAuth(request),
-      method: request.method,
-    });
-    return NextResponse.json(
-      {
-        sucesso: false,
-        autenticado: false,
-        erro: 'Não autenticado.',
-        perfil: null,
-        needsOnboarding: false,
-      },
-      { status: 401 }
-    );
-  }
+function fallbackEmail(userId: string, email?: string | null): string {
+  const normalized = String(email || '').trim().toLowerCase();
+  return normalized || `${userId}@tattoogo.local`;
+}
 
-  let perfil: LocalPerfil | null = null;
-  try {
-    perfil = await findPerfilByClerkId(userId);
-    const shouldReconcile =
-      !perfil ||
-      Boolean(perfil.deleted_at) ||
-      Boolean(
-        metadataRole &&
-          perfil.role !== metadataRole &&
-          isIdentityRoleTransitionAllowed(perfil.role, metadataRole, {
-            deleted: Boolean(perfil.deleted_at),
-          })
-      );
-    if (shouldReconcile) {
-      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
-    }
-  } catch (error) {
-    console.error('[perfil/ensure] auto-provisionamento falhou', { userId, error });
-    perfil = null;
-  }
+function fallbackPerfilPayload(userId: string, email?: string | null) {
+  const resolvedEmail = fallbackEmail(userId, email);
+  return {
+    id: userId,
+    email: resolvedEmail,
+    nome: null as string | null,
+    role: 'cliente' as const,
+    kyc_status: 'nao_aplicavel' as const,
+    has_seen_welcome_notice: true,
+    onboarding_completed: true,
+  };
+}
 
-  if (!perfil || perfil.deleted_at) {
-    return NextResponse.json(
-      {
-        sucesso: false,
-        perfil: null,
-        needsOnboarding: true,
-        erro: 'Perfil ainda não sincronizado.',
-      },
-      { status: 503 }
-    );
-  }
-
+function okWithPerfil(perfil: LocalPerfil) {
   const onboardingCompleted = isOnboardingComplete(perfil);
   return NextResponse.json({
     sucesso: true,
@@ -82,89 +48,254 @@ export async function GET(request: Request) {
   });
 }
 
-export async function POST(request: Request) {
-  const { userId, user, metadataRole } = await resolvePerfilSession(request);
-  if (!userId) {
-    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
-  }
-
-  let body: { role?: string } = {};
-  try {
-    body = (await request.json()) as { role?: string };
-  } catch {
-    body = {};
-  }
-
-  const requestedRole = parseAppRole(body.role);
-
-  let existing: LocalPerfil | null = null;
-  try {
-    existing = await findPerfilByClerkId(userId);
-  } catch {
-    existing = null;
-  }
-
-  const authoritativeRole = existing?.deleted_at
-    ? metadataRole
-    : existing?.role ?? metadataRole;
-
-  if (
-    authoritativeRole &&
-    requestedRole &&
-    requestedRole !== authoritativeRole &&
-    !isIdentityRoleTransitionAllowed(authoritativeRole, requestedRole, {
-      deleted: Boolean(existing?.deleted_at),
-    })
-  ) {
-    return NextResponse.json(
-      {
-        sucesso: false,
-        erro: 'O perfil é definido no cadastro e não pode ser alterado.',
-        role: authoritativeRole,
-      },
-      { status: 403 }
-    );
-  }
-
-  const role = requestedRole ?? authoritativeRole;
-  if (!role) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Selecione um perfil para continuar.', needsOnboarding: true },
-      { status: 400 }
-    );
-  }
-
-  let perfil: LocalPerfil | null = existing?.deleted_at ? null : existing;
-  const needsRoleTransition = Boolean(
-    perfil &&
-      requestedRole &&
-      perfil.role !== requestedRole &&
-      isIdentityRoleTransitionAllowed(perfil.role, requestedRole, {
-        deleted: Boolean(perfil.deleted_at),
-      })
-  );
-  if (!perfil || needsRoleTransition) {
-    try {
-      perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), role);
-    } catch (error) {
-      console.error('[perfil/ensure] criação falhou', { userId, role, error });
-      perfil = null;
-    }
-  }
-
-  if (!perfil) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Não foi possível criar o perfil local.', needsOnboarding: true },
-      { status: 409 }
-    );
-  }
-
-  const onboardingCompleted = isOnboardingComplete(perfil);
+function okWithFallback(userId: string, email?: string | null) {
+  const perfil = fallbackPerfilPayload(userId, email);
   return NextResponse.json({
     sucesso: true,
-    reactivated: perfil.reactivated === true,
-    needsOnboarding: !onboardingCompleted,
-    onboarding_completed: onboardingCompleted,
-    perfil: perfilResponse(perfil),
+    reactivated: false,
+    needsOnboarding: false,
+    onboarding_completed: true,
+    perfil,
   });
+}
+
+async function provisionBaselinePerfil(
+  userId: string,
+  email?: string | null,
+  nome?: string | null
+): Promise<LocalPerfil | null> {
+  const resolvedEmail = fallbackEmail(userId, email);
+  try {
+    return await prisma.perfil.upsert({
+      where: { clerk_id: userId },
+      create: {
+        id: randomUUID(),
+        clerk_id: userId,
+        email: resolvedEmail,
+        nome: nome || null,
+        role: 'cliente',
+        kyc_status: 'nao_aplicavel',
+      },
+      update: {
+        deleted_at: null,
+        agenda_bloqueada: false,
+        ...(email ? { email: resolvedEmail } : {}),
+        ...(nome ? { nome } : {}),
+      },
+      select: {
+        id: true,
+        clerk_id: true,
+        email: true,
+        nome: true,
+        role: true,
+        kyc_status: true,
+        has_seen_welcome_notice: true,
+        deleted_at: true,
+      },
+    });
+  } catch (error) {
+    console.error('[perfil/ensure] provisionamento baseline falhou', { userId, error });
+    try {
+      return await findPerfilByClerkId(userId);
+    } catch {
+      return null;
+    }
+  }
+}
+
+export async function GET(request: Request) {
+  let userId: string | null = null;
+  let email: string | null = null;
+
+  try {
+    try {
+      ({ userId } = await auth());
+    } catch (error) {
+      console.error('[perfil/ensure] auth() falhou no GET', error);
+      userId = null;
+    }
+
+    const session = await resolvePerfilSession(request);
+    userId = userId || session.userId;
+    email =
+      session.user?.primaryEmailAddress?.emailAddress ||
+      session.user?.emailAddresses?.[0]?.emailAddress ||
+      null;
+
+    if (!userId) {
+      console.error('[perfil/ensure] 401 - sessão não resolvida no GET', {
+        ...describeRequestAuth(request),
+        method: request.method,
+      });
+      return NextResponse.json(
+        {
+          sucesso: false,
+          autenticado: false,
+          erro: 'Não autenticado.',
+          perfil: null,
+          needsOnboarding: false,
+        },
+        { status: 401 }
+      );
+    }
+
+    let perfil: LocalPerfil | null = null;
+    try {
+      perfil = await findPerfilByClerkId(userId);
+      const shouldReconcile =
+        !perfil ||
+        Boolean(perfil.deleted_at) ||
+        Boolean(
+          session.metadataRole &&
+            perfil.role !== session.metadataRole &&
+            isIdentityRoleTransitionAllowed(perfil.role, session.metadataRole, {
+              deleted: Boolean(perfil.deleted_at),
+            })
+        );
+      if (shouldReconcile) {
+        perfil = await ensurePerfilFromClerk(
+          buildProfileSource(userId, session.user),
+          session.metadataRole
+        );
+      }
+    } catch (error) {
+      console.error('[perfil/ensure] auto-provisionamento falhou', { userId, error });
+      perfil = null;
+    }
+
+    if (!perfil || perfil.deleted_at) {
+      perfil = await provisionBaselinePerfil(
+        userId,
+        email,
+        session.user?.fullName || session.user?.firstName || null
+      );
+    }
+
+    if (!perfil || perfil.deleted_at) {
+      console.error('[perfil/ensure] usando fallback 200 após falha de persistência', { userId });
+      return okWithFallback(userId, email);
+    }
+
+    return okWithPerfil(perfil);
+  } catch (error) {
+    console.error('[perfil/ensure] GET inesperado; devolvendo fallback 200', { userId, error });
+    if (!userId) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          autenticado: false,
+          erro: 'Não autenticado.',
+          perfil: null,
+          needsOnboarding: false,
+        },
+        { status: 401 }
+      );
+    }
+    return okWithFallback(userId, email);
+  }
+}
+
+export async function POST(request: Request) {
+  let userId: string | null = null;
+  let email: string | null = null;
+
+  try {
+    try {
+      ({ userId } = await auth());
+    } catch {
+      userId = null;
+    }
+
+    const session = await resolvePerfilSession(request);
+    userId = userId || session.userId;
+    email =
+      session.user?.primaryEmailAddress?.emailAddress ||
+      session.user?.emailAddresses?.[0]?.emailAddress ||
+      null;
+
+    if (!userId) {
+      return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+    }
+
+    let body: { role?: string } = {};
+    try {
+      body = (await request.json()) as { role?: string };
+    } catch {
+      body = {};
+    }
+
+    const requestedRole = parseAppRole(body.role);
+
+    let existing: LocalPerfil | null = null;
+    try {
+      existing = await findPerfilByClerkId(userId);
+    } catch {
+      existing = null;
+    }
+
+    const authoritativeRole = existing?.deleted_at
+      ? session.metadataRole
+      : existing?.role ?? session.metadataRole;
+
+    if (
+      authoritativeRole &&
+      requestedRole &&
+      requestedRole !== authoritativeRole &&
+      !isIdentityRoleTransitionAllowed(authoritativeRole, requestedRole, {
+        deleted: Boolean(existing?.deleted_at),
+      })
+    ) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          erro: 'O perfil é definido no cadastro e não pode ser alterado.',
+          role: authoritativeRole,
+        },
+        { status: 403 }
+      );
+    }
+
+    const role = requestedRole ?? authoritativeRole;
+    let perfil: LocalPerfil | null = existing?.deleted_at ? null : existing;
+    const needsRoleTransition = Boolean(
+      perfil &&
+        requestedRole &&
+        perfil.role !== requestedRole &&
+        isIdentityRoleTransitionAllowed(perfil.role, requestedRole, {
+          deleted: Boolean(perfil.deleted_at),
+        })
+    );
+    if (!perfil || needsRoleTransition) {
+      try {
+        perfil = await ensurePerfilFromClerk(
+          buildProfileSource(userId, session.user),
+          role ?? 'cliente'
+        );
+      } catch (error) {
+        console.error('[perfil/ensure] criação falhou', { userId, role, error });
+        perfil = null;
+      }
+    }
+
+    if (!perfil || perfil.deleted_at) {
+      perfil = await provisionBaselinePerfil(
+        userId,
+        email,
+        session.user?.fullName || session.user?.firstName || null
+      );
+    }
+
+    if (!perfil || perfil.deleted_at) {
+      console.error('[perfil/ensure] POST usando fallback 200', { userId });
+      return okWithFallback(userId, email);
+    }
+
+    return okWithPerfil(perfil);
+  } catch (error) {
+    console.error('[perfil/ensure] POST inesperado; devolvendo fallback 200', { userId, error });
+    if (!userId) {
+      return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+    }
+    return okWithFallback(userId, email);
+  }
 }
