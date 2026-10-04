@@ -54,8 +54,8 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         present: 'Sua primeira ou próxima arte te espera.',
         future: 'Conectamos você aos melhores artistas para encontrar o traço perfeito.',
       },
-      cta: 'Minha Jornada na Pele',
-      activating: 'Ativando sua conta e preparando sua jornada...',
+      cta: 'Minha jornada na pele',
+      activating: 'Minha jornada na pele...',
     },
     dashboard: {
       title: 'Minha Jornada',
@@ -75,7 +75,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         future: 'Eternize sua arte, organize o dia e gerencie seus recebimentos.',
       },
       cta: 'Entrar no Atelier Digital',
-      activating: 'Ativando sua conta e regulando sua máquina...',
+      activating: 'Montando seu ateliê digital...',
     },
     dashboard: {
       title: 'Atelier Digital',
@@ -95,7 +95,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         future: 'Homologue artistas e acompanhe o split do seu império.',
       },
       cta: 'Entrar no Atelier Digital',
-      activating: 'Ativando sua conta e conectando seu estúdio...',
+      activating: 'Configurando a gestão do estúdio...',
     },
     dashboard: {
       title: 'Métricas do Estúdio',
@@ -112,8 +112,6 @@ export function getRoleExperience(role: AppRole): RoleExperience {
 
 export function getOnboardingLoadingMessage(role?: string | null): string {
   const parsed = parseAppRole(role);
-  if (parsed === 'cliente') return 'Preparando seu estúdio de inspirações...';
-  if (parsed === 'tatuador') return 'Montando sua bancada de trabalho...';
-  if (parsed === 'estudio') return 'Configurando a gestão do seu estúdio...';
+  if (parsed) return getRoleExperience(parsed).onboarding.activating;
   return 'Preparando seu espaço...';
 }

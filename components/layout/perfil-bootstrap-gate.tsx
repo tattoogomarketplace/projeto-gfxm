@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
+import { destinationAfterProfileSync } from '@/lib/utils/auth-redirect';
+import { markOnboardingGrace } from '@/lib/utils/session';
 
 const RETRY_DELAY_MS = 1500;
 const MAX_RETRIES = 20;
@@ -17,8 +19,9 @@ const MAX_RETRIES = 20;
  * 1,5s até o perfil existir — momento em que este gate é desmontado.
  */
 export function PerfilBootstrapGate() {
-  const router = useRouter();
+  const { getToken } = useAuth();
   const retriesRef = useRef(0);
+  const navigatingRef = useRef(false);
   const [exhausted, setExhausted] = useState(false);
 
   useEffect(() => {
@@ -29,22 +32,42 @@ export function PerfilBootstrapGate() {
 
     const scheduleRetry = () => {
       timer = setTimeout(async () => {
-        if (cancelled) return;
+        if (cancelled || navigatingRef.current) return;
         if (retriesRef.current >= MAX_RETRIES) {
           setExhausted(true);
           return;
         }
         retriesRef.current += 1;
         try {
-          await fetch('/api/perfil/ensure', {
+          const token = await getToken({ skipCache: true });
+          const response = await fetch('/api/perfil/ensure', {
             cache: 'no-store',
             credentials: 'include',
+            headers: {
+              accept: 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
           });
+          if (cancelled || navigatingRef.current) return;
+          if (response.ok) {
+            const payload = (await response.json().catch(() => null)) as {
+              perfil?: { role?: string | null; kyc_status?: string | null; has_seen_welcome_notice?: boolean | null; onboarding_completed?: boolean | null } | null;
+              needsOnboarding?: boolean;
+            } | null;
+            if (payload?.perfil) {
+              navigatingRef.current = true;
+              markOnboardingGrace();
+              window.location.href = destinationAfterProfileSync(
+                payload.perfil,
+                payload.needsOnboarding
+              );
+              return;
+            }
+          }
         } catch {
           // Falha de rede: a próxima tentativa cobre.
         }
         if (cancelled) return;
-        router.refresh();
         scheduleRetry();
       }, RETRY_DELAY_MS);
     };
@@ -54,7 +77,7 @@ export function PerfilBootstrapGate() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [router, exhausted]);
+  }, [exhausted, getToken]);
 
   return (
     <OnboardingLoadingScreen variant="sparkles">

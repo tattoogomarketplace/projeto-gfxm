@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import {
   dashboardPathForRole,
-  isOnboardingComplete,
+  destinationAfterProfileSync,
   LOGIN_PATH,
   ONBOARDING_PATH,
   parseAppRole,
-  postSignupPathForRole,
 } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
@@ -20,6 +19,7 @@ const MAX_ATTEMPTS = 40;
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
   const storedRole = useAuthStore((s) => s.role);
   const redirected = useRef(false);
   const attemptsRef = useRef(0);
@@ -41,9 +41,14 @@ export default function DashboardPage() {
       const metadataRole = parseAppRole((metadata.role as string) || storedRole);
 
       try {
+        const token = await getToken({ skipCache: true });
         const response = await fetch('/api/perfil/ensure', {
           cache: 'no-store',
           credentials: 'include',
+          headers: {
+            accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
         if (cancelled) return;
 
@@ -52,6 +57,10 @@ export default function DashboardPage() {
         // trata como falha transitória e tenta de novo.
         if (response.status === 401) {
           throw new Error('session-initializing');
+        }
+
+        if (!response.ok) {
+          throw new Error('perfil-pending');
         }
 
         const payload = (await response.json().catch(() => ({}))) as {
@@ -73,24 +82,11 @@ export default function DashboardPage() {
           throw new Error('perfil-pending');
         }
 
-        if (payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
-          redirected.current = true;
-          window.location.href = ONBOARDING_PATH;
-          return;
-        }
-
-        const role = parseAppRole(payload?.perfil?.role) || metadataRole;
-        if (!role) {
-          redirected.current = true;
-          window.location.href = ONBOARDING_PATH;
-          return;
-        }
-
         redirected.current = true;
-        window.location.href =
-          role === 'tatuador' && payload?.perfil?.kyc_status !== 'aprovado'
-            ? postSignupPathForRole(role)
-            : dashboardPathForRole(role);
+        window.location.href = destinationAfterProfileSync(
+          payload.perfil,
+          payload.needsOnboarding
+        );
       } catch {
         if (cancelled || redirected.current) return;
 
@@ -124,7 +120,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, storedRole]);
+  }, [isLoaded, isSignedIn, user, storedRole, getToken]);
 
   const loadingRole =
     (typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role : null) ||

@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
 import { ProfileWaiter } from '@/components/features/profile-waiter';
 import { TatuadorKycBlock } from '@/components/features/tatuador-kyc-block';
-import { findPerfilByClerkId, type LocalPerfil } from '@/lib/services/ensure-perfil';
-import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
+import { ensurePerfilFromClerk, findPerfilByClerkId, type LocalPerfil } from '@/lib/services/ensure-perfil';
+import { buildProfileSource, resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
 import {
   isKycApproved,
   isOnboardingComplete,
@@ -27,30 +27,33 @@ export default async function DashboardLayout({
   let clerkUserId: string | null = null;
 
   try {
-    const { userId } = await resolvePerfilSessionFromIncomingRequest();
-    clerkUserId = userId;
+    const session = await resolvePerfilSessionFromIncomingRequest();
+    clerkUserId = session.userId;
+    if (clerkUserId) {
+      perfil = await findPerfilByClerkId(clerkUserId);
+      if (!perfil || perfil.deleted_at) {
+        perfil = await ensurePerfilFromClerk(
+          buildProfileSource(clerkUserId, session.user),
+          session.metadataRole
+        );
+      }
+    }
   } catch (error) {
-    console.error('[dashboard/layout] sessão Clerk indisponível', error);
-    clerkUserId = null;
+    console.error('[dashboard/layout] sessão/perfil indisponível', error);
+    clerkUserId = clerkUserId || null;
+    perfil = null;
   }
 
   if (!clerkUserId) {
     return <ProfileWaiter />;
   }
 
-  try {
-    perfil = await findPerfilByClerkId(clerkUserId);
-  } catch (error) {
-    console.error('[dashboard/layout] prisma findPerfilByClerkId falhou', error);
-    perfil = null;
-  }
-
   // Corrida pós-OTP: sessão Clerk ativa, mas o `Perfil` ainda está sendo
   // criado pelo auto-provisionamento. NUNCA renderizamos os children neste
   // estado — tanto nas rotas do painel quanto no onboarding — para evitar o
   // null-reference crash. O `ProfileWaiter` faz o polling idempotente e
-  // dispara `router.refresh()` quando o registro fica visível.
-  if (!perfil) {
+  // navega no 200 assim que o registro fica visível.
+  if (!perfil || perfil.deleted_at) {
     return <ProfileWaiter />;
   }
 

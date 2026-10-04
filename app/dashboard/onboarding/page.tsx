@@ -11,6 +11,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import {
   dashboardPathForRole,
+  destinationAfterProfileSync,
   isOnboardingComplete,
   parseAppRole,
   postSignupPathForRole,
@@ -50,7 +51,18 @@ export default function DashboardOnboardingPage() {
     const MAX_ATTEMPTS = 40;
 
     const bootstrap = async (attempt = 0) => {
+      const retry = (releaseUi = false) => {
+        if (cancelled || attempt >= MAX_ATTEMPTS) {
+          if (!cancelled && releaseUi) setChecking(false);
+          return;
+        }
+        window.setTimeout(() => {
+          if (!cancelled) void bootstrap(attempt + 1);
+        }, 1500);
+      };
+
       if (!isSignedIn || !user) {
+        retry(false);
         return;
       }
 
@@ -61,27 +73,22 @@ export default function DashboardOnboardingPage() {
         setLocalRole(metadataRole);
       }
 
-      const retry = () => {
-        if (cancelled || attempt >= MAX_ATTEMPTS) {
-          if (!cancelled) setChecking(false);
-          return;
-        }
-        window.setTimeout(() => {
-          if (!cancelled) void bootstrap(attempt + 1);
-        }, 1500);
-      };
-
       try {
+        const token = await getToken({ skipCache: true });
         const response = await fetch('/api/perfil/ensure', {
           cache: 'no-store',
           credentials: 'include',
+          headers: {
+            accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
         if (cancelled) return;
 
-        // 401 com sessão Clerk viva = token travado/inicializando. Mantém o
-        // loader e tenta de novo — não renderiza o formulário ainda.
-        if (response.status === 401) {
-          retry();
+        // 401/503 com sessão Clerk viva = token ou Prisma ainda sincronizando.
+        // Mantém o loader e tenta de novo — não renderiza o formulário ainda.
+        if (response.status === 401 || !response.ok) {
+          retry(true);
           return;
         }
 
@@ -89,7 +96,7 @@ export default function DashboardOnboardingPage() {
 
         // Perfil ainda sendo criado (corrida pós-OTP): não renderiza os children.
         if (!payload?.perfil) {
-          retry();
+          retry(true);
           return;
         }
 
@@ -105,14 +112,14 @@ export default function DashboardOnboardingPage() {
         }
 
         if (existingRole && isOnboardingComplete(payload?.perfil) && !cancelled) {
-          window.location.href = destinationForRole(existingRole, payload?.perfil?.kyc_status);
+          window.location.href = destinationAfterProfileSync(payload.perfil, payload.needsOnboarding);
           return;
         }
 
         // Perfil resolvido: agora sim liberamos a UI do onboarding.
         if (!cancelled) setChecking(false);
       } catch {
-        retry();
+        retry(true);
       }
     };
 
@@ -120,7 +127,7 @@ export default function DashboardOnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, setRole]);
+  }, [isLoaded, isSignedIn, user, setRole, getToken]);
 
   const handleAdvance = async () => {
     if (submitting.current) return;

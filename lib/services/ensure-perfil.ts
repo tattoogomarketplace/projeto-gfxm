@@ -474,12 +474,14 @@ export async function ensurePerfilFromClerk(
   if (!clerkId) return null;
 
   const metadata = metadataOf(source);
-  const email = resolveEmail(source);
+  const resolvedEmail = resolveEmail(source);
   const nome = resolveNome(source);
   const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
 
   const existing = await findPerfilByClerkId(clerkId);
   const cpf = resolveCpf(source);
+  const email =
+    resolvedEmail || existing?.email || `pending.${clerkId}@tattoogo.local`;
 
   // Identidade pelo CPF tem prioridade sobre um stub criado pelo clerk_id:
   // religa o registro dono do CPF e evita P2002 + papel travado em 'cliente'.
@@ -518,7 +520,7 @@ export async function ensurePerfilFromClerk(
   const sharedUpdate = {
     deleted_at: null,
     agenda_bloqueada: false,
-    ...(email ? { email } : {}),
+    ...(resolvedEmail ? { email: resolvedEmail } : {}),
     ...(nome ? { nome } : {}),
     ...(!existing && role ? { role } : {}),
     ...transitionPatch,
@@ -548,21 +550,9 @@ export async function ensurePerfilFromClerk(
     accepted_terms: acceptedTerms,
   });
 
-  // Um perfil novo exige papel e e-mail definidos (preserva o onboarding). Um
-  // registro já existente pode ser reativado/atualizado mesmo sem um deles.
-  if (!existing && (!role || !email)) {
-    return null;
-  }
-
-  // Sem e-mail não é possível criar (coluna NOT NULL + única); nesse caso só
-  // atualizamos o registro já vinculado ao clerk_id.
-  if (!email) {
-    return prisma.perfil.update({
-      where: { id: existing!.id },
-      data: updateData,
-      select: PERFIL_SELECT,
-    });
-  }
+  // Sempre provisiona um registro básico quando o webhook do Clerk ainda não
+  // disparou: papel cai em `cliente` e o e-mail usa placeholder único até a
+  // sessão hidratar os metadados reais. Nunca devolve null por dados incompletos.
 
   try {
     return await prisma.perfil.upsert({

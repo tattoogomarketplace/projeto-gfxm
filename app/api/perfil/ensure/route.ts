@@ -60,17 +60,15 @@ export async function GET(request: Request) {
     perfil = null;
   }
 
-  if (!perfil) {
+  if (!perfil || perfil.deleted_at) {
     return NextResponse.json(
-      { sucesso: true, perfil: null, needsOnboarding: true },
-      { status: 200 }
-    );
-  }
-
-  if (perfil.deleted_at) {
-    return NextResponse.json(
-      { sucesso: true, perfil: null, needsOnboarding: true, reactivated: false },
-      { status: 200 }
+      {
+        sucesso: false,
+        perfil: null,
+        needsOnboarding: true,
+        erro: 'Perfil ainda não sincronizado.',
+      },
+      { status: 503 }
     );
   }
 

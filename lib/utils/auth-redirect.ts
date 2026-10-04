@@ -60,3 +60,30 @@ export function postSignupPathForRole(role?: string | null): string {
   if (normalized === 'estudio') return '/dashboard/estudio';
   return '/dashboard/cliente';
 }
+
+type SyncedPerfil = {
+  role?: string | null;
+  kyc_status?: string | null;
+  has_seen_welcome_notice?: boolean | null;
+  onboarding_completed?: boolean | null;
+  deleted_at?: Date | string | null;
+} | null | undefined;
+
+/**
+ * Destino canônico após `/api/perfil/ensure` confirmar o registro local.
+ * Onboarding incompleto permanece em `/dashboard/onboarding`; senão o painel
+ * do papel (tatuador sem KYC vai para a tela de documentos).
+ */
+export function destinationAfterProfileSync(
+  perfil: SyncedPerfil,
+  needsOnboarding?: boolean
+): string {
+  const role = parseAppRole(perfil?.role);
+  if (!perfil || !role || needsOnboarding || !isOnboardingComplete(perfil)) {
+    return ONBOARDING_PATH;
+  }
+  if (role === 'tatuador' && perfil.kyc_status !== 'aprovado') {
+    return postSignupPathForRole(role);
+  }
+  return dashboardPathForRole(role);
+}

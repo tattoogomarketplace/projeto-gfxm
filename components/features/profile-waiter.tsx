@@ -4,11 +4,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 import { isOnboardingGrace, markOnboardingGrace } from '@/lib/utils/session';
-import { ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
+import { destinationAfterProfileSync, LOGIN_PATH } from '@/lib/utils/auth-redirect';
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_ATTEMPTS = 40;
 const SIGNED_OUT_REDIRECT_MS = 8000;
+
+type EnsurePayload = {
+  sucesso?: boolean;
+  perfil?: {
+    role?: string | null;
+    kyc_status?: string | null;
+    has_seen_welcome_notice?: boolean | null;
+    onboarding_completed?: boolean | null;
+  } | null;
+  needsOnboarding?: boolean;
+};
 
 /**
  * Espera ativa pela persistência do `Perfil` (corrida pós-registro).
@@ -17,10 +28,10 @@ const SIGNED_OUT_REDIRECT_MS = 8000;
  * quando o usuário já está autenticado no Clerk mas o registro local ainda não
  * existe (webhook em processamento). Este componente assume o controle no
  * cliente: pinga `/api/perfil/ensure` (idempotente, auto-provisiona e devolve o
- * `perfil`) a cada 1,5s e SÓ navega quando o perfil existe.
+ * `perfil`) a cada 1,5s e SÓ navega no HTTP 200 com perfil confirmado.
  */
 export function ProfileWaiter() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const attemptsRef = useRef(0);
   const navigatingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -31,8 +42,8 @@ export function ProfileWaiter() {
     if (!isLoaded || isSignedIn) return;
     if (isOnboardingGrace()) return;
     const timer = window.setTimeout(() => {
-      if (isOnboardingGrace()) return;
-      window.location.href = '/login';
+      if (isOnboardingGrace() || navigatingRef.current) return;
+      window.location.href = LOGIN_PATH;
     }, SIGNED_OUT_REDIRECT_MS);
     return () => window.clearTimeout(timer);
   }, [isLoaded, isSignedIn]);
@@ -47,15 +58,26 @@ export function ProfileWaiter() {
       }
     };
 
-    if (!isLoaded || !isSignedIn) {
+    if (!isLoaded) {
       return () => {
         cancelled = true;
         stopPolling();
       };
     }
 
+    const navigate = (payload: EnsurePayload) => {
+      if (navigatingRef.current) return;
+      navigatingRef.current = true;
+      stopPolling();
+      markOnboardingGrace();
+      window.location.href = destinationAfterProfileSync(
+        payload.perfil,
+        payload.needsOnboarding
+      );
+    };
+
     const checkProfile = async () => {
-      if (cancelled) return;
+      if (cancelled || navigatingRef.current) return;
 
       if (attemptsRef.current >= MAX_ATTEMPTS) {
         setExhausted(true);
@@ -65,25 +87,22 @@ export function ProfileWaiter() {
       attemptsRef.current += 1;
 
       try {
+        const token = await getToken({ skipCache: true });
         const response = await fetch('/api/perfil/ensure', {
           cache: 'no-store',
           credentials: 'include',
-          headers: { accept: 'application/json' },
+          headers: {
+            accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
-        if (cancelled) return;
+        if (cancelled || navigatingRef.current) return;
 
-        if (response.status === 401) return;
-        if (!response.ok) return;
+        if (response.status === 401 || !response.ok) return;
 
-        const data = (await response.json().catch(() => null)) as
-          | { perfil?: unknown }
-          | null;
-
-        if (data?.perfil && !navigatingRef.current) {
-          navigatingRef.current = true;
-          stopPolling();
-          markOnboardingGrace();
-          window.location.href = ONBOARDING_PATH;
+        const data = (await response.json().catch(() => null)) as EnsurePayload | null;
+        if (data?.perfil) {
+          navigate(data);
         }
       } catch {
         // Rede instável ou sessão ainda não pronta: a próxima iteração cobre.
@@ -97,7 +116,7 @@ export function ProfileWaiter() {
       cancelled = true;
       stopPolling();
     };
-  }, [restartKey, isLoaded, isSignedIn]);
+  }, [restartKey, isLoaded, getToken]);
 
   const handleRetry = useCallback(() => {
     attemptsRef.current = 0;
