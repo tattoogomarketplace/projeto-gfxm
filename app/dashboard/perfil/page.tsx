@@ -6,11 +6,12 @@ import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { ChevronRight, FileText, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
+import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -20,7 +21,9 @@ export default function PerfilPage() {
   const { getToken } = useAuth();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
+  const setRole = useAuthStore((s) => s.setRole);
   const storedUser = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
 
   const [email, setEmail] = useState('');
   const [nome, setNome] = useState('');
@@ -53,6 +56,8 @@ export default function PerfilPage() {
           window.location.href = ONBOARDING_PATH;
           return;
         }
+        const parsedRole = parseAppRole(payload?.perfil?.role);
+        if (parsedRole) setRole(parsedRole);
       } catch {
         if (cancelled) return;
       }
@@ -81,7 +86,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, setUser, storedUser?.fullName, storedUser?.email, storedUser?.id]);
+  }, [isLoaded, isSignedIn, user, setUser, setRole, storedUser?.fullName, storedUser?.email, storedUser?.id]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();
@@ -225,6 +230,8 @@ export default function PerfilPage() {
       </section>
 
       <PasswordChangeForm />
+
+      {role === 'tatuador' ? <StudioAffiliationArtist /> : null}
 
       <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
         <div className="flex items-center gap-3">

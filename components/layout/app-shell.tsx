@@ -24,7 +24,12 @@ const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
 
 const TABS_BY_ROLE: Record<AppRole, { value: AppTab; label: string }[]> = {
   cliente: baseTabs(ROLE_EXPERIENCE.cliente.dashboard.primaryTab),
-  tatuador: baseTabs(ROLE_EXPERIENCE.tatuador.dashboard.primaryTab),
+  tatuador: [
+    { value: 'portfolio', label: ROLE_EXPERIENCE.tatuador.dashboard.primaryTab },
+    { value: 'agendar', label: 'Agenda' },
+    { value: 'chat', label: 'Chat' },
+    { value: 'perfil', label: 'Perfil' },
+  ],
   estudio: baseTabs(ROLE_EXPERIENCE.estudio.dashboard.primaryTab),
 };
 
