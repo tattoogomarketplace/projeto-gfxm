@@ -16,6 +16,7 @@ import { PasswordStrengthBar } from '@/components/features/password-strength-bar
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
+import { formatCnpj, isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { dashboardPathForRole, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -33,10 +34,8 @@ const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string().min(1, 'Confirme sua senha'),
     role: z.enum(['cliente', 'tatuador', 'estudio']),
-    cpf: z
-      .string()
-      .min(11, 'CPF inválido')
-      .refine((value) => isValidCpf(value), 'CPF inválido'),
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
     dataNascimento: z.string().min(1, 'Data obrigatória'),
     responsavelNome: z.string().optional(),
     responsavelCpf: z.string().optional(),
@@ -46,6 +45,21 @@ const registerSchema = z
     path: ['confirmPassword'],
   })
   .superRefine((data, ctx) => {
+    if (data.role === 'estudio') {
+      if (!isValidCnpj(data.cnpj)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['cnpj'],
+          message: 'CNPJ inválido',
+        });
+      }
+    } else if (!isValidCpf(data.cpf || '')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['cpf'],
+        message: 'CPF inválido',
+      });
+    }
     if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
       ctx.addIssue({
         code: 'custom',
@@ -118,6 +132,7 @@ export default function RegisterPage() {
       password: '',
       confirmPassword: '',
       cpf: '',
+      cnpj: '',
       dataNascimento: '',
     },
   });
@@ -127,16 +142,25 @@ export default function RegisterPage() {
   const confirmPasswordValue = useWatch({ control, name: 'confirmPassword' }) || '';
   const roleValue = useWatch({ control, name: 'role' }) || 'cliente';
   const cpfValue = useWatch({ control, name: 'cpf' }) || '';
+  const cnpjValue = useWatch({ control, name: 'cnpj' }) || '';
   const status = getFaixaEtaria(dataNascimento);
   const passwordsMatch = Boolean(passwordValue) && passwordValue === confirmPasswordValue;
-  const cpfIsValid = isValidCpf(cpfValue);
+  const isEstudio = roleValue === 'estudio';
+  const documentIsValid = isEstudio ? isValidCnpj(cnpjValue) : isValidCpf(cpfValue);
+  const fetchedCnpjRef = useRef('');
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
       toast.error('Você precisa aceitar os termos de uso.');
       return;
     }
-    if (!isValidCpf(data.cpf)) {
+    const isStudio = data.role === 'estudio';
+    if (isStudio) {
+      if (!isValidCnpj(data.cnpj)) {
+        toast.error('CNPJ inválido.');
+        return;
+      }
+    } else if (!isValidCpf(data.cpf || '')) {
       toast.error('CPF inválido.');
       return;
     }
@@ -149,12 +173,16 @@ export default function RegisterPage() {
     setValidationError('');
     setUserRole(data.role);
     const emailNorm = data.email.trim().toLowerCase();
-    const cpfDigits = onlyCpfDigits(data.cpf);
+    const cpfDigits = isStudio ? '' : onlyCpfDigits(data.cpf || '');
+    const cnpjDigits = isStudio ? onlyCnpjDigits(data.cnpj) : '';
     try {
       setLoadingText('Verificando seus dados...');
 
       try {
-        await api.post(`${API_URL}/api/auth/check-duplicidade`, { email: emailNorm, cpf: cpfDigits });
+        await api.post(`${API_URL}/api/auth/check-duplicidade`, {
+          email: emailNorm,
+          ...(cpfDigits ? { cpf: cpfDigits } : {}),
+        });
        } catch (dupErr: unknown) {
          console.error(dupErr);
          const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
@@ -173,7 +201,7 @@ export default function RegisterPage() {
           role: data.role,
           full_name: data.nome,
           nome: data.nome,
-          cpf: cpfDigits,
+          ...(isStudio ? { cnpj: cnpjDigits } : { cpf: cpfDigits }),
           data_nascimento: data.dataNascimento,
           accepted_terms: acceptedTerms,
           responsavel_nome: data.responsavelNome || '',
@@ -261,6 +289,51 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!isEstudio) {
+      fetchedCnpjRef.current = '';
+      return;
+    }
+    const digits = onlyCnpjDigits(cnpjValue);
+    if (digits.length !== 14 || !isValidCnpj(digits) || fetchedCnpjRef.current === digits) {
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+    fetchedCnpjRef.current = digits;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/cnpj/${digits}`, { signal: controller.signal });
+        const payload = (await res.json().catch(() => ({}))) as {
+          sucesso?: boolean;
+          nome?: string;
+          fantasia?: string | null;
+          erro?: string;
+        };
+        if (cancelled) return;
+        if (!res.ok || !payload.sucesso) {
+          toast.error(payload.erro || 'CNPJ não encontrado.');
+          return;
+        }
+        const companyName = String(payload.fantasia || payload.nome || '').trim();
+        if (companyName) {
+          setValue('nome', companyName, { shouldValidate: true, shouldDirty: true });
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        toast.error('Falha ao consultar o CNPJ.');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [isEstudio, cnpjValue, setValue]);
+
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
       <div
@@ -332,6 +405,7 @@ export default function RegisterPage() {
             value={roleValue}
             onChange={(role) => {
               if (role === roleValue) return;
+              fetchedCnpjRef.current = '';
               reset({
                 role,
                 nome: '',
@@ -339,6 +413,7 @@ export default function RegisterPage() {
                 password: '',
                 confirmPassword: '',
                 cpf: '',
+                cnpj: '',
                 dataNascimento: '',
                 responsavelNome: '',
                 responsavelCpf: '',
@@ -388,21 +463,39 @@ export default function RegisterPage() {
               (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
             }
           />
-          <Input
-            label="CPF"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="000.000.000-00"
-            {...register('cpf', {
-              onChange: (e) => {
-                const formatted = formatCpf(e.target.value);
-                if (e.target.value !== formatted) e.target.value = formatted;
-                setValue('cpf', formatted, { shouldValidate: true, shouldDirty: true });
-              },
-            })}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={errors.cpf?.message}
-          />
+          {isEstudio ? (
+            <Input
+              label="CNPJ"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="00.000.000/0000-00"
+              {...register('cnpj', {
+                onChange: (e) => {
+                  const formatted = formatCnpj(e.target.value);
+                  if (e.target.value !== formatted) e.target.value = formatted;
+                  setValue('cnpj', formatted, { shouldValidate: true, shouldDirty: true });
+                },
+              })}
+              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              error={errors.cnpj?.message}
+            />
+          ) : (
+            <Input
+              label="CPF"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="000.000.000-00"
+              {...register('cpf', {
+                onChange: (e) => {
+                  const formatted = formatCpf(e.target.value);
+                  if (e.target.value !== formatted) e.target.value = formatted;
+                  setValue('cpf', formatted, { shouldValidate: true, shouldDirty: true });
+                },
+              })}
+              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              error={errors.cpf?.message}
+            />
+          )}
           <Input
             label="Data de Nascimento"
             type="date"
@@ -470,7 +563,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !cpfIsValid}
+            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !documentIsValid}
             className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? (
