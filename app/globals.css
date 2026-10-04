@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-background: #121212;
+  --color-foreground: #F5F5F5;
+  --color-primary: #F97316;
+  --color-muted: #888888;
+  --color-muted-foreground: #a1a1aa;
+  --color-border: #2a2a2a;
+  --color-card: #1a1a1a;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {

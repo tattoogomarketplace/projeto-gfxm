@@ -13,6 +13,7 @@ import {
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
+import { BottomNav } from '@/components/layout/bottom-nav';
 import { cn } from '@/lib/utils';
 
 const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
@@ -132,7 +133,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           </div>
         </div>
         {hideTabs || !role ? null : (
-          <div className="px-4 pb-3">
+          <div className="hidden px-4 pb-3 md:block">
             <SegmentedControl
               options={TABS_BY_ROLE[role]}
               value={selectedTab}
@@ -144,10 +145,11 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       </header>
       )}
 
-      <div className="flex-1 pb-6">
+      <div className={cn('flex-1', hideTabs ? 'pb-6' : 'pb-20 md:pb-6')}>
         {children}
       </div>
 
+      {hideTabs ? null : <BottomNav />}
       <AiAssistantFab />
     </div>
   );

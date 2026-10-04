@@ -18,11 +18,9 @@ export function AiAssistantFab() {
   return (
     <div
       ref={constraintsRef}
-      className="pointer-events-none fixed z-50 w-12"
+      className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] right-[calc(env(safe-area-inset-right)+1rem)] z-[60] w-12 md:bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]"
       style={{
         top: 'calc(env(safe-area-inset-top) + 4.5rem)',
-        bottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)',
-        right: 'calc(env(safe-area-inset-right) + 1rem)',
       }}
     >
       <motion.button

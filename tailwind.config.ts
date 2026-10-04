@@ -21,7 +21,13 @@ const config: Config = {
         },
         background: "#121212",
         foreground: "#F5F5F5",
-        muted: "#888888",
+        primary: {
+          DEFAULT: "#F97316",
+        },
+        muted: {
+          DEFAULT: "#888888",
+          foreground: "#a1a1aa",
+        },
         border: "#2a2a2a",
         card: "#1a1a1a",
       },
