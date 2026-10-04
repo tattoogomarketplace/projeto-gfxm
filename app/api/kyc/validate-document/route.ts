@@ -1,6 +1,6 @@
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -68,138 +68,149 @@ function isNotFoundError(error: unknown): boolean {
 }
 
 export async function POST(request: Request) {
-  const { userId } = await resolvePerfilSession(request);
-  if (!userId) {
-    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
-  }
-
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Validação indisponível. Configure GEMINI_API_KEY.' },
-      { status: 503 }
-    );
-  }
-
-  let body: ValidateDocumentBody = {};
   try {
-    body = (await request.json()) as ValidateDocumentBody;
-  } catch {
-    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-  }
+    const { userId } = await resolvePerfilSession(request);
+    if (!userId) {
+      return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+    }
 
-  const fileKey = resolveFileKey(body);
-  if (!fileKey) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Informe um fileKey ou publicUrl válido do R2.' },
-      { status: 400 }
-    );
-  }
-
-  const perfil = await prisma.perfil.findUnique({
-    where: { clerk_id: userId },
-    select: { id: true, role: true, nome: true, deleted_at: true },
-  });
-
-  if (!perfil || perfil.deleted_at) {
-    return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
-  }
-
-  // KYC é exigência exclusiva de profissionais (tatuador/estúdio).
-  if (perfil.role === 'cliente') {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Verificação KYC não aplicável a clientes.' },
-      { status: 409 }
-    );
-  }
-
-  let object;
-  try {
-    object = await fetchR2Object(fileKey);
-  } catch (error) {
-    if (isNotFoundError(error)) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        { sucesso: false, erro: 'Documento não encontrado no storage.' },
-        { status: 404 }
+        { sucesso: false, erro: 'Validação indisponível. Configure GEMINI_API_KEY.' },
+        { status: 503 }
       );
     }
-    console.error('[kyc/validate-document] falha ao ler objeto do R2', {
-      userId,
-      fileKey,
-      error: error instanceof Error ? error.message : String(error),
+
+    let body: ValidateDocumentBody = {};
+    try {
+      body = (await request.json()) as ValidateDocumentBody;
+    } catch {
+      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+    }
+
+    const fileKey = resolveFileKey(body);
+    if (!fileKey) {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Informe um fileKey ou publicUrl válido do R2.' },
+        { status: 400 }
+      );
+    }
+
+    const perfil = await prisma.perfil.findUnique({
+      where: { clerk_id: userId },
+      select: { id: true, role: true, nome: true, deleted_at: true },
     });
-    return NextResponse.json(
-      { sucesso: false, erro: 'Falha ao recuperar o documento.' },
-      { status: 502 }
-    );
-  }
 
-  if (object.contentLength > MAX_OBJECT_BYTES) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Documento excede o tamanho máximo permitido.' },
-      { status: 413 }
-    );
-  }
+    if (!perfil || perfil.deleted_at) {
+      return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+    }
 
-  const mimeType =
-    object.contentType ||
-    (typeof body.contentType === 'string' ? body.contentType.trim() : '') ||
-    'application/octet-stream';
+    // KYC é exigência exclusiva de profissionais (tatuador/estúdio).
+    if (perfil.role === 'cliente') {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Verificação KYC não aplicável a clientes.' },
+        { status: 409 }
+      );
+    }
 
-  if (!ALLOWED_MIME_PREFIXES.some((prefix) => mimeType.startsWith(prefix))) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Formato de documento não suportado.' },
-      { status: 415 }
-    );
-  }
+    let object;
+    try {
+      object = await fetchR2Object(fileKey);
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        return NextResponse.json(
+          { sucesso: false, erro: 'Documento não encontrado no storage.' },
+          { status: 404 }
+        );
+      }
+      console.error('[kyc/validate-document] falha ao ler objeto do R2', {
+        userId,
+        fileKey,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json(
+        { sucesso: false, erro: 'Falha ao recuperar o documento.' },
+        { status: 502 }
+      );
+    }
 
-  const base64 = Buffer.from(object.body).toString('base64');
+    if (object.contentLength > MAX_OBJECT_BYTES) {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Documento excede o tamanho máximo permitido.' },
+        { status: 413 }
+      );
+    }
 
-  let analysis;
-  try {
-    analysis = await analyzeKycDocument({ base64, mimeType });
-  } catch (error) {
-    console.error('[kyc/validate-document] falha na análise de IA', {
-      userId,
-      fileKey,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json(
-      { sucesso: false, erro: 'Não foi possível analisar o documento.' },
-      { status: 502 }
-    );
-  }
+    const mimeType =
+      object.contentType ||
+      (typeof body.contentType === 'string' ? body.contentType.trim() : '') ||
+      'application/octet-stream';
 
-  const status: KycStatusValue = !analysis.isValid
-    ? 'rejeitado'
-    : analysis.confidenceScore >= MIN_AUTO_APPROVE_SCORE
-      ? 'aprovado'
-      : 'em_analise';
+    if (!ALLOWED_MIME_PREFIXES.some((prefix) => mimeType.startsWith(prefix))) {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Formato de documento não suportado.' },
+        { status: 415 }
+      );
+    }
 
-  const data: { kyc_status: KycStatusValue; nome?: string } = { kyc_status: status };
-  if (analysis.isValid && !perfil.nome && analysis.extractedName) {
-    data.nome = analysis.extractedName;
-  }
+    const base64 = Buffer.from(object.body).toString('base64');
 
-  try {
-    await prisma.perfil.update({ where: { id: perfil.id }, data });
-  } catch (error) {
-    console.error('[kyc/validate-document] falha ao persistir status KYC', {
-      userId,
-      perfilId: perfil.id,
+    let analysis;
+    try {
+      analysis = await analyzeKycDocument({ base64, mimeType });
+    } catch (error) {
+      console.error('[kyc/validate-document] falha na análise de IA', {
+        userId,
+        fileKey,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json(
+        { sucesso: false, erro: 'Não foi possível analisar o documento.' },
+        { status: 502 }
+      );
+    }
+
+    const status: KycStatusValue = !analysis.isValid
+      ? 'rejeitado'
+      : analysis.confidenceScore >= MIN_AUTO_APPROVE_SCORE
+        ? 'aprovado'
+        : 'em_analise';
+
+    const data: { kyc_status: KycStatusValue; nome?: string } = { kyc_status: status };
+    if (analysis.isValid && !perfil.nome && analysis.extractedName) {
+      data.nome = analysis.extractedName;
+    }
+
+    try {
+      await prisma.perfil.update({ where: { id: perfil.id }, data });
+    } catch (error) {
+      console.error('[kyc/validate-document] falha ao persistir status KYC', {
+        userId,
+        perfilId: perfil.id,
+        status,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json(
+        { sucesso: false, erro: 'Falha ao atualizar o status de verificação.' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      sucesso: true,
+      isValid: analysis.isValid,
+      extractedName: analysis.extractedName,
+      confidenceScore: analysis.confidenceScore,
       status,
-      error: error instanceof Error ? error.message : String(error),
     });
+  } catch (error) {
+    console.error('[KYC_AI_ERROR]', error);
     return NextResponse.json(
-      { sucesso: false, erro: 'Falha ao atualizar o status de verificação.' },
+      {
+        error: 'Erro interno na análise',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+      },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    sucesso: true,
-    isValid: analysis.isValid,
-    extractedName: analysis.extractedName,
-    confidenceScore: analysis.confidenceScore,
-    status,
-  });
 }
