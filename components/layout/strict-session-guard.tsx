@@ -11,6 +11,7 @@ import {
 } from '@/lib/utils/session';
 
 const POLL_INTERVAL_MS = 15000;
+const KICK_REDIRECT_MS = 4000;
 
 /**
  * Global enforcer of the strict single-device policy.
@@ -91,6 +92,14 @@ export function StrictSessionGuard() {
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [isLoaded, isSignedIn, triggerKick]);
+
+  useEffect(() => {
+    if (!kicked) return;
+    const timer = window.setTimeout(() => {
+      window.location.href = '/login';
+    }, KICK_REDIRECT_MS);
+    return () => window.clearTimeout(timer);
+  }, [kicked]);
 
   const handleAcknowledge = useCallback(async () => {
     if (leaving) return;

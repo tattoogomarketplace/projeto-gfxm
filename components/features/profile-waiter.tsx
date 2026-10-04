@@ -8,6 +8,8 @@ import { Sparkles } from 'lucide-react';
 const POLL_INTERVAL_MS = 1500;
 /** Teto de tentativas antes de oferecer retry manual (evita loop infinito). */
 const MAX_ATTEMPTS = 40;
+/** Janela pós-OTP: só redireciona se a sessão continuar morta após este prazo. */
+const SIGNED_OUT_REDIRECT_MS = 4000;
 
 /**
  * Espera ativa pela persistência do `Perfil` (corrida pós-registro).
@@ -30,6 +32,14 @@ export function ProfileWaiter() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [exhausted, setExhausted] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn) return;
+    const timer = window.setTimeout(() => {
+      window.location.href = '/login';
+    }, SIGNED_OUT_REDIRECT_MS);
+    return () => window.clearTimeout(timer);
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     let cancelled = false;
