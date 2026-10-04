@@ -21,6 +21,7 @@ import { getRoleExperience } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import api from '@/lib/api';
+import { enforceSingleSession } from '@/app/actions/auth-actions';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -213,6 +214,11 @@ export default function RegisterPage() {
       await setActive({
         session: completeSignUp.createdSessionId,
       });
+      try {
+        await enforceSingleSession(completeSignUp.createdSessionId);
+      } catch (err) {
+        console.error('Single-session enforcement error:', err);
+      }
 
       const clerkUser = clerk.user;
       const metadata = (clerkUser?.unsafeMetadata || clerkUser?.publicMetadata || {}) as Record<

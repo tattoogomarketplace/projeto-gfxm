@@ -17,11 +17,26 @@ export interface SessionValidityResult {
   status: 'active' | 'revoked' | 'unknown';
 }
 
+type ClerkSessionLike = {
+  id: string;
+  userId?: string;
+  status?: string;
+};
+
 function isNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const status = (error as { status?: number; statusCode?: number }).status
     ?? (error as { statusCode?: number }).statusCode;
   return status === 404;
+}
+
+function unwrapSessionList(list: unknown): ClerkSessionLike[] {
+  if (Array.isArray(list)) return list as ClerkSessionLike[];
+  if (list && typeof list === 'object' && 'data' in list) {
+    const data = (list as { data?: unknown }).data;
+    if (Array.isArray(data)) return data as ClerkSessionLike[];
+  }
+  return [];
 }
 
 /**
@@ -39,13 +54,17 @@ export async function enforceSingleSession(
   const client = await clerkClient();
 
   let userId: string | null = null;
+  let authSessionId: string | null = null;
   try {
-    ({ userId } = await auth());
+    const sessionAuth = await auth();
+    userId = sessionAuth.userId ?? null;
+    authSessionId = sessionAuth.sessionId ?? null;
   } catch {
     userId = null;
+    authSessionId = null;
   }
 
-  let sessionId = currentSessionId?.trim() || null;
+  let sessionId = currentSessionId?.trim() || authSessionId;
 
   if (sessionId) {
     try {
@@ -56,7 +75,9 @@ export async function enforceSingleSession(
         sessionId = null;
       }
     } catch {
-      sessionId = null;
+      if (!userId || !authSessionId || sessionId !== authSessionId) {
+        sessionId = null;
+      }
     }
   }
 
@@ -64,20 +85,44 @@ export async function enforceSingleSession(
     return { ok: false, revoked: 0 };
   }
 
-  const { data } = await client.sessions.getSessionList({
-    userId,
-    status: 'active',
-    limit: 100,
-  });
-  const others = data.filter((session) => session.id !== sessionId);
+  let sessions: ClerkSessionLike[] = [];
+  try {
+    const list = await client.sessions.getSessionList({
+      userId,
+      status: 'active',
+      limit: 100,
+    });
+    sessions = unwrapSessionList(list);
+  } catch {
+    try {
+      const list = await client.sessions.getSessionList({
+        userId,
+        limit: 100,
+      });
+      sessions = unwrapSessionList(list).filter(
+        (session) => session.status === 'active' || !session.status
+      );
+    } catch (error) {
+      console.error('[auth] getSessionList failed', error);
+      return { ok: false, revoked: 0 };
+    }
+  }
 
-  await Promise.all(
+  const others = sessions.filter((session) => session.id !== sessionId);
+
+  const revoked = await Promise.all(
     others.map((session) =>
-      client.sessions.revokeSession(session.id).catch(() => null)
+      client.sessions.revokeSession(session.id).then(
+        () => true,
+        (error) => {
+          console.error('[auth] revokeSession failed', session.id, error);
+          return false;
+        }
+      )
     )
   );
 
-  return { ok: true, revoked: others.length };
+  return { ok: true, revoked: revoked.filter(Boolean).length };
 }
 
 /**
