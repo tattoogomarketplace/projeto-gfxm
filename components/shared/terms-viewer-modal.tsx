@@ -8,6 +8,7 @@ import { TermsContent } from '@/components/shared/terms-content';
 interface TermsViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  closeLabel?: string;
 }
 
 /**
@@ -15,7 +16,11 @@ interface TermsViewerModalProps {
  * Privacidade a partir das Configurações do Perfil. Reaproveita o mesmo
  * conteúdo exibido no primeiro acesso.
  */
-export function TermsViewerModal({ isOpen, onClose }: TermsViewerModalProps) {
+export function TermsViewerModal({
+  isOpen,
+  onClose,
+  closeLabel = 'Entendi e fechar',
+}: TermsViewerModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -79,7 +84,7 @@ export function TermsViewerModal({ isOpen, onClose }: TermsViewerModalProps) {
                 onClick={onClose}
                 className="min-h-11 w-full rounded-xl bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
               >
-                Entendi e fechar
+                {closeLabel}
               </button>
             </div>
           </motion.div>

@@ -22,6 +22,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import api from '@/lib/api';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
+import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -97,6 +98,7 @@ export default function RegisterPage() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
   const [forceShow, setForceShow] = useState(false);
   const [machineFailed, setMachineFailed] = useState(false);
@@ -424,17 +426,24 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-4">
+          <div className="mt-4 flex items-start gap-2">
             <input
               type="checkbox"
               id="terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="w-4 h-4 accent-orange-500"
+              className="mt-0.5 h-4 w-4 accent-orange-500"
             />
-            <label htmlFor="terms" className="text-xs text-zinc-400">
-              Li e aceito os termos de uso e política de privacidade.
-            </label>
+            <p className="text-xs leading-relaxed text-zinc-400">
+              <label htmlFor="terms">Li e concordo com os </label>
+              <button
+                type="button"
+                onClick={() => setIsTermsModalOpen(true)}
+                className="font-semibold text-orange-500 underline underline-offset-2 transition-colors hover:text-orange-400"
+              >
+                Termos de Uso e Privacidade
+              </button>
+            </p>
           </div>
 
           {machineFailed ? (
@@ -466,6 +475,11 @@ export default function RegisterPage() {
         </p>
       </div>
       )}
+      <TermsViewerModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        closeLabel="Fechar"
+      />
     </div>
   );
 }
