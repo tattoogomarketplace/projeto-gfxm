@@ -11,6 +11,20 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 
+function messageFromOnboardingError(status: number, data: { erro?: unknown }): string {
+  const fromApi = typeof data.erro === 'string' ? data.erro.trim() : '';
+  if (status === 409) {
+    return fromApi || 'Este CPF já está cadastrado ou em uso por outra conta';
+  }
+  if (status === 401) {
+    return 'Sua sessão expirou. Recarregue a página e tente novamente.';
+  }
+  if (status === 403) {
+    return fromApi || 'O perfil é definido no cadastro e não pode ser alterado.';
+  }
+  return fromApi || 'Erro ao salvar perfil';
+}
+
 export default function DashboardOnboardingPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
@@ -18,6 +32,7 @@ export default function DashboardOnboardingPage() {
   const setStoreRole = useAuthStore((s) => s.setRole);
   const [selectedRole, setSelectedRole] = useState<RegisterRole | null>(null);
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const submitting = useRef(false);
 
   const metadata = useMemo(
@@ -44,6 +59,7 @@ export default function DashboardOnboardingPage() {
     const submitRole = lockedRole ?? role;
     submitting.current = true;
     setSaving(true);
+    setSubmitError(null);
     try {
       const token = await getToken({ skipCache: true });
       const response = await fetch('/api/perfil/onboarding', {
@@ -56,13 +72,12 @@ export default function DashboardOnboardingPage() {
         },
         body: JSON.stringify({ role: submitRole }),
       });
-      const payload = await response.json().catch(() => ({}));
+      const payload = (await response.json().catch(() => ({}))) as { erro?: unknown; perfil?: { role?: string | null; nome?: string | null } };
       if (!response.ok) {
-        const message =
-          response.status === 401
-            ? 'Sua sessão expirou. Recarregue a página e tente novamente.'
-            : payload.erro || 'Falha ao concluir o cadastro.';
-        throw new Error(message);
+        const errorMessage = messageFromOnboardingError(response.status, payload);
+        setSubmitError(errorMessage);
+        toast.error(errorMessage);
+        return;
       }
 
       const persistedRole = parseAppRole(payload?.perfil?.role) ?? submitRole;
@@ -95,7 +110,8 @@ export default function DashboardOnboardingPage() {
 
       window.location.href = '/dashboard';
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Falha ao concluir o onboarding.';
+      const message = err instanceof Error ? err.message : 'Erro ao salvar perfil';
+      setSubmitError(message);
       toast.error(message);
     } finally {
       submitting.current = false;
@@ -142,11 +158,21 @@ export default function DashboardOnboardingPage() {
         <RoleSelector
           value={role}
           onChange={(nextRole) => {
+            setSubmitError(null);
             setSelectedRole(nextRole);
           }}
           lockedRole={lockedRole}
         />
       </section>
+
+      {submitError ? (
+        <div
+          role="alert"
+          className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+        >
+          {submitError}
+        </div>
+      ) : null}
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-xl">
         <div className="mx-auto w-full max-w-app p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6">
