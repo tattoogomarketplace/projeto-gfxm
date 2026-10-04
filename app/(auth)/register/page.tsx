@@ -22,7 +22,7 @@ import { getRoleExperience } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import api from '@/lib/api';
-import { enforceSingleSession } from '@/app/actions/auth-actions';
+import { enforceSingleSession, persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -125,6 +125,8 @@ export default function RegisterPage() {
   const [machineFailed, setMachineFailed] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isActivating, setIsActivating] = useState(false);
+  const [razaoSocial, setRazaoSocial] = useState('');
+  const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const nextPathRef = useRef<string | null>(null);
 
   useRedirectIfAuthenticated(!isVerifying && !showWelcome && !isActivating && !loading);
@@ -183,6 +185,8 @@ export default function RegisterPage() {
     const emailNorm = data.email.trim().toLowerCase();
     const cpfDigits = isStudio ? '' : onlyCpfDigits(data.cpf || '');
     const cnpjDigits = isStudio ? onlyCnpjDigits(data.cnpj) : '';
+    const officialName = isStudio ? razaoSocial.trim() : '';
+    setStudioMeta(isStudio && officialName ? { cnpj: cnpjDigits, razaoSocial: officialName } : null);
     try {
       setLoadingText('Verificando seus dados...');
 
@@ -209,7 +213,9 @@ export default function RegisterPage() {
           role: data.role,
           full_name: data.nome,
           nome: data.nome,
-          ...(isStudio ? { cnpj: cnpjDigits } : { cpf: cpfDigits }),
+          ...(isStudio
+            ? { cnpj: cnpjDigits, ...(officialName ? { razaoSocial: officialName } : {}) }
+            : { cpf: cpfDigits }),
           data_nascimento: data.dataNascimento,
           accepted_terms: acceptedTerms,
           responsavel_nome: data.responsavelNome || '',
@@ -257,6 +263,17 @@ export default function RegisterPage() {
       } catch (err) {
         console.error('Single-session enforcement error:', err);
       }
+      if (studioMeta) {
+        try {
+          await persistStudioPublicMetadata({
+            sessionId: completeSignUp.createdSessionId,
+            cnpj: studioMeta.cnpj,
+            razaoSocial: studioMeta.razaoSocial,
+          });
+        } catch (err) {
+          console.error('Studio publicMetadata persistence error:', err);
+        }
+      }
 
       const clerkUser = clerk.user;
       const metadata = (clerkUser?.unsafeMetadata || clerkUser?.publicMetadata || {}) as Record<
@@ -303,7 +320,10 @@ export default function RegisterPage() {
       return;
     }
     const digits = onlyCnpjDigits(cnpjValue);
-    if (digits.length !== 14 || !isValidCnpj(digits) || fetchedCnpjRef.current === digits) {
+    if (digits.length !== 14 || !isValidCnpj(digits)) {
+      return;
+    }
+    if (fetchedCnpjRef.current === digits && razaoSocial) {
       return;
     }
 
@@ -325,9 +345,11 @@ export default function RegisterPage() {
           toast.error(payload.erro || 'CNPJ não encontrado.');
           return;
         }
-        const companyName = String(payload.fantasia || payload.nome || '').trim();
-        if (companyName) {
-          setValue('nome', companyName, { shouldValidate: true, shouldDirty: true });
+        const officialName = String(payload.nome || '').trim();
+        const displayName = String(payload.fantasia || payload.nome || '').trim();
+        setRazaoSocial(officialName);
+        if (displayName) {
+          setValue('nome', displayName, { shouldValidate: true, shouldDirty: true });
         }
       } catch (err) {
         if (cancelled) return;
@@ -340,7 +362,7 @@ export default function RegisterPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [isEstudio, cnpjValue, setValue]);
+  }, [isEstudio, cnpjValue, razaoSocial, setValue]);
 
   return (
     <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
@@ -414,6 +436,8 @@ export default function RegisterPage() {
             onChange={(role) => {
               if (role === roleValue) return;
               fetchedCnpjRef.current = '';
+              setRazaoSocial('');
+              setStudioMeta(null);
               reset({
                 role,
                 nome: '',
@@ -443,17 +467,33 @@ export default function RegisterPage() {
                   const formatted = formatCnpj(e.target.value);
                   if (e.target.value !== formatted) e.target.value = formatted;
                   setValue('cnpj', formatted, { shouldValidate: true, shouldDirty: true });
+                  const digits = onlyCnpjDigits(formatted);
+                  if (digits.length !== 14 || !isValidCnpj(digits)) {
+                    setRazaoSocial('');
+                    setStudioMeta(null);
+                  }
                 },
               })}
               className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
               error={errors.cnpj?.message}
             />
           ) : null}
+          {isEstudio ? (
+            <Input
+              label="Razão Social"
+              type="text"
+              value={razaoSocial}
+              readOnly={true}
+              disabled={true}
+              placeholder="Preenchido automaticamente pelo CNPJ"
+              className="bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+            />
+          ) : null}
           <Input
-            label="Nome completo"
+            label={isEstudio ? 'Nome de Exibição (Como os clientes verão)' : 'Nome completo'}
             type="text"
             autoComplete="name"
-            placeholder="Seu nome completo"
+            placeholder={isEstudio ? 'Nome público do estúdio' : 'Seu nome completo'}
             {...register('nome')}
             disabled={studioFieldsLocked}
             className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"

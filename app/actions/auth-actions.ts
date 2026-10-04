@@ -152,3 +152,43 @@ export async function checkCurrentSession(): Promise<SessionValidityResult> {
     return { status: isNotFoundError(error) ? 'revoked' : 'unknown' };
   }
 }
+
+export async function persistStudioPublicMetadata(input: {
+  sessionId?: string;
+  cnpj: string;
+  razaoSocial: string;
+}): Promise<{ ok: boolean }> {
+  const client = await clerkClient();
+  let userId: string | null = null;
+
+  try {
+    const sessionAuth = await auth();
+    userId = sessionAuth.userId ?? null;
+  } catch {
+    userId = null;
+  }
+
+  if (!userId && input.sessionId) {
+    try {
+      const session = await client.sessions.getSession(input.sessionId);
+      userId = session.userId;
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  if (!userId) return { ok: false };
+
+  const cnpj = String(input.cnpj || '').replace(/\D/g, '');
+  const razaoSocial = String(input.razaoSocial || '').trim();
+
+  await client.users.updateUserMetadata(userId, {
+    publicMetadata: {
+      role: 'estudio',
+      ...(cnpj ? { cnpj } : {}),
+      ...(razaoSocial ? { razaoSocial } : {}),
+    },
+  });
+
+  return { ok: true };
+}
