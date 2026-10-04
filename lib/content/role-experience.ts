@@ -54,8 +54,8 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         present: 'Sua primeira ou próxima arte te espera.',
         future: 'Conectamos você aos melhores artistas para encontrar o traço perfeito.',
       },
-      cta: 'Minha jornada na pele',
-      activating: 'Minha jornada na pele...',
+      cta: 'Minha Jornada na Pele',
+      activating: 'Minha Jornada na Pele...',
     },
     dashboard: {
       title: 'Minha Jornada',
@@ -74,7 +74,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         present: 'Bancada montada e máquina regulada.',
         future: 'Eternize sua arte, organize o dia e gerencie seus recebimentos.',
       },
-      cta: 'Entrar no Atelier Digital',
+      cta: 'Montar Ateliê Digital',
       activating: 'Montando seu ateliê digital...',
     },
     dashboard: {
@@ -94,7 +94,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
         present: 'Gestão master conectada.',
         future: 'Homologue artistas e acompanhe o split do seu império.',
       },
-      cta: 'Entrar no Atelier Digital',
+      cta: 'Montar Ateliê Digital',
       activating: 'Configurando a gestão do estúdio...',
     },
     dashboard: {

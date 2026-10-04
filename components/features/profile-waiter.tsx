@@ -6,26 +6,13 @@ import { OnboardingLoadingScreen } from '@/components/features/onboarding-loadin
 import { isOnboardingGrace, markOnboardingGrace } from '@/lib/utils/session';
 import { LOGIN_PATH } from '@/lib/utils/auth-redirect';
 
-const POLL_INTERVAL_MS = 1500;
-const MAX_ATTEMPTS = 40;
 const SIGNED_OUT_REDIRECT_MS = 8000;
 
-/**
- * Espera ativa pela persistência do `Perfil` (corrida pós-registro).
- *
- * O Server Component do dashboard não pode lançar/estourar o Error Boundary
- * quando o usuário já está autenticado no Clerk mas o registro local ainda não
- * existe (webhook em processamento). Este componente assume o controle no
- * cliente: pinga `/api/perfil/ensure` (idempotente, auto-provisiona e devolve o
- * `perfil`) a cada 1,5s e SÓ navega no HTTP 200 com perfil confirmado.
- */
 export function ProfileWaiter() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const attemptsRef = useRef(0);
   const navigatingRef = useRef(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [exhausted, setExhausted] = useState(false);
-  const [restartKey, setRestartKey] = useState(0);
+  const attemptedRef = useRef(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || isSignedIn) return;
@@ -37,76 +24,46 @@ export function ProfileWaiter() {
     return () => window.clearTimeout(timer);
   }, [isLoaded, isSignedIn]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const stopPolling = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-
-    if (!isLoaded) {
-      return () => {
-        cancelled = true;
-        stopPolling();
-      };
-    }
-
-    const checkProfile = async () => {
-      if (cancelled || navigatingRef.current) return;
-
-      if (attemptsRef.current >= MAX_ATTEMPTS) {
-        setExhausted(true);
-        stopPolling();
+  const checkProfile = useCallback(async () => {
+    if (navigatingRef.current) return;
+    try {
+      const token = await getToken({ skipCache: true });
+      const response = await fetch('/api/perfil/ensure', {
+        cache: 'no-store',
+        credentials: 'include',
+        headers: {
+          accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (navigatingRef.current) return;
+      if (response.status !== 200) {
+        setFailed(true);
         return;
       }
-      attemptsRef.current += 1;
+      navigatingRef.current = true;
+      markOnboardingGrace();
+      window.location.href = '/dashboard';
+    } catch {
+      setFailed(true);
+    }
+  }, [getToken]);
 
-      try {
-        const token = await getToken({ skipCache: true });
-        const response = await fetch('/api/perfil/ensure', {
-          cache: 'no-store',
-          credentials: 'include',
-          headers: {
-            accept: 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        if (cancelled || navigatingRef.current) return;
-
-        if (response.status === 401) return;
-        if (response.status !== 200) return;
-
-        navigatingRef.current = true;
-        stopPolling();
-        markOnboardingGrace();
-        window.location.href = '/dashboard';
-      } catch {
-        // Rede instável ou sessão ainda não pronta: a próxima iteração cobre.
-      }
-    };
-
+  useEffect(() => {
+    if (!isLoaded || attemptedRef.current) return;
+    attemptedRef.current = true;
     void checkProfile();
-    intervalRef.current = setInterval(checkProfile, POLL_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      stopPolling();
-    };
-  }, [restartKey, isLoaded, getToken]);
+  }, [isLoaded, checkProfile]);
 
   const handleRetry = useCallback(() => {
-    attemptsRef.current = 0;
     navigatingRef.current = false;
-    setExhausted(false);
-    setRestartKey((key) => key + 1);
-  }, []);
+    setFailed(false);
+    void checkProfile();
+  }, [checkProfile]);
 
   return (
     <OnboardingLoadingScreen variant="sparkles">
-      {exhausted ? (
+      {failed ? (
         <button
           type="button"
           onClick={handleRetry}

@@ -1,8 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { NeonButton } from '@/components/ui/neon-button';
-import { useEffect } from 'react';
-import { postSignupPathForRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { type AppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
 
 interface WelcomeGateProps {
@@ -10,12 +9,7 @@ interface WelcomeGateProps {
 }
 
 export function WelcomeGate({ role }: WelcomeGateProps) {
-  const destination = postSignupPathForRole(role);
   const content = getRoleExperience(role).onboarding;
-
-  useEffect(() => {
-    window.location.href = destination;
-  }, [destination]);
 
   return (
     <motion.div 
@@ -33,7 +27,7 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       <NeonButton
         type="button"
         onClick={() => {
-          window.location.href = destination;
+          window.location.href = '/dashboard';
         }}
       >
         {content.cta}

@@ -23,6 +23,10 @@ export default async function DashboardLayout({
   const pathname = (await headers()).get('x-pathname') ?? '';
   const isOnboarding = isOnboardingPath(pathname);
 
+  if (isOnboarding) {
+    return <>{children}</>;
+  }
+
   let perfil: LocalPerfil | null = null;
   let clerkUserId: string | null = null;
 

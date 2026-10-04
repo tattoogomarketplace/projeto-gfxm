@@ -14,8 +14,7 @@ import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingGrace } from '@/lib/utils/session';
 
-/** Teto de tentativas antes de oferecer retry manual (evita loader infinito). */
-const MAX_ATTEMPTS = 40;
+const MAX_ATTEMPTS = 3;
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -96,7 +95,7 @@ export default function DashboardPage() {
         if (attemptsRef.current < MAX_ATTEMPTS) {
           window.setTimeout(() => {
             if (!cancelled && !redirected.current) void resolveDestination();
-          }, 1500);
+          }, 800);
           return;
         }
 
