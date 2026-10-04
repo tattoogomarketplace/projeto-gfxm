@@ -105,7 +105,7 @@ export default function DashboardOnboardingPage() {
         }
 
         if (existingRole && isOnboardingComplete(payload?.perfil) && !cancelled) {
-          router.replace(destinationForRole(existingRole, payload?.perfil?.kyc_status));
+          window.location.href = destinationForRole(existingRole, payload?.perfil?.kyc_status);
           return;
         }
 

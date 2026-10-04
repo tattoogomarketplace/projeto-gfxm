@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Sparkles } from 'lucide-react';
 
@@ -25,10 +24,9 @@ const MAX_ATTEMPTS = 40;
  * continuamos o polling até a sessão ficar ativa.
  */
 export function ProfileWaiter() {
-  const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const attemptsRef = useRef(0);
-  const lastRefreshRef = useRef(0);
+  const navigatingRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [exhausted, setExhausted] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
@@ -85,17 +83,10 @@ export function ProfileWaiter() {
           | { perfil?: unknown }
           | null;
 
-        if (data?.perfil) {
-          // Perfil existe: revalida os Server Components. O refresh é
-          // re-solicitado (com throttle) enquanto este componente continuar
-          // montado, cobrindo atraso de leitura (réplica) logo após a escrita —
-          // antes, um único refresh que corresse antes da visibilidade do
-          // registro deixava o usuário preso no loader até o reload manual.
-          const now = Date.now();
-          if (now - lastRefreshRef.current >= POLL_INTERVAL_MS) {
-            lastRefreshRef.current = now;
-            router.refresh();
-          }
+        if (data?.perfil && !navigatingRef.current) {
+          navigatingRef.current = true;
+          stopPolling();
+          window.location.href = '/dashboard';
         }
       } catch {
         // Rede instável ou sessão ainda não pronta: a próxima iteração cobre.
@@ -109,11 +100,11 @@ export function ProfileWaiter() {
       cancelled = true;
       stopPolling();
     };
-  }, [router, restartKey, isLoaded, isSignedIn]);
+  }, [restartKey, isLoaded, isSignedIn]);
 
   const handleRetry = useCallback(() => {
     attemptsRef.current = 0;
-    lastRefreshRef.current = 0;
+    navigatingRef.current = false;
     setExhausted(false);
     setRestartKey((key) => key + 1);
   }, []);
