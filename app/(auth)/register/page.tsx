@@ -36,7 +36,7 @@ const registerSchema = z
     role: z.enum(['cliente', 'tatuador', 'estudio']),
     cpf: z.string().optional(),
     cnpj: z.string().optional(),
-    dataNascimento: z.string().min(1, 'Data obrigatória'),
+    dataNascimento: z.string().optional(),
     responsavelNome: z.string().optional(),
     responsavelCpf: z.string().optional(),
   })
@@ -58,6 +58,13 @@ const registerSchema = z
         code: 'custom',
         path: ['cpf'],
         message: 'CPF inválido',
+      });
+    }
+    if (data.role !== 'estudio' && !data.dataNascimento) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['dataNascimento'],
+        message: 'Data obrigatória',
       });
     }
     if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
@@ -147,6 +154,7 @@ export default function RegisterPage() {
   const passwordsMatch = Boolean(passwordValue) && passwordValue === confirmPasswordValue;
   const isEstudio = roleValue === 'estudio';
   const documentIsValid = isEstudio ? isValidCnpj(cnpjValue) : isValidCpf(cpfValue);
+  const studioFieldsLocked = isEstudio && !isValidCnpj(cnpjValue);
   const fetchedCnpjRef = useRef('');
 
   const onSubmit = async (data: RegisterFormValues) => {
@@ -424,45 +432,6 @@ export default function RegisterPage() {
             }}
           />
           <input type="hidden" {...register('role')} />
-          <Input
-            label="Nome completo"
-            type="text"
-            autoComplete="name"
-            placeholder="Seu nome completo"
-            {...register('nome')}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={errors.nome?.message}
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            placeholder="seu@email.com"
-            {...register('email')}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={errors.email?.message}
-          />
-          <Input
-            label="Senha"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Mínimo 8 caracteres"
-            {...register('password')}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={errors.password?.message}
-          />
-          <PasswordStrengthBar password={passwordValue} />
-          <Input
-            label="Confirmar senha"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Repita a senha"
-            {...register('confirmPassword')}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
-            error={
-              errors.confirmPassword?.message ||
-              (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
-            }
-          />
           {isEstudio ? (
             <Input
               label="CNPJ"
@@ -479,7 +448,51 @@ export default function RegisterPage() {
               className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
               error={errors.cnpj?.message}
             />
-          ) : (
+          ) : null}
+          <Input
+            label="Nome completo"
+            type="text"
+            autoComplete="name"
+            placeholder="Seu nome completo"
+            {...register('nome')}
+            disabled={studioFieldsLocked}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={errors.nome?.message}
+          />
+          <Input
+            label="E-mail"
+            type="email"
+            placeholder="seu@email.com"
+            {...register('email')}
+            disabled={studioFieldsLocked}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={errors.email?.message}
+          />
+          <Input
+            label="Senha"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Mínimo 8 caracteres"
+            {...register('password')}
+            disabled={studioFieldsLocked}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={errors.password?.message}
+          />
+          <PasswordStrengthBar password={passwordValue} />
+          <Input
+            label="Confirmar senha"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Repita a senha"
+            {...register('confirmPassword')}
+            disabled={studioFieldsLocked}
+            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            error={
+              errors.confirmPassword?.message ||
+              (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
+            }
+          />
+          {!isEstudio ? (
             <Input
               label="CPF"
               inputMode="numeric"
@@ -495,14 +508,16 @@ export default function RegisterPage() {
               className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
               error={errors.cpf?.message}
             />
-          )}
-          <Input
-            label="Data de Nascimento"
-            type="date"
-            {...register('dataNascimento')}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500 scheme-dark"
-            error={errors.dataNascimento?.message}
-          />
+          ) : null}
+          {roleValue === 'cliente' || roleValue === 'tatuador' ? (
+            <Input
+              label="Data de Nascimento"
+              type="date"
+              {...register('dataNascimento')}
+              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500 scheme-dark"
+              error={errors.dataNascimento?.message}
+            />
+          ) : null}
 
           {status === 'menor_18' && (
             <div className="space-y-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
