@@ -44,8 +44,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
   const nextPathRef = useRef<string | null>(null);
+  const resetToastShown = useRef(false);
 
   useRedirectIfAuthenticated(!isVerifying && !isLoading);
+
+  useEffect(() => {
+    if (resetToastShown.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset') !== 'success') return;
+    resetToastShown.current = true;
+    toast.success('Senha redefinida. Entre com a nova senha.');
+  }, []);
 
   const {
     register,
@@ -312,6 +322,12 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        <p className="text-center text-sm">
+          <Link href="/forgot-password" className="text-orange-500 hover:underline">
+            Esqueci minha senha
+          </Link>
+        </p>
 
         <p className="text-center text-sm text-zinc-500">
           Ainda não faz parte da elite?{' '}

@@ -2,7 +2,7 @@ import { clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 const CLERK_WEBHOOK_PATH = '/api/webhooks/clerk';
-const AUTH_PAGES = ['/login', '/register'];
+const AUTH_PAGES = ['/login', '/register', '/forgot-password'];
 
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;

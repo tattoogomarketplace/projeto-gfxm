@@ -50,6 +50,7 @@ if (isDev) {
       navigateFallbackDenylist: [
         /^\/register/,
         /^\/login/,
+        /^\/forgot-password/,
         /^\/sign-in/,
         /^\/sign-up/,
         /^\/api\//,
@@ -59,7 +60,7 @@ if (isDev) {
       ],
       runtimeCaching: [
         {
-          urlPattern: /\/(login|register|sign-in|sign-up)(\/.*)?$/,
+          urlPattern: /\/(login|register|forgot-password|sign-in|sign-up)(\/.*)?$/,
           handler: 'NetworkOnly',
         },
         {
