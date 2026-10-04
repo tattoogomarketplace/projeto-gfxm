@@ -123,15 +123,7 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
-      console.error('[kyc/validate-document] falha ao ler objeto do R2', {
-        userId,
-        fileKey,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return NextResponse.json(
-        { sucesso: false, erro: 'Falha ao recuperar o documento.' },
-        { status: 502 }
-      );
+      throw error;
     }
 
     if (object.contentLength > MAX_OBJECT_BYTES) {
@@ -154,21 +146,7 @@ export async function POST(request: Request) {
     }
 
     const base64 = Buffer.from(object.body).toString('base64');
-
-    let analysis;
-    try {
-      analysis = await analyzeKycDocument({ base64, mimeType });
-    } catch (error) {
-      console.error('[kyc/validate-document] falha na análise de IA', {
-        userId,
-        fileKey,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return NextResponse.json(
-        { sucesso: false, erro: 'Não foi possível analisar o documento.' },
-        { status: 502 }
-      );
-    }
+    const analysis = await analyzeKycDocument({ base64, mimeType });
 
     const status: KycStatusValue = !analysis.isValid
       ? 'rejeitado'
