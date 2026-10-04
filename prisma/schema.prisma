@@ -60,6 +60,14 @@ enum EstudioConviteStatus {
   @@map("estudio_convite_status")
 }
 
+enum AccountStatus {
+  ATIVO
+  DESATIVADO
+  AGUARDANDO_EXCLUSAO
+
+  @@map("account_status")
+}
+
 model Perfil {
   id                             String     @id @db.Uuid
   clerk_id                       String?    @unique
@@ -85,6 +93,8 @@ model Perfil {
   created_at                     DateTime   @default(now()) @db.Timestamptz(6)
   updated_at                     DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at                     DateTime?  @db.Timestamptz(6)
+  statusConta                    AccountStatus @default(ATIVO) @map("status_conta")
+  dataFim                        DateTime?     @db.Timestamptz(6) @map("data_fim")
 
   studio                   Perfil?  @relation("TatuadorVinculoEstudio", fields: [studio_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
   tatuadoresVinculados     Perfil[] @relation("TatuadorVinculoEstudio")
@@ -112,6 +122,8 @@ model Perfil {
   @@index([cidade, estado], map: "perfis_geo_idx")
   @@index([studio_id], map: "perfis_studio_id_idx")
   @@index([deleted_at], map: "perfis_deleted_at_idx")
+  @@index([statusConta], map: "perfis_status_conta_idx")
+  @@index([dataFim], map: "perfis_data_fim_idx")
   @@map("perfis")
 }
 
