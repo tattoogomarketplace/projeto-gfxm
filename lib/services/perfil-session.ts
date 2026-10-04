@@ -192,7 +192,7 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
     // rota; tratamos como sessão ausente e tentamos a requisição crua.
     authThrew = error instanceof Error ? error.message : String(error);
   }
-  userId = middlewareUserId;
+  userId = middlewareUserId || null;
 
   // 2) Fallback explícito para a requisição crua quando não há contexto de
   //    middleware (ex.: execução fora do App Router).

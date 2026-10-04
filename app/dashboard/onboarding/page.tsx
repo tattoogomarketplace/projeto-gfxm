@@ -51,8 +51,6 @@ export default function DashboardOnboardingPage() {
 
     const bootstrap = async (attempt = 0) => {
       if (!isSignedIn || !user) {
-        router.replace('/login');
-        setChecking(false);
         return;
       }
 
@@ -220,7 +218,7 @@ export default function DashboardOnboardingPage() {
   const effectiveRole = lockedRole ?? role;
   const content = getRoleExperience(effectiveRole).onboarding;
 
-  if (!isLoaded || checking || !isSignedIn) {
+  if (!isLoaded || checking || !isSignedIn || !user) {
     return (
       <div className="flex min-h-full items-center justify-center p-10">
         <TattooMachineLoader label={content.activating} />

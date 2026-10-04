@@ -5,6 +5,7 @@ export default async function DashboardAiLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireDashboardPerfil();
+  const perfil = await requireDashboardPerfil();
+  if (!perfil) return null;
   return children;
 }

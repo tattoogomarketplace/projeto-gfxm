@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Sparkles } from 'lucide-react';
-import { AUTH_HYDRATION_GRACE_MS } from '@/lib/utils/auth-redirect';
 
 /** Intervalo de polling da existência do Perfil. */
 const POLL_INTERVAL_MS = 1500;
@@ -44,15 +43,16 @@ export function ProfileWaiter() {
       }
     };
 
-    if (isLoaded && !isSignedIn) {
-      const graceTimer = window.setTimeout(() => {
-        if (cancelled) return;
-        stopPolling();
-        router.replace('/login');
-      }, AUTH_HYDRATION_GRACE_MS);
+    if (!isLoaded) {
       return () => {
         cancelled = true;
-        window.clearTimeout(graceTimer);
+        stopPolling();
+      };
+    }
+
+    if (!isSignedIn) {
+      return () => {
+        cancelled = true;
         stopPolling();
       };
     }

@@ -11,7 +11,7 @@ import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { AUTH_HYDRATION_GRACE_MS, isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -32,14 +32,6 @@ export default function PerfilPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-
-  useEffect(() => {
-    if (!isLoaded || isSignedIn) return;
-    const graceTimer = window.setTimeout(() => {
-      router.replace('/login');
-    }, AUTH_HYDRATION_GRACE_MS);
-    return () => window.clearTimeout(graceTimer);
-  }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -186,7 +178,7 @@ export default function PerfilPage() {
     }
   };
 
-  if (loading) {
+  if (loading || !isLoaded || !isSignedIn || !user) {
     return (
       <div className="flex min-h-full items-center justify-center p-10">
         <TattooMachineLoader label="Abrindo seu perfil" />

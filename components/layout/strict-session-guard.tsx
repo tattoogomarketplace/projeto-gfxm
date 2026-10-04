@@ -10,7 +10,6 @@ import {
   isIntentionalSignOut,
   resetIntentionalSignOut,
 } from '@/lib/utils/session';
-import { AUTH_HYDRATION_GRACE_MS } from '@/lib/utils/auth-redirect';
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -52,14 +51,9 @@ export function StrictSessionGuard() {
       if (isIntentionalSignOut()) {
         resetIntentionalSignOut();
         wasSignedIn.current = false;
-        return;
+      } else {
+        triggerKick();
       }
-
-      const graceTimer = window.setTimeout(() => {
-        if (!kickedRef.current) triggerKick();
-      }, AUTH_HYDRATION_GRACE_MS);
-
-      return () => window.clearTimeout(graceTimer);
     }
   }, [isLoaded, isSignedIn, triggerKick]);
 

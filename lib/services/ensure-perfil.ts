@@ -169,6 +169,7 @@ function identityRolePatch(
 }
 
 export async function findPerfilByClerkId(clerkId: string): Promise<LocalPerfil | null> {
+  if (!clerkId) return null;
   return prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
     select: PERFIL_SELECT,

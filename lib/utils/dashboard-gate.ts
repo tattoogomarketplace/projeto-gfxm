@@ -8,7 +8,6 @@ import { buildProfileSource, resolvePerfilSessionFromIncomingRequest } from '@/l
 import {
   dashboardPathForRole,
   isOnboardingComplete,
-  LOGIN_PATH,
   ONBOARDING_PATH,
   parseAppRole,
   type AppRole,
@@ -20,10 +19,10 @@ type GateResult = {
   role: AppRole | null;
 };
 
-export async function requireDashboardSession(): Promise<GateResult> {
+export async function requireDashboardSession(): Promise<GateResult | null> {
   const { userId, user, metadataRole } = await resolvePerfilSessionFromIncomingRequest();
   if (!userId) {
-    redirect(LOGIN_PATH);
+    return null;
   }
 
   let perfil: LocalPerfil | null = null;
@@ -52,8 +51,11 @@ export async function requireDashboardSession(): Promise<GateResult> {
   };
 }
 
-export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<LocalPerfil> {
-  const { perfil, role } = await requireDashboardSession();
+export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<LocalPerfil | null> {
+  const session = await requireDashboardSession();
+  if (!session) return null;
+
+  const { perfil, role } = session;
 
   if (!perfil || perfil.deleted_at || !role || !isOnboardingComplete(perfil)) {
     redirect(ONBOARDING_PATH);

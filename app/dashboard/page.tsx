@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
-  AUTH_HYDRATION_GRACE_MS,
   dashboardPathForRole,
   isOnboardingComplete,
   LOGIN_PATH,
@@ -32,14 +31,8 @@ export default function DashboardPage() {
     let cancelled = false;
 
     if (!isSignedIn || !user) {
-      const graceTimer = window.setTimeout(() => {
-        if (cancelled || redirected.current) return;
-        redirected.current = true;
-        router.replace(LOGIN_PATH);
-      }, AUTH_HYDRATION_GRACE_MS);
       return () => {
         cancelled = true;
-        window.clearTimeout(graceTimer);
       };
     }
 
@@ -120,6 +113,14 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, [isLoaded, isSignedIn, user, storedRole, router]);
+
+  if (!isLoaded || !isSignedIn || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#121212]">
+        <TattooMachineLoader label="Conectando ao seu painel" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#121212]">

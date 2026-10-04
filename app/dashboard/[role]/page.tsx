@@ -17,6 +17,7 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
   }
 
   const perfil = await requireDashboardPerfil(expectedRole);
+  if (!perfil) return null;
   const experience = getRoleExperience(perfil?.role ?? expectedRole);
   const user = await currentUser();
   const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;

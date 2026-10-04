@@ -5,9 +5,6 @@ const ALLOWED_ROLES: AppRole[] = ['cliente', 'tatuador', 'estudio'];
 export const ONBOARDING_PATH = '/dashboard/onboarding';
 export const LOGIN_PATH = '/login';
 
-/** Post-OTP Clerk limbo: isSignedIn can briefly drop before the session hydrates. */
-export const AUTH_HYDRATION_GRACE_MS = 3500;
-
 type OnboardingFlagSource = {
   has_seen_welcome_notice?: boolean | null;
   onboarding_completed?: boolean | null;

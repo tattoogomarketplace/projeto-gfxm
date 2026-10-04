@@ -41,10 +41,7 @@ export default function KycPendentePage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    // Sem sessão não há como resolver o KYC: devolve ao login em vez de manter
-    // o loader de "Verificando KYC" girando para sempre.
     if (!isSignedIn || !user) {
-      router.replace('/login');
       return;
     }
 
@@ -104,7 +101,7 @@ export default function KycPendentePage() {
     };
   }, [isLoaded, isSignedIn, user, router]);
 
-  if (loading) {
+  if (loading || !isLoaded || !isSignedIn || !user) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-[#121212]">
         <TattooMachineLoader label="Verificando KYC" />

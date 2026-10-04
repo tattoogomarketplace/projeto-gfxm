@@ -24,39 +24,39 @@ export default async function DashboardLayout({
   const isOnboarding = isOnboardingPath(pathname);
 
   let perfil: LocalPerfil | null = null;
-  let clerkUserId = '';
-  let authenticated = false;
+  let clerkUserId: string | null = null;
 
   try {
     const { userId } = await resolvePerfilSessionFromIncomingRequest();
-    clerkUserId = userId ?? '';
-    authenticated = Boolean(userId);
+    clerkUserId = userId;
   } catch {
-    // Falha ao resolver a sessão: tratamos como não autenticado; o
-    // middleware redireciona quem realmente é anônimo.
-    authenticated = false;
+    clerkUserId = null;
   }
 
-  if (authenticated) {
-    try {
-      perfil = await findPerfilByClerkId(clerkUserId);
-    } catch {
-      // Erro transitório de banco não pode estourar o Error Boundary.
-      perfil = null;
-    }
+  // Transição pós-OTP: `auth()` devolve userId nulo. Nunca chamar Prisma
+  // nem renderizar children — o cliente hidrata e o waiter faz refresh.
+  if (!clerkUserId) {
+    return <ProfileWaiter />;
+  }
 
-    // Corrida pós-OTP: sessão Clerk ativa, mas o `Perfil` ainda está sendo
-    // criado pelo auto-provisionamento. NUNCA renderizamos os children neste
-    // estado — tanto nas rotas do painel quanto no onboarding — para evitar o
-    // null-reference crash. O `ProfileWaiter` faz o polling idempotente e
-    // dispara `router.refresh()` quando o registro fica visível.
-    if (!perfil) {
-      return <ProfileWaiter />;
-    }
+  try {
+    perfil = await findPerfilByClerkId(clerkUserId);
+  } catch {
+    // Erro transitório de banco não pode estourar o Error Boundary.
+    perfil = null;
+  }
 
-    if (!isOnboarding && !isOnboardingComplete(perfil)) {
-      redirect(ONBOARDING_PATH);
-    }
+  // Corrida pós-OTP: sessão Clerk ativa, mas o `Perfil` ainda está sendo
+  // criado pelo auto-provisionamento. NUNCA renderizamos os children neste
+  // estado — tanto nas rotas do painel quanto no onboarding — para evitar o
+  // null-reference crash. O `ProfileWaiter` faz o polling idempotente e
+  // dispara `router.refresh()` quando o registro fica visível.
+  if (!perfil) {
+    return <ProfileWaiter />;
+  }
+
+  if (!isOnboarding && !isOnboardingComplete(perfil)) {
+    redirect(ONBOARDING_PATH);
   }
 
   // Bloqueio global de KYC: um tatuador não homologado não acessa NENHUMA rota

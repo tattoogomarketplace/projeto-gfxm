@@ -20,6 +20,7 @@ export default async function TatuadorLayout({
   children: React.ReactNode;
 }) {
   const perfil = await requireDashboardPerfil('tatuador');
+  if (!perfil) return null;
 
   if (!isKycApproved(perfil?.kyc_status)) {
     return <TatuadorKycBlock userId={perfil?.clerk_id ?? ''} status={perfil?.kyc_status} />;
