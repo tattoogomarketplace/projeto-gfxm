@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { useClerk } from '@clerk/nextjs';
 import { useSignUp } from '@clerk/nextjs/legacy';
-import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { WelcomeGate } from '@/components/features/welcome-gate';
@@ -87,7 +86,6 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -282,8 +280,7 @@ export default function RegisterPage() {
               if (!nextPath) return;
               setIsActivating(true);
               try {
-                router.push(nextPath);
-                router.refresh();
+                window.location.href = nextPath;
               } catch (err) {
                 console.error('Session activation error:', err);
               }

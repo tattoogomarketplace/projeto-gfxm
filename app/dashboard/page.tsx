@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   dashboardPathForRole,
@@ -18,7 +17,6 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 const MAX_ATTEMPTS = 3;
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const storedRole = useAuthStore((s) => s.role);
   const redirected = useRef(false);
@@ -62,29 +60,28 @@ export default function DashboardPage() {
 
         if (payload?.autenticado === false) {
           redirected.current = true;
-          router.replace(LOGIN_PATH);
+          window.location.href = LOGIN_PATH;
           return;
         }
 
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           redirected.current = true;
-          router.replace(ONBOARDING_PATH);
+          window.location.href = ONBOARDING_PATH;
           return;
         }
 
         const role = parseAppRole(payload?.perfil?.role) || metadataRole;
         if (!role) {
           redirected.current = true;
-          router.replace(ONBOARDING_PATH);
+          window.location.href = ONBOARDING_PATH;
           return;
         }
 
         redirected.current = true;
-        router.replace(
+        window.location.href =
           role === 'tatuador' && payload?.perfil?.kyc_status !== 'aprovado'
             ? postSignupPathForRole(role)
-            : dashboardPathForRole(role)
-        );
+            : dashboardPathForRole(role);
       } catch {
         if (cancelled || redirected.current) return;
 
@@ -100,7 +97,7 @@ export default function DashboardPage() {
 
         if (metadataRole) {
           redirected.current = true;
-          router.replace(dashboardPathForRole(metadataRole));
+          window.location.href = dashboardPathForRole(metadataRole);
           return;
         }
 
@@ -112,7 +109,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, storedRole, router]);
+  }, [isLoaded, isSignedIn, user, storedRole]);
 
   if (!isLoaded || !isSignedIn || !user) {
     return (
@@ -131,7 +128,7 @@ export default function DashboardPage() {
             attemptsRef.current = 0;
             setFailed(false);
             redirected.current = false;
-            router.refresh();
+            window.location.reload();
           }}
           className="min-h-11 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
         >

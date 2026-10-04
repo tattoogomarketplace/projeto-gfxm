@@ -7,7 +7,6 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useClerk } from '@clerk/nextjs';
 import { useSignIn } from '@clerk/nextjs/legacy';
-import { useRouter } from 'next/navigation';
 import { Input } from '@/components/input';
 import Link from 'next/link';
 import { OtpInput } from '@/components/ui/otp-input';
@@ -34,7 +33,6 @@ function clerkErrorMessage(err: unknown): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
@@ -97,8 +95,7 @@ export default function LoginPage() {
           } catch (err) {
             console.error('Single-session enforcement error:', err);
           }
-          router.push('/dashboard');
-          router.refresh();
+          window.location.assign('/dashboard');
         } catch (err) {
           console.error('Session activation error:', err);
         }
@@ -238,8 +235,7 @@ export default function LoginPage() {
               const nextPath = nextPathRef.current;
               if (!nextPath) return;
               try {
-                router.push(nextPath);
-                router.refresh();
+                window.location.href = nextPath;
               } catch (err) {
                 console.error('Session activation error:', err);
               }

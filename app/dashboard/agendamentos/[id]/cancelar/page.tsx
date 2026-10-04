@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
 import { toast } from 'sonner';
 import { GlassContainer } from '@/components/ui/glass-container';
 
 export default function CancelarAgendamentoPage() {
   const { id } = useParams();
-  const router = useRouter();
   const [step, setStep] = useState<'validate' | 'verify'>('validate');
 
   const authHeaders = () => {
@@ -69,7 +68,9 @@ export default function CancelarAgendamentoPage() {
             <h2 className="text-xl font-bold mb-4 text-center">Confirme o Cancelamento</h2>
             <TattooOTPInput
               onComplete={handleVerify}
-              onSuccess={() => router.push('/dashboard')}
+              onSuccess={() => {
+                window.location.href = '/dashboard';
+              }}
               length={6}
             />
           </>

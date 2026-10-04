@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { ChevronRight, FileText, Settings } from 'lucide-react';
@@ -17,7 +16,6 @@ import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
 
 export default function PerfilPage() {
-  const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
   const clerk = useClerk();
@@ -52,7 +50,7 @@ export default function PerfilPage() {
         }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
-          router.replace(ONBOARDING_PATH);
+          window.location.href = ONBOARDING_PATH;
           return;
         }
       } catch {
@@ -83,7 +81,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, router, setUser, storedUser?.fullName, storedUser?.email, storedUser?.id]);
+  }, [isLoaded, isSignedIn, user, setUser, storedUser?.fullName, storedUser?.email, storedUser?.id]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();
@@ -170,8 +168,7 @@ export default function PerfilPage() {
         // O usuário já foi removido no Clerk; a limpeza local é suficiente.
       }
       toast.success('Conta excluída com sucesso.');
-      router.push('/login');
-      router.refresh();
+      window.location.href = '/login';
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao desativar a conta.');
       setDeleting(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { TaskResetPassword, TaskSetupMFA } from '@clerk/nextjs';
 import {
   isBypassedSessionTask,
@@ -19,7 +19,6 @@ import {
  */
 export default function SessionTaskPage() {
   const params = useParams();
-  const router = useRouter();
 
   const raw = params?.task;
   const candidate = Array.isArray(raw) ? raw[0] : raw;
@@ -27,8 +26,8 @@ export default function SessionTaskPage() {
   const task: SessionTaskKey | null = isSessionTaskKey(candidate) ? candidate : null;
 
   useEffect(() => {
-    if (!task || bypassed) router.replace(SESSION_TASK_COMPLETE_URL);
-  }, [task, bypassed, router]);
+    if (!task || bypassed) window.location.href = SESSION_TASK_COMPLETE_URL;
+  }, [task, bypassed]);
 
   if (!task || bypassed) return null;
 

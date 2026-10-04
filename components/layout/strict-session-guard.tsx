@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
 import { checkCurrentSession } from '@/app/actions/auth-actions';
@@ -24,7 +23,6 @@ const POLL_INTERVAL_MS = 15000;
 export function StrictSessionGuard() {
   const { isLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
-  const router = useRouter();
 
   const [kicked, setKicked] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -103,10 +101,9 @@ export function StrictSessionGuard() {
     } catch {
       // Mesmo com falha do Clerk, garantimos a limpeza e a saída local.
     } finally {
-      router.replace('/login');
-      router.refresh();
+      window.location.href = '/login';
     }
-  }, [leaving, clerk, router]);
+  }, [leaving, clerk]);
 
   if (!kicked) return null;
 

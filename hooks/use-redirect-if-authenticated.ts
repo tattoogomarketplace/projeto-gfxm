@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 
 /**
@@ -15,13 +14,12 @@ export function useRedirectIfAuthenticated(enabled = true): {
   isLoaded: boolean;
   isSignedIn: boolean;
 } {
-  const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
 
   useEffect(() => {
     if (!enabled || !isLoaded || !isSignedIn) return;
-    router.replace('/dashboard');
-  }, [enabled, isLoaded, isSignedIn, router]);
+    window.location.href = '/dashboard';
+  }, [enabled, isLoaded, isSignedIn]);
 
   return { isLoaded, isSignedIn: !!isSignedIn };
 }

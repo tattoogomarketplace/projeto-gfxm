@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
@@ -30,7 +29,6 @@ function destinationForRole(role: AppRole, kycStatus?: string | null): string {
 }
 
 export default function DashboardOnboardingPage() {
-  const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
   const setUser = useAuthStore((s) => s.setUser);
@@ -120,7 +118,7 @@ export default function DashboardOnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, router, setRole]);
+  }, [isLoaded, isSignedIn, user, setRole]);
 
   const handleAdvance = async () => {
     if (submitting.current) return;
@@ -203,7 +201,7 @@ export default function DashboardOnboardingPage() {
       });
       setRole(persistedRole);
 
-      router.replace(destinationForRole(persistedRole, persistedKyc));
+      window.location.href = destinationForRole(persistedRole, persistedKyc);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Falha ao concluir o onboarding.';
       toast.error(message);
