@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth, useClerk, useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { ChevronRight, FileText, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
+import { AccountManagement } from '@/components/features/account-management';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
@@ -18,7 +19,6 @@ import { clearClientSession } from '@/lib/utils/session';
 
 export default function PerfilPage() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useAuth();
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
@@ -29,8 +29,6 @@ export default function PerfilPage() {
   const [nome, setNome] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
@@ -136,50 +134,6 @@ export default function PerfilPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (deleting) return;
-    setDeleting(true);
-    try {
-      // Renova o token de sessão do Clerk (skipCache) e envia como Bearer. O
-      // token antigo em localStorage (`tattoogo_token`) NÃO é uma credencial
-      // Clerk e fazia o backend rejeitar a requisição com 401.
-      let token: string | null = null;
-      try {
-        token = await getToken({ skipCache: true });
-      } catch {
-        token = null;
-      }
-
-      // Deletamos a conta no backend e SÓ encerramos a sessão após o 200 OK.
-      // Encerrar antes deixava a requisição sem credencial e resultava em 401.
-      const response = await fetch('/api/perfil/desativar', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload.erro || 'Falha ao desativar a conta.');
-      }
-
-      clearClientSession({ intentional: true });
-      try {
-        await clerk.signOut();
-      } catch {
-        // O usuário já foi removido no Clerk; a limpeza local é suficiente.
-      }
-      toast.success('Conta excluída com sucesso.');
-      window.location.href = '/login';
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao desativar a conta.');
-      setDeleting(false);
-    }
-  };
-
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
       <div className="flex min-h-full items-center justify-center p-10">
@@ -278,39 +232,7 @@ export default function PerfilPage() {
         </button>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-red-900/50 bg-red-950/20 p-4 transition-all hover:border-red-500/40">
-        <h2 className="text-lg font-bold text-red-400">Excluir conta</h2>
-        {!confirmDelete ? (
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="min-h-11 w-full rounded-xl border border-red-500/50 py-3 font-bold text-red-400 transition-all hover:border-red-500 hover:bg-red-500/10 active:scale-95"
-          >
-            Excluir conta
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                disabled={deleting}
-                className="min-h-11 rounded-xl border border-zinc-700 font-bold text-zinc-300"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="min-h-11 rounded-xl bg-red-600 font-bold text-white disabled:opacity-50"
-              >
-                {deleting ? <TattooMachineLoader compact label="Excluindo" /> : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+      <AccountManagement fallbackRole={role} />
 
       <TermsViewerModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </div>
