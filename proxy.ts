@@ -11,6 +11,16 @@ export default clerkMiddleware(async (auth, req) => {
   // Handler, portanto não participa do fluxo de sessão do middleware.
   if (pathname === CLERK_WEBHOOK_PATH) return;
 
+  // Clerk hosted paths flash during post-OTP limbo; catch-all to app routes.
+  const isSignInPath = pathname === '/sign-in' || pathname.startsWith('/sign-in/');
+  const isSignUpPath = pathname === '/sign-up' || pathname.startsWith('/sign-up/');
+  if (isSignInPath) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+  if (isSignUpPath) {
+    return NextResponse.redirect(new URL('/dashboard/onboarding', req.url));
+  }
+
   // Usuário já autenticado não deve ver login/cadastro: redireciona no servidor
   // (antes do render) para o painel, que resolve o papel canônico.
   const isAuthPage = AUTH_PAGES.some(

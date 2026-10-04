@@ -7,7 +7,7 @@ export function PasswordChangeForm() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useUser();
+  const { isLoaded, user } = useUser();
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -15,13 +15,15 @@ export function PasswordChangeForm() {
       if (!user) {
         throw new Error('Sessão expirada. Faça login novamente.');
       }
-      await user.updatePassword({ newPassword, currentPassword: currentPassword || undefined });
+      await user?.updatePassword({ newPassword, currentPassword: currentPassword || undefined });
       toast.success('Senha alterada com sucesso!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Falha ao alterar a senha.');
     }
     setLoading(false);
   };
+
+  if (!isLoaded) return null;
 
   return (
     <div className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">

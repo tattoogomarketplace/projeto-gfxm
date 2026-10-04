@@ -7,7 +7,7 @@ import { useUser } from '@clerk/nextjs';
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   const [bank, setBank] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useUser();
+  const { isLoaded, user } = useUser();
 
   const handleSave = async () => {
     setLoading(true);
@@ -27,7 +27,7 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
     }
 
     try {
-      await user.updateMetadata({
+      await user?.updateMetadata({
         unsafeMetadata: {
           bank_account: payload,
         },
@@ -38,6 +38,8 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
     }
     setLoading(false);
   };
+
+  if (!isLoaded) return null;
 
   return (
     <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">

@@ -11,7 +11,7 @@ import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
+import { AUTH_HYDRATION_GRACE_MS, isOnboardingComplete, ONBOARDING_PATH } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -34,9 +34,11 @@ export default function PerfilPage() {
   const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (!isLoaded || isSignedIn) return;
+    const graceTimer = window.setTimeout(() => {
       router.replace('/login');
-    }
+    }, AUTH_HYDRATION_GRACE_MS);
+    return () => window.clearTimeout(graceTimer);
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
@@ -50,10 +52,7 @@ export default function PerfilPage() {
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (isLoaded && !isSignedIn) {
-          router.replace('/login');
-          return;
-        }
+        if (isLoaded && !isSignedIn) return;
         // 401 com sessão Clerk viva = token ainda travado/inicializando.
         // Hidrata pelos dados do Clerk em vez de redirecionar ou lançar.
         if (response.status === 401) {

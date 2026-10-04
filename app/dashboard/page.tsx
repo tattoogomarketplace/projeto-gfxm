@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
+  AUTH_HYDRATION_GRACE_MS,
   dashboardPathForRole,
   isOnboardingComplete,
   LOGIN_PATH,
@@ -28,15 +29,19 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoaded || redirected.current) return;
 
-    // Sem sessão Clerk não há o que resolver: manda para o login em vez de
-    // manter o loader girando para sempre (o proxy não protege /dashboard).
-    if (!isSignedIn || !user) {
-      redirected.current = true;
-      router.replace(LOGIN_PATH);
-      return;
-    }
-
     let cancelled = false;
+
+    if (!isSignedIn || !user) {
+      const graceTimer = window.setTimeout(() => {
+        if (cancelled || redirected.current) return;
+        redirected.current = true;
+        router.replace(LOGIN_PATH);
+      }, AUTH_HYDRATION_GRACE_MS);
+      return () => {
+        cancelled = true;
+        window.clearTimeout(graceTimer);
+      };
+    }
 
     const resolveDestination = async () => {
       const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
