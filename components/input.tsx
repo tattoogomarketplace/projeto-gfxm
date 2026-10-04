@@ -40,7 +40,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               type="button"
               tabIndex={-1}
               onClick={() => setShowPassword((visible) => !visible)}
-              className="absolute inset-y-0 right-0 z-20 flex w-12 cursor-pointer items-center justify-center text-zinc-500 pointer-events-auto transition-colors hover:text-orange-500"
+              className={cn(
+                "absolute inset-y-0 right-0 z-20 flex w-12 cursor-pointer items-center justify-center pointer-events-auto transition-colors",
+                showPassword ? "text-orange-500" : "text-zinc-500"
+              )}
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
