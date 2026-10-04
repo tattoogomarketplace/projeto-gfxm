@@ -5,6 +5,7 @@ import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { Eruda } from "@/components/Eruda";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { CLERK_TASK_URLS } from "@/lib/utils/session-tasks";
@@ -93,6 +94,7 @@ export default function RootLayout({
           <Providers>
             <ThemeProvider>
               <PwaRegister />
+              <Eruda />
               <StrictSessionGuard />
               <SessionTaskGuard />
               <main className="h-full w-full overflow-y-auto env-safe-area">
