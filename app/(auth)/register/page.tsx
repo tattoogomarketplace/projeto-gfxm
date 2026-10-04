@@ -108,7 +108,7 @@ export default function RegisterPage() {
 
   useRedirectIfAuthenticated(!isVerifying && !showWelcome && !isActivating && !loading);
 
-  const { register, handleSubmit, control, setValue, formState: { errors, isValid } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, control, setValue, reset, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     mode: 'onChange',
     defaultValues: {
@@ -331,8 +331,21 @@ export default function RegisterPage() {
           <RoleSelector
             value={roleValue}
             onChange={(role) => {
-              setValue('role', role, { shouldValidate: true, shouldDirty: true });
+              if (role === roleValue) return;
+              reset({
+                role,
+                nome: '',
+                email: '',
+                password: '',
+                confirmPassword: '',
+                cpf: '',
+                dataNascimento: '',
+                responsavelNome: '',
+                responsavelCpf: '',
+              });
               setUserRole(role);
+              setMachineFailed(false);
+              setValidationError('');
             }}
           />
           <input type="hidden" {...register('role')} />
