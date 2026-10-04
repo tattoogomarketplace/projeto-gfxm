@@ -11,10 +11,12 @@ import {
   postSignupPathForRole,
 } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { isOnboardingGrace } from '@/lib/utils/session';
 
 /** Teto de tentativas antes de oferecer retry manual (evita loader infinito). */
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 40;
 
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -59,12 +61,19 @@ export default function DashboardPage() {
         };
 
         if (payload?.autenticado === false) {
+          if (isOnboardingGrace()) {
+            throw new Error('session-initializing');
+          }
           redirected.current = true;
           window.location.href = LOGIN_PATH;
           return;
         }
 
-        if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
+        if (!payload?.perfil) {
+          throw new Error('perfil-pending');
+        }
+
+        if (payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           redirected.current = true;
           window.location.href = ONBOARDING_PATH;
           return;
@@ -95,6 +104,12 @@ export default function DashboardPage() {
           return;
         }
 
+        if (isOnboardingGrace()) {
+          redirected.current = true;
+          window.location.href = ONBOARDING_PATH;
+          return;
+        }
+
         if (metadataRole) {
           redirected.current = true;
           window.location.href = dashboardPathForRole(metadataRole);
@@ -111,10 +126,14 @@ export default function DashboardPage() {
     };
   }, [isLoaded, isSignedIn, user, storedRole]);
 
+  const loadingRole =
+    (typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role : null) ||
+    storedRole;
+
   if (!isLoaded || !isSignedIn || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#121212]">
-        <TattooMachineLoader label="Conectando ao seu painel" />
+        <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
       </div>
     );
   }
@@ -135,7 +154,7 @@ export default function DashboardPage() {
           Tentar novamente
         </button>
       ) : (
-        <TattooMachineLoader label="Conectando ao seu painel" />
+        <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
       )}
     </div>
   );

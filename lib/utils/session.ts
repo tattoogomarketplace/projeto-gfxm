@@ -22,6 +22,45 @@ export function resetIntentionalSignOut(): void {
   intentionalSignOut = false;
 }
 
+const ONBOARDING_GRACE_KEY = `${APP_STORAGE_PREFIX}:onboarding-grace`;
+const ONBOARDING_GRACE_MS = 90_000;
+
+export function markOnboardingGrace(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(
+      ONBOARDING_GRACE_KEY,
+      String(Date.now() + ONBOARDING_GRACE_MS)
+    );
+  } catch {
+    // sessionStorage pode estar indisponível; o fluxo segue sem a marca.
+  }
+}
+
+export function isOnboardingGrace(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const until = Number(window.sessionStorage.getItem(ONBOARDING_GRACE_KEY) || 0);
+    if (!until) return false;
+    if (Date.now() > until) {
+      window.sessionStorage.removeItem(ONBOARDING_GRACE_KEY);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearOnboardingGrace(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(ONBOARDING_GRACE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 interface ClearClientSessionOptions {
   intentional?: boolean;
 }

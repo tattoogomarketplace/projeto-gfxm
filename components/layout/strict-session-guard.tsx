@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { checkCurrentSession } from '@/app/actions/auth-actions';
 import {
   isIntentionalSignOut,
+  isOnboardingGrace,
   resetIntentionalSignOut,
 } from '@/lib/utils/session';
 
@@ -42,6 +43,9 @@ export function StrictSessionGuard() {
         wasSignedIn.current = false;
         return;
       }
+      if (isOnboardingGrace()) {
+        return;
+      }
       kickToLogin();
     }
   }, [isLoaded, isSignedIn, kickToLogin]);
@@ -56,6 +60,7 @@ export function StrictSessionGuard() {
       try {
         const { status } = await checkCurrentSession();
         if (!stopped && status === 'revoked') {
+          if (isOnboardingGrace()) return;
           kickToLogin();
         }
       } catch {

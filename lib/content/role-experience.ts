@@ -1,4 +1,4 @@
-import type { AppRole } from '@/lib/utils/auth-redirect';
+import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 /**
  * Narrativa de onboarding guiada pela regra Past-Present-Future:
@@ -108,4 +108,12 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
 
 export function getRoleExperience(role: AppRole): RoleExperience {
   return ROLE_EXPERIENCE[role] ?? ROLE_EXPERIENCE.cliente;
+}
+
+export function getOnboardingLoadingMessage(role?: string | null): string {
+  const parsed = parseAppRole(role);
+  if (parsed === 'cliente') return 'Preparando seu estúdio de inspirações...';
+  if (parsed === 'tatuador') return 'Montando sua bancada de trabalho...';
+  if (parsed === 'estudio') return 'Configurando a gestão do seu estúdio...';
+  return 'Preparando seu espaço...';
 }

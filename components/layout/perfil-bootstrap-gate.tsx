@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 
 const RETRY_DELAY_MS = 1500;
 const MAX_RETRIES = 20;
@@ -57,39 +57,19 @@ export function PerfilBootstrapGate() {
   }, [router, exhausted]);
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#121212] px-6 text-center text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_60%)]"
-      />
-      <div className="relative flex flex-col items-center gap-6">
-        <span className="relative flex h-20 w-20 items-center justify-center">
-          <span className="absolute inset-0 rounded-full border-2 border-orange-500/20" />
-          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-r-orange-500/60 border-t-orange-500 shadow-[0_0_28px_rgba(249,115,22,0.55)]" />
-          <Sparkles className="h-7 w-7 text-orange-400" strokeWidth={1.75} />
-        </span>
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-            TattooGo MK
-          </p>
-          <h1 className="text-xl font-bold tracking-tight text-white">Preparando seu espaço...</h1>
-          <p className="mx-auto max-w-xs text-sm leading-relaxed text-zinc-400">
-            Estamos finalizando a criação do seu perfil. Isso leva só um instante.
-          </p>
-        </div>
-        {exhausted ? (
-          <button
-            type="button"
-            onClick={() => {
-              retriesRef.current = 0;
-              setExhausted(false);
-            }}
-            className="min-h-11 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
-          >
-            Tentar novamente
-          </button>
-        ) : null}
-      </div>
-    </div>
+    <OnboardingLoadingScreen variant="sparkles">
+      {exhausted ? (
+        <button
+          type="button"
+          onClick={() => {
+            retriesRef.current = 0;
+            setExhausted(false);
+          }}
+          className="min-h-11 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
+        >
+          Tentar novamente
+        </button>
+      ) : null}
+    </OnboardingLoadingScreen>
   );
 }

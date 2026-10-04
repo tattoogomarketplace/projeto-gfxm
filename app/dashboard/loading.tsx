@@ -1,4 +1,4 @@
-import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 
 /**
  * Fallback de navegação de TODO o segmento `/dashboard`.
@@ -10,9 +10,5 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
  * autenticação e a resolução do perfil acontecem no servidor.
  */
 export default function DashboardLoading() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#121212] px-6 text-center text-white">
-      <TattooMachineLoader label="Preparando seu espaço" />
-    </div>
-  );
+  return <OnboardingLoadingScreen />;
 }

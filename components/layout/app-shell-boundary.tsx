@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 
 /**
  * Fallback do Suspense que envolve o `AppShell`.
@@ -13,11 +13,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
  * de marca, garantindo feedback visual contínuo (nunca tela preta muda).
  */
 function AppShellFallback() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#121212] px-6">
-      <TattooMachineLoader label="Preparando seu espaço" />
-    </div>
-  );
+  return <OnboardingLoadingScreen />;
 }
 
 export function AppShellBoundary({

@@ -5,9 +5,10 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
-import { getRoleExperience } from '@/lib/content/role-experience';
+import { getOnboardingLoadingMessage, getRoleExperience } from '@/lib/content/role-experience';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { markOnboardingGrace } from '@/lib/utils/session';
 import {
   dashboardPathForRole,
   isOnboardingComplete,
@@ -42,6 +43,7 @@ export default function DashboardOnboardingPage() {
 
   useEffect(() => {
     if (!isLoaded) return;
+    markOnboardingGrace();
 
     let cancelled = false;
     /** Teto de tentativas da corrida pós-OTP (evita loader infinito). */
@@ -217,9 +219,12 @@ export default function DashboardOnboardingPage() {
   const content = getRoleExperience(effectiveRole).onboarding;
 
   if (!isLoaded || checking || !isSignedIn || !user) {
+    const loadingRole =
+      (typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role : null) ||
+      effectiveRole;
     return (
-      <div className="flex min-h-full items-center justify-center p-10">
-        <TattooMachineLoader label={content.activating} />
+      <div className="flex min-h-dvh items-center justify-center bg-[#121212] p-10">
+        <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
       </div>
     );
   }
