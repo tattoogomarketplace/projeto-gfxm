@@ -29,20 +29,19 @@ export default async function DashboardLayout({
   try {
     const { userId } = await resolvePerfilSessionFromIncomingRequest();
     clerkUserId = userId;
-  } catch {
+  } catch (error) {
+    console.error('[dashboard/layout] sessão Clerk indisponível', error);
     clerkUserId = null;
   }
 
-  // Transição pós-OTP: `auth()` devolve userId nulo. Nunca chamar Prisma
-  // nem renderizar children — o cliente hidrata e o waiter faz refresh.
   if (!clerkUserId) {
     return <ProfileWaiter />;
   }
 
   try {
     perfil = await findPerfilByClerkId(clerkUserId);
-  } catch {
-    // Erro transitório de banco não pode estourar o Error Boundary.
+  } catch (error) {
+    console.error('[dashboard/layout] prisma findPerfilByClerkId falhou', error);
     perfil = null;
   }
 

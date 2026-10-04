@@ -1,6 +1,8 @@
 import { TatuadorKycBlock } from '@/components/features/tatuador-kyc-block';
+import { SessionHydrating } from '@/components/features/session-hydrating';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { isKycApproved } from '@/lib/utils/auth-redirect';
+import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -19,8 +21,15 @@ export default async function TatuadorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const perfil = await requireDashboardPerfil('tatuador');
-  if (!perfil) return null;
+  let perfil = null;
+  try {
+    perfil = await requireDashboardPerfil('tatuador');
+  } catch (error) {
+    rethrowNextControlFlow(error);
+    console.error('[dashboard/tatuador/layout] sessão indisponível', error);
+    return <SessionHydrating />;
+  }
+  if (!perfil) return <SessionHydrating />;
 
   if (!isKycApproved(perfil?.kyc_status)) {
     return <TatuadorKycBlock userId={perfil?.clerk_id ?? ''} status={perfil?.kyc_status} />;

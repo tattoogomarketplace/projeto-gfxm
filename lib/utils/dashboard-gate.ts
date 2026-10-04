@@ -20,7 +20,20 @@ type GateResult = {
 };
 
 export async function requireDashboardSession(): Promise<GateResult | null> {
-  const { userId, user, metadataRole } = await resolvePerfilSessionFromIncomingRequest();
+  let userId: string | null = null;
+  let user = null;
+  let metadataRole = null;
+
+  try {
+    const session = await resolvePerfilSessionFromIncomingRequest();
+    userId = session.userId;
+    user = session.user;
+    metadataRole = session.metadataRole;
+  } catch (error) {
+    console.error('[dashboard-gate] sessão Clerk indisponível', error);
+    return null;
+  }
+
   if (!userId) {
     return null;
   }
@@ -40,7 +53,8 @@ export async function requireDashboardSession(): Promise<GateResult | null> {
     if (shouldReconcile) {
       perfil = await ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole);
     }
-  } catch {
+  } catch (error) {
+    console.error('[dashboard-gate] prisma findPerfilByClerkId falhou', error);
     perfil = null;
   }
 

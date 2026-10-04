@@ -1,6 +1,8 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { SessionHydrating } from '@/components/features/session-hydrating';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
+import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { resolveDisplayName } from '@/lib/utils/display-name';
@@ -16,8 +18,15 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
     redirect('/dashboard');
   }
 
-  const perfil = await requireDashboardPerfil(expectedRole);
-  if (!perfil) return null;
+  let perfil = null;
+  try {
+    perfil = await requireDashboardPerfil(expectedRole);
+  } catch (error) {
+    rethrowNextControlFlow(error);
+    console.error('[dashboard/role] sessão indisponível', error);
+    return <SessionHydrating />;
+  }
+  if (!perfil) return <SessionHydrating />;
   const experience = getRoleExperience(perfil?.role ?? expectedRole);
   const user = await currentUser();
   const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
