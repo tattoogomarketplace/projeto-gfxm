@@ -308,6 +308,14 @@ export default function LoginPage() {
               {...register('password')}
               error={errors.password?.message}
             />
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-gray-400 transition-colors hover:text-orange-500"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
           </div>
 
           <button
@@ -322,12 +330,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        <p className="text-center text-sm">
-          <Link href="/forgot-password" className="text-orange-500 hover:underline">
-            Esqueci minha senha
-          </Link>
-        </p>
 
         <p className="text-center text-sm text-zinc-500">
           Ainda não faz parte da elite?{' '}
