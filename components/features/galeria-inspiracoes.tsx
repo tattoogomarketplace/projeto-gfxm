@@ -17,7 +17,7 @@ import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
-  onStartConversation: (tatuadorId: string) => void;
+  onStartConversation: (tatuadorId: string, artworkId: string) => void;
 };
 
 const HEALING_OPTIONS: { value: GaleriaHealingFilter; label: string }[] = [

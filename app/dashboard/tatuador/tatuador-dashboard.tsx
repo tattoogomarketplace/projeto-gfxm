@@ -1,12 +1,13 @@
 'use client';
 
-import { CalendarDays, Images, MessageCircle } from 'lucide-react';
+import { Suspense } from 'react';
+import { CalendarDays, Images } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChatBox } from '@/components/features/chat/chat-box';
+import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
@@ -81,17 +82,10 @@ export default function TatuadorDashboard() {
       ) : null}
 
       {activeTab === 'chat' ? (
-        <section key="chat" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
-              <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold">Chat</h1>
-              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">Converse com clientes sobre sessões e orçamentos.</p>
-            </div>
-          </div>
-          <ChatBox />
+        <section key="chat" className="screen-fade-in -mx-4 min-h-0 flex-1 sm:-mx-8">
+          <Suspense fallback={<Skeleton className="h-[28rem] w-full rounded-2xl" />}>
+            <ChatWorkspace />
+          </Suspense>
         </section>
       ) : null}
     </div>

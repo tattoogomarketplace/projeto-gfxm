@@ -75,16 +75,21 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   }, [setRole]);
 
   useEffect(() => {
+    if (pathname.startsWith('/dashboard/chat')) {
+      setActiveTab('chat');
+      return;
+    }
     const tab = searchParams.get('tab');
     if (tab === 'portfolio' || tab === 'agendar' || tab === 'chat') {
       setActiveTab(tab);
     }
-  }, [searchParams, setActiveTab]);
+  }, [pathname, searchParams, setActiveTab]);
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
   const isAiChat = pathname.startsWith('/dashboard/ai');
   const isKycPendente = pathname.startsWith('/dashboard/kyc-pendente');
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
+  const isDedicatedChat = pathname.startsWith('/dashboard/chat');
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
   const hideTabs = isOnboarding || isAiChat || isKycPendente;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
@@ -92,11 +97,13 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const tabParam = searchParams.get('tab');
   const selectedTab: AppTab = isProfileSettings
     ? 'perfil'
-    : tabParam === 'agendar' || tabParam === 'chat' || tabParam === 'portfolio'
-      ? tabParam
-      : activeTab === 'perfil'
-        ? 'portfolio'
-        : activeTab;
+    : isDedicatedChat || tabParam === 'chat'
+      ? 'chat'
+      : tabParam === 'agendar' || tabParam === 'portfolio'
+        ? tabParam
+        : activeTab === 'perfil'
+          ? 'portfolio'
+          : activeTab;
   const headerTitle = isSettingsHub
     ? 'Configurações'
     : selectedTab === 'perfil'
@@ -115,6 +122,11 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     // em branco). A aba ativa é derivada do pathname.
     if (tab === 'perfil') {
       router.push('/dashboard/perfil');
+      return;
+    }
+    if (tab === 'chat') {
+      setActiveTab('chat');
+      router.push('/dashboard/chat');
       return;
     }
     setActiveTab(tab);

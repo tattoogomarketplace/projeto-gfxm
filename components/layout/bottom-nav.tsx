@@ -27,6 +27,7 @@ type BottomNavProps = {
 
 function resolveActiveTab(pathname: string, storeTab: AppTab): AppTab {
   if (pathname.startsWith('/dashboard/perfil')) return 'perfil';
+  if (pathname.startsWith('/dashboard/chat')) return 'chat';
   if (storeTab === 'agendar' || storeTab === 'chat' || storeTab === 'portfolio') {
     return storeTab;
   }
@@ -81,7 +82,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       <ul className="grid h-16 grid-cols-4 px-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
-          const href = item.tab === 'perfil' ? '/dashboard/perfil' : `${homePath}?tab=${item.tab}`;
+          const href =
+            item.tab === 'perfil'
+              ? '/dashboard/perfil'
+              : item.tab === 'chat'
+                ? '/dashboard/chat'
+                : `${homePath}?tab=${item.tab}`;
           return (
             <li key={item.tab} className="flex">
               <Link

@@ -8,6 +8,7 @@ export default function GaleriaClient() {
   const router = useRouter();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
+  const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-x-hidden bg-transparent px-4 pb-8 pt-5 text-neutral-900 dark:text-white sm:px-6">
@@ -17,10 +18,12 @@ export default function GaleriaClient() {
       />
       <div className="relative">
         <GaleriaInspiracoes
-          onStartConversation={(tatuadorId) => {
+          onStartConversation={(tatuadorId, artworkId) => {
             setPendingChatPeer(tatuadorId);
+            setPendingChatArtwork(artworkId);
             setActiveTab('chat');
-            router.push('/dashboard/cliente?tab=chat');
+            const params = new URLSearchParams({ artistId: tatuadorId, artworkId });
+            router.push(`/dashboard/chat?${params.toString()}`);
           }}
         />
       </div>

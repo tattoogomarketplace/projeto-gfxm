@@ -1,19 +1,16 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, MapPin, MessageCircle, Sparkles } from 'lucide-react';
+import { CalendarDays, Sparkles } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
-import { perfilService } from '@/lib/services/perfil-service';
-import { GeoFilter } from '@/components/shared/geo-filter';
-import { ChatBox } from '@/components/features/chat/chat-box';
+import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { GaleriaInspiracoes } from '@/components/features/galeria-inspiracoes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getRoleExperience } from '@/lib/content/role-experience';
-import type { Agendamento, ArtistaResumo } from '@/lib/types/database';
+import type { Agendamento } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
-import { cn } from '@/lib/utils';
 
 const EXPERIENCE = getRoleExperience('cliente').dashboard;
 
@@ -44,19 +41,11 @@ function SectionHeading({
 export default function ClienteDashboard() {
   const router = useRouter();
   const { data: agendamentos, isLoading } = useAgendamentos();
-  const [artistas, setArtistas] = useState<ArtistaResumo[]>([]);
-  const [cidade, setCidade] = useState('');
-  const [chatPeer, setChatPeer] = useState<string | null>(null);
-
-  useEffect(() => {
-    perfilService.listarArtistas({ cidade }).then(setArtistas);
-  }, [cidade]);
 
   const activeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
-  const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
-  const activeChatPeer = chatPeer ?? pendingChatPeer;
+  const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-x-hidden bg-transparent px-4 pb-8 pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:px-6">
@@ -134,70 +123,22 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'chat' && (
-          <section key="chat" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
-            <SectionHeading
-              icon={<MessageCircle className="h-5 w-5" strokeWidth={1.75} />}
-              title="Encontrar Artistas"
-              subtitle="Selecione um artista para iniciar uma conversa."
-            />
-            <GeoFilter onChange={setCidade} />
-            <div className="grid grid-cols-2 gap-3">
-              {(artistas ?? []).map((a) => {
-                const selected = activeChatPeer === a?.id;
-                const email = a?.email ?? '';
-                const initial = email.trim().charAt(0) || '?';
-                return (
-                  <button
-                    key={a?.id ?? email}
-                    onClick={() => {
-                      if (!a?.id) return;
-                      setChatPeer(a.id);
-                      setPendingChatPeer(null);
-                    }}
-                    className={cn(
-                      'group relative min-h-11 overflow-hidden rounded-xl border p-3 text-left transition-all active:scale-95',
-                      selected
-                        ? 'border-orange-500/60 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.25)]'
-                         : 'border-neutral-200 bg-white hover:border-orange-500/40 hover:bg-orange-500/5 dark:border-neutral-800 dark:bg-[#121212]'
-                    )}
-                  >
-                    <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold uppercase text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400">
-                      {initial}
-                    </span>
-                    <span className="mt-2 block truncate text-sm font-medium text-neutral-900 dark:text-white">
-                      {email || 'Artista'}
-                    </span>
-                    {a?.cidade ? (
-                      <span className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
-                        <MapPin className="h-3 w-3" strokeWidth={1.75} />
-                        {a.cidade}/{a?.estado ?? ''}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-            {artistas.length === 0 ? (
-              <GlassContainer className="border-dashed border-white/10 p-6 text-center">
-                <p className="text-sm text-zinc-400">Nenhum artista encontrado nesta região.</p>
-              </GlassContainer>
-            ) : null}
-            {activeChatPeer && (
-              <div className="mt-2">
-                <ChatBox destinatarioId={activeChatPeer} />
-              </div>
-            )}
+          <section key="chat" className="screen-fade-in -mx-4 min-h-0 flex-1 sm:-mx-6">
+            <Suspense fallback={<Skeleton className="h-[28rem] w-full rounded-2xl" />}>
+              <ChatWorkspace />
+            </Suspense>
           </section>
         )}
 
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <GaleriaInspiracoes
-              onStartConversation={(tatuadorId) => {
-                setChatPeer(tatuadorId);
-                setPendingChatPeer(null);
+              onStartConversation={(tatuadorId, artworkId) => {
+                setPendingChatPeer(tatuadorId);
+                setPendingChatArtwork(artworkId);
                 setActiveTab('chat');
-                router.replace('/dashboard/cliente?tab=chat', { scroll: false });
+                const params = new URLSearchParams({ artistId: tatuadorId, artworkId });
+                router.push(`/dashboard/chat?${params.toString()}`);
               }}
             />
           </section>

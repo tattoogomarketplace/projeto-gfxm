@@ -9,6 +9,8 @@ interface UiState {
   setActiveTab: (tab: AppTab) => void;
   pendingChatPeer: string | null;
   setPendingChatPeer: (id: string | null) => void;
+  pendingChatArtwork: string | null;
+  setPendingChatArtwork: (id: string | null) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -16,4 +18,6 @@ export const useUiStore = create<UiState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   pendingChatPeer: null,
   setPendingChatPeer: (id) => set({ pendingChatPeer: id }),
+  pendingChatArtwork: null,
+  setPendingChatArtwork: (id) => set({ pendingChatArtwork: id }),
 }));

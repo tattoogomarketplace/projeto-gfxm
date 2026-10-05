@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 
 type GaleriaCardProps = {
   item: GaleriaItem;
-  onStartConversation: (tatuadorId: string) => void;
+  onStartConversation: (tatuadorId: string, artworkId: string) => void;
 };
 
 export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
@@ -165,7 +165,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           type="button"
           onClick={() => {
             triggerHaptic('light');
-            onStartConversation(item.tatuadorId);
+            onStartConversation(item.tatuadorId, item.id);
           }}
           className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-4 text-sm font-semibold text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.18)] transition-all hover:border-orange-500 hover:bg-orange-500/20 hover:shadow-[0_0_24px_rgba(249,115,22,0.32)] active:scale-[0.98]"
         >
