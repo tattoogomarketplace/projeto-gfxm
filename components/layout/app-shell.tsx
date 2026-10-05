@@ -140,7 +140,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     <div
       className={cn(
         'luxury-canvas relative mx-auto flex min-h-dvh w-full flex-col text-neutral-900 dark:text-white',
-        hideTabs ? 'pb-[env(safe-area-inset-bottom)]' : 'pb-[calc(5.5rem+env(safe-area-inset-bottom))]'
+        hideTabs ? 'pb-[env(safe-area-inset-bottom,0px)]' : 'nav-safe-pad'
       )}
     >
       {isAiChat ? null : (

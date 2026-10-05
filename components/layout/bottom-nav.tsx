@@ -72,14 +72,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200/80 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-black/80 md:hidden',
+        'bottom-nav-safe fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200/80 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-black/80 md:hidden',
         conceal && 'pointer-events-none invisible'
       )}
-      style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
-      <ul className="grid h-16 grid-cols-4 px-1">
+      <ul className="mx-auto grid h-16 max-w-app grid-cols-4 px-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =

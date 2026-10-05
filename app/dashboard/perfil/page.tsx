@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { ChevronRight, Settings } from 'lucide-react';
-import { Input } from '@/components/input';
 import { AccountManagement } from '@/components/features/account-management';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
@@ -14,6 +13,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
+import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -29,7 +29,6 @@ export default function PerfilPage() {
   const [email, setEmail] = useState('');
   const [nome, setNome] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
@@ -83,42 +82,6 @@ export default function PerfilPage() {
     };
   }, [isLoaded, isSignedIn, user, setUser, setRole, router]);
 
-  const handleSaveName = async () => {
-    const nextName = nome.trim();
-    if (nextName.length < 2) {
-      toast.error('Informe seu nome real.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      if (!user) {
-        throw new Error('Sessão expirada. Faça login novamente.');
-      }
-      const parts = nextName.split(/\s+/);
-      await user.update({
-        firstName: parts[0],
-        lastName: parts.slice(1).join(' ') || undefined,
-      });
-      await user.updateMetadata({
-        unsafeMetadata: {
-          full_name: nextName,
-          nome: nextName,
-        },
-      });
-      setUser({
-        id: user?.id ?? '',
-        email: user?.primaryEmailAddress?.emailAddress ?? email,
-        fullName: nextName,
-      });
-      toast.success('Nome atualizado com sucesso.');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar o nome.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleLogout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -141,46 +104,38 @@ export default function PerfilPage() {
     );
   }
 
+  const roleLabel = role ? ROLE_EXPERIENCE[role].label : 'Conta';
+  const initials = (nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A';
+
   return (
     <div className="screen-fade-in min-h-dvh flex flex-col space-y-6 bg-transparent p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
         />
         <div className="relative flex items-center gap-3">
-          <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/40 bg-white text-lg font-bold uppercase text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
-            {(nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A'}
+          <span className="flex h-14 w-14 min-h-14 min-w-14 items-center justify-center rounded-full border border-orange-500/40 bg-white text-xl font-bold uppercase text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
+            {initials}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-              Perfil
+              {roleLabel}
             </p>
             <h1 className="mt-0.5 truncate bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-              {nome || 'Artista'}
+              {nome || roleLabel}
             </h1>
             <p className="mt-1 truncate text-sm text-zinc-400">{maskEmail(email)}</p>
           </div>
+          <Link
+            href="/dashboard/perfil/configuracoes"
+            aria-label="Abrir configurações"
+            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-[#FF5722]/10 hover:text-[#FF5722] active:scale-[0.98]"
+          >
+            <Settings className="h-5 w-5" strokeWidth={1.75} />
+          </Link>
         </div>
       </header>
-
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
-        <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Editar nome</h2>
-        <Input
-          label="Nome real"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className="focus:ring-orange-500"
-        />
-        <button
-          type="button"
-          onClick={handleSaveName}
-          disabled={saving}
-          className="min-h-11 w-full rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
-        >
-          {saving ? <TattooMachineLoader compact label="Salvando" /> : 'Salvar nome'}
-        </button>
-      </section>
 
       {role === 'tatuador' ? <PortfolioUpload tatuadorId={user.id} /> : null}
 

@@ -10,6 +10,7 @@ import {
   Languages,
   LockKeyhole,
   Palette,
+  Settings,
   ShieldCheck,
   UserRoundCog,
 } from 'lucide-react';
@@ -22,7 +23,6 @@ import { SettingsRow } from '@/components/settings/settings-row';
 import { WorkingHoursSchedule } from '@/components/settings/working-hours-schedule';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { TERMS_VERSION } from '@/lib/terms';
 
 type SectionId = 'appearance' | 'schedule' | 'notifications' | 'security' | 'privacy';
 
@@ -65,7 +65,7 @@ export const SettingsHub = memo(function SettingsHub() {
           </Link>
           <div className="flex items-center gap-3">
             <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-[#FF5722]/40 bg-white text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.3)] dark:bg-[#1a1a1a]">
-              <Palette className="h-5 w-5" strokeWidth={1.75} />
+              <Settings className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF5722]">
@@ -164,7 +164,7 @@ export const SettingsHub = memo(function SettingsHub() {
           <SettingsRow
             icon={<FileText className="h-5 w-5" strokeWidth={1.75} />}
             title="Termos de Uso e Privacidade"
-            subtitle={`Versão ${TERMS_VERSION}`}
+            subtitle="Leia os termos vigentes da plataforma"
             onClick={openTerms}
             chevron
           />
