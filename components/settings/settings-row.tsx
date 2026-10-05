@@ -1,0 +1,77 @@
+'use client';
+
+import { memo, type ReactNode } from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type SettingsRowProps = {
+  icon: ReactNode;
+  title: string;
+  subtitle?: string;
+  trailing?: ReactNode;
+  href?: string;
+  onClick?: () => void;
+  chevron?: boolean;
+  className?: string;
+};
+
+export const SettingsRow = memo(function SettingsRow({
+  icon,
+  title,
+  subtitle,
+  trailing,
+  href,
+  onClick,
+  chevron = false,
+  className,
+}: SettingsRowProps) {
+  const inner = (
+    <>
+      <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#FF5722]/30 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_14px_rgba(255,87,34,0.18)]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-neutral-900 dark:text-white">{title}</span>
+        {subtitle ? (
+          <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
+            {subtitle}
+          </span>
+        ) : null}
+      </span>
+      {trailing}
+      {chevron ? (
+        <ChevronRight
+          className="h-4 w-4 min-h-4 min-w-4 shrink-0 text-zinc-500 transition-colors duration-200 group-hover:text-[#FF5722]"
+          strokeWidth={1.75}
+        />
+      ) : null}
+    </>
+  );
+
+  const classes = cn(
+    'group flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left',
+    'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5',
+    'transition-all duration-200 hover:border-[#FF5722]/40 hover:bg-[#FF5722]/5',
+    (href || onClick) && 'active:scale-[0.98]',
+    className
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {inner}
+      </Link>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={classes}>
+        {inner}
+      </button>
+    );
+  }
+
+  return <div className={classes}>{inner}</div>;
+});

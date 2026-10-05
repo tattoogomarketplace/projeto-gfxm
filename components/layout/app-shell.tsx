@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Settings } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -84,6 +86,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const isAiChat = pathname.startsWith('/dashboard/ai');
   const isKycPendente = pathname.startsWith('/dashboard/kyc-pendente');
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
+  const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
   const hideTabs = isOnboarding || isAiChat || isKycPendente;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
@@ -137,6 +140,15 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
+            {hideTabs || isSettingsHub ? null : (
+              <Link
+                href="/dashboard/perfil/configuracoes"
+                aria-label="Abrir configurações"
+                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-[#FF5722]/10 hover:text-[#FF5722] active:scale-[0.98]"
+              >
+                <Settings className="h-5 w-5" strokeWidth={1.75} />
+              </Link>
+            )}
           </div>
         </div>
         {hideTabs || !role ? null : (

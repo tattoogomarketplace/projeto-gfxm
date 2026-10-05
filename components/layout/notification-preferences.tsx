@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { memo, useCallback, useSyncExternalStore } from 'react';
 import {
   BellRing,
   CalendarClock,
@@ -51,7 +51,7 @@ const OPTIONS: Array<{
   },
 ];
 
-function PreferenceToggle({
+const PreferenceToggle = memo(function PreferenceToggle({
   checked,
   onChange,
   labelledBy,
@@ -89,9 +89,15 @@ function PreferenceToggle({
       </span>
     </button>
   );
-}
+});
 
-export function NotificationPreferences() {
+type NotificationPreferencesProps = {
+  embedded?: boolean;
+};
+
+export const NotificationPreferences = memo(function NotificationPreferences({
+  embedded = false,
+}: NotificationPreferencesProps) {
   const prefs = useSyncExternalStore(
     subscribeNotificationPrefs,
     getNotificationPrefsSnapshot,
@@ -99,26 +105,17 @@ export function NotificationPreferences() {
   );
   const { triggerHaptic } = useHapticFeedback();
 
-  const handleToggle = (key: NotificationPrefKey, title: string) => {
-    const nextValue = !prefs[key];
-    setNotificationPref(key, nextValue);
-    triggerHaptic(nextValue ? 'success' : 'light');
-    toast.success(nextValue ? `${title} ativado.` : `${title} desativado.`);
-  };
+  const handleToggle = useCallback(
+    (key: NotificationPrefKey, title: string) => {
+      const nextValue = !prefs[key];
+      setNotificationPref(key, nextValue);
+      triggerHaptic(nextValue ? 'success' : 'light');
+      toast.success(nextValue ? `${title} ativado.` : `${title} desativado.`);
+    },
+    [prefs, triggerHaptic]
+  );
 
-  return (
-    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#FF5722]/30 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.22)]">
-          <BellRing className="h-5 w-5" strokeWidth={1.75} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-[#FF5722]">Central de Notificações</h2>
-          <p className="mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
-            Escolha o que chega no e-mail e no app. A alteração é salva neste dispositivo na hora.
-          </p>
-        </div>
-      </div>
+  const list = (
       <div className="space-y-2">
         {OPTIONS.map((option) => {
           const Icon = option.icon;
@@ -164,6 +161,24 @@ export function NotificationPreferences() {
           );
         })}
       </div>
+  );
+
+  if (embedded) return list;
+
+  return (
+    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#FF5722]/30 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.22)]">
+          <BellRing className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-bold text-[#FF5722]">Central de Notificações</h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
+            Escolha o que chega no e-mail e no app. A alteração é salva neste dispositivo na hora.
+          </p>
+        </div>
+      </div>
+      {list}
     </section>
   );
-}
+});

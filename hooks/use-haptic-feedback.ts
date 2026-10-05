@@ -4,20 +4,21 @@
  * e evitar chamadas órfãs ao navigator.vibrate.
  */
 
-export const useHapticFeedback = () => {
-  const triggerHaptic = (type: 'light' | 'medium' | 'heavy' | 'success' = 'light') => {
-    // Verificação de segurança para execução apenas em ambiente de browser/mobile
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      const patterns = {
-        light: 50,
-        medium: 50,
-        heavy: [200, 100, 200],
-        success: [30, 50, 30],
-      };
+import { useCallback } from 'react';
 
-      navigator.vibrate(patterns[type]);
+const PATTERNS: Record<'light' | 'medium' | 'heavy' | 'success', number | number[]> = {
+  light: 50,
+  medium: 50,
+  heavy: [200, 100, 200],
+  success: [30, 50, 30],
+};
+
+export const useHapticFeedback = () => {
+  const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success' = 'light') => {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(PATTERNS[type]);
     }
-  };
+  }, []);
 
   return { triggerHaptic };
 };

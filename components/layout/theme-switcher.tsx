@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { memo, useCallback, useSyncExternalStore } from 'react';
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -44,17 +44,20 @@ const THEMES: Array<{
 
 const emptySubscribe = () => () => undefined;
 
-export function ThemeSwitcher() {
+export const ThemeSwitcher = memo(function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const { triggerHaptic } = useHapticFeedback();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const active = (mounted ? theme : 'dark') as AppTheme;
 
-  const handleSelect = (next: AppTheme) => {
-    triggerHaptic('light');
-    setTheme(next);
-  };
+  const handleSelect = useCallback(
+    (next: AppTheme) => {
+      triggerHaptic('light');
+      setTheme(next);
+    },
+    [setTheme, triggerHaptic]
+  );
 
   return (
     <div
@@ -123,4 +126,4 @@ export function ThemeSwitcher() {
       })}
     </div>
   );
-}
+});
