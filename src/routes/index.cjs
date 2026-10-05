@@ -10,10 +10,12 @@ const studiosRoutes = require("./studios.routes.cjs");
 const perfilRoutes = require("./perfil.routes.cjs");
 const artistScheduleRoutes = require("./artist-schedule.routes.cjs");
 const artistPortfolioRoutes = require("./artist-portfolio.routes.cjs");
+const galeriaRoutes = require("./galeria.routes.cjs");
 
 const router = Router();
 
 router.use("/catalogo", catalogoRoutes);
+router.use("/galeria", galeriaRoutes);
 router.use("/auth", authRoutes);
 router.use("/chat", chatRoutes);
 router.use("/portfolio", portfolioRoutes);

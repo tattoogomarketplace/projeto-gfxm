@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
-import { CalendarDays, Images, MapPin, MessageCircle, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CalendarDays, MapPin, MessageCircle, Sparkles } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { perfilService } from '@/lib/services/perfil-service';
 import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
-import { PortfolioCard } from '@/components/features/portfolio-card';
+import { GaleriaInspiracoes } from '@/components/features/galeria-inspiracoes';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getCachedFeed } from '@/lib/catalogo';
 import { getRoleExperience } from '@/lib/content/role-experience';
-import type { Agendamento, ArtistaResumo, FeedItem } from '@/lib/types/database';
+import type { Agendamento, ArtistaResumo } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { cn } from '@/lib/utils';
 
@@ -42,21 +42,21 @@ function SectionHeading({
 }
 
 export default function ClienteDashboard() {
+  const router = useRouter();
   const { data: agendamentos, isLoading } = useAgendamentos();
   const [artistas, setArtistas] = useState<ArtistaResumo[]>([]);
   const [cidade, setCidade] = useState('');
   const [chatPeer, setChatPeer] = useState<string | null>(null);
-  const [feed, setFeed] = useState<FeedItem[]>([]);
 
   useEffect(() => {
     perfilService.listarArtistas({ cidade }).then(setArtistas);
   }, [cidade]);
 
-  useEffect(() => {
-    getCachedFeed().then(setFeed).catch(() => setFeed([]));
-  }, []);
-
   const activeTab = useUiStore((s) => s.activeTab);
+  const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
+  const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
+  const activeChatPeer = chatPeer ?? pendingChatPeer;
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-x-hidden bg-transparent px-4 pb-8 pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:px-6">
@@ -143,13 +143,17 @@ export default function ClienteDashboard() {
             <GeoFilter onChange={setCidade} />
             <div className="grid grid-cols-2 gap-3">
               {(artistas ?? []).map((a) => {
-                const selected = chatPeer === a?.id;
+                const selected = activeChatPeer === a?.id;
                 const email = a?.email ?? '';
                 const initial = email.trim().charAt(0) || '?';
                 return (
                   <button
                     key={a?.id ?? email}
-                    onClick={() => a?.id && setChatPeer(a.id)}
+                    onClick={() => {
+                      if (!a?.id) return;
+                      setChatPeer(a.id);
+                      setPendingChatPeer(null);
+                    }}
                     className={cn(
                       'group relative min-h-11 overflow-hidden rounded-xl border p-3 text-left transition-all active:scale-95',
                       selected
@@ -178,9 +182,9 @@ export default function ClienteDashboard() {
                 <p className="text-sm text-zinc-400">Nenhum artista encontrado nesta região.</p>
               </GlassContainer>
             ) : null}
-            {chatPeer && (
+            {activeChatPeer && (
               <div className="mt-2">
-                <ChatBox destinatarioId={chatPeer} />
+                <ChatBox destinatarioId={activeChatPeer} />
               </div>
             )}
           </section>
@@ -188,32 +192,14 @@ export default function ClienteDashboard() {
 
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
-            <SectionHeading
-              icon={<Images className="h-5 w-5" strokeWidth={1.75} />}
-              title="Galeria de Inspiração"
-              subtitle="Descubra estilos e curta as artes que combinam com você."
+            <GaleriaInspiracoes
+              onStartConversation={(tatuadorId) => {
+                setChatPeer(tatuadorId);
+                setPendingChatPeer(null);
+                setActiveTab('chat');
+                router.replace('/dashboard/cliente?tab=chat', { scroll: false });
+              }}
             />
-            {feed.length === 0 ? (
-              <GlassContainer className="border-dashed border-white/10 p-6 text-center">
-                <p className="text-sm text-zinc-400">Nenhuma arte disponível ainda.</p>
-              </GlassContainer>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {(feed ?? []).map((item) => (
-                  <PortfolioCard
-                    key={item?.id ?? item?.url_imagem}
-                    id={item?.id ?? ''}
-                    imageUrl={item?.url_imagem ?? ''}
-                    artistName={item?.estilo ?? ''}
-                    initialLikes={item?.likes_count || 0}
-                    style={item?.estilo}
-                    bodyPart={item?.body_part}
-                    sessionDuration={item?.session_duration}
-                    isHealed={item?.is_healed}
-                  />
-                ))}
-              </div>
-            )}
           </section>
         )}
       </div>

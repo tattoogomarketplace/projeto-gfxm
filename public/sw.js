@@ -12,7 +12,7 @@ const APP_SHELL = [
   '/apple-touch-icon.png'
 ];
 
-const DATA_PATHS = ['/api/catalogo/feed', '/api/catalogo/artistas', '/api/catalogo/cidades'];
+const DATA_PATHS = ['/api/catalogo/feed', '/api/catalogo/artistas', '/api/catalogo/cidades', '/api/galeria'];
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
