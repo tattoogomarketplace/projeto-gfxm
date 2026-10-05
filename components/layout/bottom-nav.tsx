@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
@@ -50,12 +51,17 @@ const NavIcon = memo(function NavIcon({
   return <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />;
 });
 
+const subscribeNoop = () => () => {};
+const clientTrue = () => true;
+const serverFalse = () => false;
+
 function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
   const role = useAuthStore((s) => s.role);
   const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { triggerHaptic } = useHapticFeedback();
+  const mounted = useSyncExternalStore(subscribeNoop, clientTrue, serverFalse);
 
   const conceal = hidden || !role || shouldHideNav(pathname);
   const homePath = role ? dashboardPathForRole(role) : '/dashboard';
@@ -69,16 +75,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [setActiveTab, triggerHaptic]
   );
 
-  return (
+  const nav = (
     <nav
       className={cn(
-        'bottom-nav-safe fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200/80 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-black/80 md:hidden',
+        'bottom-nav-safe fixed bottom-0 left-0 right-0 z-50 m-0 w-full md:hidden',
+        'border-t border-neutral-200/80 bg-white/80 backdrop-blur-xl',
+        'dark:border-white/10 dark:bg-[#121212]/80',
+        'pb-[max(1rem,env(safe-area-inset-bottom))]',
+        'pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]',
         conceal && 'pointer-events-none invisible'
       )}
+      style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: 0 }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
-      <ul className="mx-auto grid h-16 max-w-app grid-cols-4 px-1">
+      <ul className="mx-auto grid h-12 max-w-app grid-cols-4 px-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -95,7 +106,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 scroll={false}
                 onClick={() => handleSelect(item.tab)}
                 className={cn(
-                  'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold tracking-tight',
+                  'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-1',
+                  'text-[10px] font-medium leading-none tracking-tight',
                   'transition-colors duration-200 active:scale-[0.98]',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
                   active ? 'text-primary' : 'text-muted-foreground'
@@ -111,6 +123,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       </ul>
     </nav>
   );
+
+  if (!mounted) return nav;
+  return createPortal(nav, document.body);
 }
 
 export const BottomNav = memo(BottomNavInner);

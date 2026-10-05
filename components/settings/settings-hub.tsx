@@ -58,9 +58,9 @@ export const SettingsHub = memo(function SettingsHub() {
         <div className="relative space-y-3">
           <Link
             href="/dashboard/perfil"
-            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-sm font-medium text-zinc-400 transition-all duration-200 hover:text-[#FF5722] active:scale-[0.98]"
+            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transition-all duration-200 hover:text-[#FF5722] active:scale-[0.98]"
           >
-            <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.75} />
             Voltar ao perfil
           </Link>
           <div className="flex items-center gap-3">
