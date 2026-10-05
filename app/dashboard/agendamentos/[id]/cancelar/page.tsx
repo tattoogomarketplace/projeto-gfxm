@@ -50,7 +50,7 @@ export default function CancelarAgendamentoPage() {
   };
 
   return (
-    <div className="p-8 text-white min-h-screen bg-graphite flex flex-col items-center justify-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-graphite p-4 text-white sm:p-8 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
       <GlassContainer className="p-8 w-full max-w-md">
         {step === 'validate' ? (
           <>

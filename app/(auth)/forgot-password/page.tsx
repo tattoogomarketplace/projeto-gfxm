@@ -15,6 +15,7 @@ import { PasswordStrengthBar } from '@/components/features/password-strength-bar
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
+import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 
 const credentialsSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -58,11 +59,16 @@ export default function ForgotPasswordPage() {
   const [forceShow, setForceShow] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
 
-  useRedirectIfAuthenticated(step === 'credentials' && !isLoading && !resetComplete);
+  const { bridging: sessionBridge } = useRedirectIfAuthenticated(
+    step === 'credentials' && !isLoading && !resetComplete
+  );
 
   useEffect(() => {
     if (!resetComplete) return;
-    window.location.href = '/login?reset=success';
+    const timer = window.setTimeout(() => {
+      window.location.assign('/login?reset=success');
+    }, 160);
+    return () => window.clearTimeout(timer);
   }, [resetComplete]);
 
   const credentialsForm = useForm<CredentialsValues>({
@@ -195,16 +201,17 @@ export default function ForgotPasswordPage() {
 
   if (!isLoaded && !forceShow) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
+      <AuthScreen>
         <TattooMachineLoader compact label="Carregando" />
-      </div>
+      </AuthScreen>
     );
   }
 
   if (step === 'otp') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
-        <div className="w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl">
+      <AuthScreen>
+        <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+        <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">
               Verificação <span className="text-orange-500">OTP</span>
@@ -237,14 +244,15 @@ export default function ForgotPasswordPage() {
             Voltar
           </button>
         </div>
-      </div>
+      </AuthScreen>
     );
   }
 
   if (step === 'password') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
-        <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+      <AuthScreen>
+        <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+        <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">
               Nova <span className="text-orange-500">senha</span>
@@ -285,17 +293,18 @@ export default function ForgotPasswordPage() {
               disabled={isLoading || !passwordsMatch}
               className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
             >
-              {isLoading ? <TattooMachineLoader compact label="Salvando" /> : 'Salvar senha'}
-            </button>
-          </form>
+            {isLoading ? <TattooMachineLoader compact label="Salvando" /> : 'Salvar senha'}
+          </button>
+        </form>
         </div>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#121212] px-4">
-      <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+    <AuthScreen>
+      <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+      <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
             Recuperar <span className="text-orange-500">senha</span>
@@ -355,6 +364,6 @@ export default function ForgotPasswordPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthScreen>
   );
 }

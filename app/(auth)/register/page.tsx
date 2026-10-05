@@ -21,6 +21,7 @@ import { ONBOARDING_PATH, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
+import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
@@ -130,7 +131,9 @@ export default function RegisterPage() {
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const nextPathRef = useRef<string | null>(null);
 
-  useRedirectIfAuthenticated(!isVerifying && !showWelcome && !isActivating && !loading);
+  const { bridging: sessionBridge } = useRedirectIfAuthenticated(
+    !isVerifying && !showWelcome && !isActivating && !loading
+  );
 
   const { register, handleSubmit, control, setValue, reset, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -362,13 +365,14 @@ export default function RegisterPage() {
   }, [isEstudio, cnpjValue, razaoSocial, setValue]);
 
   return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-6 text-white">
+    <AuthScreen className="p-4 sm:p-6">
+      <AuthBridgeOverlay visible={sessionBridge || isActivating} label="Entrando" />
       <div
         id="clerk-captcha"
         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
       ></div>
       {isActivating ? (
-        <div className="flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl">
+        <div className="screen-fade-in flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-center shadow-2xl sm:p-8">
           <TattooMachineLoader label={getOnboardingLoadingMessage(userRole)} />
         </div>
       ) : !isLoaded && !forceShow ? (
@@ -376,7 +380,7 @@ export default function RegisterPage() {
       ) : showWelcome ? (
         <WelcomeGate role={userRole} />
       ) : isVerifying ? (
-        <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-2xl backdrop-blur-md">
+        <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl backdrop-blur-md sm:p-8">
           <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
           <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
           <TattooOTPVerification
@@ -387,11 +391,13 @@ export default function RegisterPage() {
               const nextPath = nextPathRef.current;
               if (!nextPath) return;
               setIsActivating(true);
-              try {
-                window.location.href = nextPath;
-              } catch (err) {
-                console.error('Session activation error:', err);
-              }
+              window.setTimeout(() => {
+                try {
+                  window.location.assign(nextPath);
+                } catch (err) {
+                  console.error('Session activation error:', err);
+                }
+              }, 160);
             }}
           />
           <button
@@ -406,7 +412,7 @@ export default function RegisterPage() {
           </button>
         </div>
       ) : (
-      <div className="screen-fade-in w-full max-w-md bg-zinc-950 p-8 rounded-2xl border border-zinc-800 shadow-xl">
+      <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl sm:p-8">
         <Link
           href="/login"
           className="-ml-2 mb-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-orange-500"
@@ -638,6 +644,6 @@ export default function RegisterPage() {
         onClose={() => setIsTermsModalOpen(false)}
         closeLabel="Fechar"
       />
-    </div>
+    </AuthScreen>
   );
 }

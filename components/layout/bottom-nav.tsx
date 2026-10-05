@@ -75,7 +75,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         'fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200/80 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-black/80 md:hidden',
         conceal && 'pointer-events-none invisible'
       )}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >

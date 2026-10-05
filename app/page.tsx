@@ -26,7 +26,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#121212] flex flex-col items-center justify-center text-white relative overflow-hidden">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#121212] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-white">
       <TermsModal
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}

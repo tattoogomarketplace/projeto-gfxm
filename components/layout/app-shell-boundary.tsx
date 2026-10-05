@@ -7,7 +7,7 @@ import { DashboardRouteSkeleton } from '@/components/ui/dashboard-route-skeleton
 
 function AppShellFallback() {
   return (
-    <div className="luxury-canvas relative mx-auto min-h-screen w-full pb-28 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
+    <div className="luxury-canvas relative mx-auto min-h-dvh w-full pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <header className="sticky top-0 z-40 shrink-0 border-b border-neutral-200/80 bg-white/70 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl dark:border-neutral-800 dark:bg-black/70">
         <div className="flex min-h-11 items-center px-4 pb-3">
           <span className="text-[17px] font-semibold tracking-tight">TattooGo MK</span>

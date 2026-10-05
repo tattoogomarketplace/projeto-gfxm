@@ -60,11 +60,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
   );
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Seleção de tema"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-3"
-    >
+    <div role="radiogroup" aria-label="Seleção de tema" className="space-y-2">
       {THEMES.map((option) => {
         const Icon = option.icon;
         const selected = active === option.id;
@@ -76,46 +72,37 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
             aria-checked={selected}
             onClick={() => handleSelect(option.id)}
             className={cn(
-              'group relative flex min-h-11 w-full flex-col overflow-hidden rounded-2xl border p-4 text-left',
-              'bg-white dark:bg-[#121212]',
-              'transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
+              'group flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left',
+              'transition-all duration-200 active:scale-[0.98]',
               selected
-                ? 'border-[#FF5722] ring-2 ring-[#FF5722]/20 shadow-[0_0_24px_rgba(255,87,34,0.22)]'
-                : 'border-neutral-200 hover:border-[#FF5722]/40 dark:border-neutral-800'
+                ? 'border-[#FF5722]/30 bg-[#FF5722]/5 shadow-[0_0_16px_rgba(255,87,34,0.16)]'
+                : 'border-neutral-200 bg-neutral-50 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-white/5'
             )}
           >
-            <div
-              aria-hidden
-              className={cn(
-                'mb-4 h-16 w-full rounded-xl border border-neutral-200 bg-gradient-to-br dark:border-neutral-800',
-                option.preview
-              )}
-            />
             <span
               className={cn(
-                'mb-3 flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300',
+                'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                 selected
-                  ? 'border-[#FF5722]/60 bg-[#FF5722]/15 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.28)]'
-                  : 'border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-300'
+                  ? 'border-[#FF5722]/50 bg-[#FF5722]/15 text-[#FF5722]'
+                  : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.75} />
             </span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF5722]">
-              {option.subtitle}
-            </span>
-            <span className="mt-1 text-base font-bold text-neutral-900 dark:text-white">
-              {option.title}
-            </span>
-            <span className="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
-              {option.description}
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-neutral-900 dark:text-white">
+                {option.title}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
+                {option.subtitle} · {option.description}
+              </span>
             </span>
             <span
               className={cn(
-                'absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full transition-all duration-300',
+                'flex h-6 w-6 min-h-6 min-w-6 items-center justify-center rounded-full transition-all duration-200',
                 selected
                   ? 'scale-100 bg-[#FF5722] text-black opacity-100'
-                  : 'scale-75 bg-white/10 text-transparent opacity-0'
+                  : 'scale-75 bg-transparent text-transparent opacity-0'
               )}
               aria-hidden
             >

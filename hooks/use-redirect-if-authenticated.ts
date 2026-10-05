@@ -13,13 +13,18 @@ import { useUser } from '@clerk/nextjs';
 export function useRedirectIfAuthenticated(enabled = true): {
   isLoaded: boolean;
   isSignedIn: boolean;
+  bridging: boolean;
 } {
   const { isLoaded, isSignedIn } = useUser();
+  const bridging = enabled && isLoaded && !!isSignedIn;
 
   useEffect(() => {
-    if (!enabled || !isLoaded || !isSignedIn) return;
-    window.location.href = '/dashboard';
-  }, [enabled, isLoaded, isSignedIn]);
+    if (!bridging) return;
+    const timer = window.setTimeout(() => {
+      window.location.assign('/dashboard');
+    }, 160);
+    return () => window.clearTimeout(timer);
+  }, [bridging]);
 
-  return { isLoaded, isSignedIn: !!isSignedIn };
+  return { isLoaded, isSignedIn: !!isSignedIn, bridging };
 }

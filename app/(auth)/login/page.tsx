@@ -15,6 +15,7 @@ import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
+import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -43,10 +44,11 @@ export default function LoginPage() {
   const [resending, setResending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
+  const [bridging, setBridging] = useState(false);
   const nextPathRef = useRef<string | null>(null);
   const resetToastShown = useRef(false);
 
-  useRedirectIfAuthenticated(!isVerifying && !isLoading);
+  const { bridging: sessionBridge } = useRedirectIfAuthenticated(!isVerifying && !isLoading && !bridging);
 
   useEffect(() => {
     if (resetToastShown.current) return;
@@ -105,7 +107,10 @@ export default function LoginPage() {
           } catch (err) {
             console.error('Single-session enforcement error:', err);
           }
-          window.location.assign('/dashboard');
+          setBridging(true);
+          window.setTimeout(() => {
+            window.location.assign('/dashboard');
+          }, 160);
         } catch (err) {
           console.error('Session activation error:', err);
         }
@@ -221,16 +226,17 @@ export default function LoginPage() {
 
   if (!isLoaded && !forceShow) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
+      <AuthScreen>
         <TattooMachineLoader compact label="Carregando" />
-      </div>
+      </AuthScreen>
     );
   }
 
   if (isVerifying) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#121212] px-4">
-        <div className="w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl">
+      <AuthScreen>
+        <AuthBridgeOverlay visible={bridging || sessionBridge} label="Entrando" />
+        <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">
               Verificação <span className="text-orange-500">OTP</span>
@@ -244,11 +250,14 @@ export default function LoginPage() {
             onSuccess={() => {
               const nextPath = nextPathRef.current;
               if (!nextPath) return;
-              try {
-                window.location.href = nextPath;
-              } catch (err) {
-                console.error('Session activation error:', err);
-              }
+              setBridging(true);
+              window.setTimeout(() => {
+                try {
+                  window.location.assign(nextPath);
+                } catch (err) {
+                  console.error('Session activation error:', err);
+                }
+              }, 160);
             }}
             length={6}
           />
@@ -275,13 +284,14 @@ export default function LoginPage() {
             Voltar
           </button>
         </div>
-      </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#121212] px-4">
-      <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-8">
+    <AuthScreen>
+      <AuthBridgeOverlay visible={bridging || sessionBridge} label="Entrando" />
+      <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
             TattooGo <span className="text-orange-500">MK</span>
@@ -338,6 +348,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthScreen>
   );
 }
