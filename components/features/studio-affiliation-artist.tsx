@@ -221,10 +221,10 @@ export function StudioAffiliationArtist() {
           {(pedidos ?? []).map((pedido) => (
             <div
               key={pedido?.id ?? pedido?.estudio?.nome}
-              className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-white/10"
             >
               <div>
-                <p className="font-medium text-white">{pedido?.estudio?.nome ?? 'Estúdio'}</p>
+                <p className="font-medium text-neutral-900 dark:text-white">{pedido?.estudio?.nome ?? 'Estúdio'}</p>
                 <p className="text-xs text-zinc-500">
                   {STATUS_LABEL[pedido?.status ?? ''] ?? pedido?.status ?? 'pendente'}
                 </p>

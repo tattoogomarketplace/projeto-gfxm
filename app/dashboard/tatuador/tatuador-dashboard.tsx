@@ -24,7 +24,7 @@ export default function TatuadorDashboard() {
       {activeTab === 'portfolio' ? (
         <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+            <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <Images className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div>
@@ -46,7 +46,7 @@ export default function TatuadorDashboard() {
       {activeTab === 'agendar' ? (
         <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+            <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div>
@@ -74,7 +74,7 @@ export default function TatuadorDashboard() {
                 </GlassContainer>
               ))}
               {(!agendamentos || agendamentos.length === 0) && (
-                <p className="text-zinc-400">Nenhum agendamento pendente.</p>
+                <p className="text-neutral-500 dark:text-zinc-400">Nenhum agendamento pendente.</p>
               )}
             </div>
           )}

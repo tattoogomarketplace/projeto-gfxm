@@ -42,7 +42,7 @@ function Chip({
       className={cn(
         'min-h-11 shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold tracking-tight transition-all active:scale-95',
         selected
-          ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
+          ? 'border-orange-500 bg-orange-500/15 text-orange-700 shadow-[0_0_16px_rgba(249,115,22,0.28)] dark:text-orange-300'
           : 'border-neutral-300 bg-white text-neutral-600 hover:border-orange-500/40 hover:text-neutral-900 dark:border-neutral-700 dark:bg-[#161616] dark:text-zinc-400 dark:hover:text-zinc-200'
       )}
     >
@@ -80,7 +80,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   return (
     <div className="space-y-5">
       <header className="flex items-start gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
           <Images className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
       <div className="space-y-3">
         <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
+          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
             Estilo
           </legend>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -124,7 +124,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </fieldset>
 
         <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
+          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
             Parte do corpo
           </legend>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -153,7 +153,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </fieldset>
 
         <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
+          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
             Cicatrização
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -176,7 +176,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-zinc-400 transition-colors hover:text-orange-300"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-neutral-500 transition-colors hover:text-orange-600 dark:text-zinc-400 dark:hover:text-orange-300"
           >
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
             Limpar filtros
@@ -192,17 +192,17 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           <Skeleton className="mb-4 h-56 w-full break-inside-avoid rounded-2xl" />
         </div>
       ) : isError ? (
-        <GlassContainer className="border-dashed border-white/10 p-6 text-center">
-          <p className="text-sm text-zinc-400">Não foi possível carregar a galeria agora.</p>
-          <p className="mt-1 text-xs text-zinc-500">Tente novamente em instantes.</p>
+        <GlassContainer className="border-dashed p-6 text-center">
+          <p className="text-sm text-neutral-500 dark:text-zinc-400">Não foi possível carregar a galeria agora.</p>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">Tente novamente em instantes.</p>
         </GlassContainer>
       ) : items.length === 0 ? (
-        <GlassContainer className="border-dashed border-white/10 p-6 text-center">
-          <Sparkles className="mx-auto h-6 w-6 text-orange-400" strokeWidth={1.75} />
-          <p className="mt-3 text-sm text-zinc-400">
+        <GlassContainer className="border-dashed p-6 text-center">
+          <Sparkles className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
+          <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
             {hasFilters ? 'Nenhuma arte encontrada com esses filtros.' : 'Nenhuma arte disponível ainda.'}
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
             {hasFilters
               ? 'Ajuste estilo, parte do corpo ou cicatrização para ampliar a busca.'
               : 'Quando tatuadores verificados publicarem, as artes aparecem aqui.'}

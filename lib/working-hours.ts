@@ -394,3 +394,39 @@ export function isDateWithinWorkingHours(schedule: WorkingHoursSchedule, date: D
 
   return true;
 }
+
+export function listUpcomingSlots(
+  schedule: WorkingHoursSchedule,
+  options?: {
+    from?: Date;
+    days?: number;
+    intervalMinutes?: number;
+    limit?: number;
+  }
+): string[] {
+  const from = options?.from instanceof Date && !Number.isNaN(options.from.getTime())
+    ? options.from
+    : new Date();
+  const days = options?.days && options.days > 0 ? options.days : 14;
+  const interval = options?.intervalMinutes && options.intervalMinutes > 0
+    ? options.intervalMinutes
+    : 60;
+  const limit = options?.limit && options.limit > 0 ? options.limit : 12;
+  const now = Date.now();
+  const cursor = new Date(from);
+  cursor.setSeconds(0, 0);
+  cursor.setMinutes(0);
+  cursor.setHours(cursor.getHours() + 1);
+
+  const horizon = new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
+  const slots: string[] = [];
+
+  while (cursor.getTime() < horizon.getTime() && slots.length < limit) {
+    if (cursor.getTime() > now && isDateWithinWorkingHours(schedule, cursor)) {
+      slots.push(cursor.toISOString());
+    }
+    cursor.setMinutes(cursor.getMinutes() + interval);
+  }
+
+  return slots;
+}

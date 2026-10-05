@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MessageCircle, Sparkles } from 'lucide-react';
+import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { bodyPartLabel, styleLabel } from '@/lib/portfolio-metadata';
 import type { ChatArtworkRef, ChatConversationDto, ChatPeer } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +48,9 @@ export function ChatWorkspace() {
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingSlots, setBookingSlots] = useState<string[]>([]);
+  const bookingIntentOpened = useRef(false);
 
   const selectedId = selectedPeer?.id ?? artistIdParam ?? pendingChatPeer;
   const artworkId = artwork?.id ?? artworkIdParam ?? pendingChatArtwork ?? undefined;
@@ -145,21 +150,45 @@ export function ChatWorkspace() {
     router.replace(`/dashboard/chat?artistId=${encodeURIComponent(peer.id)}`, { scroll: false });
   };
 
+  const openBooking = useCallback(
+    async (artistId: string, nextArtworkId?: string) => {
+      triggerHaptic('medium');
+      try {
+        const res = await fetch(`/api/artistas/${encodeURIComponent(artistId)}`, { cache: 'no-store' });
+        const json = (await res.json().catch(() => ({}))) as { availableSlots?: string[] };
+        setBookingSlots(Array.isArray(json.availableSlots) ? json.availableSlots : []);
+      } catch {
+        setBookingSlots([]);
+      }
+      if (nextArtworkId && artwork?.id !== nextArtworkId) {
+        await loadContext(artistId, nextArtworkId);
+      }
+      setBookingOpen(true);
+    },
+    [artwork?.id, loadContext, triggerHaptic]
+  );
+
+  useEffect(() => {
+    if (!bookingIntent || !selectedPeer?.id || bookingIntentOpened.current) return;
+    bookingIntentOpened.current = true;
+    void openBooking(selectedPeer.id, artworkId);
+  }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
+
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden px-4 pb-6 pt-5 text-white sm:px-6">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden px-4 pb-6 pt-5 text-neutral-900 dark:text-white sm:px-6">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
       />
 
       <div className="relative mb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
           TattooGo MK
         </p>
-        <h1 className="mt-1 bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+        <h1 className="mt-1 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
           Chat & Orçamentos
         </h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">
           Converse com o artista sobre a referência e solicite o orçamento na plataforma.
         </p>
       </div>
@@ -167,13 +196,13 @@ export function ChatWorkspace() {
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside
           className={cn(
-            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-[#121212]',
+            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none',
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
-          <div className="flex items-center gap-2 border-b border-neutral-800 px-4 py-3">
-            <MessageCircle className="h-4 w-4 text-orange-400" />
-            <p className="text-sm font-semibold text-white">Conversas</p>
+          <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+            <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+            <p className="text-sm font-semibold text-neutral-900 dark:text-white">Conversas</p>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {loadingList ? (
@@ -185,9 +214,9 @@ export function ChatWorkspace() {
             ) : null}
             {!loadingList && orderedConversations.length === 0 ? (
               <div className="px-3 py-8 text-center">
-                <Sparkles className="mx-auto h-5 w-5 text-orange-400" />
-                <p className="mt-3 text-sm text-zinc-400">Nenhuma conversa ainda.</p>
-                <p className="mt-1 text-xs text-zinc-500">
+                <Sparkles className="mx-auto h-5 w-5 text-orange-500 dark:text-orange-400" />
+                <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">Nenhuma conversa ainda.</p>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
                   Toque em Iniciar Conversa na galeria para pedir um orçamento.
                 </p>
               </div>
@@ -201,7 +230,7 @@ export function ChatWorkspace() {
                     'mb-1 flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all',
                     active
                       ? 'border-orange-500/50 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
-                      : 'border-transparent hover:border-neutral-800 hover:bg-white/5'
+                      : 'border-transparent hover:border-neutral-200 hover:bg-neutral-50 dark:hover:border-neutral-800 dark:hover:bg-white/5'
                   )}
                 >
                   <button
@@ -210,7 +239,7 @@ export function ChatWorkspace() {
                       triggerHaptic('light');
                       router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
                     }}
-                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-[#1a1a1a] text-sm font-semibold text-orange-400"
+                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400"
                     aria-label={`Abrir vitrine de ${item.peer.name}`}
                   >
                     {item.peer.initial}
@@ -221,14 +250,14 @@ export function ChatWorkspace() {
                     className="min-w-0 flex-1 text-left active:scale-[0.99]"
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-white">{item.peer.name}</span>
+                      <span className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{item.peer.name}</span>
                       {item.unreadCount > 0 ? (
                         <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
                           {item.unreadCount}
                         </span>
                       ) : null}
                     </span>
-                    <span className="mt-0.5 block truncate text-[11px] text-zinc-500">
+                    <span className="mt-0.5 block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
                       {item.lastMessage?.mensagem || 'Nova conversa de orçamento'}
                     </span>
                   </button>
@@ -244,7 +273,7 @@ export function ChatWorkspace() {
               <button
                 type="button"
                 onClick={() => setMobileThreadOpen(false)}
-                className="mb-3 flex min-h-11 items-center gap-2 text-sm text-zinc-400 lg:hidden"
+                className="mb-3 flex min-h-11 items-center gap-2 text-sm text-neutral-500 dark:text-zinc-400 lg:hidden"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Conversas
@@ -261,10 +290,33 @@ export function ChatWorkspace() {
                 triggerHaptic('light');
                 router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);
               }}
+              onOpenBooking={(artistId, nextArtworkId) => {
+                void openBooking(artistId, nextArtworkId);
+              }}
             />
           </div>
         </section>
       </div>
+
+      {selectedPeer ? (
+        <AtomicBookingSheet
+          artistId={selectedPeer.id}
+          artistName={selectedPeer.name}
+          slots={bookingSlots}
+          artworkId={artwork?.id}
+          artworkLabel={
+            artwork
+              ? `${styleLabel(artwork.style)}${artwork.bodyPart ? ` · ${bodyPartLabel(artwork.bodyPart)}` : ''}`
+              : undefined
+          }
+          open={bookingOpen}
+          onClose={() => setBookingOpen(false)}
+          onBooked={() => {
+            setActiveTab('agendar');
+            router.push('/dashboard/cliente?tab=agendar');
+          }}
+        />
+      ) : null}
     </div>
   );
 }

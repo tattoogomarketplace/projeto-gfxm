@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getArtistSchedule } from '@/lib/services/artist-schedule';
 import type { PortfolioItemDto } from '@/lib/portfolio-metadata';
-import { WEEKDAY_LABELS, type WorkingHoursSchedule } from '@/lib/working-hours';
+import { WEEKDAY_LABELS, listUpcomingSlots, type WorkingHoursSchedule } from '@/lib/working-hours';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -36,6 +36,7 @@ export type PublicArtistVitrine = {
   artist: PublicArtistProfile;
   items: PortfolioItemDto[];
   scheduleSummary: string[];
+  availableSlots: string[];
 };
 
 export function isArtistId(value: string): boolean {
@@ -109,12 +110,22 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
   const name = artistName(artist.nome);
   const studioName = (artist.studio?.nome ?? '').trim();
   const kycApproved = artist.kyc_status === 'aprovado';
+  const bookingEnabled = kycApproved && !artist.agenda_bloqueada;
   let scheduleSummary: string[] = [];
+  let availableSlots: string[] = [];
   try {
     const schedule = await getArtistSchedule(artistId);
     scheduleSummary = summarizeSchedule(schedule.schedule);
+    if (bookingEnabled) {
+      availableSlots = listUpcomingSlots(schedule.schedule, {
+        days: 14,
+        intervalMinutes: 60,
+        limit: 12,
+      });
+    }
   } catch {
     scheduleSummary = [];
+    availableSlots = [];
   }
 
   return {
@@ -126,7 +137,7 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       estado: artist.estado,
       studio: artist.studio ? { id: artist.studio.id, name: studioName || 'Estúdio' } : null,
       kycApproved,
-      bookingEnabled: kycApproved && !artist.agenda_bloqueada,
+      bookingEnabled,
     },
     items: rows.map((row) => ({
       id: row.id,
@@ -141,5 +152,6 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       descricao: row.descricao,
     })),
     scheduleSummary,
+    availableSlots,
   };
 }

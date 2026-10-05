@@ -11,15 +11,15 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', isLoading, children, ...props }, ref) => {
     const variants = {
-      primary: "bg-amber text-graphite hover:bg-amber-500 active:scale-95",
-      outline: "border border-amber text-amber hover:bg-amber/10 active:scale-95",
-      ghost: "text-amber hover:bg-amber/5 active:scale-95",
+      primary: "bg-orange-500 text-white hover:bg-orange-600 active:scale-95",
+      outline: "border border-orange-500 text-orange-500 hover:bg-orange-500/10 active:scale-95",
+      ghost: "text-orange-500 hover:bg-orange-500/5 active:scale-95",
     }
 
     return (
       <button
         className={cn(
-          "relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-bold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 focus:ring-offset-graphite",
+          "relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-bold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-orange-500/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#121212]",
           variants[variant],
           className
         )}

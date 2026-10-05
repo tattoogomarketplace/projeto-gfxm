@@ -34,7 +34,7 @@ export default function EstudioDashboard() {
           <div className="mt-6">
             <h3 className="font-bold mb-4">Visão Geral dos Artistas</h3>
             {agendamentos?.map((ag: Agendamento, index: number) => (
-              <div key={ag?.id ?? `agendamento-${index}`} className="text-sm border-b border-white/10 py-2">
+              <div key={ag?.id ?? `agendamento-${index}`} className="border-b border-neutral-200 py-2 text-sm dark:border-white/10">
                 Artista ID: {(ag?.tatuador_id ?? '').slice(0, 8) || '—'}... | Status: {ag?.status ?? 'pendente'}
               </div>
             ))}

@@ -307,22 +307,22 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
               </div>
               <div className="space-y-2 p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-white">{styleLabel(item.style)}</span>
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{styleLabel(item.style)}</span>
                   <span
                     className={cn(
                       'rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-wide',
                       item.isHealed
-                        ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
-                        : 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/40 dark:text-emerald-300'
+                        : 'border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-300'
                     )}
                   >
                     {healingLabel(item.isHealed)}
                   </span>
                 </div>
                 {item.descricao ? (
-                  <p className="line-clamp-3 text-xs leading-relaxed text-zinc-400">{item.descricao}</p>
+                  <p className="line-clamp-3 text-xs leading-relaxed text-neutral-500 dark:text-zinc-400">{item.descricao}</p>
                 ) : null}
-                <p className="flex items-center gap-1 text-xs text-zinc-400">
+                <p className="flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-400">
                   <MapPin className="h-3 w-3" strokeWidth={1.75} />
                   {bodyPartLabel(item.bodyPart)}
                   <Clock3 className="ml-2 h-3 w-3" strokeWidth={1.75} />
@@ -336,13 +336,13 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
       {modalOpen ? (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-orange-500/30 bg-[#121212] p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-orange-500/30 bg-white p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)] dark:bg-[#121212]">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
                   Curadoria
                 </p>
-                <h3 className="mt-1 text-lg font-bold text-white">Classificar peça</h3>
+                <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Classificar peça</h3>
               </div>
               <button
                 type="button"
@@ -409,7 +409,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
                   value={notes}
                   onChange={(event) => setNotes(event.target.value.slice(0, 180))}
                   rows={3}
-                  className="min-h-20 w-full resize-none rounded-xl border border-neutral-800 bg-black/40 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-orange-500/50"
+                  className="min-h-20 w-full resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#161616] dark:text-white dark:placeholder:text-zinc-500"
                   placeholder="Opcional. A curadoria converte em legenda formal de studio."
                 />
               </label>

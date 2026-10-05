@@ -53,7 +53,7 @@ export const SettingsHub = memo(function SettingsHub() {
       <header className="screen-fade-in relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[#FF5722]/20 blur-3xl"
+          className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
         />
         <div className="relative space-y-3">
           <Link

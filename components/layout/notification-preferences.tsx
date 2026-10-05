@@ -69,14 +69,14 @@ const PreferenceToggle = memo(function PreferenceToggle({
       onClick={onChange}
       className={cn(
         'relative inline-flex h-11 w-12 shrink-0 items-center justify-center rounded-full',
-        'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5722]/70'
+        'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70'
       )}
     >
       <span
         className={cn(
           'relative h-7 w-11 rounded-full transition-all duration-200',
           checked
-            ? 'bg-[#FF5722] shadow-[0_0_16px_rgba(255,87,34,0.45)]'
+            ? 'bg-[#F97316] shadow-[0_0_16px_rgba(249,115,22,0.45)]'
             : 'bg-neutral-300 dark:bg-zinc-700'
         )}
       >
@@ -127,7 +127,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
               className={cn(
                 'flex min-h-11 items-center gap-3 rounded-xl border px-3 py-3 transition-all duration-200',
                 checked
-                  ? 'border-[#FF5722]/30 bg-[#FF5722]/5'
+                  ? 'border-[#F97316]/30 bg-[#F97316]/5'
                   : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5'
               )}
             >
@@ -135,7 +135,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
                 className={cn(
                   'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                   checked
-                    ? 'border-[#FF5722]/50 bg-[#FF5722]/15 text-[#FF5722]'
+                    ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
                     : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
                 )}
               >
@@ -166,13 +166,13 @@ export const NotificationPreferences = memo(function NotificationPreferences({
   if (embedded) return list;
 
   return (
-    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#FF5722]/30 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.22)]">
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] shadow-[0_0_18px_rgba(249,115,22,0.22)]">
           <BellRing className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-[#FF5722]">Central de Notificações</h2>
+          <h2 className="text-lg font-bold text-[#F97316]">Central de Notificações</h2>
           <p className="mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
             Escolha o que chega no e-mail e no app. A alteração é salva neste dispositivo na hora.
           </p>

@@ -80,9 +80,15 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           alt={`${styleLabel(item.style)} por ${artistName}`}
           className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
         />
+        <button
+          type="button"
+          onClick={openArtistProfile}
+          className="absolute inset-0 z-[1]"
+          aria-label={`Abrir vitrine de ${artistName}`}
+        />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
 
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+        <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap gap-1.5">
           <span className="rounded-full border border-orange-500/40 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-300 backdrop-blur-md">
             {styleLabel(item.style)}
           </span>
@@ -98,14 +104,9 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           </span>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 translate-y-2 p-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] p-3 opacity-100 sm:translate-y-2 sm:opacity-0 sm:transition-all sm:duration-300 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
           <div className="rounded-xl border border-white/10 bg-black/55 p-3 backdrop-blur-xl">
-            <button
-              type="button"
-              onClick={openArtistProfile}
-              className="flex w-full items-center gap-2 text-left"
-              aria-label={`Abrir vitrine de ${artistName}`}
-            >
+            <div className="flex w-full items-center gap-2 text-left">
               <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold uppercase text-orange-400">
                 {item.artist?.initial || artistName.charAt(0) || 'A'}
               </span>
@@ -115,7 +116,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
                   {studioName ? studioName : 'Artista independente'}
                 </p>
               </div>
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -129,11 +130,11 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
             aria-label={`Abrir vitrine de ${artistName}`}
           >
             <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{artistName}</p>
-            <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-zinc-400">
               {studioName || 'Artista independente'}
             </p>
             {location ? (
-              <p className="mt-1 flex items-center gap-1 text-[11px] text-zinc-500">
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-neutral-500 dark:text-zinc-500">
                 <MapPin className="h-3 w-3" strokeWidth={1.75} />
                 {location}
               </p>
@@ -154,12 +155,12 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
                 transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               >
                 <Heart
-                  className={isLiked ? 'fill-orange-500 text-orange-500' : 'text-zinc-500 hover:text-zinc-300'}
+                  className={isLiked ? 'fill-orange-500 text-orange-500' : 'text-neutral-400 hover:text-orange-500 dark:text-zinc-500 dark:hover:text-zinc-300'}
                   size={22}
                 />
               </motion.div>
             </AnimatePresence>
-            <span className={isLiked ? 'font-medium text-orange-400' : 'font-medium text-zinc-400'}>
+            <span className={isLiked ? 'font-medium text-orange-600 dark:text-orange-400' : 'font-medium text-neutral-500 dark:text-zinc-400'}>
               {likes}
             </span>
           </button>
@@ -167,12 +168,12 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
 
         <div className="flex flex-wrap items-center gap-1.5">
           {item.bodyPart ? (
-            <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+            <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-neutral-700 dark:bg-transparent dark:text-zinc-400">
               {bodyPartLabel(item.bodyPart)}
             </span>
           ) : null}
           {item.sessionDuration ? (
-            <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+            <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-neutral-700 dark:bg-transparent dark:text-zinc-400">
               {sessionDurationLabel(item.sessionDuration)}
             </span>
           ) : null}
@@ -184,7 +185,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
             triggerHaptic('light');
             onStartConversation(item.tatuadorId, item.id);
           }}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-4 text-sm font-semibold text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.18)] transition-all hover:border-orange-500 hover:bg-orange-500/20 hover:shadow-[0_0_24px_rgba(249,115,22,0.32)] active:scale-[0.98]"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-4 text-sm font-semibold text-orange-600 shadow-[0_0_16px_rgba(249,115,22,0.18)] transition-all hover:border-orange-500 hover:bg-orange-500/20 hover:shadow-[0_0_24px_rgba(249,115,22,0.32)] active:scale-[0.98] dark:text-orange-300"
         >
           <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
           Iniciar Conversa / Orçamento

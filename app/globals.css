@@ -31,12 +31,12 @@
 
   :root.light {
     color-scheme: light;
-    --background: #FAFAF7;
+    --background: #F6F3EE;
     --foreground: #171717;
     --muted: #737373;
     --muted-foreground: #525252;
-    --border: #E5E5E5;
-    --card: #FFFFFF;
+    --border: #E8E2D9;
+    --card: #FFFDF9;
     --input: #FFFFFF;
   }
 
@@ -53,17 +53,17 @@
 
   .light {
     color-scheme: light;
-    --background: #FAFAF7;
+    --background: #F6F3EE;
     --foreground: #171717;
     --muted: #737373;
     --muted-foreground: #525252;
-    --border: #E5E5E5;
-    --card: #FFFFFF;
+    --border: #E8E2D9;
+    --card: #FFFDF9;
     --input: #FFFFFF;
-    --color-background: #FAFAF7;
+    --color-background: #F6F3EE;
     --color-foreground: #171717;
-    --color-border: #E5E5E5;
-    --color-card: #FFFFFF;
+    --color-border: #E8E2D9;
+    --color-card: #FFFDF9;
   }
 
   html {
@@ -212,19 +212,19 @@
   }
 
   .luxury-canvas {
-    background-color: #fafaf7;
+    background-color: #f6f3ee;
     background-image:
-      radial-gradient(120% 70% at 50% -8%, rgba(255, 87, 34, 0.14), transparent 58%),
-      radial-gradient(80% 50% at 100% 108%, rgba(255, 87, 34, 0.08), transparent 52%),
-      linear-gradient(to bottom, #f5f0ea, #fafaf7, #ffffff);
+      radial-gradient(120% 70% at 50% -8%, rgba(249, 115, 22, 0.10), transparent 58%),
+      radial-gradient(80% 50% at 100% 108%, rgba(249, 115, 22, 0.06), transparent 52%),
+      linear-gradient(to bottom, #f6f3ee, #fafaf7, #fffdf9);
   }
 
   .dark .luxury-canvas {
-    background-color: #000000;
+    background-color: #121212;
     background-image:
-      radial-gradient(120% 70% at 50% -8%, rgba(255, 87, 34, 0.16), transparent 58%),
-      radial-gradient(90% 55% at 100% 110%, rgba(255, 87, 34, 0.1), transparent 52%),
-      linear-gradient(to bottom, #0a0a0a, #171717, #000000);
+      radial-gradient(120% 70% at 50% -8%, rgba(249, 115, 22, 0.14), transparent 58%),
+      radial-gradient(90% 55% at 100% 110%, rgba(249, 115, 22, 0.08), transparent 52%),
+      linear-gradient(to bottom, #161616, #121212, #1a1a1a);
   }
 
   .tattoo-wallpaper {

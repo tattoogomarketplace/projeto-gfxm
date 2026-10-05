@@ -25,7 +25,7 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
+      <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
@@ -65,7 +65,7 @@ export default function ClienteDashboard() {
               <Sparkles className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
                 TattooGo MK
               </p>
               <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
@@ -93,26 +93,26 @@ export default function ClienteDashboard() {
                 {agendamentos?.map((ag: Agendamento, index: number) => (
                   <GlassContainer
                     key={ag?.id ?? `agendamento-${index}`}
-                    className="group relative min-h-11 overflow-hidden border-white/10 p-4 transition-colors hover:border-orange-500/40"
+                    className="group relative min-h-11 overflow-hidden p-4 transition-colors hover:border-orange-500/40"
                   >
                     <div
                       aria-hidden
                       className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition-colors group-hover:bg-orange-500/15"
                     />
                     <div className="relative flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-orange-400">
+                      <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">
                         {ag?.status ?? 'pendente'}
                       </span>
-                      <span className="text-xs font-medium text-zinc-400">
+                      <span className="text-xs font-medium text-neutral-500 dark:text-zinc-400">
                         {ag?.data_hora ? new Date(ag.data_hora).toLocaleDateString() : '—'}
                       </span>
                     </div>
                   </GlassContainer>
                 ))}
                 {(!agendamentos || agendamentos.length === 0) && (
-                  <GlassContainer className="border-dashed border-white/10 p-6 text-center">
-                    <p className="text-sm text-zinc-400">Nenhum agendamento encontrado.</p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                  <GlassContainer className="border-dashed p-6 text-center">
+                    <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhum agendamento encontrado.</p>
+                    <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
                       Sua próxima obra-prima começa com um agendamento.
                     </p>
                   </GlassContainer>

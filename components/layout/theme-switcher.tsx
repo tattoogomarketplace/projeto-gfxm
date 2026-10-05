@@ -38,7 +38,7 @@ const THEMES: Array<{
     subtitle: 'Automático',
     description: 'Acompanha o tema do seu dispositivo automaticamente.',
     icon: Monitor,
-    preview: 'from-[#121212] via-[#F6F3EE] to-[#FF5722]/30',
+    preview: 'from-[#121212] via-[#F6F3EE] to-[#F97316]/30',
   },
 ];
 
@@ -75,15 +75,15 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
               'group flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left',
               'transition-all duration-200 active:scale-[0.98]',
               selected
-                ? 'border-[#FF5722]/30 bg-[#FF5722]/5 shadow-[0_0_16px_rgba(255,87,34,0.16)]'
-                : 'border-neutral-200 bg-neutral-50 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-white/5'
+                ? 'border-[#F97316]/30 bg-[#F97316]/5 shadow-[0_0_16px_rgba(249,115,22,0.16)]'
+                : 'border-neutral-200 bg-neutral-50 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-white/5'
             )}
           >
             <span
               className={cn(
                 'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                 selected
-                  ? 'border-[#FF5722]/50 bg-[#FF5722]/15 text-[#FF5722]'
+                  ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
                   : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
               )}
             >
@@ -101,7 +101,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
               className={cn(
                 'flex h-6 w-6 min-h-6 min-w-6 items-center justify-center rounded-full transition-all duration-200',
                 selected
-                  ? 'scale-100 bg-[#FF5722] text-black opacity-100'
+                  ? 'scale-100 bg-[#F97316] text-white opacity-100'
                   : 'scale-75 bg-transparent text-transparent opacity-0'
               )}
               aria-hidden

@@ -46,14 +46,14 @@ const DayToggle = memo(function DayToggle({
       onClick={onChange}
       className={cn(
         'relative inline-flex h-11 w-12 shrink-0 items-center justify-center rounded-full',
-        'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5722]/70'
+        'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70'
       )}
     >
       <span
         className={cn(
           'relative h-7 w-11 rounded-full transition-all duration-200',
           checked
-            ? 'bg-[#FF5722] shadow-[0_0_16px_rgba(255,87,34,0.45)]'
+            ? 'bg-[#F97316] shadow-[0_0_16px_rgba(249,115,22,0.45)]'
             : 'bg-neutral-300 dark:bg-zinc-700'
         )}
       >
@@ -95,7 +95,7 @@ const TimeField = memo(function TimeField({
         className={cn(
           'h-11 w-full min-h-11 rounded-xl border px-3 text-sm font-medium',
           'border-neutral-200 bg-white text-neutral-900 caret-neutral-900',
-          'transition-all duration-200 focus:border-[#FF5722] focus:outline-none focus:ring-1 focus:ring-[#FF5722]',
+          'transition-all duration-200 focus:border-[#F97316] focus:outline-none focus:ring-1 focus:ring-[#F97316]',
           'dark:border-neutral-800 dark:bg-[#1a1a1a] dark:text-white dark:caret-white',
           'scheme-light dark:scheme-dark',
           'disabled:cursor-not-allowed disabled:opacity-40'
@@ -173,7 +173,7 @@ const DayRow = memo(function DayRow({
       className={cn(
         'rounded-2xl border px-3 py-3 transition-all duration-200',
         day.active
-          ? 'border-[#FF5722]/30 bg-[#FF5722]/5'
+          ? 'border-[#F97316]/30 bg-[#F97316]/5'
           : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5'
       )}
     >
@@ -182,7 +182,7 @@ const DayRow = memo(function DayRow({
           className={cn(
             'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
             day.active
-              ? 'border-[#FF5722]/50 bg-[#FF5722]/15 text-[#FF5722]'
+              ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
               : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
           )}
         >
@@ -234,7 +234,7 @@ const DayRow = memo(function DayRow({
                   type="button"
                   disabled={disabled || !allowBreak}
                   onClick={() => onAddBreak(day.day)}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-xs font-semibold text-[#FF5722] transition-all duration-200 hover:bg-[#FF5722]/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-xs font-semibold text-[#F97316] transition-all duration-200 hover:bg-[#F97316]/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Plus className="h-4 w-4" strokeWidth={1.75} />
                   Adicionar
@@ -489,9 +489,9 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
         disabled={saving}
         className={cn(
           'flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold',
-          'bg-[#FF5722] text-black shadow-[0_0_18px_rgba(255,87,34,0.35)]',
+          'bg-[#F97316] text-white shadow-[0_0_18px_rgba(249,115,22,0.35)]',
           'transition-all duration-200 hover:bg-[#ff6a3c] active:scale-[0.98]',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5722]/70',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
           'disabled:cursor-wait disabled:opacity-70'
         )}
       >
