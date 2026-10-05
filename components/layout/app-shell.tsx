@@ -90,18 +90,24 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const hideTabs = isOnboarding || isAiChat || isKycPendente;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
+  const tabParam = searchParams.get('tab');
   const selectedTab: AppTab = isProfileSettings
     ? 'perfil'
-    : activeTab === 'perfil'
-      ? 'portfolio'
-      : activeTab;
-  const headerTitle = pathname.startsWith('/dashboard/perfil/configuracoes')
-    ? 'Configurações'
-    : isProfileSettings
-      ? 'Minha Jornada'
-      : role
-        ? ROLE_EXPERIENCE[role].dashboard.title
-        : title;
+    : tabParam === 'agendar' || tabParam === 'chat' || tabParam === 'portfolio'
+      ? tabParam
+      : activeTab === 'perfil'
+        ? 'portfolio'
+        : activeTab;
+  const headerTitle =
+    isSettingsHub || selectedTab === 'perfil'
+      ? 'Configurações de Perfil'
+      : selectedTab === 'agendar'
+        ? 'Agenda & Sessões'
+        : selectedTab === 'chat'
+          ? 'Chat & Mensagens'
+          : role
+            ? ROLE_EXPERIENCE[role].dashboard.title
+            : title;
 
   const handleTabChange = (tab: AppTab) => {
     // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
