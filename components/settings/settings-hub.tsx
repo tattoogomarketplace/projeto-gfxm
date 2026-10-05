@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   BellRing,
   ChevronLeft,
+  Clock3,
   FileText,
   Languages,
   LockKeyhole,
@@ -18,10 +19,11 @@ import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { SettingsAccordion } from '@/components/settings/settings-accordion';
 import { SettingsRow } from '@/components/settings/settings-row';
+import { WorkingHoursSchedule } from '@/components/settings/working-hours-schedule';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { TERMS_VERSION } from '@/lib/terms';
 
-type SectionId = 'appearance' | 'notifications' | 'security' | 'privacy';
+type SectionId = 'appearance' | 'schedule' | 'notifications' | 'security' | 'privacy';
 
 export const SettingsHub = memo(function SettingsHub() {
   const [openSection, setOpenSection] = useState<SectionId | null>('appearance');
@@ -70,7 +72,7 @@ export const SettingsHub = memo(function SettingsHub() {
                 Configurações
               </h1>
               <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">
-                Hub modular de aparência, alertas, senha e privacidade.
+                Hub modular de aparência, expediente, alertas, senha e privacidade.
               </p>
             </div>
           </div>
@@ -87,6 +89,18 @@ export const SettingsHub = memo(function SettingsHub() {
         delayMs={40}
       >
         <ThemeSwitcher />
+      </SettingsAccordion>
+
+      <SettingsAccordion
+        id="schedule"
+        title="Gestão de Horários e Expediente"
+        subtitle="Disponibilidade semanal, intervalos e folgas"
+        icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
+        open={openSection === 'schedule'}
+        onToggle={handleToggle}
+        delayMs={60}
+      >
+        <WorkingHoursSchedule />
       </SettingsAccordion>
 
       <SettingsAccordion
