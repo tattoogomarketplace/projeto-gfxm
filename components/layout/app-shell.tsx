@@ -160,11 +160,11 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
-            {hideTabs || isSettingsHub ? null : (
+            {hideTabs || isProfileSettings ? null : (
               <Link
                 href="/dashboard/perfil/configuracoes"
                 aria-label="Abrir configurações"
-                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-[#FF5722]/10 hover:text-[#FF5722] active:scale-[0.98]"
+                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-500 active:scale-[0.98]"
               >
                 <Settings className="h-5 w-5" strokeWidth={1.75} />
               </Link>

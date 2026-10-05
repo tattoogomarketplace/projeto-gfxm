@@ -139,11 +139,13 @@ export function StudioAffiliationArtist() {
   return (
     <GlassContainer className="space-y-5 p-5 sm:p-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
           Afiliação de estúdio
         </p>
-        <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Conectar-se a um estúdio verificado</h3>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+          Conectar-se a um estúdio verificado
+        </h3>
+        <p className="mt-1 text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
           Sua conta permanece independente. A afiliação só compartilha métricas de curtidas e
           agenda — sem submissão administrativa.
         </p>

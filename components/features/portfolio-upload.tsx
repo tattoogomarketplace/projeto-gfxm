@@ -258,17 +258,18 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-[#121212] p-6 shadow-[0_0_40px_rgba(249,115,22,0.08)]">
+      <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-orange-500/15 blur-3xl"
         />
-        <h2 className="relative mb-1 font-bold text-orange-400">Novo Post no Portfólio</h2>
-        <p className="relative mb-4 max-w-sm text-sm text-zinc-400">
-          Toda peça precisa de estilo, parte do corpo, duração e status de cicatrização antes de
-          entrar na Galeria de Inspirações.
+        <h3 className="relative mb-1 text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
+          Nova peça
+        </h3>
+        <p className="relative mb-4 max-w-sm text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
+          Estilo, parte do corpo, duração e cicatrização antes de entrar na galeria.
         </p>
-        <label className="relative flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral-700 bg-[#161616] transition-colors hover:border-orange-500">
+        <label className="relative flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:border-orange-500 dark:border-neutral-700 dark:bg-[#161616]">
           <ImagePlus className="mb-2 h-5 w-5 text-orange-400" strokeWidth={1.75} />
           <span className="text-sm text-zinc-400">
             {checking ? 'Verificando conteúdo...' : 'Tirar foto ou escolher da galeria'}
@@ -291,15 +292,15 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
           <Skeleton className="h-28 w-full rounded-2xl" />
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#121212] p-6 text-center">
-          <p className="text-sm text-zinc-400">Nenhuma peça publicada ainda.</p>
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-800 dark:bg-[#121212]">
+          <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma peça publicada ainda.</p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-2 gap-3">
           {items.map((item) => (
             <li
               key={item.id}
-              className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#121212]"
+              className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-[#121212]"
             >
               <div className="relative h-40 w-full overflow-hidden">
                 <OptimizedImage src={item.imageUrl} alt={styleLabel(item.style)} className="h-full w-full" />

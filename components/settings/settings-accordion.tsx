@@ -37,19 +37,19 @@ export const SettingsAccordion = memo(function SettingsAccordion({
         onClick={() => onToggle(id)}
         className="group flex min-h-11 w-full items-center gap-3 px-4 py-4 text-left transition-all duration-200 active:scale-[0.98]"
       >
-        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-[#FF5722]/40 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.22)]">
+        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-bold text-neutral-900 dark:text-white">{title}</span>
+          <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">{title}</span>
           <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
             {subtitle}
           </span>
         </span>
         <ChevronRight
           className={cn(
-            'h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-500 transition-transform duration-300 ease-out group-hover:text-[#FF5722]',
-            open && 'rotate-90 text-[#FF5722]'
+            'h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-500 transition-transform duration-300 ease-out group-hover:text-orange-500',
+            open && 'rotate-90 text-orange-500'
           )}
           strokeWidth={1.75}
         />

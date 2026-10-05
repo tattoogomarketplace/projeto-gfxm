@@ -107,12 +107,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
+        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
           <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-bold text-orange-500 dark:text-orange-400">Alterar Senha</h3>
-          <p className="mt-0.5 text-xs text-zinc-400">
+          <h3 className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">Alterar senha</h3>
+          <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
             Gestão segura via Clerk. Outras sessões serão encerradas após a troca.
           </p>
         </div>

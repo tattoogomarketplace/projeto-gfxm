@@ -58,26 +58,26 @@ export const SettingsHub = memo(function SettingsHub() {
         <div className="relative space-y-3">
           <Link
             href="/dashboard/perfil"
-            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transition-all duration-200 hover:text-[#FF5722] active:scale-[0.98]"
+            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transition-all duration-200 hover:text-orange-500 active:scale-[0.98]"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.75} />
             Voltar ao perfil
           </Link>
           <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-[#FF5722]/40 bg-white text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.3)] dark:bg-[#1a1a1a]">
+            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <Settings className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF5722]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
                 Central
               </p>
-              <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-[#FF5722] bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100">
+              <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
                 Configurações
               </h1>
-              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">
+              <p className="mt-1 text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
                 {isTatuador
-                  ? 'Hub modular de aparência, expediente, alertas, senha e privacidade.'
-                  : 'Hub modular de aparência, alertas, senha e privacidade.'}
+                  ? 'Tema, expediente, notificações, senha e privacidade.'
+                  : 'Tema, notificações, senha e privacidade.'}
               </p>
             </div>
           </div>
