@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useClerk, useUser } from '@clerk/nextjs';
-import { ChevronRight, FileText, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronRight, FileText, Palette, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
 import { AccountManagement } from '@/components/features/account-management';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
@@ -197,10 +198,28 @@ export default function PerfilPage() {
               Configurações
             </h2>
             <p className="mt-0.5 text-xs text-zinc-400">
-              Preferências e documentos legais da sua conta.
+              Preferências, aparência e documentos legais da sua conta.
             </p>
           </div>
         </div>
+        <Link
+          href="/dashboard/perfil/configuracoes"
+          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]"
+        >
+          <Palette className="h-5 w-5 min-h-5 min-w-5 text-orange-400" strokeWidth={1.75} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-white">
+              Aparência e tema
+            </span>
+            <span className="mt-0.5 block text-xs text-zinc-500">
+              Escuro, claro ou padrão do sistema
+            </span>
+          </span>
+          <ChevronRight
+            className="h-4 w-4 min-h-4 min-w-4 text-zinc-500 transition-colors group-hover:text-orange-400"
+            strokeWidth={1.75}
+          />
+        </Link>
         <button
           type="button"
           onClick={() => setShowTerms(true)}

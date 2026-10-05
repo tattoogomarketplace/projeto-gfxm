@@ -92,11 +92,13 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     : activeTab === 'perfil'
       ? 'portfolio'
       : activeTab;
-  const headerTitle = isProfileSettings
-    ? 'Minha Jornada'
-    : role
-      ? ROLE_EXPERIENCE[role].dashboard.title
-      : title;
+  const headerTitle = pathname.startsWith('/dashboard/perfil/configuracoes')
+    ? 'Configurações'
+    : isProfileSettings
+      ? 'Minha Jornada'
+      : role
+        ? ROLE_EXPERIENCE[role].dashboard.title
+        : title;
 
   const handleTabChange = (tab: AppTab) => {
     // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de

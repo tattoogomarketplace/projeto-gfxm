@@ -1,5 +1,3 @@
 'use client';
 
-export function ThemeToggle() {
-  return null;
-}
+export { ThemeSwitcher as ThemeToggle } from '@/components/layout/theme-switcher';

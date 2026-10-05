@@ -11,6 +11,7 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
 @layer base {
   :root {
@@ -27,6 +28,16 @@
     color-scheme: dark;
     --background: #121212;
     --foreground: #F5F5F5;
+  }
+
+  .light {
+    color-scheme: light;
+    --background: #F6F3EE;
+    --foreground: #1A1A1A;
+    --color-background: #F6F3EE;
+    --color-foreground: #1A1A1A;
+    --color-border: #E4DCD3;
+    --color-card: #FFFDF9;
   }
 
   html {
