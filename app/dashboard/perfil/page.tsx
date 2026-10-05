@@ -194,7 +194,9 @@ export default function PerfilPage() {
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium text-neutral-900 dark:text-white">Configurações</span>
           <span className="mt-0.5 block text-xs text-zinc-500">
-            Tema, expediente, notificações e segurança
+            {role === 'tatuador'
+              ? 'Tema, expediente, notificações e segurança'
+              : 'Tema, notificações e segurança'}
           </span>
         </span>
         <ChevronRight

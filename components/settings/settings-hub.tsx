@@ -21,11 +21,14 @@ import { SettingsAccordion } from '@/components/settings/settings-accordion';
 import { SettingsRow } from '@/components/settings/settings-row';
 import { WorkingHoursSchedule } from '@/components/settings/working-hours-schedule';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useAuthStore } from '@/hooks/use-auth-store';
 import { TERMS_VERSION } from '@/lib/terms';
 
 type SectionId = 'appearance' | 'schedule' | 'notifications' | 'security' | 'privacy';
 
 export const SettingsHub = memo(function SettingsHub() {
+  const role = useAuthStore((s) => s.role);
+  const isTatuador = role === 'tatuador';
   const [openSection, setOpenSection] = useState<SectionId | null>('appearance');
   const [showTerms, setShowTerms] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
@@ -72,7 +75,9 @@ export const SettingsHub = memo(function SettingsHub() {
                 Configurações
               </h1>
               <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">
-                Hub modular de aparência, expediente, alertas, senha e privacidade.
+                {isTatuador
+                  ? 'Hub modular de aparência, expediente, alertas, senha e privacidade.'
+                  : 'Hub modular de aparência, alertas, senha e privacidade.'}
               </p>
             </div>
           </div>
@@ -91,17 +96,19 @@ export const SettingsHub = memo(function SettingsHub() {
         <ThemeSwitcher />
       </SettingsAccordion>
 
-      <SettingsAccordion
-        id="schedule"
-        title="Gestão de Horários e Expediente"
-        subtitle="Disponibilidade semanal, intervalos e folgas"
-        icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
-        open={openSection === 'schedule'}
-        onToggle={handleToggle}
-        delayMs={60}
-      >
-        <WorkingHoursSchedule />
-      </SettingsAccordion>
+      {isTatuador ? (
+        <SettingsAccordion
+          id="schedule"
+          title="Gestão de Horários e Expediente"
+          subtitle="Disponibilidade semanal, intervalos e folgas"
+          icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
+          open={openSection === 'schedule'}
+          onToggle={handleToggle}
+          delayMs={60}
+        >
+          <WorkingHoursSchedule />
+        </SettingsAccordion>
+      ) : null}
 
       <SettingsAccordion
         id="notifications"
