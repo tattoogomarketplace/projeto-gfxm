@@ -103,22 +103,22 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   }, [messages]);
 
   return (
-    <div className="tattoo-wallpaper flex flex-col w-full h-150 bg-[#09090b] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
+    <div className="tattoo-wallpaper flex h-150 w-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-gray-800 dark:bg-[#09090b] dark:shadow-2xl">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-32 space-y-4">
         {messages.map((m: Message) => (
           <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-3 rounded-lg ${m.sender === 'user' ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
+            <div className={`max-w-[80%] rounded-lg p-3 ${m.sender === 'user' ? 'bg-orange-600 text-white' : 'bg-neutral-100 text-neutral-800 dark:bg-gray-800 dark:text-gray-200'}`}>
               {m.text}
             </div>
           </div>
         ))}
       </div>
-      <div className="p-4 bg-[#1a1a1a] border-t border-gray-800 flex items-center gap-2">
+      <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-50 p-4 dark:border-gray-800 dark:bg-[#1a1a1a]">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500"
+          className="flex-1 border-none bg-transparent text-neutral-900 outline-none placeholder-neutral-400 dark:text-white dark:placeholder-gray-500"
           placeholder={destinatarioId ? 'Digite sua mensagem...' : 'Selecione um artista para conversar'}
           disabled={!destinatarioId}
         />

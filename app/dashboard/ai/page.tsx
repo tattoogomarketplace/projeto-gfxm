@@ -78,7 +78,7 @@ export default function DashboardAiPage() {
   };
 
   return (
-    <div className="tattoo-wallpaper relative mx-auto flex min-h-dvh w-full max-w-app flex-col bg-[#09090b]">
+    <div className="tattoo-wallpaper relative mx-auto flex min-h-full w-full max-w-app flex-col bg-neutral-50 dark:bg-[#09090b]">
       <AiChatHeader />
 
       <div
@@ -89,14 +89,14 @@ export default function DashboardAiPage() {
           <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
             <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#F97316]/15 blur-2xl" />
             <div className="relative flex items-start gap-3">
-              <div className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/40 bg-[#1a1a1a] text-[#F97316] shadow-[0_0_16px_rgba(249,115,22,0.28)]">
+              <div className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/40 bg-white text-[#F97316] shadow-[0_0_16px_rgba(249,115,22,0.28)] dark:bg-[#1a1a1a]">
                 <Sparkles className="h-5 w-5" strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#F97316]">
                   Assistente IA
                 </p>
-                <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-[#F5F5F5]">
+                <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-[#F5F5F5]">
                   TattooGo Studio
                 </h2>
                 <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
@@ -116,7 +116,7 @@ export default function DashboardAiPage() {
                   'max-w-[84%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-[14px] leading-relaxed',
                   isUser
                     ? 'rounded-tr-md bg-[#F97316] text-black shadow-[0_0_16px_rgba(249,115,22,0.28)]'
-                    : 'rounded-tl-md border border-white/8 bg-[#1a1a1a] text-[#F5F5F5]'
+                    : 'rounded-tl-md border border-neutral-200 bg-white text-neutral-800 dark:border-white/8 dark:bg-[#1a1a1a] dark:text-[#F5F5F5]'
                 )}
               >
                 {message.content}
@@ -127,7 +127,7 @@ export default function DashboardAiPage() {
 
         {isLoading ? (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-tl-md border border-[#F97316]/25 bg-[#1a1a1a] px-4 py-3 text-[13px] text-[#F97316]">
+            <div className="rounded-2xl rounded-tl-md border border-[#F97316]/25 bg-white px-4 py-3 text-[13px] text-[#F97316] dark:bg-[#1a1a1a]">
               Traçando resposta...
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function DashboardAiPage() {
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
             placeholder="Pergunte sobre estilos, cuidados ou agenda..."
-            className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-[#F5F5F5] outline-none placeholder:text-zinc-500"
+            className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-[#F5F5F5] dark:placeholder:text-zinc-500"
             autoComplete="off"
             aria-label="Mensagem para o assistente"
           />
@@ -155,7 +155,7 @@ export default function DashboardAiPage() {
             type="submit"
             disabled={isLoading || !input.trim()}
             aria-label="Enviar mensagem"
-            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/40 bg-[#1a1a1a] text-[#F97316] transition-colors hover:border-[#F97316] disabled:opacity-40"
+            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/40 bg-white text-[#F97316] transition-colors hover:border-[#F97316] disabled:opacity-40 dark:bg-[#1a1a1a]"
           >
             <Send className="h-4 w-4" strokeWidth={1.75} />
           </button>

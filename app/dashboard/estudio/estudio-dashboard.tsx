@@ -12,13 +12,13 @@ export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
-    <div className="p-8 text-white min-h-screen bg-graphite">
+    <div className="flex min-h-full flex-col bg-neutral-50 p-8 text-neutral-900 dark:bg-black dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
       <p className="mb-6 text-sm text-zinc-400">{EXPERIENCE.subtitle}</p>
       
       {isLoading ? (
         <div className="space-y-4">
-          <div className="h-24 bg-graphite-200 animate-pulse rounded-xl" />
+           <div className="h-24 animate-pulse rounded-xl bg-neutral-200 dark:bg-graphite-200" />
         </div>
       ) : (
         <div className="grid gap-4">

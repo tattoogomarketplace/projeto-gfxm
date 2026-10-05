@@ -31,7 +31,7 @@ function SectionHeading({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <h2 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+        <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
           {title}
         </h2>
         {subtitle ? <p className="mt-0.5 text-sm text-zinc-400">{subtitle}</p> : null}
@@ -58,27 +58,27 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative min-h-full overflow-hidden bg-[#09090b] px-4 pb-8 pt-5 text-white sm:px-6">
+    <div className="relative flex min-h-full flex-col overflow-x-hidden bg-neutral-50 px-4 pb-8 pt-5 text-neutral-900 dark:bg-black dark:text-white sm:px-6">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
       />
 
       <div className="relative space-y-6">
-        <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent p-5 backdrop-blur-md transition-colors hover:border-orange-500/30">
+        <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/30 dark:border-white/10 dark:bg-gradient-to-br dark:from-white/[0.08] dark:via-white/[0.03] dark:to-transparent dark:shadow-none">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
           />
           <div className="relative flex items-center gap-3">
-            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.3)]">
+            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-white text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
               <Sparkles className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
                 TattooGo MK
               </p>
-              <h1 className="mt-0.5 bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
                 {EXPERIENCE.title}
               </h1>
             </div>
@@ -153,13 +153,13 @@ export default function ClienteDashboard() {
                       'group relative min-h-11 overflow-hidden rounded-xl border p-3 text-left transition-all active:scale-95',
                       selected
                         ? 'border-orange-500/60 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.25)]'
-                        : 'border-white/10 bg-white/5 hover:border-orange-500/40 hover:bg-orange-500/5'
+                        : 'border-neutral-200 bg-white hover:border-orange-500/40 hover:bg-orange-500/5 dark:border-white/10 dark:bg-white/5'
                     )}
                   >
-                    <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/30 bg-[#1a1a1a] text-sm font-semibold uppercase text-orange-400">
+                    <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold uppercase text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400">
                       {initial}
                     </span>
-                    <span className="mt-2 block truncate text-sm font-medium text-white">
+                    <span className="mt-2 block truncate text-sm font-medium text-neutral-900 dark:text-white">
                       {email || 'Artista'}
                     </span>
                     {a?.cidade ? (

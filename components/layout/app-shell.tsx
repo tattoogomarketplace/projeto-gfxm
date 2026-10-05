@@ -116,19 +116,19 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   };
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full flex-col bg-[var(--background)] text-[var(--foreground)]">
+    <div className="relative mx-auto flex min-h-screen w-full flex-col bg-neutral-50 text-neutral-900 dark:bg-black dark:text-white">
       {isAiChat ? null : (
       <header
         className={cn(
-          'sticky top-0 z-40 border-b border-white/5 bg-[color-mix(in_srgb,var(--background)_80%,transparent)] backdrop-blur-xl',
-          'pt-3'
+          'sticky top-0 z-40 shrink-0 border-b border-neutral-200 bg-neutral-50/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/80',
+          'pt-[max(0.75rem,env(safe-area-inset-top))]'
         )}
       >
         <div className="flex min-h-11 items-center justify-between px-4 pb-3">
           <h1 className="text-[17px] font-semibold tracking-tight">{headerTitle}</h1>
           <div className="flex items-center gap-2">
             {!isOnline || pending > 0 ? (
-              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-zinc-300">
+              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
@@ -147,7 +147,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       </header>
       )}
 
-      <div className={cn('flex-1', hideTabs ? 'pb-6' : 'pb-20 md:pb-6')}>
+      <div className={cn('flex min-h-0 flex-1 flex-col', hideTabs ? 'pb-6' : 'pb-28')}>
         {children}
       </div>
 

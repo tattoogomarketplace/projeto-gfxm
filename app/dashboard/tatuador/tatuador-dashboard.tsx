@@ -18,7 +18,7 @@ export default function TatuadorDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="p-4 text-white min-h-full bg-graphite sm:p-8">
+    <div className="flex min-h-full flex-col bg-neutral-50 p-4 text-neutral-900 dark:bg-black dark:text-white sm:p-8">
       {activeTab === 'portfolio' ? (
         <section className="space-y-4">
           <div className="flex items-start gap-3">
@@ -54,7 +54,7 @@ export default function TatuadorDashboard() {
 
           {isLoading ? (
             <div className="space-y-4">
-              <div className="h-24 bg-graphite-200 animate-pulse rounded-xl" />
+              <div className="h-24 animate-pulse rounded-xl bg-neutral-200 dark:bg-graphite-200" />
             </div>
           ) : (
             <div className="grid gap-4">

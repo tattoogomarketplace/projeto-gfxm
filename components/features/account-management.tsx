@@ -88,7 +88,7 @@ export function AccountManagement({ fallbackRole = null }: AccountManagementProp
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
             Evolução de perfil
           </p>
-          <h2 className="text-lg font-bold text-white">Quero me tornar Tatuador</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Quero me tornar Tatuador</h2>
           <p className="text-sm text-zinc-400">
             Abra sua bancada profissional, envie o KYC e publique seu portfólio. Este fluxo é exclusivo
             para clientes.
@@ -108,7 +108,7 @@ export function AccountManagement({ fallbackRole = null }: AccountManagementProp
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
             Evolução de perfil
           </p>
-          <h2 className="text-lg font-bold text-white">Abrir/Registrar um Estúdio</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Abrir/Registrar um Estúdio</h2>
           <p className="text-sm text-zinc-400">
             Homologue o ateliê com CNPJ e gerencie tatuadores parceiros. Este fluxo é exclusivo para
             tatuadores.
@@ -123,13 +123,13 @@ export function AccountManagement({ fallbackRole = null }: AccountManagementProp
         </section>
       ) : null}
 
-      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
             <ShieldAlert className="h-5 w-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+            <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
               Gerenciamento de Conta
             </h2>
             <p className="mt-0.5 text-xs text-zinc-400">

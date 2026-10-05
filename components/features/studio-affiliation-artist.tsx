@@ -142,7 +142,7 @@ export function StudioAffiliationArtist() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
           Afiliação de estúdio
         </p>
-        <h3 className="mt-1 text-lg font-bold text-white">Conectar-se a um estúdio verificado</h3>
+        <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Conectar-se a um estúdio verificado</h3>
         <p className="mt-1 text-sm text-zinc-400">
           Sua conta permanece independente. A afiliação só compartilha métricas de curtidas e
           agenda — sem submissão administrativa.
@@ -152,7 +152,7 @@ export function StudioAffiliationArtist() {
       {vinculo ? (
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
           <p className="text-xs uppercase tracking-wider text-emerald-300">Vinculado</p>
-          <p className="mt-1 font-semibold text-white">{vinculo?.nome ?? 'Estúdio'}</p>
+          <p className="mt-1 font-semibold text-neutral-900 dark:text-white">{vinculo?.nome ?? 'Estúdio'}</p>
           <p className="text-xs text-zinc-400">
             {[vinculo?.cidade, vinculo?.estado].filter(Boolean).join(' / ') || 'Local não informado'}
           </p>
@@ -171,7 +171,7 @@ export function StudioAffiliationArtist() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar estúdio por nome ou cidade"
-              className="h-12 w-full rounded-lg border border-white/10 bg-black/30 pl-10 pr-3 text-sm text-white outline-none focus:border-amber-500"
+              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-white/10 dark:bg-black/30 dark:text-white"
             />
           </div>
           <Button type="submit" isLoading={searching} className="shrink-0">
@@ -185,10 +185,10 @@ export function StudioAffiliationArtist() {
           {(studios ?? []).map((studio) => (
             <li
               key={studio?.id ?? studio?.nome}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-white/10 dark:bg-black/20"
             >
               <div className="min-w-0">
-                <p className="flex items-center gap-2 truncate font-semibold text-white">
+                <p className="flex items-center gap-2 truncate font-semibold text-neutral-900 dark:text-white">
                   <Building2 className="h-4 w-4 text-amber-500" />
                   {studio?.nome ?? 'Estúdio'}
                 </p>

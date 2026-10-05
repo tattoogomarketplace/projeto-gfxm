@@ -34,7 +34,7 @@ export function AiAssistantFab() {
         style={{ touchAction: 'none' }}
         className={cn(
           'pointer-events-auto absolute bottom-0 right-0 flex h-12 w-12 min-h-11 min-w-11 items-center justify-center rounded-full',
-          'bg-[#1a1a1a] text-[#F97316]',
+          'bg-white text-[#F97316] dark:bg-[#1a1a1a]',
           'border border-[#F97316]/50',
           'shadow-[0_0_18px_rgba(249,115,22,0.35),0_8px_24px_rgba(0,0,0,0.45)]',
           'hover:border-[#F97316] hover:shadow-[0_0_28px_rgba(249,115,22,0.55)]',

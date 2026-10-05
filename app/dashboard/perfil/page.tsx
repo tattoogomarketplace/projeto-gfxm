@@ -144,21 +144,21 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent p-5 backdrop-blur-md transition-colors hover:border-orange-500/40">
+    <div className="space-y-6 p-4 text-neutral-900 sm:p-6 dark:text-white">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-white/10 dark:bg-gradient-to-br dark:from-white/[0.08] dark:via-white/[0.03] dark:to-transparent dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
         />
         <div className="relative flex items-center gap-3">
-          <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-lg font-bold uppercase text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.3)]">
+          <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/40 bg-white text-lg font-bold uppercase text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
             {(nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A'}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
               Meu Perfil
             </p>
-            <h1 className="mt-0.5 truncate bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+            <h1 className="mt-0.5 truncate bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
               {nome || 'Artista'}
             </h1>
             <p className="mt-1 truncate text-sm text-zinc-400">{maskEmail(email)}</p>
@@ -166,13 +166,13 @@ export default function PerfilPage() {
         </div>
       </header>
 
-      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
-        <h2 className="text-lg font-bold text-orange-400">Editar nome</h2>
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+        <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Editar nome</h2>
         <Input
           label="Nome real"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="border-white/10 bg-zinc-900 focus:ring-orange-500"
+          className="border-neutral-200 bg-white text-neutral-900 focus:ring-orange-500 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
         />
         <button
           type="button"
@@ -188,13 +188,13 @@ export default function PerfilPage() {
 
       {role === 'tatuador' ? <StudioAffiliationArtist /> : null}
 
-      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
+          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
             <Settings className="h-5 w-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+            <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
               Configurações
             </h2>
             <p className="mt-0.5 text-xs text-zinc-400">
@@ -204,11 +204,11 @@ export default function PerfilPage() {
         </div>
         <Link
           href="/dashboard/perfil/configuracoes"
-          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]"
+          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-white/10 dark:bg-white/5"
         >
-          <Palette className="h-5 w-5 min-h-5 min-w-5 text-orange-400" strokeWidth={1.75} />
+          <Palette className="h-5 w-5 min-h-5 min-w-5 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-white">
+            <span className="block text-sm font-medium text-neutral-900 dark:text-white">
               Aparência e tema
             </span>
             <span className="mt-0.5 block text-xs text-zinc-500">
@@ -223,11 +223,11 @@ export default function PerfilPage() {
         <button
           type="button"
           onClick={() => setShowTerms(true)}
-          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]"
+          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-white/10 dark:bg-white/5"
         >
-          <FileText className="h-5 w-5 min-h-5 min-w-5 text-orange-400" strokeWidth={1.75} />
+          <FileText className="h-5 w-5 min-h-5 min-w-5 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-white">
+            <span className="block text-sm font-medium text-neutral-900 dark:text-white">
               Termos de Uso e Política de Privacidade
             </span>
             <span className="mt-0.5 block text-xs text-zinc-500">Versão {TERMS_VERSION}</span>
@@ -239,8 +239,8 @@ export default function PerfilPage() {
         </button>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all hover:border-orange-500/40">
-        <h2 className="text-lg font-bold text-orange-400">Sessão</h2>
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+        <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Sessão</h2>
         <button
           type="button"
           onClick={handleLogout}

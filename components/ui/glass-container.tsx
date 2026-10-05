@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface GlassContainerProps {
   children: React.ReactNode;
@@ -6,7 +7,13 @@ interface GlassContainerProps {
 }
 
 export const GlassContainer = ({ children, className = '' }: GlassContainerProps) => (
-  <div className={`backdrop-blur-md bg-white/5 border border-white/10 rounded-xl ${className}`}>
+  <div
+    className={cn(
+      'rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-sm backdrop-blur-md',
+      'dark:border-white/10 dark:bg-white/5 dark:text-white dark:shadow-none',
+      className
+    )}
+  >
     {children}
   </div>
 );

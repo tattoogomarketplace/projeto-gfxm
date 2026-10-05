@@ -19,17 +19,17 @@ const config: Config = {
         neon: {
           orange: '#F97316',
         },
-        background: "#121212",
-        foreground: "#F5F5F5",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         primary: {
           DEFAULT: "#F97316",
         },
         muted: {
-          DEFAULT: "#888888",
-          foreground: "#a1a1aa",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
-        border: "#2a2a2a",
-        card: "#1a1a1a",
+        border: "var(--border)",
+        card: "var(--card)",
       },
       fontFamily: {
         sans: [

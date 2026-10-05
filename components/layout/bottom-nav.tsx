@@ -51,7 +51,7 @@ export function BottomNav({ hidden = false }: BottomNavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-background/80 backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200 bg-neutral-50/90 backdrop-blur-md dark:border-neutral-800 dark:bg-black/90 md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Navegação principal"
     >

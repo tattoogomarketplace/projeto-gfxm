@@ -31,8 +31,8 @@ export function SegmentedControl<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'relative grid w-full rounded-2xl bg-white/10 p-1 backdrop-blur-xl',
-        'border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
+        'relative grid w-full rounded-2xl bg-neutral-100 p-1 backdrop-blur-xl dark:bg-white/10',
+        'border border-neutral-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/10',
         className
       )}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
@@ -64,8 +64,8 @@ export function SegmentedControl<T extends string>({
               'text-[13px] font-semibold tracking-tight transition-colors duration-200',
               'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
               selected
-                ? 'text-orange-200 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'text-orange-700 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)] dark:text-orange-200'
+                : 'text-neutral-500 hover:text-neutral-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             )}
           >
             {option.label}

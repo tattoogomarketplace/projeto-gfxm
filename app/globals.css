@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #121212;
-  --color-foreground: #F5F5F5;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-primary: #F97316;
-  --color-muted: #888888;
-  --color-muted-foreground: #a1a1aa;
-  --color-border: #2a2a2a;
-  --color-card: #1a1a1a;
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -18,6 +18,11 @@
     color-scheme: dark;
     --background: #121212;
     --foreground: #F5F5F5;
+    --muted: #888888;
+    --muted-foreground: #a1a1aa;
+    --border: #2a2a2a;
+    --card: #1a1a1a;
+    --input: #161616;
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
     --font-inter: Inter, system-ui, -apple-system, sans-serif;
@@ -28,16 +33,26 @@
     color-scheme: dark;
     --background: #121212;
     --foreground: #F5F5F5;
+    --muted: #888888;
+    --muted-foreground: #a1a1aa;
+    --border: #2a2a2a;
+    --card: #1a1a1a;
+    --input: #161616;
   }
 
   .light {
     color-scheme: light;
-    --background: #F6F3EE;
-    --foreground: #1A1A1A;
-    --color-background: #F6F3EE;
-    --color-foreground: #1A1A1A;
-    --color-border: #E4DCD3;
-    --color-card: #FFFDF9;
+    --background: #FAFAF7;
+    --foreground: #171717;
+    --muted: #737373;
+    --muted-foreground: #525252;
+    --border: #E5E5E5;
+    --card: #FFFFFF;
+    --input: #FFFFFF;
+    --color-background: #FAFAF7;
+    --color-foreground: #171717;
+    --color-border: #E5E5E5;
+    --color-card: #FFFFFF;
   }
 
   html {
@@ -94,6 +109,25 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .light .glass-panel {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(23, 23, 23, 0.08);
+  }
+
+  .surface-card {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+
+  .screen-page {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   .tattoo-wallpaper {

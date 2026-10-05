@@ -100,17 +100,17 @@ export function ThemeSwitcher() {
             onClick={() => handleSelect(option.id)}
             className={cn(
               'group relative flex min-h-11 w-full flex-col overflow-hidden rounded-2xl border p-4 text-left',
-              'bg-zinc-950/50 light:bg-white/80',
+              'bg-white dark:bg-zinc-950/50',
               'transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
               selected
                 ? 'border-[#FF5722] ring-2 ring-[#FF5722]/20 shadow-[0_0_24px_rgba(255,87,34,0.22)]'
-                : 'border-white/10 light:border-black/10 hover:border-[#FF5722]/40'
+                : 'border-neutral-200 hover:border-[#FF5722]/40 dark:border-white/10'
             )}
           >
             <div
               aria-hidden
               className={cn(
-                'mb-4 h-16 w-full rounded-xl border border-white/10 bg-gradient-to-br light:border-black/10',
+                'mb-4 h-16 w-full rounded-xl border border-neutral-200 bg-gradient-to-br dark:border-white/10',
                 option.preview
               )}
             />
@@ -119,7 +119,7 @@ export function ThemeSwitcher() {
                 'mb-3 flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300',
                 selected
                   ? 'border-[#FF5722]/60 bg-[#FF5722]/15 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.28)]'
-                  : 'border-white/10 bg-white/5 text-zinc-300 light:border-black/10 light:bg-black/5 light:text-zinc-700'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.75} />
@@ -127,10 +127,10 @@ export function ThemeSwitcher() {
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF5722]">
               {option.subtitle}
             </span>
-            <span className="mt-1 text-base font-bold text-white light:text-zinc-900">
+            <span className="mt-1 text-base font-bold text-neutral-900 dark:text-white">
               {option.title}
             </span>
-            <span className="mt-1 text-xs leading-relaxed text-zinc-400 light:text-zinc-600">
+            <span className="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
               {option.description}
             </span>
             <span

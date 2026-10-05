@@ -107,7 +107,7 @@ export function StudioIncomingRequests() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
             Pedidos de afiliação
           </p>
-          <h3 className="mt-1 text-lg font-bold text-white">Artistas querendo se conectar</h3>
+          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Artistas querendo se conectar</h3>
         </div>
         {pendentes.length === 0 ? (
           <p className="text-sm text-zinc-400">Nenhum pedido pendente no momento.</p>
@@ -116,10 +116,10 @@ export function StudioIncomingRequests() {
             {(pendentes ?? []).map((pedido) => (
               <li
                 key={pedido?.id ?? pedido?.tatuador?.id}
-                className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-white/10 dark:bg-black/20 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-white">{pedido?.tatuador?.nome || 'Artista'}</p>
+                  <p className="font-semibold text-neutral-900 dark:text-white">{pedido?.tatuador?.nome || 'Artista'}</p>
                   <p className="text-xs text-zinc-500">
                     {[pedido?.tatuador?.cidade, pedido?.tatuador?.estado].filter(Boolean).join(' / ') ||
                       'Local não informado'}{' '}
@@ -152,14 +152,14 @@ export function StudioIncomingRequests() {
       </GlassContainer>
 
       <GlassContainer className="space-y-3 p-5 sm:p-6">
-        <h3 className="text-lg font-bold text-white">Artistas parceiros</h3>
+        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Artistas parceiros</h3>
         {artistas.length === 0 ? (
           <p className="text-sm text-zinc-400">Nenhum artista vinculado ainda.</p>
         ) : (
           <ul className="divide-y divide-white/10">
             {(artistas ?? []).map((artista) => (
               <li key={artista?.id ?? artista?.nome} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-white">{artista?.nome ?? 'Artista'}</span>
+                <span className="text-neutral-900 dark:text-white">{artista?.nome ?? 'Artista'}</span>
                 <span className="text-xs uppercase tracking-wider text-zinc-500">
                   {(artista?.kyc_status ?? 'pendente').replace('_', ' ')}
                 </span>

@@ -99,7 +99,7 @@ export default function RootLayout({
           <link rel="manifest" href="/manifest.json" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         </head>
-        <body className="font-sans antialiased h-full overflow-hidden">
+        <body className="font-sans antialiased h-full overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-black dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />
@@ -107,8 +107,8 @@ export default function RootLayout({
               <StrictSessionGuard />
               <SingleSessionEnforcer />
               <SessionTaskGuard />
-              <main className="h-full w-full overflow-y-auto env-safe-area">
-                <div className="max-w-app mx-auto min-h-full">
+              <main className="h-full w-full overflow-y-auto overscroll-y-contain">
+                <div className="mx-auto flex min-h-full w-full max-w-app flex-col">
                   {children}
                 </div>
               </main>

@@ -34,11 +34,11 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-white">{experience.dashboard.title}</h1>
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">{experience.dashboard.title}</h1>
         <p className="text-sm text-zinc-400">{experience.dashboard.subtitle}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="h-40 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+        <div className="h-40 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50 dark:shadow-none">
           <p className="text-zinc-400">Bem-vindo, {resolveDisplayName({
             full_name: (metadata.full_name as string) || user?.firstName || undefined,
             nome: (metadata.nome as string) || perfil?.nome || undefined,

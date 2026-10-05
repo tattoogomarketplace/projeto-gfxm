@@ -50,15 +50,15 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="group relative shrink-0 w-full sm:w-[calc(50%-1rem)] bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-2xl overflow-hidden shadow-lg transition-all hover:border-orange-500/40 hover:shadow-[0_0_30px_rgba(249,115,22,0.18)]"
+      className="group relative w-full shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/40 hover:shadow-[0_0_30px_rgba(249,115,22,0.18)] dark:border-zinc-800 dark:bg-zinc-900/50 dark:shadow-lg sm:w-[calc(50%-1rem)]"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative h-64 w-full overflow-hidden">
         <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
       </div>
       
-      <div className="p-4 flex justify-between items-center bg-zinc-950/30">
-        <span className="text-zinc-300 font-medium">{artistName}</span>
+      <div className="flex items-center justify-between bg-neutral-50 p-4 dark:bg-zinc-950/30">
+        <span className="font-medium text-neutral-800 dark:text-zinc-300">{artistName}</span>
         <button onClick={handleLike} className="relative flex min-h-11 min-w-11 items-center gap-2 p-2 active:scale-95">
           <AnimatePresence>
             <motion.div
