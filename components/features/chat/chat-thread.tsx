@@ -27,7 +27,18 @@ type ChatThreadProps = {
   peerName?: string;
   artworkId?: string;
   artwork?: ChatArtworkRef | null;
+  bookingIntent?: boolean;
+  onOpenProfile?: (artistId: string) => void;
 };
+
+function bookingDraft(artwork?: ChatArtworkRef | null): string {
+  if (artwork) {
+    return `Gostaria de agendar uma sessão de ${styleLabel(artwork.style)}${
+      artwork.bodyPart ? ` em ${bodyPartLabel(artwork.bodyPart)}` : ''
+    }. Podemos confirmar um horário disponível?`;
+  }
+  return 'Gostaria de agendar uma sessão. Podemos confirmar um horário disponível?';
+}
 
 async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
   const clerkToken = await getToken().catch(() => null);
@@ -45,9 +56,11 @@ export function ChatThread({
   peerName,
   artworkId,
   artwork,
+  bookingIntent = false,
+  onOpenProfile,
 }: ChatThreadProps) {
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(artwork) : ''));
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -188,16 +201,31 @@ export function ChatThread({
     );
   }
 
+  const openProfile = () => {
+    if (!destinatarioId || !onOpenProfile) return;
+    onOpenProfile(destinatarioId);
+  };
+
   return (
     <div className="flex h-[28rem] min-h-[28rem] flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-[#121212] shadow-[0_0_32px_rgba(0,0,0,0.35)] lg:h-auto">
       <div className="flex items-center gap-3 border-b border-neutral-800 px-4 py-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
-          {(peerName || 'A').charAt(0).toUpperCase()}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">{peerName || 'Artista'}</p>
-          <p className="truncate text-[11px] text-zinc-500">Orçamento e dúvidas da sessão</p>
-        </div>
+        <button
+          type="button"
+          onClick={openProfile}
+          disabled={!destinatarioId || !onOpenProfile}
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
+          aria-label={`Abrir vitrine de ${peerName || 'artista'}`}
+        >
+          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
+            {(peerName || 'A').charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-white">{peerName || 'Artista'}</span>
+            <span className="block truncate text-[11px] text-zinc-500">
+              {bookingIntent ? 'Solicitar agendamento da sessão' : 'Orçamento e dúvidas da sessão'}
+            </span>
+          </span>
+        </button>
       </div>
 
       {artwork ? (
@@ -260,6 +288,11 @@ export function ChatThread({
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onFocus={() => {
+              if (bookingIntent && !input.trim()) {
+                setInput(bookingDraft(artwork));
+              }
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -268,7 +301,13 @@ export function ChatThread({
             }}
             rows={1}
             className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-neutral-800 bg-black/40 px-3 py-2.5 text-sm text-white caret-white outline-none placeholder:text-zinc-500 focus:border-orange-500/50"
-            placeholder={artwork ? 'Peça um orçamento sobre esta arte...' : 'Digite sua mensagem...'}
+            placeholder={
+              bookingIntent
+                ? bookingDraft(artwork)
+                : artwork
+                  ? 'Peça um orçamento sobre esta arte...'
+                  : 'Digite sua mensagem...'
+            }
           />
           <button
             type="button"

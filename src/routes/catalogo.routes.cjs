@@ -5,6 +5,7 @@ const router = Router();
 
 router.get("/feed", catalogoController.feed);
 router.get("/artistas", catalogoController.artistas);
+router.get("/artistas/:id", catalogoController.artistVitrine);
 router.get("/cidades", catalogoController.cidades);
 
 module.exports = router;

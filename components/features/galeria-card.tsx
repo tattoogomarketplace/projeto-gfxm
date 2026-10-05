@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MapPin, MessageCircle } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -21,10 +22,16 @@ type GaleriaCardProps = {
 };
 
 export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(item.likesCount);
   const { triggerHaptic } = useHapticFeedback();
   const enqueue = useOfflineQueue((s) => s.enqueue);
+
+  const openArtistProfile = () => {
+    triggerHaptic('light');
+    router.push(`/dashboard/artista/${encodeURIComponent(item.tatuadorId)}`);
+  };
 
   const artistName = item.artist?.name || 'Artista';
   const studioName = item.artist?.studio?.name;
@@ -93,7 +100,12 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
 
         <div className="absolute inset-x-0 bottom-0 translate-y-2 p-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <div className="rounded-xl border border-white/10 bg-black/55 p-3 backdrop-blur-xl">
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openArtistProfile}
+              className="flex w-full items-center gap-2 text-left"
+              aria-label={`Abrir vitrine de ${artistName}`}
+            >
               <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold uppercase text-orange-400">
                 {item.artist?.initial || artistName.charAt(0) || 'A'}
               </span>
@@ -103,14 +115,19 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
                   {studioName ? studioName : 'Artista independente'}
                 </p>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
 
       <div className="space-y-3 bg-neutral-50 p-4 dark:bg-[#121212]">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={openArtistProfile}
+            className="min-w-0 flex-1 text-left"
+            aria-label={`Abrir vitrine de ${artistName}`}
+          >
             <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{artistName}</p>
             <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
               {studioName || 'Artista independente'}
@@ -121,7 +138,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
                 {location}
               </p>
             ) : null}
-          </div>
+          </button>
           <button
             type="button"
             onClick={handleLike}

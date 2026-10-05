@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY não configurada no .env");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 export async function moderateChatContent(message: string): Promise<{ allowed: boolean; reason?: string }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return { allowed: true, reason: 'fallback' };
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
   const prompt = `
@@ -26,7 +26,7 @@ export async function moderateChatContent(message: string): Promise<{ allowed: b
     return JSON.parse(jsonString);
   } catch (error) {
     console.error("Erro na moderação IA:", error);
-    return { allowed: false, reason: "Falha na análise de segurança." };
+    return { allowed: true, reason: "fallback" };
   }
 }
 

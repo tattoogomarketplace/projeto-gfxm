@@ -58,6 +58,7 @@ export type PortfolioPublishInput = {
   bodyPart: string;
   sessionDuration: string;
   isHealed: boolean;
+  notes?: string;
 };
 
 const STYLE_SET = new Set<string>(PORTFOLIO_STYLES);
@@ -138,4 +139,43 @@ export function bodyPartLabel(value: string): string {
 
 export function sessionDurationLabel(value: string): string {
   return isPortfolioSessionDuration(value) ? DURATION_LABELS[value] : value;
+}
+
+const CASUAL_NOISE =
+  /\b(top|lindo|linda|show|brabo|braba|massa|irado|irada|fire|love|amei|demais|kk+|haha+|lol)\b/gi;
+
+export function sanitizePortfolioNotes(value: string): string {
+  const withoutLinks = value
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/\bwww\.\S+/gi, '')
+    .replace(/[#@][\p{L}\p{N}_]+/gu, '')
+    .replace(CASUAL_NOISE, '')
+    .replace(/[^\p{L}\p{N}\s.,;:()\-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!withoutLinks) return '';
+  const clipped = withoutLinks.slice(0, 180).trim();
+  return clipped.charAt(0).toUpperCase() + clipped.slice(1);
+}
+
+export function composeStudioCaption(input: {
+  style: string;
+  bodyPart: string;
+  sessionDuration: string;
+  isHealed: boolean;
+  notes?: string;
+}): string {
+  const style = styleLabel(input.style);
+  const bodyPart = bodyPartLabel(input.bodyPart);
+  const duration = sessionDurationLabel(input.sessionDuration);
+  const healing = input.isHealed
+    ? 'registro cicatrizado após o processo de cura'
+    : 'registro de sessão recente, ainda em processo de cicatrização';
+  const notes = sanitizePortfolioNotes(input.notes ?? '');
+  const lead = `${style} executado em ${bodyPart.toLowerCase()}, com duração de ${duration}.`;
+  const close = `Peça catalogada como ${healing}, em padrão de studio.`;
+  if (notes) {
+    return `${lead} ${notes.replace(/[.]+$/, '')}. ${close}`;
+  }
+  return `${lead} ${close}`;
 }

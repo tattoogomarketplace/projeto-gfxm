@@ -88,24 +88,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ erro: 'Mensagem vazia.' }, { status: 400 });
   }
 
-  const geminiResponse = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-      },
-    }),
-  });
+  let geminiResponse: Response;
+  try {
+    geminiResponse = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        },
+      }),
+    });
+  } catch (error) {
+    console.error('[chat] falha de rede no Gemini', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { erro: 'Assistente temporariamente indisponível. Tente novamente em instantes.' },
+      { status: 503 }
+    );
+  }
 
   const payload = (await geminiResponse.json().catch(() => ({}))) as GeminiApiResponse;
   if (!geminiResponse.ok) {
+    const status = geminiResponse.status === 403 || geminiResponse.status === 401 ? 503 : 502;
     return NextResponse.json(
-      { erro: payload.error?.message || 'Falha ao consultar o assistente.' },
-      { status: 502 }
+      { erro: 'Assistente temporariamente indisponível. Tente novamente em instantes.' },
+      { status }
     );
   }
 

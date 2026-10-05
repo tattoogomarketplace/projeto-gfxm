@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/prisma';
+import { moderatePortfolioImage, refineStudioCaption } from '@/lib/ai-moderation';
 import {
+  composeStudioCaption,
   isHttpsImageUrl,
   isPortfolioBodyPart,
   isPortfolioSessionDuration,
   isPortfolioStyle,
+  sanitizePortfolioNotes,
   type PortfolioItemDto,
   type PortfolioPublishInput,
 } from '@/lib/portfolio-metadata';
@@ -123,12 +126,15 @@ export function parsePublishPayload(raw: unknown): PortfolioPublishInput {
     throw new ArtistPortfolioError(400, 'Duração da sessão inválida.');
   }
 
+  const notes = sanitizePortfolioNotes(readString(body.notes ?? body.caption ?? body.descricao ?? body.description));
+
   return {
     imageUrl,
     style,
     bodyPart,
     sessionDuration,
     isHealed,
+    ...(notes ? { notes } : {}),
   };
 }
 
@@ -159,11 +165,39 @@ export async function publishArtistPortfolio(
   raw: unknown
 ): Promise<PortfolioItemDto> {
   const payload = parsePublishPayload(raw);
-  const descricao = readString(
-    raw && typeof raw === 'object' && !Array.isArray(raw)
-      ? (raw as Record<string, unknown>).descricao ?? (raw as Record<string, unknown>).description
-      : ''
-  );
+
+  const moderation = await moderatePortfolioImage(payload.imageUrl);
+  if (!moderation.allowed) {
+    throw new ArtistPortfolioError(
+      422,
+      'A imagem foi recusada pela curadoria. Envie uma peça de tatuagem em padrão de studio.'
+    );
+  }
+
+  const structuredCaption = composeStudioCaption({
+    style: payload.style,
+    bodyPart: payload.bodyPart,
+    sessionDuration: payload.sessionDuration,
+    isHealed: payload.isHealed,
+    notes: payload.notes,
+  });
+  let descricao = structuredCaption;
+  try {
+    descricao = await refineStudioCaption(
+      {
+        style: payload.style,
+        bodyPart: payload.bodyPart,
+        sessionDuration: payload.sessionDuration,
+        isHealed: payload.isHealed,
+        notes: payload.notes,
+      },
+      structuredCaption
+    );
+  } catch (error) {
+    console.warn('[artist-portfolio] legenda formal via Gemini indisponível; usando estrutura local.', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   const created = await prisma.portfolio.create({
     data: {
@@ -173,7 +207,7 @@ export async function publishArtistPortfolio(
       body_part: payload.bodyPart,
       session_duration: payload.sessionDuration,
       is_healed: payload.isHealed,
-      descricao: descricao || null,
+      descricao,
       likes_count: 0,
     },
     select: ITEM_SELECT,

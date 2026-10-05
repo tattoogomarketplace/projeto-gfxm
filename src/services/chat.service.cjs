@@ -103,8 +103,20 @@ async function enviarDuvida({ remetenteId, destinatarioId, mensagem }) {
     throw error;
   }
 
-  const vereditoIa = await moderateChatDuvida(mensagem);
-  if (vereditoIa.includes("NEGOCIACAO") || vereditoIa.includes("FORA_DO_ESCOPO")) {
+  let vereditoIa = "TIMEOUT_OU_FALHA_EXTERNA";
+  try {
+    vereditoIa = await moderateChatDuvida(mensagem);
+  } catch (error) {
+    console.warn("[chat] Gemini indisponível na moderação; mensagem segue com filtro local.", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    vereditoIa = "TIMEOUT_OU_FALHA_EXTERNA";
+  }
+  const normalizedVerdict = String(vereditoIa || "").toUpperCase();
+  if (
+    normalizedVerdict !== "TIMEOUT_OU_FALHA_EXTERNA" &&
+    (normalizedVerdict.includes("NEGOCIACAO") || normalizedVerdict.includes("FORA_DO_ESCOPO"))
+  ) {
     const registro = await persistirAuditoria({
       remetenteId,
       destinatarioId,

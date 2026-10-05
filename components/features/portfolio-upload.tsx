@@ -4,7 +4,6 @@ import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Clock3, ImagePlus, MapPin, Sparkles, X } from 'lucide-react';
-import { moderateImageWithGemini } from '@/lib/ai-moderation';
 import { NeonButton } from '@/components/ui/neon-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -26,8 +25,6 @@ import {
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { cn } from '@/lib/utils';
 
-const SAFETY_MESSAGE =
-  'Conteúdo impróprio detectado. Upload bloqueado por violação das diretrizes.';
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
 
@@ -92,6 +89,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
   const [bodyPart, setBodyPart] = useState<PortfolioBodyPart | ''>('');
   const [sessionDuration, setSessionDuration] = useState<PortfolioSessionDuration | ''>('');
   const [healing, setHealing] = useState<HealingStatus>('fresh');
+  const [notes, setNotes] = useState('');
 
   const canPublish = Boolean(pendingFile && style && bodyPart && sessionDuration);
 
@@ -141,6 +139,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
     setBodyPart('');
     setSessionDuration('');
     setHealing('fresh');
+    setNotes('');
     setModalOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -162,34 +161,13 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
     setChecking(true);
     try {
-      const reader = new FileReader();
-      const base64String = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          const encoded = result?.split(',')[1];
-          if (!encoded) {
-            reject(new Error(SAFETY_MESSAGE));
-            return;
-          }
-          resolve(encoded);
-        };
-        reader.onerror = () => reject(new Error(SAFETY_MESSAGE));
-        reader.readAsDataURL(file);
-      });
-
-      const isSafe = await moderateImageWithGemini(base64String);
-      if (!isSafe) {
-        toast.error(SAFETY_MESSAGE);
-        return;
-      }
-
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPendingFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setModalOpen(true);
-      toast.success('Imagem aprovada. Classifique a peça para publicar.');
+      toast.success('Imagem recebida. Classifique a peça para publicar.');
     } catch {
-      toast.error(SAFETY_MESSAGE);
+      toast.error('Não foi possível preparar a imagem.');
     } finally {
       setChecking(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -246,6 +224,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
             bodyPart,
             sessionDuration,
             isHealed: healing === 'healed',
+            notes: notes.trim() || undefined,
           }),
         },
         tokenFn
@@ -339,6 +318,9 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
                     {healingLabel(item.isHealed)}
                   </span>
                 </div>
+                {item.descricao ? (
+                  <p className="line-clamp-3 text-xs leading-relaxed text-zinc-400">{item.descricao}</p>
+                ) : null}
                 <p className="flex items-center gap-1 text-xs text-zinc-400">
                   <MapPin className="h-3 w-3" strokeWidth={1.75} />
                   {bodyPartLabel(item.bodyPart)}
@@ -417,6 +399,19 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
                     : 'Recém-feita: sessão recente, ainda em processo de cicatrização.'}
                 </p>
               </div>
+
+              <label className="block space-y-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
+                  Notas da peça
+                </span>
+                <textarea
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value.slice(0, 180))}
+                  rows={3}
+                  className="min-h-20 w-full resize-none rounded-xl border border-neutral-800 bg-black/40 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-orange-500/50"
+                  placeholder="Opcional. A curadoria converte em legenda formal de studio."
+                />
+              </label>
             </div>
 
             <NeonButton

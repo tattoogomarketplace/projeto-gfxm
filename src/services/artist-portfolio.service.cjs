@@ -87,6 +87,75 @@ function isHttpsImageUrl(value) {
   }
 }
 
+const STYLE_LABELS = {
+  "Fine Line": "Fine Line",
+  Realismo: "Realismo",
+  "Old School": "Old School",
+  Blackwork: "Blackwork",
+  Minimalista: "Minimalista",
+  Oriental: "Oriental",
+  Geometrico: "Geométrico",
+  Aquarela: "Aquarela",
+  Lettering: "Lettering",
+  "Neo Traditional": "Neo Traditional",
+};
+
+const BODY_PART_LABELS = {
+  Braco: "Braço",
+  Antebraco: "Antebraço",
+  Ombro: "Ombro",
+  Peito: "Peito",
+  Costas: "Costas",
+  Costela: "Costela",
+  Perna: "Perna",
+  Coxa: "Coxa",
+  Panturrilha: "Panturrilha",
+  Pulso: "Pulso",
+  Mao: "Mão",
+  Pescoco: "Pescoço",
+};
+
+const DURATION_LABELS = {
+  "Ate 1h": "Até 1h",
+  "1-2h": "1-2h",
+  "2-4h": "2-4h",
+  "4-6h": "4-6h",
+  "Dia inteiro": "Dia inteiro",
+  "Multiplas sessoes": "Múltiplas sessões",
+};
+
+function sanitizeNotes(value) {
+  const raw = readString(value);
+  if (!raw) return "";
+  const cleaned = raw
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\bwww\.\S+/gi, "")
+    .replace(/[#@]\S+/g, "")
+    .replace(/\b(top|lindo|linda|show|brabo|braba|massa|irado|irada|fire|love|amei|demais)\b/gi, "")
+    .replace(/[^\p{L}\p{N}\s.,;:()\-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return "";
+  const clipped = cleaned.slice(0, 180).trim();
+  return clipped.charAt(0).toUpperCase() + clipped.slice(1);
+}
+
+function composeStudioCaption({ style, bodyPart, sessionDuration, isHealed, notes }) {
+  const styleName = STYLE_LABELS[style] || style;
+  const partName = (BODY_PART_LABELS[bodyPart] || bodyPart).toLowerCase();
+  const duration = DURATION_LABELS[sessionDuration] || sessionDuration;
+  const healing = isHealed
+    ? "registro cicatrizado após o processo de cura"
+    : "registro de sessão recente, ainda em processo de cicatrização";
+  const lead = `${styleName} executado em ${partName}, com duração de ${duration}.`;
+  const close = `Peça catalogada como ${healing}, em padrão de studio.`;
+  const extra = sanitizeNotes(notes);
+  if (extra) {
+    return `${lead} ${extra.replace(/[.]+$/, "")}. ${close}`;
+  }
+  return `${lead} ${close}`;
+}
+
 function toPortfolioItemDto(row) {
   return {
     id: row.id,
@@ -136,7 +205,8 @@ function parsePublishPayload(raw) {
     throw httpError(400, "Duração da sessão inválida.");
   }
 
-  return { imageUrl, style, bodyPart, sessionDuration, isHealed };
+  const notes = sanitizeNotes(raw.notes ?? raw.caption ?? raw.descricao ?? raw.description);
+  return { imageUrl, style, bodyPart, sessionDuration, isHealed, notes };
 }
 
 async function listMine(tatuadorId) {
@@ -150,7 +220,7 @@ async function listMine(tatuadorId) {
 
 async function publishMine(tatuadorId, raw) {
   const payload = parsePublishPayload(raw);
-  const descricao = readString(raw?.descricao ?? raw?.description);
+  const descricao = composeStudioCaption(payload);
 
   const created = await prisma.portfolio.create({
     data: {
@@ -160,7 +230,7 @@ async function publishMine(tatuadorId, raw) {
       body_part: payload.bodyPart,
       session_duration: payload.sessionDuration,
       is_healed: payload.isHealed,
-      descricao: descricao || null,
+      descricao,
       likes_count: 0,
     },
     select: ITEM_SELECT,

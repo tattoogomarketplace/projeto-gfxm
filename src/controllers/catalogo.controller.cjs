@@ -29,4 +29,16 @@ async function cidades(req, res) {
   }
 }
 
-module.exports = { feed, artistas, cidades };
+async function artistVitrine(req, res) {
+  try {
+    const payload = await catalogoService.getArtistVitrine(req.params.id);
+    return res.status(200).json({ sucesso: true, ...payload });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    return res.status(500).json({ sucesso: false, erro: "Falha ao carregar a vitrine do artista." });
+  }
+}
+
+module.exports = { feed, artistas, cidades, artistVitrine };

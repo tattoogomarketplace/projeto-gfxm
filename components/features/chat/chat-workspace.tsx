@@ -38,6 +38,7 @@ export function ChatWorkspace() {
 
   const artistIdParam = searchParams.get('artistId') || searchParams.get('tatuadorId');
   const artworkIdParam = searchParams.get('artworkId') || searchParams.get('portfolioId');
+  const bookingIntent = searchParams.get('intent') === 'agendar';
 
   const [actorId, setActorId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ChatConversationDto[]>([]);
@@ -194,21 +195,31 @@ export function ChatWorkspace() {
             {orderedConversations.map((item) => {
               const active = selectedId === item.peer.id;
               return (
-                <button
+                <div
                   key={item.peer.id}
-                  type="button"
-                  onClick={() => selectConversation(item.peer)}
                   className={cn(
-                    'mb-1 flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all active:scale-[0.99]',
+                    'mb-1 flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all',
                     active
                       ? 'border-orange-500/50 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
                       : 'border-transparent hover:border-neutral-800 hover:bg-white/5'
                   )}
                 >
-                  <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
+                    }}
+                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-[#1a1a1a] text-sm font-semibold text-orange-400"
+                    aria-label={`Abrir vitrine de ${item.peer.name}`}
+                  >
                     {item.peer.initial}
-                  </span>
-                  <span className="min-w-0 flex-1">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectConversation(item.peer)}
+                    className="min-w-0 flex-1 text-left active:scale-[0.99]"
+                  >
                     <span className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-semibold text-white">{item.peer.name}</span>
                       {item.unreadCount > 0 ? (
@@ -220,8 +231,8 @@ export function ChatWorkspace() {
                     <span className="mt-0.5 block truncate text-[11px] text-zinc-500">
                       {item.lastMessage?.mensagem || 'Nova conversa de orçamento'}
                     </span>
-                  </span>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -245,6 +256,11 @@ export function ChatWorkspace() {
               peerName={selectedPeer?.name}
               artworkId={artworkId}
               artwork={artwork}
+              bookingIntent={bookingIntent}
+              onOpenProfile={(artistId) => {
+                triggerHaptic('light');
+                router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);
+              }}
             />
           </div>
         </section>

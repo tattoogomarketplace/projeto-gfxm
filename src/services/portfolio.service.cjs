@@ -23,11 +23,21 @@ async function uploadValidatedPortfolio({ user, accessToken, artistaId, imagemBa
   }
 
   const { buffer, base64 } = await prepareImage(imagemBase64);
-  const respostaIA = await moderateTattooImage(base64);
+  let respostaIA = "TIMEOUT_OU_FALHA_EXTERNA";
+  try {
+    respostaIA = await moderateTattooImage(base64);
+  } catch (error) {
+    console.warn("[portfolio] Gemini indisponível na moderação; publicação segue.", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    respostaIA = "TIMEOUT_OU_FALHA_EXTERNA";
+  }
 
-  if (respostaIA === "TIMEOUT_OU_FALHA_EXTERNA" || respostaIA.includes("NAO")) {
+  const normalized = String(respostaIA || "").toUpperCase();
+  const rejected = normalized.includes("NAO") || normalized.includes("NÃO") || normalized.includes("REJEIT");
+  if (rejected && normalized !== "TIMEOUT_OU_FALHA_EXTERNA") {
     const error = new Error(
-      "SISTEMA DE MODERAÇÃO: A imagem foi rejeitada pela IA ou o serviço está instável."
+      "A imagem foi recusada pela curadoria. Envie uma peça de tatuagem em padrão de studio."
     );
     error.status = 422;
     throw error;
