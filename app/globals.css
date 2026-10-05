@@ -211,7 +211,42 @@
   }
 
   .screen-fade-in {
-    animation: screen-fade-in 240ms ease-out both;
+    animation: screen-fade-in 300ms ease-in-out both;
+    transition: opacity 300ms ease-in-out;
+  }
+
+  .luxury-skeleton {
+    background-color: rgb(229 229 229 / 0.8);
+  }
+
+  .dark .luxury-skeleton {
+    background-color: rgb(38 38 38 / 0.4);
+  }
+
+  .luxury-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 38%,
+      rgb(249 115 22 / 0.08) 50%,
+      transparent 62%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
+    animation: luxury-shimmer 1.6s ease-in-out infinite;
+  }
+
+  .dark .luxury-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 38%,
+      rgb(249 115 22 / 0.12) 50%,
+      rgb(255 255 255 / 0.04) 58%,
+      transparent 70%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
   }
 
   .ai-fab-pulse {
@@ -221,7 +256,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .screen-fade-in,
-  .ai-fab-pulse {
+  .ai-fab-pulse,
+  .luxury-shimmer {
     animation: none;
   }
 }
@@ -229,11 +265,20 @@
 @keyframes screen-fade-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes luxury-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -40% 0;
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StudioIncomingRequests } from '@/components/features/studio-incoming-requests';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
@@ -12,13 +13,14 @@ export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-8 text-neutral-900 dark:text-white">
+    <div className="screen-fade-in min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-8 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
       <p className="mb-6 text-sm text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
       
       {isLoading ? (
         <div className="space-y-4">
-           <div className="h-24 animate-pulse rounded-xl bg-neutral-200 dark:bg-graphite-200" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
         <div className="grid gap-4">

@@ -24,7 +24,9 @@ export function OptimizedImage({ src, alt, className }: OptimizedImageProps) {
   if (!resolved) {
     return (
       <div className={`relative ${className ?? ''} bg-zinc-800`} aria-hidden>
-        <div className="absolute inset-0 animate-pulse bg-zinc-800/80" />
+        <div className="luxury-skeleton absolute inset-0 animate-pulse bg-neutral-800/60 dark:bg-neutral-800/40">
+          <span className="luxury-shimmer pointer-events-none absolute inset-0" />
+        </div>
       </div>
     );
   }

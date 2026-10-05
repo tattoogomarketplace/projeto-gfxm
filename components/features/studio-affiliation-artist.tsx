@@ -133,7 +133,7 @@ export function StudioAffiliationArtist() {
   };
 
   if (loading) {
-    return <Skeleton className="h-48 w-full" />;
+    return <Skeleton className="h-48 w-full rounded-2xl" />;
   }
 
   return (

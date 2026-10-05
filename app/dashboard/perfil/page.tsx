@@ -134,7 +134,7 @@ export default function PerfilPage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="min-h-screen space-y-4 bg-neutral-50 p-4 sm:p-6 dark:bg-black">
+      <div className="screen-fade-in min-h-screen space-y-4 bg-neutral-50 p-4 transition-opacity duration-300 ease-in-out sm:p-6 dark:bg-black">
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
@@ -143,7 +143,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 space-y-6 p-4 text-neutral-900 sm:p-6 dark:text-white">
+    <div className="screen-fade-in min-h-screen flex flex-col dark:bg-black bg-neutral-50 space-y-6 p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden

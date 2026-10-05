@@ -8,6 +8,7 @@ import { perfilService } from '@/lib/services/perfil-service';
 import { GeoFilter } from '@/components/shared/geo-filter';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioCard } from '@/components/features/portfolio-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getCachedFeed } from '@/lib/catalogo';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento, ArtistaResumo, FeedItem } from '@/lib/types/database';
@@ -58,7 +59,7 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative min-h-screen flex flex-col overflow-x-hidden px-4 pb-8 pt-5 text-neutral-900 dark:bg-black bg-neutral-50 dark:text-white sm:px-6">
+    <div className="relative min-h-screen flex flex-col overflow-x-hidden px-4 pb-8 pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:bg-black bg-neutral-50 dark:text-white sm:px-6">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
@@ -87,7 +88,7 @@ export default function ClienteDashboard() {
         </header>
 
         {activeTab === 'agendar' && (
-          <section className="space-y-4">
+          <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
               title={EXPERIENCE.heading}
@@ -95,8 +96,8 @@ export default function ClienteDashboard() {
             />
             {isLoading ? (
               <div className="space-y-4">
-                <div className="h-24 animate-pulse rounded-xl border border-white/10 bg-orange-500/5" />
-                <div className="h-24 animate-pulse rounded-xl border border-white/10 bg-orange-500/5" />
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
               </div>
             ) : (
               <div className="grid gap-4">
@@ -133,7 +134,7 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'chat' && (
-          <section className="space-y-4">
+          <section key="chat" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <SectionHeading
               icon={<MessageCircle className="h-5 w-5" strokeWidth={1.75} />}
               title="Encontrar Artistas"
@@ -186,7 +187,7 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'portfolio' && (
-          <section className="space-y-4">
+          <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <SectionHeading
               icon={<Images className="h-5 w-5" strokeWidth={1.75} />}
               title="Galeria de Inspiração"

@@ -139,7 +139,12 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         )}
       >
         <div className="flex min-h-11 items-center justify-between px-4 pb-3">
-          <h1 className="text-[17px] font-semibold tracking-tight">{headerTitle}</h1>
+          <h1
+            key={headerTitle}
+            className="text-[17px] font-semibold tracking-tight transition-opacity duration-300 ease-in-out screen-fade-in"
+          >
+            {headerTitle}
+          </h1>
           <div className="flex items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
@@ -170,7 +175,13 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       </header>
       )}
 
-      <div className={cn('flex min-h-0 flex-1 flex-col', hideTabs ? 'pb-6' : 'pb-0')}>
+      <div
+        key={pathname}
+        className={cn(
+          'flex min-h-0 flex-1 flex-col screen-fade-in transition-opacity duration-300 ease-in-out',
+          hideTabs ? 'pb-6' : 'pb-0'
+        )}
+      >
         {children}
       </div>
 

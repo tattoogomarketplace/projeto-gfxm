@@ -91,9 +91,9 @@ export function StudioIncomingRequests() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-36 w-full" />
-        <Skeleton className="h-24 w-full" />
+      <div className="screen-fade-in space-y-3 transition-opacity duration-300 ease-in-out">
+        <Skeleton className="h-36 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }

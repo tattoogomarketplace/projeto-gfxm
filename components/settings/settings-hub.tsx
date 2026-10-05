@@ -44,7 +44,7 @@ export const SettingsHub = memo(function SettingsHub() {
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
   return (
-    <div className="flex min-h-screen flex-col space-y-4 bg-neutral-50 p-4 text-neutral-900 sm:p-6 dark:bg-black dark:text-white">
+    <div className="screen-fade-in flex min-h-screen flex-col space-y-4 bg-neutral-50 p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:bg-black dark:text-white">
       <header className="screen-fade-in relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden

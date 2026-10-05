@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChatBox } from '@/components/features/chat/chat-box';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { getRoleExperience } from '@/lib/content/role-experience';
@@ -18,9 +19,9 @@ export default function TatuadorDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-4 text-neutral-900 dark:text-white sm:p-8">
+    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-4 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:p-8">
       {activeTab === 'portfolio' ? (
-        <section className="space-y-4">
+        <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
               <Images className="h-5 w-5" strokeWidth={1.75} />
@@ -33,15 +34,16 @@ export default function TatuadorDashboard() {
           {user?.id ? (
             <PortfolioUpload tatuadorId={user.id} />
           ) : (
-            <GlassContainer className="border-dashed p-6 text-center">
-              <p className="text-sm text-zinc-400">Carregando seu portfólio...</p>
-            </GlassContainer>
+            <div className="space-y-4">
+              <Skeleton className="h-40 w-full rounded-2xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
           )}
         </section>
       ) : null}
 
       {activeTab === 'agendar' ? (
-        <section className="space-y-4">
+        <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
               <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
@@ -54,7 +56,8 @@ export default function TatuadorDashboard() {
 
           {isLoading ? (
             <div className="space-y-4">
-              <div className="h-24 animate-pulse rounded-xl bg-neutral-200 dark:bg-graphite-200" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
             </div>
           ) : (
             <div className="grid gap-4">
@@ -78,7 +81,7 @@ export default function TatuadorDashboard() {
       ) : null}
 
       {activeTab === 'chat' ? (
-        <section className="space-y-4">
+        <section key="chat" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
               <MessageCircle className="h-5 w-5" strokeWidth={1.75} />
