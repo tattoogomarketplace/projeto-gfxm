@@ -23,7 +23,6 @@ export default function PerfilPage() {
   const clerk = useClerk();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
-  const storedUser = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
 
   const [email, setEmail] = useState('');
@@ -40,13 +39,9 @@ export default function PerfilPage() {
     let cancelled = false;
 
     const hydrate = async () => {
-      if (!isLoaded || !isSignedIn) return;
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
-        if (isLoaded && !isSignedIn) return;
-        // 401 com sessão Clerk viva = token ainda travado/inicializando.
-        // Hidrata pelos dados do Clerk em vez de redirecionar ou lançar.
         if (response.status === 401) {
           throw new Error('session-initializing');
         }
@@ -61,20 +56,21 @@ export default function PerfilPage() {
         if (cancelled) return;
       }
 
-      const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
+      const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
       const fullName = resolveFullName(
         {
           full_name: metadata?.full_name as string | undefined,
           nome: metadata?.nome as string | undefined,
-          name: user?.fullName || undefined,
+          name: user.fullName || undefined,
         },
-        storedUser?.fullName || user?.fullName || ''
+        user.fullName || ''
       );
-      const emailAddress = user?.primaryEmailAddress?.emailAddress ?? storedUser?.email ?? '';
+      const emailAddress = user.primaryEmailAddress?.emailAddress ?? '';
+      if (cancelled) return;
       setEmail(emailAddress);
       setNome(fullName);
       setUser({
-        id: user?.id ?? storedUser?.id ?? '',
+        id: user.id,
         email: emailAddress,
         fullName,
       });
@@ -85,7 +81,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, setUser, setRole, storedUser?.fullName, storedUser?.email, storedUser?.id]);
+  }, [isLoaded, isSignedIn, user, setUser, setRole]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();
@@ -144,8 +140,8 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 text-neutral-900 sm:p-6 dark:text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-white/10 dark:bg-gradient-to-br dark:from-white/[0.08] dark:via-white/[0.03] dark:to-transparent dark:shadow-none">
+    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 space-y-6 p-4 text-neutral-900 sm:p-6 dark:text-white">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
@@ -166,13 +162,13 @@ export default function PerfilPage() {
         </div>
       </header>
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Editar nome</h2>
         <Input
           label="Nome real"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="border-neutral-200 bg-white text-neutral-900 focus:ring-orange-500 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+          className="border-neutral-200 bg-white text-neutral-900 focus:ring-orange-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
         />
         <button
           type="button"
@@ -188,7 +184,7 @@ export default function PerfilPage() {
 
       {role === 'tatuador' ? <StudioAffiliationArtist /> : null}
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
             <Settings className="h-5 w-5" strokeWidth={1.75} />
@@ -239,7 +235,7 @@ export default function PerfilPage() {
         </button>
       </section>
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Sessão</h2>
         <button
           type="button"

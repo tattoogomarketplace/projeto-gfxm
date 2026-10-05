@@ -52,6 +52,15 @@ function writeToStorage(prefs: NotificationPrefs) {
   }
 }
 
+function prefsEqual(a: NotificationPrefs, b: NotificationPrefs) {
+  return (
+    a.reminders === b.reminders &&
+    a.chat === b.chat &&
+    a.proposals === b.proposals &&
+    a.marketing === b.marketing
+  );
+}
+
 export function getNotificationPrefs(): NotificationPrefs {
   if (!cachedPrefs) {
     cachedPrefs = readFromStorage();
@@ -67,7 +76,11 @@ export function subscribeNotificationPrefs(listener: () => void) {
 }
 
 export function getNotificationPrefsSnapshot(): NotificationPrefs {
-  cachedPrefs = readFromStorage();
+  const next = readFromStorage();
+  if (cachedPrefs && prefsEqual(cachedPrefs, next)) {
+    return cachedPrefs;
+  }
+  cachedPrefs = next;
   return cachedPrefs;
 }
 

@@ -42,34 +42,10 @@ const THEMES: Array<{
   },
 ];
 
-function persistTheme(theme: AppTheme) {
-  try {
-    window.localStorage.setItem('tattoogo-theme', theme);
-  } catch {
-    // Storage can be unavailable (private mode); visual theme still applies.
-  }
-}
-
-function applyDocumentTheme(theme: AppTheme, resolved: string | undefined) {
-  if (typeof document === 'undefined') return;
-  const root = document.documentElement;
-  const effective =
-    theme === 'system'
-      ? resolved === 'light' ||
-        window.matchMedia('(prefers-color-scheme: light)').matches
-        ? 'light'
-        : 'dark'
-      : theme;
-
-  root.classList.toggle('dark', effective === 'dark');
-  root.classList.toggle('light', effective === 'light');
-  root.style.colorScheme = effective;
-}
-
 const emptySubscribe = () => () => undefined;
 
 export function ThemeSwitcher() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { triggerHaptic } = useHapticFeedback();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -77,8 +53,6 @@ export function ThemeSwitcher() {
 
   const handleSelect = (next: AppTheme) => {
     triggerHaptic('light');
-    persistTheme(next);
-    applyDocumentTheme(next, resolvedTheme);
     setTheme(next);
   };
 
@@ -100,17 +74,17 @@ export function ThemeSwitcher() {
             onClick={() => handleSelect(option.id)}
             className={cn(
               'group relative flex min-h-11 w-full flex-col overflow-hidden rounded-2xl border p-4 text-left',
-              'bg-white dark:bg-zinc-950/50',
+              'bg-white dark:bg-[#121212]',
               'transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]',
               selected
                 ? 'border-[#FF5722] ring-2 ring-[#FF5722]/20 shadow-[0_0_24px_rgba(255,87,34,0.22)]'
-                : 'border-neutral-200 hover:border-[#FF5722]/40 dark:border-white/10'
+                : 'border-neutral-200 hover:border-[#FF5722]/40 dark:border-neutral-800'
             )}
           >
             <div
               aria-hidden
               className={cn(
-                'mb-4 h-16 w-full rounded-xl border border-neutral-200 bg-gradient-to-br dark:border-white/10',
+                'mb-4 h-16 w-full rounded-xl border border-neutral-200 bg-gradient-to-br dark:border-neutral-800',
                 option.preview
               )}
             />
@@ -119,7 +93,7 @@ export function ThemeSwitcher() {
                 'mb-3 flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300',
                 selected
                   ? 'border-[#FF5722]/60 bg-[#FF5722]/15 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.28)]'
-                  : 'border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300'
+                  : 'border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-300'
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.75} />

@@ -116,11 +116,16 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   };
 
   return (
-    <div className="relative mx-auto flex min-h-screen w-full flex-col bg-neutral-50 text-neutral-900 dark:bg-black dark:text-white">
+    <div
+      className={cn(
+        'relative mx-auto min-h-screen flex flex-col w-full text-neutral-900 dark:text-white dark:bg-black bg-neutral-50',
+        hideTabs ? '' : 'pb-28'
+      )}
+    >
       {isAiChat ? null : (
       <header
         className={cn(
-          'sticky top-0 z-40 shrink-0 border-b border-neutral-200 bg-neutral-50/80 backdrop-blur-xl dark:border-white/5 dark:bg-black/80',
+           'sticky top-0 z-40 shrink-0 border-b border-neutral-200 bg-neutral-50/80 backdrop-blur-xl dark:border-neutral-800 dark:bg-black/80',
           'pt-[max(0.75rem,env(safe-area-inset-top))]'
         )}
       >
@@ -147,7 +152,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       </header>
       )}
 
-      <div className={cn('flex min-h-0 flex-1 flex-col', hideTabs ? 'pb-6' : 'pb-28')}>
+      <div className={cn('flex min-h-0 flex-1 flex-col', hideTabs ? 'pb-6' : 'pb-0')}>
         {children}
       </div>
 

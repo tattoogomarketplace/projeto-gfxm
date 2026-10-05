@@ -14,8 +14,8 @@ import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 
 export default function ConfiguracoesPage() {
   return (
-    <div className="space-y-6 bg-neutral-50 p-4 text-neutral-900 sm:p-6 dark:bg-transparent dark:text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-gradient-to-br dark:from-white/[0.08] dark:via-white/[0.03] dark:to-transparent dark:shadow-none">
+    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 space-y-6 p-4 text-neutral-900 sm:p-6 dark:text-white">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-all duration-300 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[#FF5722]/20 blur-3xl"
@@ -47,7 +47,7 @@ export default function ConfiguracoesPage() {
         </div>
       </header>
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div>
           <h2 className="text-lg font-bold text-[#FF5722]">Aparência</h2>
           <p className="mt-1 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
@@ -59,10 +59,10 @@ export default function ConfiguracoesPage() {
 
       <NotificationPreferences />
 
-      <section className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <h2 className="text-lg font-bold text-[#FF5722]">Preferências</h2>
         <div className="space-y-2">
-          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-[#121212]">
             <Languages className="h-5 w-5 min-h-5 min-w-5 text-[#FF5722]" strokeWidth={1.75} />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-neutral-900 dark:text-white">
@@ -77,11 +77,11 @@ export default function ConfiguracoesPage() {
         </div>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <h2 className="text-lg font-bold text-[#FF5722]">Segurança</h2>
         <Link
           href="/dashboard/perfil"
-          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all duration-300 hover:border-[#FF5722]/40 hover:bg-[#FF5722]/5 active:scale-[0.99] dark:border-white/10 dark:bg-white/5"
+          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all duration-300 hover:border-[#FF5722]/40 hover:bg-[#FF5722]/5 active:scale-[0.99] dark:border-neutral-800 dark:bg-[#121212]"
         >
           <LockKeyhole className="h-5 w-5 min-h-5 min-w-5 text-[#FF5722]" strokeWidth={1.75} />
           <span className="min-w-0 flex-1">
@@ -97,7 +97,7 @@ export default function ConfiguracoesPage() {
             strokeWidth={1.75}
           />
         </Link>
-        <div className="flex min-h-11 items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+        <div className="flex min-h-11 items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-[#121212]">
           <ShieldCheck className="h-5 w-5 min-h-5 min-w-5 text-[#FF5722]" strokeWidth={1.75} />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-neutral-900 dark:text-white">

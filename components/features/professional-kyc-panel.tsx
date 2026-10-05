@@ -253,7 +253,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
             Verificação profissional
           </p>
-          <h3 className="mt-1 text-lg font-bold text-white">Documento sanitário / identidade</h3>
+           <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Documento sanitário / identidade</h3>
           <p className="mt-1 text-sm leading-relaxed text-zinc-400">
             Sua conta de tatuador é independente do estúdio. Envie RG, CNH ou comprovante oficial
             para liberar agenda e recebimentos.
@@ -291,10 +291,10 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
             type="button"
             disabled={busy}
             onClick={() => inputRef.current?.click()}
-            className="flex min-h-24 w-full flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/40 bg-black/20 px-4 py-6 text-center transition-colors hover:border-amber-500 hover:bg-amber-500/5 disabled:opacity-60"
+            className="flex min-h-24 w-full flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/40 bg-neutral-50 px-4 py-6 text-center transition-colors hover:border-amber-500 hover:bg-amber-500/5 disabled:opacity-60 dark:bg-[#121212]"
           >
             <Upload className="mb-2 h-6 w-6 text-amber-500" />
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-neutral-900 dark:text-white">
               {fileName ? fileName : 'Toque para enviar o documento'}
             </span>
             <span className="mt-1 text-xs text-zinc-500">PDF ou imagem, até 10 MB</span>

@@ -3,20 +3,15 @@
 import { useEffect } from 'react';
 import { ThemeProvider as NextThemesProvider, useTheme } from 'next-themes';
 
+const THEME_VALUES = { dark: 'dark', light: 'light' };
+
 function ThemeSync() {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     if (typeof document === 'undefined' || !resolvedTheme) return;
 
-    const root = document.documentElement;
-    const isLight = resolvedTheme === 'light';
-
-    root.classList.toggle('dark', !isLight);
-    root.classList.toggle('light', isLight);
-    root.style.colorScheme = isLight ? 'light' : 'dark';
-
-    const color = isLight ? '#F6F3EE' : '#121212';
+    const color = resolvedTheme === 'light' ? '#F6F3EE' : '#121212';
     document.querySelectorAll('meta[name="theme-color"]').forEach((node) => {
       node.setAttribute('content', color);
     });
@@ -33,7 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       enableSystem
       enableColorScheme
       themes={['dark', 'light']}
-      value={{ dark: 'dark', light: 'light' }}
+      value={THEME_VALUES}
       storageKey="tattoogo-theme"
       disableTransitionOnChange
     >

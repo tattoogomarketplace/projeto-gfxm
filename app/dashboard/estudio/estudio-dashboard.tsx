@@ -12,9 +12,9 @@ export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
-    <div className="flex min-h-full flex-col bg-neutral-50 p-8 text-neutral-900 dark:bg-black dark:text-white">
+    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-8 text-neutral-900 dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
-      <p className="mb-6 text-sm text-zinc-400">{EXPERIENCE.subtitle}</p>
+      <p className="mb-6 text-sm text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
       
       {isLoading ? (
         <div className="space-y-4">

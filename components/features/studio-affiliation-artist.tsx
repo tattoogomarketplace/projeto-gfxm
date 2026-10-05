@@ -171,7 +171,7 @@ export function StudioAffiliationArtist() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar estúdio por nome ou cidade"
-              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-white/10 dark:bg-black/30 dark:text-white"
+              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
             />
           </div>
           <Button type="submit" isLoading={searching} className="shrink-0">
@@ -185,7 +185,7 @@ export function StudioAffiliationArtist() {
           {(studios ?? []).map((studio) => (
             <li
               key={studio?.id ?? studio?.nome}
-                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-white/10 dark:bg-black/20"
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-[#121212]"
             >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 truncate font-semibold text-neutral-900 dark:text-white">

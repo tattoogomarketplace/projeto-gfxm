@@ -113,13 +113,13 @@ export function StudioCnpjPanel({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
             Compliance fiscal
           </p>
-          <h3 className="mt-1 text-lg font-bold text-white">CNPJ do estúdio</h3>
+           <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">CNPJ do estúdio</h3>
         </div>
       </div>
 
       {compliance?.cnpjMasked ? (
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
-          <p className="font-semibold text-white">{compliance?.razaoSocial || 'Estúdio registrado'}</p>
+         <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-800 dark:bg-[#121212]">
+           <p className="font-semibold text-neutral-900 dark:text-white">{compliance?.razaoSocial || 'Estúdio registrado'}</p>
           <p className="mt-1 text-zinc-400">{compliance?.cnpjMasked}</p>
           <p className="mt-1 text-xs uppercase tracking-wider text-emerald-300">
             {compliance?.statusReceita || 'ativa'}
@@ -135,7 +135,7 @@ export function StudioCnpjPanel({
             onChange={(event) => setCnpj(formatCnpj(event.target.value))}
             placeholder="00.000.000/0000-00"
             inputMode="numeric"
-            className="h-12 w-full rounded-lg border border-white/10 bg-black/30 px-4 text-sm text-white outline-none focus:border-amber-500"
+             className="h-12 w-full rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
           />
           {preview ? <p className="text-xs text-zinc-400">{preview}</p> : null}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

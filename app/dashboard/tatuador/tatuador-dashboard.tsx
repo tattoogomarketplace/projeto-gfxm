@@ -18,7 +18,7 @@ export default function TatuadorDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="flex min-h-full flex-col bg-neutral-50 p-4 text-neutral-900 dark:bg-black dark:text-white sm:p-8">
+    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-4 text-neutral-900 dark:text-white sm:p-8">
       {activeTab === 'portfolio' ? (
         <section className="space-y-4">
           <div className="flex items-start gap-3">
@@ -27,7 +27,7 @@ export default function TatuadorDashboard() {
             </span>
             <div>
               <h1 className="text-2xl font-bold">Portfólio</h1>
-              <p className="mt-1 text-sm text-zinc-400">Publique artes e mantenha sua bancada visível.</p>
+              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">Publique artes e mantenha sua bancada visível.</p>
             </div>
           </div>
           {user?.id ? (
@@ -48,7 +48,7 @@ export default function TatuadorDashboard() {
             </span>
             <div>
               <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
-              <p className="text-sm text-zinc-400">{EXPERIENCE.subtitle}</p>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
             </div>
           </div>
 
@@ -85,7 +85,7 @@ export default function TatuadorDashboard() {
             </span>
             <div>
               <h1 className="text-2xl font-bold">Chat</h1>
-              <p className="mt-1 text-sm text-zinc-400">Converse com clientes sobre sessões e orçamentos.</p>
+              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">Converse com clientes sobre sessões e orçamentos.</p>
             </div>
           </div>
           <ChatBox />

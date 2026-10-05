@@ -14,6 +14,7 @@ const config: Config = {
       colors: {
         graphite: {
           DEFAULT: '#121212',
+          50: '#1a1a1a',
           200: '#1e1e1e',
         },
         neon: {

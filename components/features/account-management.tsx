@@ -123,7 +123,7 @@ export function AccountManagement({ fallbackRole = null }: AccountManagementProp
         </section>
       ) : null}
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.22)]">
             <ShieldAlert className="h-5 w-5" strokeWidth={1.75} />

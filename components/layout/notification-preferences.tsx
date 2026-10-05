@@ -107,7 +107,7 @@ export function NotificationPreferences() {
   };
 
   return (
-    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-white/10 dark:bg-zinc-950/50 dark:shadow-none">
+    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#FF5722]/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#FF5722]/30 bg-[#FF5722]/10 text-[#FF5722] shadow-[0_0_18px_rgba(255,87,34,0.22)]">
           <BellRing className="h-5 w-5" strokeWidth={1.75} />
@@ -131,7 +131,7 @@ export function NotificationPreferences() {
                 'flex min-h-11 items-center gap-3 rounded-xl border px-3 py-3 transition-all duration-200',
                 checked
                   ? 'border-[#FF5722]/30 bg-[#FF5722]/5'
-                  : 'border-neutral-200 bg-neutral-50 dark:border-white/10 dark:bg-white/5'
+                  : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5'
               )}
             >
               <span
@@ -139,7 +139,7 @@ export function NotificationPreferences() {
                   'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                   checked
                     ? 'border-[#FF5722]/50 bg-[#FF5722]/15 text-[#FF5722]'
-                    : 'border-neutral-200 bg-white text-neutral-500 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400'
+                    : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
                 )}
               >
                 <Icon className="h-5 w-5" strokeWidth={1.75} />

@@ -29,6 +29,17 @@
     --touch-min: 44px;
   }
 
+  :root.light {
+    color-scheme: light;
+    --background: #FAFAF7;
+    --foreground: #171717;
+    --muted: #737373;
+    --muted-foreground: #525252;
+    --border: #E5E5E5;
+    --card: #FFFFFF;
+    --input: #FFFFFF;
+  }
+
   .dark {
     color-scheme: dark;
     --background: #121212;

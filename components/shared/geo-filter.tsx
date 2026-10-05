@@ -30,7 +30,7 @@ export const GeoFilter = ({ onChange }: { onChange: (val: string) => void }) => 
 
   return (
     <select 
-      className={`mb-6 w-full max-w-xs rounded-lg border bg-white p-2 text-sm text-neutral-900 transition-all focus:border-orange-500 dark:bg-zinc-900 dark:text-white ${error ? 'border-red-500' : 'border-neutral-200 dark:border-zinc-800'}`}
+      className={`mb-6 w-full max-w-xs rounded-lg border bg-white p-2 text-sm text-neutral-900 transition-all focus:border-orange-500 dark:bg-[#121212] dark:text-white ${error ? 'border-red-500' : 'border-neutral-200 dark:border-neutral-800'}`}
       onChange={(e) => onChange(e.target.value)}
       disabled={loading || !!error}
     >

@@ -103,7 +103,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
   }, [messages]);
 
   return (
-    <div className="tattoo-wallpaper flex h-150 w-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-gray-800 dark:bg-[#09090b] dark:shadow-2xl">
+    <div className="tattoo-wallpaper flex h-150 w-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-2xl">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 pb-32 space-y-4">
         {messages.map((m: Message) => (
           <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -113,7 +113,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-50 p-4 dark:border-gray-800 dark:bg-[#1a1a1a]">
+      <div className="flex items-center gap-2 border-t border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-[#121212]">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

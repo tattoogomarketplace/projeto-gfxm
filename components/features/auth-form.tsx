@@ -18,9 +18,9 @@ export function AuthForm() {
   };
 
   if (message) return (
-    <div className="p-8 bg-zinc-900 border border-amber-500/30 rounded-2xl text-center shadow-2xl">
-      <h2 className="text-2xl font-bold text-amber-500 mb-4">Quase lá...</h2>
-      <p className="text-zinc-300">{message}</p>
+    <div className="rounded-2xl border border-amber-500/30 bg-white p-8 text-center shadow-2xl dark:border-neutral-800 dark:bg-[#121212]">
+      <h2 className="mb-4 text-2xl font-bold text-amber-500">Quase lá...</h2>
+      <p className="text-neutral-600 dark:text-zinc-300">{message}</p>
       <button 
         onClick={() => setMessage('')}
         className="mt-6 text-zinc-500 hover:text-white underline text-sm"
@@ -31,23 +31,23 @@ export function AuthForm() {
   );
 
   return (
-    <div className="p-6 bg-zinc-900 rounded-xl border border-zinc-800">
-      <h2 className="text-xl font-bold text-white mb-6">Criar Conta</h2>
+    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121212]">
+      <h2 className="mb-6 text-xl font-bold text-neutral-900 dark:text-white">Criar Conta</h2>
       <input 
         type="email" 
         onChange={(e) => setEmail(e.target.value)} 
         placeholder="Email" 
-        className="w-full p-3 mb-4 bg-zinc-950 text-white rounded-lg border border-zinc-700"
+        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
       />
       <input 
         type="password" 
         onChange={(e) => setPassword(e.target.value)} 
         placeholder="Senha" 
-        className="w-full p-3 mb-4 bg-zinc-950 text-white rounded-lg border border-zinc-700"
+        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
       />
       <select 
         onChange={(e) => setRole(e.target.value)} 
-        className="w-full p-3 mb-6 bg-zinc-950 text-white rounded-lg border border-zinc-700"
+        className="mb-6 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
       >
         <option value="cliente">Cliente</option>
         <option value="tatuador">Tatuador</option>

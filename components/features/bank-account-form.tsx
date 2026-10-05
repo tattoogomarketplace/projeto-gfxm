@@ -42,12 +42,12 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   if (!isLoaded) return null;
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-      <h3 className="text-white font-bold mb-4">Dados Bancários (Seguros)</h3>
+    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121212]">
+      <h3 className="mb-4 font-bold text-neutral-900 dark:text-white">Dados Bancários (Seguros)</h3>
       <input 
         type="text" 
         placeholder="Número da Conta (mascarado ao salvar)"
-        className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-white mb-4"
+        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
         onChange={(e) => setBank(e.target.value)}
       />
       <button onClick={handleSave} disabled={loading} className="bg-orange-500 px-4 py-2 rounded-lg font-bold disabled:opacity-50">Salvar Dados</button>
