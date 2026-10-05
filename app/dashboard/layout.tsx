@@ -54,7 +54,7 @@ export default async function DashboardLayout({
 
   if (!perfil || perfil.deleted_at) {
     return (
-      <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 text-neutral-900 dark:text-white">
+      <div className="luxury-canvas flex min-h-screen flex-col text-neutral-900 dark:text-white">
         <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
       </div>
     );
@@ -85,7 +85,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 text-neutral-900 dark:text-white">
+    <div className="luxury-canvas flex min-h-screen flex-col text-neutral-900 dark:text-white">
       <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
     </div>
   );

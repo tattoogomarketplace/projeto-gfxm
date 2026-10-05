@@ -99,7 +99,7 @@ export default function RootLayout({
           <link rel="manifest" href="/manifest.json" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         </head>
-        <body className="font-sans antialiased h-full overflow-hidden dark:bg-black bg-neutral-50 text-neutral-900 dark:text-white">
+        <body className="luxury-canvas font-sans antialiased h-full overflow-hidden text-neutral-900 dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />

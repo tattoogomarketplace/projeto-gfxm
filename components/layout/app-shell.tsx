@@ -15,7 +15,6 @@ import {
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
-import { BottomNav } from '@/components/layout/bottom-nav';
 import { cn } from '@/lib/utils';
 
 const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
@@ -98,9 +97,10 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       : activeTab === 'perfil'
         ? 'portfolio'
         : activeTab;
-  const headerTitle =
-    isSettingsHub || selectedTab === 'perfil'
-      ? 'Configurações de Perfil'
+  const headerTitle = isSettingsHub
+    ? 'Configurações'
+    : selectedTab === 'perfil'
+      ? 'Perfil'
       : selectedTab === 'agendar'
         ? 'Agenda & Sessões'
         : selectedTab === 'chat'
@@ -127,22 +127,19 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   return (
     <div
       className={cn(
-        'relative mx-auto min-h-screen flex flex-col w-full text-neutral-900 dark:text-white dark:bg-black bg-neutral-50',
+        'luxury-canvas relative mx-auto flex min-h-screen w-full flex-col text-neutral-900 dark:text-white',
         hideTabs ? '' : 'pb-28'
       )}
     >
       {isAiChat ? null : (
       <header
         className={cn(
-           'sticky top-0 z-40 shrink-0 border-b border-neutral-200 bg-neutral-50/80 backdrop-blur-xl dark:border-neutral-800 dark:bg-black/80',
+            'sticky top-0 z-40 shrink-0 border-b border-neutral-200/80 bg-white/70 backdrop-blur-xl dark:border-neutral-800 dark:bg-black/70',
           'pt-[max(0.75rem,env(safe-area-inset-top))]'
         )}
       >
         <div className="flex min-h-11 items-center justify-between px-4 pb-3">
-          <h1
-            key={headerTitle}
-            className="text-[17px] font-semibold tracking-tight transition-opacity duration-300 ease-in-out screen-fade-in"
-          >
+          <h1 className="text-[17px] font-semibold tracking-tight">
             {headerTitle}
           </h1>
           <div className="flex items-center gap-2">
@@ -176,16 +173,14 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       )}
 
       <div
-        key={pathname}
         className={cn(
-          'flex min-h-0 flex-1 flex-col screen-fade-in transition-opacity duration-300 ease-in-out',
+          'flex min-h-0 flex-1 flex-col',
           hideTabs ? 'pb-6' : 'pb-0'
         )}
       >
         {children}
       </div>
 
-      {hideTabs ? null : <BottomNav />}
       <AiAssistantFab />
     </div>
   );

@@ -19,7 +19,7 @@ export default function TatuadorDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-black bg-neutral-50 p-4 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:p-8">
+    <div className="min-h-screen flex flex-col bg-transparent p-4 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:p-8">
       {activeTab === 'portfolio' ? (
         <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
           <div className="flex items-start gap-3">

@@ -4,15 +4,13 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useClerk, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { ChevronRight, FileText, Palette, Settings } from 'lucide-react';
+import { ChevronRight, Settings } from 'lucide-react';
 import { Input } from '@/components/input';
 import { AccountManagement } from '@/components/features/account-management';
-import { PasswordChangeForm } from '@/components/features/password-change-form';
+import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
-import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
@@ -31,7 +29,6 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -134,7 +131,7 @@ export default function PerfilPage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="screen-fade-in min-h-screen space-y-4 bg-neutral-50 p-4 transition-opacity duration-300 ease-in-out sm:p-6 dark:bg-black">
+      <div className="screen-fade-in min-h-screen space-y-4 bg-transparent p-4 transition-opacity duration-300 ease-in-out sm:p-6">
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
@@ -143,7 +140,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="screen-fade-in min-h-screen flex flex-col dark:bg-black bg-neutral-50 space-y-6 p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
+    <div className="screen-fade-in min-h-screen flex flex-col space-y-6 bg-transparent p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
@@ -155,7 +152,7 @@ export default function PerfilPage() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-              Meu Perfil
+              Perfil
             </p>
             <h1 className="mt-0.5 truncate bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
               {nome || 'Artista'}
@@ -183,60 +180,28 @@ export default function PerfilPage() {
         </button>
       </section>
 
-      <PasswordChangeForm />
+      {role === 'tatuador' ? <PortfolioUpload tatuadorId={user.id} /> : null}
 
       {role === 'tatuador' ? <StudioAffiliationArtist /> : null}
 
-      <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
-            <Settings className="h-5 w-5" strokeWidth={1.75} />
+      <Link
+        href="/dashboard/perfil/configuracoes"
+        className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-neutral-800 dark:bg-[#121212]"
+      >
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
+          <Settings className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-neutral-900 dark:text-white">Configurações</span>
+          <span className="mt-0.5 block text-xs text-zinc-500">
+            Tema, expediente, notificações e segurança
           </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-              Configurações
-            </h2>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              Preferências, aparência e documentos legais da sua conta.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/dashboard/perfil/configuracoes"
-          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-white/10 dark:bg-white/5"
-        >
-          <Palette className="h-5 w-5 min-h-5 min-w-5 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-neutral-900 dark:text-white">
-              Aparência e tema
-            </span>
-            <span className="mt-0.5 block text-xs text-zinc-500">
-              Escuro, claro ou padrão do sistema
-            </span>
-          </span>
-          <ChevronRight
-            className="h-4 w-4 min-h-4 min-w-4 text-zinc-500 transition-colors group-hover:text-orange-400"
-            strokeWidth={1.75}
-          />
-        </Link>
-        <button
-          type="button"
-          onClick={() => setShowTerms(true)}
-          className="group flex min-h-11 w-full items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-white/10 dark:bg-white/5"
-        >
-          <FileText className="h-5 w-5 min-h-5 min-w-5 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-neutral-900 dark:text-white">
-              Termos de Uso e Política de Privacidade
-            </span>
-            <span className="mt-0.5 block text-xs text-zinc-500">Versão {TERMS_VERSION}</span>
-          </span>
-          <ChevronRight
-            className="h-4 w-4 min-h-4 min-w-4 text-zinc-500 transition-colors group-hover:text-orange-400"
-            strokeWidth={1.75}
-          />
-        </button>
-      </section>
+        </span>
+        <ChevronRight
+          className="h-4 w-4 min-h-4 min-w-4 text-zinc-500 transition-colors group-hover:text-orange-400"
+          strokeWidth={1.75}
+        />
+      </Link>
 
       <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <h2 className="text-lg font-bold text-orange-500 dark:text-orange-400">Sessão</h2>
@@ -251,8 +216,6 @@ export default function PerfilPage() {
       </section>
 
       <AccountManagement fallbackRole={role} />
-
-      <TermsViewerModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </div>
   );
 }

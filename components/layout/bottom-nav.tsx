@@ -1,7 +1,8 @@
 'use client';
 
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -24,50 +25,70 @@ type BottomNavProps = {
   hidden?: boolean;
 };
 
-function resolveActiveTab(pathname: string, tabParam: string | null): AppTab {
+function resolveActiveTab(pathname: string, storeTab: AppTab): AppTab {
   if (pathname.startsWith('/dashboard/perfil')) return 'perfil';
-  if (tabParam === 'agendar' || tabParam === 'chat' || tabParam === 'portfolio') {
-    return tabParam;
+  if (storeTab === 'agendar' || storeTab === 'chat' || storeTab === 'portfolio') {
+    return storeTab;
   }
   return 'portfolio';
 }
 
-export function BottomNav({ hidden = false }: BottomNavProps) {
+function shouldHideNav(pathname: string): boolean {
+  return (
+    pathname.startsWith('/dashboard/onboarding') ||
+    pathname.startsWith('/dashboard/ai') ||
+    pathname.startsWith('/dashboard/kyc-pendente')
+  );
+}
+
+const NavIcon = memo(function NavIcon({
+  icon: Icon,
+}: {
+  icon: typeof Home;
+}) {
+  return <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />;
+});
+
+function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const role = useAuthStore((s) => s.role);
+  const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { triggerHaptic } = useHapticFeedback();
 
-  if (hidden || !role) return null;
+  const conceal = hidden || !role || shouldHideNav(pathname);
+  const homePath = role ? dashboardPathForRole(role) : '/dashboard';
+  const activeTab = resolveActiveTab(pathname, storeTab);
 
-  const homePath = dashboardPathForRole(role);
-  const activeTab = resolveActiveTab(pathname, searchParams.get('tab'));
-
-  const hrefFor = (tab: AppTab) => {
-    if (tab === 'perfil') return '/dashboard/perfil';
-    return `${homePath}?tab=${tab}`;
-  };
+  const handleSelect = useCallback(
+    (tab: AppTab) => {
+      triggerHaptic('light');
+      if (tab !== 'perfil') setActiveTab(tab);
+    },
+    [setActiveTab, triggerHaptic]
+  );
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200 bg-neutral-50/90 backdrop-blur-md dark:border-neutral-800 dark:bg-black/90 md:hidden"
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-50 w-full border-t border-neutral-200/80 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-black/80 md:hidden',
+        conceal && 'pointer-events-none invisible'
+      )}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Navegação principal"
+      aria-hidden={conceal}
     >
       <ul className="grid h-16 grid-cols-4 px-1">
         {ITEMS.map((item) => {
-          const Icon = item.icon;
           const active = activeTab === item.tab;
+          const href = item.tab === 'perfil' ? '/dashboard/perfil' : `${homePath}?tab=${item.tab}`;
           return (
             <li key={item.tab} className="flex">
               <Link
-                href={hrefFor(item.tab)}
+                href={href}
+                prefetch
                 scroll={false}
-                onClick={() => {
-                  triggerHaptic('light');
-                  if (item.tab !== 'perfil') setActiveTab(item.tab);
-                }}
+                onClick={() => handleSelect(item.tab)}
                 className={cn(
                   'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold tracking-tight',
                   'transition-colors duration-200 active:scale-[0.98]',
@@ -76,7 +97,7 @@ export function BottomNav({ hidden = false }: BottomNavProps) {
                 )}
                 aria-current={active ? 'page' : undefined}
               >
-                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+                <NavIcon icon={item.icon} />
                 <span>{item.label}</span>
               </Link>
             </li>
@@ -86,3 +107,5 @@ export function BottomNav({ hidden = false }: BottomNavProps) {
     </nav>
   );
 }
+
+export const BottomNav = memo(BottomNavInner);
