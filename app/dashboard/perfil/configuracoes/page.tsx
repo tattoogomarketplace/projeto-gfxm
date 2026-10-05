@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import {
-  Bell,
   ChevronLeft,
   ChevronRight,
   Languages,
@@ -10,6 +9,7 @@ import {
   Palette,
   ShieldCheck,
 } from 'lucide-react';
+import { NotificationPreferences } from '@/components/layout/notification-preferences';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 
 export default function ConfiguracoesPage() {
@@ -57,6 +57,8 @@ export default function ConfiguracoesPage() {
         <ThemeSwitcher />
       </section>
 
+      <NotificationPreferences />
+
       <section className="space-y-3 rounded-xl border border-white/10 bg-zinc-950/50 p-4 transition-all duration-300 hover:border-[#FF5722]/40 light:border-black/10 light:bg-white/80">
         <h2 className="text-lg font-bold text-[#FF5722]">Preferências</h2>
         <div className="space-y-2">
@@ -70,17 +72,6 @@ export default function ConfiguracoesPage() {
             </span>
             <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
               Ativo
-            </span>
-          </div>
-          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 light:border-black/10 light:bg-black/[0.03]">
-            <Bell className="h-5 w-5 min-h-5 min-w-5 text-[#FF5722]" strokeWidth={1.75} />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-white light:text-zinc-900">
-                Alertas do estúdio
-              </span>
-              <span className="mt-0.5 block text-xs text-zinc-500">
-                Agenda, chat e confirmações seguem o dispositivo.
-              </span>
             </span>
           </div>
         </div>

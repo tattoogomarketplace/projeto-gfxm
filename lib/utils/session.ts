@@ -65,14 +65,15 @@ interface ClearClientSessionOptions {
   intentional?: boolean;
 }
 
-  /**
-   * Wipe every client-side marker tied to the current session so the next login
-   * is treated as a fresh entry: no cached token, no queued offline actions and
-   * no residual device state that could skip full re-authentication (OTP).
-   *
-   * Intentionally preserves `termsAccepted` (legal acceptance) and
-   * `tattoogo-theme` (device appearance preference), which are not session state.
-   */
+/**
+ * Wipe every client-side marker tied to the current session so the next login
+ * is treated as a fresh entry: no cached token, no queued offline actions and
+ * no residual device state that could skip full re-authentication (OTP).
+ *
+ * Intentionally preserves `termsAccepted` (legal acceptance),
+ * `tattoogo-theme` (device appearance) and `tattoogo-notification-prefs`
+ * (notification choices), which are not session state.
+ */
 export function clearClientSession(options: ClearClientSessionOptions = {}): void {
   if (options.intentional) {
     markIntentionalSignOut();
@@ -80,8 +81,9 @@ export function clearClientSession(options: ClearClientSessionOptions = {}): voi
 
   if (typeof window !== 'undefined') {
     try {
+      const preserved = new Set(['tattoogo-theme', 'tattoogo-notification-prefs']);
       Object.keys(window.localStorage)
-        .filter((key) => key.startsWith(APP_STORAGE_PREFIX) && key !== 'tattoogo-theme')
+        .filter((key) => key.startsWith(APP_STORAGE_PREFIX) && !preserved.has(key))
         .forEach((key) => window.localStorage.removeItem(key));
       window.sessionStorage.clear();
     } catch {
