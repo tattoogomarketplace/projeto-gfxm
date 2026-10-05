@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'tattoogo-mk-v2';
+const CACHE_VERSION = 'tattoogo-mk-v3';
 const SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const IMAGE_CACHE = CACHE_VERSION + '-images';
@@ -9,7 +9,9 @@ const APP_SHELL = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-180x180.png',
+  '/opengraph-image.png'
 ];
 
 const DATA_PATHS = ['/api/catalogo/feed', '/api/catalogo/artistas', '/api/catalogo/cidades', '/api/galeria'];
