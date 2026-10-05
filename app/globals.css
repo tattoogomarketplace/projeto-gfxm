@@ -193,7 +193,7 @@
   }
 
   .nav-safe-pad {
-    padding-bottom: calc(3rem + max(1rem, env(safe-area-inset-bottom, 0px)));
+    padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
   }
 
   .bottom-nav-safe {
@@ -205,8 +205,8 @@
     width: 100%;
     margin: 0;
     transform: none;
-    padding-bottom: max(1rem, constant(safe-area-inset-bottom));
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    padding-bottom: constant(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
   }

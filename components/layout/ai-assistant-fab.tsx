@@ -18,7 +18,7 @@ export function AiAssistantFab() {
   return (
     <div
       ref={constraintsRef}
-      className="pointer-events-none fixed bottom-[calc(3.75rem+max(1rem,env(safe-area-inset-bottom,0px)))] right-[calc(env(safe-area-inset-right)+1rem)] z-[60] w-12 md:bottom-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"
+      className="pointer-events-none fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] right-[calc(env(safe-area-inset-right)+1rem)] z-[60] w-12 md:bottom-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"
       style={{
         top: 'calc(env(safe-area-inset-top) + 4.5rem)',
       }}

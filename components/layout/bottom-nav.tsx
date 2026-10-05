@@ -76,11 +76,19 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         'bottom-nav-safe fixed bottom-0 left-0 right-0 z-50 m-0 w-full md:hidden',
         'border-t border-neutral-200/80 bg-white/80 backdrop-blur-xl',
         'dark:border-white/10 dark:bg-[#121212]/80',
-        'pb-[max(1rem,env(safe-area-inset-bottom))]',
+        'pb-[env(safe-area-inset-bottom)]',
         'pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]',
         conceal && 'pointer-events-none invisible'
       )}
-      style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: 0, transform: 'none' }}
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        margin: 0,
+        transform: 'none',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
