@@ -73,7 +73,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'bottom-nav-safe fixed bottom-0 left-0 right-0 z-50 m-0 w-full md:hidden',
+        'bottom-nav-safe fixed inset-x-0 bottom-0 z-50 m-0 w-full md:hidden',
         'border-t border-neutral-200/80 bg-white/80 backdrop-blur-xl',
         'dark:border-white/10 dark:bg-[#121212]/80',
         'pb-[env(safe-area-inset-bottom)]',
