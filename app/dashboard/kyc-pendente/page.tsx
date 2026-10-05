@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
@@ -34,6 +35,7 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
 
 export default function KycPendentePage() {
   const { isLoaded, isSignedIn, user } = useUser();
+  const router = useRouter();
   const [status, setStatus] = useState<KycStatus>('pendente');
   const [loading, setLoading] = useState(true);
 
@@ -57,17 +59,17 @@ export default function KycPendentePage() {
         }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
-          window.location.href = '/dashboard/onboarding';
+          router.push('/dashboard/onboarding');
           return;
         }
         const role = normalizeAppRole(payload?.perfil?.role || (metadata?.role as string));
         if (role !== 'tatuador') {
-          window.location.href = dashboardPathForRole(role);
+          router.push(dashboardPathForRole(role));
           return;
         }
         const kyc = (payload?.perfil?.kyc_status as KycStatus) || 'pendente';
         if (kyc === 'aprovado') {
-          window.location.href = '/dashboard/tatuador';
+          router.push('/dashboard/tatuador');
           return;
         }
         setStatus(kyc);
@@ -79,13 +81,13 @@ export default function KycPendentePage() {
 
       const role = normalizeAppRole(metadata?.role as string);
         if (role !== 'tatuador') {
-          window.location.href = dashboardPathForRole(role);
+          router.push(dashboardPathForRole(role));
           return;
         }
 
         const kyc = (metadata?.kyc_status as KycStatus) || 'pendente';
       if (kyc === 'aprovado') {
-        window.location.href = '/dashboard/tatuador';
+        router.push('/dashboard/tatuador');
         return;
       }
 
@@ -97,7 +99,7 @@ export default function KycPendentePage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, router]);
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
@@ -125,7 +127,7 @@ export default function KycPendentePage() {
             onStatusChange={(next) => {
               setStatus(next);
               if (next === 'aprovado') {
-                window.location.href = '/dashboard/tatuador';
+                router.push('/dashboard/tatuador');
               }
             }}
           />

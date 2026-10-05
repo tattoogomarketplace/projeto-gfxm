@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 import { markOnboardingGrace } from '@/lib/utils/session';
 
 export function PerfilBootstrapGate() {
   const { getToken } = useAuth();
+  const router = useRouter();
   const navigatingRef = useRef(false);
   const attemptedRef = useRef(false);
   const [failed, setFailed] = useState(false);
@@ -27,14 +29,14 @@ export function PerfilBootstrapGate() {
       if (response.status === 200) {
         navigatingRef.current = true;
         markOnboardingGrace();
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
         return;
       }
       setFailed(true);
     } catch {
       setFailed(true);
     }
-  }, [getToken]);
+  }, [getToken, router]);
 
   useEffect(() => {
     if (attemptedRef.current) return;

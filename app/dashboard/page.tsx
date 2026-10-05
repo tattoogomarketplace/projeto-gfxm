@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
   dashboardPathForRole,
@@ -19,6 +20,7 @@ const MAX_ATTEMPTS = 3;
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
   const storedRole = useAuthStore((s) => s.role);
   const redirected = useRef(false);
   const attemptsRef = useRef(0);
@@ -73,7 +75,7 @@ export default function DashboardPage() {
             throw new Error('session-initializing');
           }
           redirected.current = true;
-          window.location.href = LOGIN_PATH;
+          router.push(LOGIN_PATH);
           return;
         }
 
@@ -82,9 +84,8 @@ export default function DashboardPage() {
         }
 
         redirected.current = true;
-        window.location.href = destinationAfterProfileSync(
-          payload.perfil,
-          payload.needsOnboarding
+        router.push(
+          destinationAfterProfileSync(payload.perfil, payload.needsOnboarding)
         );
       } catch {
         if (cancelled || redirected.current) return;
@@ -101,13 +102,13 @@ export default function DashboardPage() {
 
         if (isOnboardingGrace()) {
           redirected.current = true;
-          window.location.href = ONBOARDING_PATH;
+          router.push(ONBOARDING_PATH);
           return;
         }
 
         if (metadataRole) {
           redirected.current = true;
-          window.location.href = dashboardPathForRole(metadataRole);
+          router.push(dashboardPathForRole(metadataRole));
           return;
         }
 
@@ -119,7 +120,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, storedRole, getToken]);
+  }, [isLoaded, isSignedIn, user, storedRole, getToken, router]);
 
   const loadingRole =
     (typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role : null) ||

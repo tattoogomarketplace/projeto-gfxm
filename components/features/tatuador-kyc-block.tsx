@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { ShieldAlert } from 'lucide-react';
 import {
@@ -46,6 +47,7 @@ function normalizeStatus(status: string): KycStatus {
 export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; status: string }) {
   void _userId;
   const { signOut } = useClerk();
+  const router = useRouter();
   const normalized = normalizeStatus(status);
   const copy = KYC_STATUS_COPY[normalized];
 
@@ -74,7 +76,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
               status={normalized}
               onStatusChange={(next) => {
                 if (next === 'aprovado') {
-                  window.location.href = '/dashboard/tatuador';
+                  router.push('/dashboard/tatuador');
                 }
               }}
             />

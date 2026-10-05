@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { checkCurrentSession } from '@/app/actions/auth-actions';
 import {
@@ -20,14 +21,15 @@ const POLL_INTERVAL_MS = 4000;
  */
 export function StrictSessionGuard() {
   const { isLoaded, isSignedIn } = useAuth();
+  const router = useRouter();
   const wasSignedIn = useRef(false);
   const redirected = useRef(false);
 
   const kickToLogin = useCallback(() => {
     if (redirected.current) return;
     redirected.current = true;
-    window.location.href = '/login';
-  }, []);
+    router.push('/login');
+  }, [router]);
 
   useEffect(() => {
     if (!isLoaded) return;

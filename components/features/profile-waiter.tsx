@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 import { isOnboardingGrace, markOnboardingGrace } from '@/lib/utils/session';
@@ -10,6 +11,7 @@ const SIGNED_OUT_REDIRECT_MS = 8000;
 
 export function ProfileWaiter() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
+  const router = useRouter();
   const navigatingRef = useRef(false);
   const attemptedRef = useRef(false);
   const [failed, setFailed] = useState(false);
@@ -19,10 +21,10 @@ export function ProfileWaiter() {
     if (isOnboardingGrace()) return;
     const timer = window.setTimeout(() => {
       if (isOnboardingGrace() || navigatingRef.current) return;
-      window.location.href = LOGIN_PATH;
+      router.push(LOGIN_PATH);
     }, SIGNED_OUT_REDIRECT_MS);
     return () => window.clearTimeout(timer);
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, router]);
 
   const checkProfile = useCallback(async () => {
     if (navigatingRef.current) return;
@@ -43,11 +45,11 @@ export function ProfileWaiter() {
       }
       navigatingRef.current = true;
       markOnboardingGrace();
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } catch {
       setFailed(true);
     }
-  }, [getToken]);
+  }, [getToken, router]);
 
   useEffect(() => {
     if (!isLoaded || attemptedRef.current) return;

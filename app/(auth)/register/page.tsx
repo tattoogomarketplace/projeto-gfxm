@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { useSignUp } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
@@ -113,12 +114,13 @@ function clerkErrorMessage(err: unknown): string {
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [showWelcome] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -393,7 +395,7 @@ export default function RegisterPage() {
               setIsActivating(true);
               window.setTimeout(() => {
                 try {
-                  window.location.assign(nextPath);
+                  router.push(nextPath);
                 } catch (err) {
                   console.error('Session activation error:', err);
                 }

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { useSignIn } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
@@ -36,6 +37,7 @@ function clerkErrorMessage(err: unknown): string {
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [emailForVerification, setEmailForVerification] = useState('');
@@ -109,7 +111,7 @@ export default function LoginPage() {
           }
           setBridging(true);
           window.setTimeout(() => {
-            window.location.assign('/dashboard');
+            router.push('/dashboard');
           }, 160);
         } catch (err) {
           console.error('Session activation error:', err);
@@ -253,7 +255,7 @@ export default function LoginPage() {
               setBridging(true);
               window.setTimeout(() => {
                 try {
-                  window.location.assign(nextPath);
+                  router.push(nextPath);
                 } catch (err) {
                   console.error('Session activation error:', err);
                 }

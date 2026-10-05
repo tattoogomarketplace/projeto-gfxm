@@ -1,5 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { NeonButton } from '@/components/ui/neon-button';
 import { type AppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
@@ -10,6 +11,7 @@ interface WelcomeGateProps {
 
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const content = getRoleExperience(role).onboarding;
+  const router = useRouter();
 
   return (
     <motion.div 
@@ -27,7 +29,7 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       <NeonButton
         type="button"
         onClick={() => {
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
         }}
       >
         {content.cta}

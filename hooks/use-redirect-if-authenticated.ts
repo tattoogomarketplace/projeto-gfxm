@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 
 /**
@@ -16,15 +17,16 @@ export function useRedirectIfAuthenticated(enabled = true): {
   bridging: boolean;
 } {
   const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const bridging = enabled && isLoaded && !!isSignedIn;
 
   useEffect(() => {
     if (!bridging) return;
     const timer = window.setTimeout(() => {
-      window.location.assign('/dashboard');
+      router.push('/dashboard');
     }, 160);
     return () => window.clearTimeout(timer);
-  }, [bridging]);
+  }, [bridging, router]);
 
   return { isLoaded, isSignedIn: !!isSignedIn, bridging };
 }

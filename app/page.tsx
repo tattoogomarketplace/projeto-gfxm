@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TermsModal } from '@/components/shared/terms-modal';
 export default function Home() {
   const [showTerms, setShowTerms] = useState(false);
+  const router = useRouter();
 
   const handleAccess = () => {
     // Verifica se já aceitou (pode ser via localStorage)
     const hasAccepted = localStorage.getItem('termsAccepted');
     if (hasAccepted) {
-      window.location.href = '/login';
+      router.push('/login');
     } else {
       setShowTerms(true);
     }
@@ -19,7 +21,7 @@ export default function Home() {
     try {
       localStorage.setItem('termsAccepted', 'true');
       setShowTerms(false);
-      window.location.href = '/login';
+      router.push('/login');
     } catch (error) {
       console.error('Falha ao aceitar termos:', error);
     }

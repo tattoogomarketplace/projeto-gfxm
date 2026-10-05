@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
 import { useSignIn } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
@@ -51,6 +52,7 @@ function clerkErrorMessage(err: unknown): string {
 export default function ForgotPasswordPage() {
   const { isLoaded, signIn } = useSignIn();
   const clerk = useClerk();
+  const router = useRouter();
   const [step, setStep] = useState<ResetStep>('credentials');
   const [emailForReset, setEmailForReset] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,10 +68,10 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     if (!resetComplete) return;
     const timer = window.setTimeout(() => {
-      window.location.assign('/login?reset=success');
+      router.push('/login?reset=success');
     }, 160);
     return () => window.clearTimeout(timer);
-  }, [resetComplete]);
+  }, [resetComplete, router]);
 
   const credentialsForm = useForm<CredentialsValues>({
     resolver: zodResolver(credentialsSchema),

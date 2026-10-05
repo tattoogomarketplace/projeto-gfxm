@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
@@ -28,6 +29,7 @@ function messageFromOnboardingError(status: number, data: { erro?: unknown }): s
 export default function DashboardOnboardingPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setStoreRole = useAuthStore((s) => s.setRole);
   const [selectedRole, setSelectedRole] = useState<RegisterRole | null>(null);
@@ -108,7 +110,7 @@ export default function DashboardOnboardingPage() {
       });
       setStoreRole(persistedRole);
 
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar perfil';
       setSubmitError(message);

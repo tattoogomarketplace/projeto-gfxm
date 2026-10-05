@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
@@ -13,6 +14,7 @@ export default function TermsPage() {
   const [loading, setLoading] = useState(false);
   const [canAccept, setCanAccept] = useState(false);
   const { user, role } = useAuthStore();
+  const router = useRouter();
 
   const persistAceite = async () => {
     localStorage.setItem('termsAccepted', 'true');
@@ -29,9 +31,9 @@ export default function TermsPage() {
     try {
       await persistAceite();
       if (user?.id) {
-        window.location.href = dashboardPathForRole(role);
+        router.push(dashboardPathForRole(role));
       } else {
-        window.location.href = '/login';
+        router.push('/login');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao aceitar termos.';

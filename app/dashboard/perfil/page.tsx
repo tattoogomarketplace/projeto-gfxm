@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { ChevronRight, Settings } from 'lucide-react';
@@ -20,6 +21,7 @@ import { clearClientSession } from '@/lib/utils/session';
 export default function PerfilPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
+  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const role = useAuthStore((s) => s.role);
@@ -45,7 +47,7 @@ export default function PerfilPage() {
         }
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
-          window.location.href = ONBOARDING_PATH;
+          router.push(ONBOARDING_PATH);
           return;
         }
         const parsedRole = parseAppRole(payload?.perfil?.role);
@@ -79,7 +81,7 @@ export default function PerfilPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, user, setUser, setRole]);
+  }, [isLoaded, isSignedIn, user, setUser, setRole, router]);
 
   const handleSaveName = async () => {
     const nextName = nome.trim();

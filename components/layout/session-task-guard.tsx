@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from '@clerk/nextjs';
 import {
   isBypassedSessionTask,
@@ -27,6 +27,7 @@ import {
 export function SessionTaskGuard() {
   const { isLoaded, isSignedIn, session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !session) return;
@@ -36,7 +37,7 @@ export function SessionTaskGuard() {
 
     if (isBypassedSessionTask(task.key)) {
       if (isSessionTaskPath(pathname)) {
-        window.location.href = SESSION_TASK_COMPLETE_URL;
+        router.push(SESSION_TASK_COMPLETE_URL);
       }
       return;
     }
@@ -45,8 +46,8 @@ export function SessionTaskGuard() {
 
     if (isSessionTaskPath(pathname)) return;
 
-    window.location.href = SESSION_TASK_URLS[task.key];
-  }, [isLoaded, isSignedIn, session, pathname]);
+    router.push(SESSION_TASK_URLS[task.key]);
+  }, [isLoaded, isSignedIn, session, pathname, router]);
 
   return null;
 }
