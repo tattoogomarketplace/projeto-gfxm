@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
+import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { validateChatMessage } from "@/lib/utils/chat-moderation";
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
@@ -62,7 +63,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
     const { isValid, error } = validateChatMessage(input);
 
     if (!isValid) {
-      alert(error);
+      toast.error(error || 'Mensagem bloqueada pelas diretrizes.');
       return;
     }
 

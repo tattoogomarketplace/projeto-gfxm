@@ -11,6 +11,7 @@ import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TERMS_VERSION } from '@/lib/terms';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
@@ -133,8 +134,10 @@ export default function PerfilPage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="flex min-h-full items-center justify-center p-10">
-        <TattooMachineLoader label="Abrindo seu perfil" />
+      <div className="min-h-screen space-y-4 bg-neutral-50 p-4 sm:p-6 dark:bg-black">
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }

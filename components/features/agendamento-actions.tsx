@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from 'sonner';
 import { getCancelAction } from '@/lib/utils/scheduling';
 
 export function AgendamentoActions({ agendamento }: { agendamento: { data_hora: string } }) {
@@ -15,7 +16,7 @@ export function AgendamentoActions({ agendamento }: { agendamento: { data_hora: 
 
   return (
     <button 
-      onClick={() => alert("Cancelamento processado.")}
+      onClick={() => toast.success('Cancelamento processado.')}
       className="bg-red-900/50 text-red-400 px-4 py-2 rounded-lg"
     >
       Cancelar Agendamento

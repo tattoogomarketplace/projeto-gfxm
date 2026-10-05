@@ -2,18 +2,19 @@
 
 import { Suspense } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
+import { DashboardRouteSkeleton } from '@/components/ui/dashboard-route-skeleton';
 
-/**
- * Fallback do Suspense que envolve o `AppShell`.
- *
- * `AppShell` consome `useSearchParams()`, que suspende durante a resolução da
- * navegação. Antes o fallback era um `div` preto vazio, exibindo uma tela
- * completamente preta enquanto o shell hidratava. Agora renderizamos o loader
- * de marca, garantindo feedback visual contínuo (nunca tela preta muda).
- */
 function AppShellFallback() {
-  return <OnboardingLoadingScreen />;
+  return (
+    <div className="relative mx-auto min-h-screen w-full bg-neutral-50 pb-28 text-neutral-900 dark:bg-black dark:text-white">
+      <header className="sticky top-0 z-40 shrink-0 border-b border-neutral-200 bg-neutral-50/80 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl dark:border-neutral-800 dark:bg-black/80">
+        <div className="flex min-h-11 items-center px-4 pb-3">
+          <span className="text-[17px] font-semibold tracking-tight">TattooGo MK</span>
+        </div>
+      </header>
+      <DashboardRouteSkeleton />
+    </div>
+  );
 }
 
 export function AppShellBoundary({
