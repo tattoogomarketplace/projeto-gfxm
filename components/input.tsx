@@ -27,10 +27,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={resolvedType}
             className={cn(
-              "relative z-0 flex h-12 w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 transition-all duration-200 placeholder:text-neutral-400 focus:border-amber focus:outline-none focus:ring-1 focus:ring-amber disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:bg-[#121212] dark:text-white dark:placeholder:text-muted/50",
+              "relative z-0 flex h-12 w-full rounded-lg border px-4 py-2 text-sm transition-all duration-200 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50",
+              "border-neutral-200 bg-white text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 focus:border-amber focus:ring-amber",
+              "dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500",
+              "scheme-light dark:scheme-dark",
               isPassword && "pr-12",
               error && "border-red-500 focus:ring-red-500",
-              className
+              className,
+              "border-neutral-200 bg-white text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             )}
             ref={ref}
             {...props}

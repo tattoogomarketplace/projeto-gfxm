@@ -100,6 +100,49 @@
   [role="button"]:active {
     transform: scale(0.98);
   }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+  select,
+  textarea {
+    color: var(--foreground);
+    caret-color: var(--foreground);
+    background-color: var(--input);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+
+  .light input[type="date"],
+  .light input[type="datetime-local"],
+  .light input[type="time"],
+  .light input[type="month"],
+  .light input[type="week"] {
+    color-scheme: light;
+    color: #171717;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="datetime-local"],
+  .dark input[type="time"],
+  .dark input[type="month"],
+  .dark input[type="week"] {
+    color-scheme: dark;
+    color: #ffffff;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    box-shadow: 0 0 0 1000px var(--input) inset;
+    transition: background-color 9999s ease-out 0s;
+  }
 }
 
 @layer utilities {

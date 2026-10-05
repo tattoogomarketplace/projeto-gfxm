@@ -262,7 +262,7 @@ export default function ForgotPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 placeholder="Nova senha"
-                className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+                className="focus:ring-orange-500"
                 {...passwordForm.register('password')}
                 error={passwordForm.formState.errors.password?.message}
               />
@@ -272,7 +272,7 @@ export default function ForgotPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 placeholder="Repita a senha"
-                className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+                className="focus:ring-orange-500"
                 {...passwordForm.register('confirmPassword')}
                 error={
                   passwordForm.formState.errors.confirmPassword?.message ||
@@ -315,7 +315,7 @@ export default function ForgotPasswordPage() {
               label="E-mail"
               type="email"
               placeholder="seu@email.com"
-              className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               {...credentialsForm.register('email')}
               error={credentialsForm.formState.errors.email?.message}
             />
@@ -324,7 +324,7 @@ export default function ForgotPasswordPage() {
               inputMode="numeric"
               autoComplete="off"
               placeholder="000.000.000-00"
-              className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               {...credentialsForm.register('cpf', {
                 onChange: (event) => {
                   const formatted = formatCpf(event.target.value);

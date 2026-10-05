@@ -295,7 +295,7 @@ export default function LoginPage() {
               label="E-mail"
               type="email"
               placeholder="seu@email.com"
-              className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               {...register('email')}
               error={errors.email?.message}
             />
@@ -304,7 +304,7 @@ export default function LoginPage() {
               type="password"
               autoComplete="current-password"
               placeholder="Sua senha"
-              className="border-zinc-800 bg-zinc-900 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               {...register('password')}
               error={errors.password?.message}
             />

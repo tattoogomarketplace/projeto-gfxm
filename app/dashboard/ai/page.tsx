@@ -147,7 +147,7 @@ export default function DashboardAiPage() {
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
             placeholder="Pergunte sobre estilos, cuidados ou agenda..."
-            className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-neutral-900 outline-none placeholder:text-neutral-400 dark:text-[#F5F5F5] dark:placeholder:text-zinc-500"
+            className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             autoComplete="off"
             aria-label="Mensagem para o assistente"
           />

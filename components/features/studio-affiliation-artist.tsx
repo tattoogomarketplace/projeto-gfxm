@@ -171,7 +171,7 @@ export function StudioAffiliationArtist() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar estúdio por nome ou cidade"
-              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-amber-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             />
           </div>
           <Button type="submit" isLoading={searching} className="shrink-0">

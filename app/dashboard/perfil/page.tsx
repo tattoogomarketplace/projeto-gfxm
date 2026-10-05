@@ -168,7 +168,7 @@ export default function PerfilPage() {
           label="Nome real"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className="border-neutral-200 bg-white text-neutral-900 focus:ring-orange-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+          className="focus:ring-orange-500"
         />
         <button
           type="button"

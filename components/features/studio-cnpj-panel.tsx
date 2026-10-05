@@ -135,7 +135,7 @@ export function StudioCnpjPanel({
             onChange={(event) => setCnpj(formatCnpj(event.target.value))}
             placeholder="00.000.000/0000-00"
             inputMode="numeric"
-             className="h-12 w-full rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 outline-none focus:border-amber-500 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+             className="h-12 w-full rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-amber-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
           />
           {preview ? <p className="text-xs text-zinc-400">{preview}</p> : null}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

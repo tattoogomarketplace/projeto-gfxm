@@ -194,16 +194,16 @@ export function OtpInput({
             animate={isError ? { x: [-10, 10, -10, 10, 0] } : { x: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'h-16 w-12 min-h-11 min-w-11 rounded-xl border-2 bg-zinc-900 text-center text-2xl font-bold outline-none transition-all',
+              'h-16 w-12 min-h-11 min-w-11 rounded-xl border-2 bg-white text-center text-2xl font-bold text-neutral-900 caret-neutral-900 outline-none transition-all dark:bg-neutral-900 dark:text-white dark:caret-white',
               isError &&
-                'border-red-600 bg-red-950/30 text-red-500 shadow-[0_0_20px_rgba(220,38,38,0.6)]',
+                'border-red-600 bg-red-50 text-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)] dark:bg-red-950/30 dark:text-red-500',
               isSuccess &&
                 'border-[#F97316] text-[#F97316] shadow-[0_0_18px_rgba(249,115,22,0.45)]',
               !isError &&
                 !isSuccess &&
                 (digit
                   ? 'border-[#F97316] text-[#F97316] shadow-[0_0_10px_rgba(249,115,22,0.25)]'
-                  : 'border-zinc-700 text-zinc-600 focus:border-[#F97316] focus:shadow-[0_0_10px_rgba(249,115,22,0.3)]')
+                  : 'border-neutral-300 text-neutral-400 focus:border-[#F97316] focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] dark:border-zinc-700 dark:text-zinc-400')
             )}
           />
         ))}

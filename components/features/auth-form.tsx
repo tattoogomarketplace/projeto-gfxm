@@ -37,17 +37,17 @@ export function AuthForm() {
         type="email" 
         onChange={(e) => setEmail(e.target.value)} 
         placeholder="Email" 
-        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <input 
         type="password" 
         onChange={(e) => setPassword(e.target.value)} 
         placeholder="Senha" 
-        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <select 
         onChange={(e) => setRole(e.target.value)} 
-        className="mb-6 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+        className="mb-6 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white"
       >
         <option value="cliente">Cliente</option>
         <option value="tatuador">Tatuador</option>

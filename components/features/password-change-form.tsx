@@ -49,14 +49,14 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
         placeholder="Senha Atual"
         value={currentPassword}
         onChange={(e) => setCurrentPassword(e.target.value)}
-        className="w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 outline-none transition-colors focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+        className="w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <input
         type="password"
         placeholder="Nova Senha"
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
-        className="w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 outline-none transition-colors focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+        className="w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <button
         type="button"

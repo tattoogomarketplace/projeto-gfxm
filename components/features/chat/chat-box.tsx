@@ -118,7 +118,7 @@ export function ChatBox({ destinatarioId }: { destinatarioId?: string }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          className="flex-1 border-none bg-transparent text-neutral-900 outline-none placeholder-neutral-400 dark:text-white dark:placeholder-gray-500"
+          className="flex-1 border-none bg-transparent text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
           placeholder={destinatarioId ? 'Digite sua mensagem...' : 'Selecione um artista para conversar'}
           disabled={!destinatarioId}
         />

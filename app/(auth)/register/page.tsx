@@ -471,7 +471,7 @@ export default function RegisterPage() {
                   }
                 },
               })}
-              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               error={errors.cnpj?.message}
             />
           ) : null}
@@ -483,7 +483,7 @@ export default function RegisterPage() {
               readOnly={true}
               disabled={true}
               placeholder="Preenchido automaticamente pelo CNPJ"
-              className="bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+              className="cursor-not-allowed bg-neutral-100 text-neutral-700 opacity-80 dark:bg-neutral-800 dark:text-neutral-200"
             />
           ) : null}
           <Input
@@ -493,7 +493,7 @@ export default function RegisterPage() {
             placeholder={isEstudio ? 'Nome público do estúdio' : 'Seu nome completo'}
             {...register('nome')}
             disabled={studioFieldsLocked}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            className="focus:ring-orange-500"
             error={errors.nome?.message}
           />
           <Input
@@ -502,7 +502,7 @@ export default function RegisterPage() {
             placeholder="seu@email.com"
             {...register('email')}
             disabled={studioFieldsLocked}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            className="focus:ring-orange-500"
             error={errors.email?.message}
           />
           <Input
@@ -512,7 +512,7 @@ export default function RegisterPage() {
             placeholder="Mínimo 8 caracteres"
             {...register('password')}
             disabled={studioFieldsLocked}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            className="focus:ring-orange-500"
             error={errors.password?.message}
           />
           <PasswordStrengthBar password={passwordValue} />
@@ -523,7 +523,7 @@ export default function RegisterPage() {
             placeholder="Repita a senha"
             {...register('confirmPassword')}
             disabled={studioFieldsLocked}
-            className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+            className="focus:ring-orange-500"
             error={
               errors.confirmPassword?.message ||
               (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
@@ -542,7 +542,7 @@ export default function RegisterPage() {
                   setValue('cpf', formatted, { shouldValidate: true, shouldDirty: true });
                 },
               })}
-              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+              className="focus:ring-orange-500"
               error={errors.cpf?.message}
             />
           ) : null}
@@ -551,17 +551,17 @@ export default function RegisterPage() {
               label="Data de Nascimento"
               type="date"
               {...register('dataNascimento')}
-              className="bg-zinc-900 border-zinc-800 focus:ring-orange-500 scheme-dark"
+              className="focus:ring-orange-500"
               error={errors.dataNascimento?.message}
             />
           ) : null}
 
           {status === 'menor_18' && (
-            <div className="space-y-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+            <div className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
               <Input
                 label="Nome Completo do Responsável Legal"
                 {...register('responsavelNome')}
-                className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+                className="focus:ring-orange-500"
                 error={errors.responsavelNome?.message}
               />
               <Input
@@ -575,7 +575,7 @@ export default function RegisterPage() {
                     setValue('responsavelCpf', formatted, { shouldValidate: true, shouldDirty: true });
                   },
                 })}
-                className="bg-zinc-900 border-zinc-800 focus:ring-orange-500"
+                className="focus:ring-orange-500"
                 error={errors.responsavelCpf?.message}
               />
               <p className="text-[10px] text-zinc-400 leading-relaxed">
