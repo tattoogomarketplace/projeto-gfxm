@@ -1,9 +1,12 @@
 'use client';
 
-import { memo, useCallback, useMemo, useState, useSyncExternalStore } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { Clock3, Coffee, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { Skeleton } from '@/components/ui/skeleton';
+import { authedFetch } from '@/lib/utils/authed-fetch';
 import { cn } from '@/lib/utils';
 import {
   WEEKDAY_LABELS,
@@ -12,6 +15,7 @@ import {
   createBreakInterval,
   getWorkingHoursServerSnapshot,
   getWorkingHoursSnapshot,
+  hydrateWorkingHours,
   resolveTimezone,
   saveWorkingHours,
   subscribeWorkingHours,
@@ -274,9 +278,45 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     getWorkingHoursSnapshot,
     getWorkingHoursServerSnapshot
   );
+  const { getToken } = useAuth();
   const [draft, setDraft] = useState<WorkingHoursDraft>(() => cloneWorkingHours(persisted));
   const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
+
+  const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const boot = async () => {
+      try {
+        const res = await authedFetch('/api/tatuador/schedule', {}, tokenFn);
+        const payload = (await res.json().catch(() => ({}))) as {
+          sucesso?: boolean;
+          schedule?: WorkingHoursDraft;
+          erro?: string;
+        };
+        if (!res.ok || !payload.schedule) {
+          throw new Error(payload.erro || 'Falha ao carregar expediente.');
+        }
+        if (cancelled) return;
+        const synced = hydrateWorkingHours(payload.schedule);
+        setDraft(cloneWorkingHours(synced));
+        setHydrated(true);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(error instanceof Error ? error.message : 'Falha ao carregar expediente.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void boot();
+    return () => {
+      cancelled = true;
+    };
+  }, [tokenFn]);
 
   const syncedDraft = useMemo(() => {
     if (!hydrated) return cloneWorkingHours(persisted);
@@ -364,7 +404,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     [ensureHydrated, triggerHaptic]
   );
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const nextIssues = validateWorkingHours(syncedDraft);
     if (nextIssues.length > 0) {
       triggerHaptic('heavy');
@@ -374,19 +414,56 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
 
     const payload = cloneWorkingHours(syncedDraft);
     payload.timezone = resolveTimezone();
-    const saved = saveWorkingHours(payload);
-    setDraft(cloneWorkingHours(saved));
-    setHydrated(true);
-    triggerHaptic('success');
-    toast.success('Expediente salvo.', {
-      description: `${saved.days.filter((day) => day.active).length} dias ativos neste dispositivo.`,
-    });
-  }, [syncedDraft, triggerHaptic]);
+    setSaving(true);
+    try {
+      const res = await authedFetch(
+        '/api/tatuador/schedule',
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schedule: payload }),
+        },
+        tokenFn
+      );
+      const body = (await res.json().catch(() => ({}))) as {
+        sucesso?: boolean;
+        schedule?: WorkingHoursDraft;
+        erro?: string;
+      };
+      if (!res.ok || !body.schedule) {
+        throw new Error(body.erro || 'Falha ao salvar expediente.');
+      }
+      const saved = saveWorkingHours(body.schedule);
+      setDraft(cloneWorkingHours(saved));
+      setHydrated(true);
+      triggerHaptic('success');
+      toast.success('Expediente salvo.', {
+        description: `${saved.days.filter((day) => day.active).length} dias ativos sincronizados com a agenda.`,
+      });
+    } catch (error) {
+      triggerHaptic('heavy');
+      toast.error(error instanceof Error ? error.message : 'Falha ao salvar expediente.');
+    } finally {
+      setSaving(false);
+    }
+  }, [syncedDraft, tokenFn, triggerHaptic]);
+
+  if (loading) {
+    return (
+      <div className="space-y-3" aria-busy="true" aria-live="polite">
+        <Skeleton className="h-4 w-3/4 rounded-lg" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
-        Defina abertura, fechamento e intervalos de segunda a domingo. O expediente fica neste dispositivo, pronto para sincronizar com o banco.
+        Defina abertura, fechamento e intervalos de segunda a domingo. O expediente é persistido no Neon e aplicado nos agendamentos.
       </p>
 
       <div className="grid grid-cols-1 gap-2">
@@ -406,16 +483,20 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
 
       <button
         type="button"
-        onClick={handleSave}
+        onClick={() => {
+          void handleSave();
+        }}
+        disabled={saving}
         className={cn(
           'flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold',
           'bg-[#FF5722] text-black shadow-[0_0_18px_rgba(255,87,34,0.35)]',
           'transition-all duration-200 hover:bg-[#ff6a3c] active:scale-[0.98]',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5722]/70'
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5722]/70',
+          'disabled:cursor-wait disabled:opacity-70'
         )}
       >
         <Save className="h-4 w-4" strokeWidth={1.75} />
-        Salvar Expediente
+        {saving ? 'Salvando...' : 'Salvar Expediente'}
       </button>
       <p className="text-center text-[11px] text-neutral-500 dark:text-zinc-500">
         {dirty ? 'Alterações pendentes.' : 'Expediente atualizado.'} {activeDays} dia{activeDays === 1 ? '' : 's'} ativo{activeDays === 1 ? '' : 's'}.

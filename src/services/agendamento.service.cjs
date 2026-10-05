@@ -2,6 +2,7 @@ const { Prisma } = require("@prisma/client");
 const { prisma } = require("./prisma.service.cjs");
 const { sanitizarExtras, detectarTermoSaude } = require("./compliance-juridico.service.cjs");
 const { logCompliance } = require("./chat.service.cjs");
+const { isDateWithinWorkingHours } = require("../utils/working-hours.cjs");
 
 const MUTEX_MINUTOS = 10;
 const CALCAO_PERCENTUAL = 0.25;
@@ -87,6 +88,14 @@ async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras
 
       if (!tatuador) {
         throw httpError(403, "Tatuador indisponivel para agendamento.");
+      }
+
+      const scheduleRow = await tx.artistSchedule.findUnique({
+        where: { tatuadorId },
+        select: { scheduleJson: true },
+      });
+      if (scheduleRow?.scheduleJson && !isDateWithinWorkingHours(scheduleRow.scheduleJson, slot)) {
+        throw httpError(409, "Horario fora do expediente do tatuador.");
       }
 
       const conflito = await tx.agendamento.findFirst({

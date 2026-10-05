@@ -332,3 +332,65 @@ export function updateDaySchedule(
 export function toWorkingHoursPayload(schedule: WorkingHoursSchedule): WorkingHoursSchedule {
   return cloneWorkingHours(schedule);
 }
+
+export function hydrateWorkingHours(schedule: WorkingHoursSchedule): WorkingHoursSchedule {
+  const next = cloneWorkingHours(schedule);
+  next.schemaVersion = WORKING_HOURS_SCHEMA_VERSION;
+  cachedSchedule = next;
+  writeToStorage(next);
+  listeners.forEach((listener) => listener());
+  return next;
+}
+
+function readPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  return parts.find((part) => part.type === type)?.value ?? '';
+}
+
+export function getZonedClock(
+  date: Date,
+  timezone: string
+): { weekday: WeekdayId; minutes: number } {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || fallbackTimezone(),
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(date);
+    const weekdayRaw = readPart(parts, 'weekday').toLowerCase();
+    const weekday = WEEKDAY_IDS.includes(weekdayRaw as WeekdayId)
+      ? (weekdayRaw as WeekdayId)
+      : WEEKDAY_IDS[0];
+    const hours = Number(readPart(parts, 'hour'));
+    const minutes = Number(readPart(parts, 'minute'));
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+      return { weekday, minutes: 0 };
+    }
+    return { weekday, minutes: hours * 60 + minutes };
+  } catch {
+    return { weekday: WEEKDAY_IDS[0], minutes: 0 };
+  }
+}
+
+export function isDateWithinWorkingHours(schedule: WorkingHoursSchedule, date: Date): boolean {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false;
+  const tz = schedule.timezone || fallbackTimezone();
+  const { weekday, minutes } = getZonedClock(date, tz);
+  const day = schedule.days.find((item) => item.day === weekday);
+  if (!day || !day.active) return false;
+  if (!isValidTime(day.start) || !isValidTime(day.end)) return false;
+
+  const open = timeToMinutes(day.start);
+  const close = timeToMinutes(day.end);
+  if (minutes < open || minutes >= close) return false;
+
+  for (const interval of day.breaks) {
+    if (!isValidTime(interval.start) || !isValidTime(interval.end)) continue;
+    const breakStart = timeToMinutes(interval.start);
+    const breakEnd = timeToMinutes(interval.end);
+    if (minutes >= breakStart && minutes < breakEnd) return false;
+  }
+
+  return true;
+}

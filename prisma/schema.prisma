@@ -113,6 +113,7 @@ model Perfil {
   complianceLogs           ComplianceLog[]
   convitesEnviados         EstudioConvite[]  @relation("ConviteEstudio")
   convitesRecebidos        EstudioConvite[]  @relation("ConviteTatuador")
+  artistSchedule           ArtistSchedule?
 
   @@unique([email], map: "perfis_email_unique_idx")
   @@index([role], map: "perfis_role_idx")
@@ -304,6 +305,17 @@ model EstudioTatuador {
   @@id([estudio_id, tatuador_id])
   @@index([tatuador_id], map: "estudio_tatuadores_tatuador_idx")
   @@map("estudio_tatuadores")
+}
+
+model ArtistSchedule {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tatuadorId   String   @unique @map("tatuador_id") @db.Uuid
+  scheduleJson Json     @map("schedule_json")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tatuador Perfil @relation(fields: [tatuadorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("artist_schedules")
 }
 
 model ComplianceLog {

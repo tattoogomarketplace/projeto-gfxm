@@ -8,6 +8,7 @@ const agendamentoRoutes = require("./agendamento.routes.cjs");
 const estudioRoutes = require("./estudio.routes.cjs");
 const studiosRoutes = require("./studios.routes.cjs");
 const perfilRoutes = require("./perfil.routes.cjs");
+const artistScheduleRoutes = require("./artist-schedule.routes.cjs");
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/agendamentos", agendamentoRoutes);
 router.use("/estudio", estudioRoutes);
 router.use("/studios", studiosRoutes);
 router.use("/perfil", perfilRoutes);
+router.use("/tatuador/schedule", artistScheduleRoutes);
 
 module.exports = router;
