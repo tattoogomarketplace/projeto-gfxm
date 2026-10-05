@@ -9,6 +9,7 @@ import { Eruda } from "@/components/Eruda";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { CLERK_TASK_URLS } from "@/lib/utils/session-tasks";
 
 const BRAND_ASSET_VERSION = "20261005";
@@ -140,7 +141,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas font-sans antialiased h-full min-h-dvh overflow-hidden text-neutral-900 dark:text-white">
+        <body className="luxury-canvas font-sans antialiased h-dvh min-h-dvh overflow-hidden text-neutral-900 dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />
@@ -148,11 +149,12 @@ export default function RootLayout({
               <StrictSessionGuard />
               <SingleSessionEnforcer />
               <SessionTaskGuard />
-              <main className="h-full min-h-dvh w-full overflow-y-auto overscroll-y-contain">
+              <main className="h-dvh min-h-dvh w-full overflow-y-auto overscroll-y-contain">
                 <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col">
                   {children}
                 </div>
               </main>
+              <BottomNav />
             </ThemeProvider>
           </Providers>
         </body>

@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { BottomNav } from '@/components/layout/bottom-nav';
 import { DashboardRouteSkeleton } from '@/components/ui/dashboard-route-skeleton';
 
 function AppShellFallback() {
@@ -30,7 +29,6 @@ export function AppShellBoundary({
       <Suspense fallback={<AppShellFallback />}>
         <AppShell title={title}>{children}</AppShell>
       </Suspense>
-      <BottomNav />
     </>
   );
 }

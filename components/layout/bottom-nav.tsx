@@ -1,7 +1,6 @@
 'use client';
 
-import { memo, useCallback, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
@@ -36,6 +35,7 @@ function resolveActiveTab(pathname: string, storeTab: AppTab): AppTab {
 }
 
 function shouldHideNav(pathname: string): boolean {
+  if (!pathname.startsWith('/dashboard')) return true;
   return (
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
@@ -51,17 +51,12 @@ const NavIcon = memo(function NavIcon({
   return <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />;
 });
 
-const subscribeNoop = () => () => {};
-const clientTrue = () => true;
-const serverFalse = () => false;
-
 function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
   const role = useAuthStore((s) => s.role);
   const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { triggerHaptic } = useHapticFeedback();
-  const mounted = useSyncExternalStore(subscribeNoop, clientTrue, serverFalse);
 
   const conceal = hidden || !role || shouldHideNav(pathname);
   const homePath = role ? dashboardPathForRole(role) : '/dashboard';
@@ -75,7 +70,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [setActiveTab, triggerHaptic]
   );
 
-  const nav = (
+  return (
     <nav
       className={cn(
         'bottom-nav-safe fixed bottom-0 left-0 right-0 z-50 m-0 w-full md:hidden',
@@ -85,7 +80,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         'pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]',
         conceal && 'pointer-events-none invisible'
       )}
-      style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: 0 }}
+      style={{ position: 'fixed', bottom: 0, left: 0, right: 0, margin: 0, transform: 'none' }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
@@ -123,9 +118,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       </ul>
     </nav>
   );
-
-  if (!mounted) return nav;
-  return createPortal(nav, document.body);
 }
 
 export const BottomNav = memo(BottomNavInner);

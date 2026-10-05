@@ -96,7 +96,7 @@ export default function PerfilPage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="screen-fade-in min-h-dvh space-y-4 bg-transparent p-4 transition-opacity duration-300 ease-in-out sm:p-6">
+      <div className="screen-fade-in min-h-full space-y-4 bg-transparent p-4 pb-6 transition-opacity duration-300 ease-in-out sm:p-6">
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
@@ -108,7 +108,7 @@ export default function PerfilPage() {
   const initials = (nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A';
 
   return (
-    <div className="screen-fade-in min-h-dvh flex flex-col space-y-6 bg-transparent p-4 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
+    <div className="screen-fade-in flex min-h-full flex-col space-y-6 bg-transparent p-4 pb-6 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
