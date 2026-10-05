@@ -118,7 +118,7 @@ export default function RootLayout({
       afterSignOutUrl="/"
       taskUrls={CLERK_TASK_URLS}
     >
-      <html lang="pt-BR" className="h-[100dvh] min-h-[100dvh] dark" suppressHydrationWarning>
+      <html lang="pt-BR" className="h-full min-h-dvh bg-[#121212] dark" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -141,7 +141,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden font-sans antialiased text-neutral-900 dark:text-white">
+        <body className="luxury-canvas relative flex h-full min-h-dvh flex-col overflow-hidden bg-[#121212] font-sans antialiased text-neutral-900 dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />
