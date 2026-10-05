@@ -6,6 +6,7 @@ const { isDateWithinWorkingHours } = require("../utils/working-hours.cjs");
 
 const MUTEX_MINUTOS = 10;
 const CALCAO_PERCENTUAL = 0.25;
+const MAX_SERIALIZATION_RETRIES = 3;
 
 function httpError(status, message, extra) {
   const error = new Error(message);
@@ -32,12 +33,18 @@ async function liberarMutexExpirados(tx, tatuadorId, dataHora) {
   });
 }
 
-async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras }) {
+function normalizeSlot(date) {
+  const slot = new Date(date);
+  slot.setSeconds(0, 0);
+  return slot;
+}
+
+async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, extras }) {
   if (!tatuadorId || !dataHora || !valorTotal) {
     throw httpError(400, "tatuador_id, data_hora e valor_total sao obrigatorios.");
   }
 
-  const slot = new Date(dataHora);
+  const slot = normalizeSlot(new Date(dataHora));
   if (Number.isNaN(slot.getTime()) || slot.getTime() <= Date.now()) {
     throw httpError(400, "Horario de agendamento invalido.");
   }
@@ -64,8 +71,8 @@ async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras
   const valorSinal = Number((valorServico * CALCAO_PERCENTUAL).toFixed(2));
   const mutexExpiraEm = new Date(Date.now() + MUTEX_MINUTOS * 60 * 1000);
 
-  try {
-    const agendamento = await prisma.$transaction(async (tx) => {
+  const agendamento = await prisma.$transaction(
+    async (tx) => {
       await tx.$queryRaw`
         SELECT pg_advisory_xact_lock(
           hashtext(${tatuadorId}::text),
@@ -75,27 +82,42 @@ async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras
 
       await liberarMutexExpirados(tx, tatuadorId, slot);
 
-      const tatuador = await tx.perfil.findFirst({
-        where: {
-          id: tatuadorId,
-          deleted_at: null,
-          role: "tatuador",
-          kyc_status: "aprovado",
-          agenda_bloqueada: false,
-        },
-        select: { id: true },
-      });
-
-      if (!tatuador) {
+      const tatuadorRows = await tx.$queryRaw`
+        SELECT id
+        FROM perfis
+        WHERE id = ${tatuadorId}::uuid
+          AND deleted_at IS NULL
+          AND role::text = 'tatuador'
+          AND kyc_status::text = 'aprovado'
+          AND agenda_bloqueada = false
+        FOR UPDATE
+      `;
+      if (!tatuadorRows?.[0]) {
         throw httpError(403, "Tatuador indisponivel para agendamento.");
       }
 
-      const scheduleRow = await tx.artistSchedule.findUnique({
-        where: { tatuadorId },
-        select: { scheduleJson: true },
-      });
-      if (scheduleRow?.scheduleJson && !isDateWithinWorkingHours(scheduleRow.scheduleJson, slot)) {
+      const scheduleRows = await tx.$queryRaw`
+        SELECT schedule_json
+        FROM artist_schedules
+        WHERE tatuador_id = ${tatuadorId}::uuid
+        FOR UPDATE
+      `;
+      const scheduleJson = scheduleRows?.[0]?.schedule_json;
+      if (scheduleJson && !isDateWithinWorkingHours(scheduleJson, slot)) {
         throw httpError(409, "Horario fora do expediente do tatuador.");
+      }
+
+      const lockedConflicts = await tx.$queryRaw`
+        SELECT id
+        FROM agendamentos
+        WHERE tatuador_id = ${tatuadorId}::uuid
+          AND data_hora = ${slot}
+          AND deleted_at IS NULL
+          AND status::text IN ('aguardando_sinal', 'confirmado')
+        FOR UPDATE
+      `;
+      if (lockedConflicts?.length) {
+        throw httpError(409, "Horario em mutex. Outro cliente esta concluindo o calcão deste slot.");
       }
 
       const conflito = await tx.agendamento.findFirst({
@@ -105,14 +127,14 @@ async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras
           deleted_at: null,
           status: { in: ["aguardando_sinal", "confirmado"] },
         },
-        select: { id: true, status: true, mutex_expira_em: true },
+        select: { id: true },
       });
 
       if (conflito) {
         throw httpError(409, "Horario em mutex. Outro cliente esta concluindo o calcão deste slot.");
       }
 
-      const criado = await tx.agendamento.create({
+      return tx.agendamento.create({
         data: {
           cliente_id: user.id,
           tatuador_id: tatuadorId,
@@ -131,28 +153,47 @@ async function criarAgendamento({ user, tatuadorId, dataHora, valorTotal, extras
         },
         include: { extras: true },
       });
-
-      return criado;
-    });
-
-    return {
-      sucesso: true,
-      agendamento,
-      calcao: {
-        percentual: 25,
-        valor: valorSinal,
-        mutex_expira_em: mutexExpiraEm,
-        extras_legais: extrasLegais,
-        extras_renomeados: bloqueios,
-      },
-    };
-  } catch (err) {
-    if (err.status) throw err;
-    if (err.code === "P2002") {
-      throw httpError(409, "Horario ja reservado para este tatuador.");
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 5000,
+      timeout: 15000,
     }
-    throw err;
+  );
+
+  return {
+    sucesso: true,
+    agendamento,
+    calcao: {
+      percentual: 25,
+      valor: valorSinal,
+      mutex_expira_em: mutexExpiraEm,
+      extras_legais: extrasLegais,
+      extras_renomeados: bloqueios,
+    },
+  };
+}
+
+async function criarAgendamento(params) {
+  let lastError;
+  for (let attempt = 0; attempt < MAX_SERIALIZATION_RETRIES; attempt += 1) {
+    try {
+      return await criarAgendamentoOnce(params);
+    } catch (err) {
+      lastError = err;
+      if (err.status) throw err;
+      if (err.code === "P2002") {
+        throw httpError(409, "Horario ja reservado para este tatuador.");
+      }
+      const retryable = err.code === "P2034" || err.code === "P2028";
+      if (retryable && attempt < MAX_SERIALIZATION_RETRIES - 1) continue;
+      if (retryable) {
+        throw httpError(409, "Horario ja reservado para este tatuador.");
+      }
+      throw err;
+    }
   }
+  throw lastError;
 }
 
 async function expirarMutexVencidos() {
