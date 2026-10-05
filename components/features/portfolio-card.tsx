@@ -6,15 +6,29 @@ import { Heart } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
+import { bodyPartLabel, healingLabel, sessionDurationLabel, styleLabel } from '@/lib/portfolio-metadata';
 
 interface PortfolioCardProps {
   id: string;
   imageUrl: string;
   artistName: string;
   initialLikes?: number;
+  style?: string;
+  bodyPart?: string;
+  sessionDuration?: string;
+  isHealed?: boolean;
 }
 
-export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: PortfolioCardProps) {
+export function PortfolioCard({
+  id,
+  imageUrl,
+  artistName,
+  initialLikes = 0,
+  style,
+  bodyPart,
+  sessionDuration,
+  isHealed,
+}: PortfolioCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
   const { triggerHaptic } = useHapticFeedback();
@@ -58,7 +72,37 @@ export function PortfolioCard({ id, imageUrl, artistName, initialLikes = 0 }: Po
       </div>
       
       <div className="flex items-center justify-between bg-neutral-50 p-4 dark:bg-[#121212]">
-        <span className="font-medium text-neutral-800 dark:text-zinc-300">{artistName}</span>
+        <div className="min-w-0 flex-1 pr-3">
+          <span className="block truncate font-medium text-neutral-800 dark:text-zinc-300">{artistName}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {style ? (
+              <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-400">
+                {styleLabel(style)}
+              </span>
+            ) : null}
+            {bodyPart ? (
+              <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                {bodyPartLabel(bodyPart)}
+              </span>
+            ) : null}
+            {sessionDuration ? (
+              <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                {sessionDurationLabel(sessionDuration)}
+              </span>
+            ) : null}
+            {typeof isHealed === 'boolean' ? (
+              <span
+                className={
+                  isHealed
+                    ? 'rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300'
+                    : 'rounded-full border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-300'
+                }
+              >
+                {healingLabel(isHealed)}
+              </span>
+            ) : null}
+          </div>
+        </div>
         <button onClick={handleLike} className="relative flex min-h-11 min-w-11 items-center gap-2 p-2 active:scale-95">
           <AnimatePresence>
             <motion.div

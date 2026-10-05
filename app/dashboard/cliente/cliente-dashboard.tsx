@@ -206,6 +206,10 @@ export default function ClienteDashboard() {
                     imageUrl={item?.url_imagem ?? ''}
                     artistName={item?.estilo ?? ''}
                     initialLikes={item?.likes_count || 0}
+                    style={item?.estilo}
+                    bodyPart={item?.body_part}
+                    sessionDuration={item?.session_duration}
+                    isHealed={item?.is_healed}
                   />
                 ))}
               </div>

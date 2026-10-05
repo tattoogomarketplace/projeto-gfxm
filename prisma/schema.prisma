@@ -129,21 +129,26 @@ model Perfil {
 }
 
 model Portfolio {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tatuador_id String   @db.Uuid
-  url_imagem  String
-  estilo      String
-  descricao   String?
-  likes_count Int      @default(0)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
-  deleted_at  DateTime? @db.Timestamptz(6)
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tatuador_id       String    @db.Uuid
+  url_imagem        String
+  estilo            String
+  body_part         String    @default("")
+  session_duration  String    @default("")
+  is_healed         Boolean   @default(false)
+  descricao         String?
+  likes_count       Int       @default(0)
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
 
   tatuador Perfil          @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   likes    PortfolioLike[]
 
   @@index([tatuador_id], map: "portfolios_tatuador_id_idx")
   @@index([estilo], map: "portfolios_estilo_idx")
+  @@index([body_part], map: "portfolios_body_part_idx")
+  @@index([is_healed], map: "portfolios_is_healed_idx")
   @@index([deleted_at], map: "portfolios_deleted_at_idx")
   @@map("portfolios")
 }

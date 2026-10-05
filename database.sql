@@ -239,14 +239,17 @@ CREATE TRIGGER on_auth_user_created
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE public.portfolios (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tatuador_id uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
-  url_imagem  text NOT NULL,
-  estilo      text NOT NULL,
-  descricao   text,
-  likes_count integer NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now(),
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tatuador_id       uuid NOT NULL REFERENCES public.perfis (id) ON DELETE CASCADE,
+  url_imagem        text NOT NULL,
+  estilo            text NOT NULL,
+  body_part         text NOT NULL DEFAULT '',
+  session_duration  text NOT NULL DEFAULT '',
+  is_healed         boolean NOT NULL DEFAULT false,
+  descricao         text,
+  likes_count       integer NOT NULL DEFAULT 0,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT portfolios_url_imagem_https CHECK (url_imagem ~* '^https://'),
   CONSTRAINT portfolios_estilo_not_empty CHECK (char_length(trim(estilo)) > 0),
@@ -257,6 +260,8 @@ CREATE TABLE public.portfolios (
 
 CREATE INDEX portfolios_tatuador_id_idx ON public.portfolios (tatuador_id);
 CREATE INDEX portfolios_estilo_idx ON public.portfolios (estilo);
+CREATE INDEX portfolios_body_part_idx ON public.portfolios (body_part);
+CREATE INDEX portfolios_is_healed_idx ON public.portfolios (is_healed);
 
 CREATE TRIGGER portfolios_set_updated_at
   BEFORE UPDATE ON public.portfolios

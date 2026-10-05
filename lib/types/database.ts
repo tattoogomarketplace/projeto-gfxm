@@ -36,6 +36,9 @@ export interface Portfolio {
   tatuador_id: string;
   url_imagem: string;
   estilo: string;
+  body_part?: string;
+  session_duration?: string;
+  is_healed?: boolean;
   descricao?: string;
   likes_count: number;
   created_at: string;
@@ -64,6 +67,9 @@ export interface FeedItem {
   id: string;
   url_imagem: string;
   estilo: string;
+  body_part?: string;
+  session_duration?: string;
+  is_healed?: boolean;
   likes_count: number;
 }
 

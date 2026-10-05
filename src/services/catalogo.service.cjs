@@ -2,13 +2,21 @@ const { prisma } = require("./prisma.service.cjs");
 const { cacheGet, cacheSet } = require("./cache.service.cjs");
 
 async function getFeed() {
-  const key = "feed:portfolios:v1";
+  const key = "feed:portfolios:v2";
   const hit = await cacheGet(key);
   if (hit) return hit;
 
   const data = await prisma.portfolio.findMany({
     where: { deleted_at: null },
-    select: { id: true, url_imagem: true, likes_count: true, estilo: true },
+    select: {
+      id: true,
+      url_imagem: true,
+      likes_count: true,
+      estilo: true,
+      body_part: true,
+      session_duration: true,
+      is_healed: true,
+    },
     orderBy: { created_at: "desc" },
     take: 24,
   });

@@ -10,7 +10,12 @@ function resolveSrc(src?: string | null): string | null {
   if (src == null || typeof src !== 'string') return null;
   const trimmed = src.trim();
   if (!trimmed) return null;
-  if (trimmed.startsWith('http') || trimmed.startsWith('data:') || trimmed.startsWith('/')) {
+  if (
+    trimmed.startsWith('http') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('/')
+  ) {
     return trimmed;
   }
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,7 +36,7 @@ export function OptimizedImage({ src, alt, className }: OptimizedImageProps) {
     );
   }
 
-  const isDataUrl = resolved.startsWith('data:');
+  const isDataUrl = resolved.startsWith('data:') || resolved.startsWith('blob:');
 
   return (
     <div className={`relative ${className ?? ''} bg-zinc-800`}>

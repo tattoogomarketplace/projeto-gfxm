@@ -13,7 +13,17 @@ async function fromCatalogoApi<T>(path: string): Promise<T | null> {
 }
 
 export async function getCachedFeed() {
-  const cached = await fromCatalogoApi<Array<{ id: string; url_imagem: string; likes_count: number; estilo: string }>>('/api/catalogo/feed');
+  const cached = await fromCatalogoApi<
+    Array<{
+      id: string;
+      url_imagem: string;
+      likes_count: number;
+      estilo: string;
+      body_part?: string;
+      session_duration?: string;
+      is_healed?: boolean;
+    }>
+  >('/api/catalogo/feed');
   return cached || [];
 }
 
