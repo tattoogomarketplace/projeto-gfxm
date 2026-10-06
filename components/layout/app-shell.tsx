@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Settings } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
@@ -10,6 +10,9 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import {
   dashboardPathForRole,
+  isKycApproved,
+  isOnboardingComplete,
+  ONBOARDING_PATH,
   parseAppRole,
   type AppRole,
 } from '@/lib/utils/auth-redirect';
@@ -43,13 +46,18 @@ interface AppShellProps {
 export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const activeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
+  const tabRole = role ?? 'cliente';
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,12 +67,30 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (!response.ok) return;
         const payload = await response.json().catch(() => ({}));
+        if (cancelled) return;
         const parsedRole = parseAppRole(payload?.perfil?.role);
-        if (parsedRole && !cancelled) {
-          setRole(parsedRole);
+        if (parsedRole) setRole(parsedRole);
+
+        const currentPath = pathnameRef.current;
+        if (
+          payload?.needsOnboarding ||
+          (payload?.perfil && !isOnboardingComplete(payload.perfil))
+        ) {
+          if (!currentPath.startsWith(ONBOARDING_PATH)) {
+            router.replace(ONBOARDING_PATH);
+          }
+          return;
+        }
+
+        if (
+          parsedRole === 'tatuador' &&
+          !isKycApproved(payload?.perfil?.kyc_status) &&
+          !currentPath.startsWith('/dashboard/kyc-pendente')
+        ) {
+          router.replace('/dashboard/kyc-pendente');
         }
       } catch {
-        // Sem perfil sincronizado, a navegação por abas permanece oculta.
+        // Sem perfil sincronizado, a dock permanece visível com o papel padrão.
       }
     };
 
@@ -72,18 +98,22 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
     return () => {
       cancelled = true;
     };
-  }, [setRole]);
+  }, [router, setRole]);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/chat')) {
       setActiveTab('chat');
       return;
     }
-    const tab = searchParams.get('tab');
+    if (pathname.startsWith('/dashboard/perfil')) {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
     if (tab === 'portfolio' || tab === 'agendar' || tab === 'chat') {
       setActiveTab(tab);
     }
-  }, [pathname, searchParams, setActiveTab]);
+  }, [pathname, setActiveTab]);
 
   const isOnboarding = pathname.startsWith('/dashboard/onboarding');
   const isAiChat = pathname.startsWith('/dashboard/ai');
@@ -94,16 +124,13 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const hideTabs = isOnboarding || isAiChat || isKycPendente;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
-  const tabParam = searchParams.get('tab');
   const selectedTab: AppTab = isProfileSettings
     ? 'perfil'
-    : isDedicatedChat || tabParam === 'chat'
+    : isDedicatedChat
       ? 'chat'
-      : tabParam === 'agendar' || tabParam === 'portfolio'
-        ? tabParam
-        : activeTab === 'perfil'
-          ? 'portfolio'
-          : activeTab;
+      : activeTab === 'perfil'
+        ? 'portfolio'
+        : activeTab;
   const headerTitle = isSettingsHub
     ? 'Configurações'
     : selectedTab === 'perfil'
@@ -130,9 +157,9 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       return;
     }
     setActiveTab(tab);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     params.set('tab', tab);
-    const targetPath = role ? dashboardPathForRole(role) : pathname;
+    const targetPath = dashboardPathForRole(tabRole);
     router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
   };
 
@@ -171,10 +198,10 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
             )}
           </div>
         </div>
-        {hideTabs || !role ? null : (
+        {hideTabs ? null : (
           <div className="hidden px-4 pb-3 md:block">
             <SegmentedControl
-              options={TABS_BY_ROLE[role]}
+              options={TABS_BY_ROLE[tabRole]}
               value={selectedTab}
               onChange={handleTabChange}
               ariaLabel="Navegação principal"

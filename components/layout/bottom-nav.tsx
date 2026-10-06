@@ -58,8 +58,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { triggerHaptic } = useHapticFeedback();
 
-  const conceal = hidden || !role || shouldHideNav(pathname);
-  const homePath = role ? dashboardPathForRole(role) : '/dashboard';
+  const conceal = hidden || shouldHideNav(pathname);
+  const homePath = dashboardPathForRole(role);
   const activeTab = resolveActiveTab(pathname, storeTab);
 
   const handleSelect = useCallback(
@@ -73,7 +73,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-50 mx-auto max-w-md md:hidden',
+        'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto max-w-md md:hidden',
         'rounded-2xl bg-[#1a1a1a]/90 backdrop-blur-xl',
         'border border-white/10 shadow-2xl',
         'flex items-center px-1 py-1.5',
