@@ -37,6 +37,7 @@ function DrawerRow({
   onClick,
   danger = false,
   disabled = false,
+  prefetch = true,
 }: {
   icon: ReactNode;
   title: string;
@@ -45,6 +46,7 @@ function DrawerRow({
   onClick?: () => void;
   danger?: boolean;
   disabled?: boolean;
+  prefetch?: boolean;
 }) {
   const inner = (
     <>
@@ -88,7 +90,7 @@ function DrawerRow({
 
   if (href) {
     return (
-      <Link href={href} onClick={onClick} className={classes}>
+      <Link href={href} prefetch={prefetch} onClick={onClick} className={classes}>
         {inner}
       </Link>
     );
@@ -195,6 +197,7 @@ export function ProfileSettingsDrawer() {
                   title="Configurações"
                   subtitle="Aparência, notificações, senha e privacidade"
                   href="/dashboard/perfil/configuracoes"
+                  prefetch
                   onClick={dismiss}
                 />
               </DrawerSection>

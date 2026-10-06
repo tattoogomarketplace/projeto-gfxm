@@ -349,6 +349,7 @@
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    will-change: transform, opacity;
   }
 
   .screen-fade-in {

@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   BellRing,
   ChevronLeft,
@@ -37,27 +37,31 @@ function parseSection(value: string | null): SectionId | null {
 export const SettingsHub = memo(function SettingsHub() {
   const role = useAuthStore((s) => s.role);
   const isTatuador = role === 'tatuador';
-  const searchParams = useSearchParams();
-  const sectionParam = parseSection(searchParams.get('section'));
-  const viewParam = searchParams.get('view');
-  const [openSection, setOpenSection] = useState<SectionId | null>(sectionParam);
-  const [showTerms, setShowTerms] = useState(viewParam === 'terms');
+  const pathname = usePathname();
+  const [openSection, setOpenSection] = useState<SectionId | null>(null);
+  const [deepLinkedSection, setDeepLinkedSection] = useState<SectionId | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
 
   useEffect(() => {
-    if (sectionParam) setOpenSection(sectionParam);
-    setShowTerms(viewParam === 'terms');
-  }, [sectionParam, viewParam]);
+    const params = new URLSearchParams(window.location.search);
+    const section = parseSection(params.get('section'));
+    if (section) {
+      setOpenSection(section);
+      setDeepLinkedSection(section);
+    }
+    setShowTerms(params.get('view') === 'terms');
+  }, [pathname]);
 
   useEffect(() => {
-    if (!sectionParam) return;
-    const node = document.getElementById(`settings-section-${sectionParam}`);
+    if (!deepLinkedSection) return;
+    const node = document.getElementById(`settings-section-${deepLinkedSection}`);
     if (!node) return;
     const timer = window.setTimeout(() => {
       node.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 80);
     return () => window.clearTimeout(timer);
-  }, [sectionParam]);
+  }, [deepLinkedSection]);
 
   const handleToggle = useCallback(
     (id: string) => {
@@ -75,7 +79,7 @@ export const SettingsHub = memo(function SettingsHub() {
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
   return (
-    <div className="gpu-layer relative flex transform-gpu flex-col text-neutral-900 backface-hidden will-change-transform dark:text-white">
+    <div className="gpu-layer relative flex transform-gpu flex-col text-neutral-900 backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
       <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transform-gpu backface-hidden dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
@@ -84,7 +88,8 @@ export const SettingsHub = memo(function SettingsHub() {
         <div className="relative space-y-3">
           <Link
             href="/dashboard/perfil"
-            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transition-all duration-200 hover:text-orange-500 active:scale-[0.98]"
+            prefetch
+            className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transform-gpu backface-hidden transition-transform transition-opacity duration-300 ease-out hover:text-orange-500 active:scale-[0.98]"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.75} />
             Voltar ao perfil

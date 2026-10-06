@@ -28,8 +28,8 @@ export const SettingsAccordion = memo(function SettingsAccordion({
   return (
     <section
       id={`settings-section-${id}`}
-      className="screen-fade-in gpu-layer overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm contain-paint transform-gpu backface-hidden dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none"
-      style={{ animationDelay: `${delayMs}ms` }}
+      className="gpu-layer overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none"
+      style={delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
     >
       <button
         type="button"
