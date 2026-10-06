@@ -142,7 +142,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas relative flex h-full min-h-dvh flex-col overflow-hidden bg-[#121212] font-sans antialiased text-neutral-900 dark:text-white">
+        <body className="luxury-canvas relative mb-0 flex h-full min-h-dvh flex-col overflow-hidden bg-[#121212] pb-0 font-sans antialiased text-neutral-900 dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />
@@ -150,7 +150,7 @@ export default function RootLayout({
               <StrictSessionGuard />
               <SingleSessionEnforcer />
               <SessionTaskGuard />
-              <main className="min-h-0 w-full flex-1 overflow-y-auto overscroll-y-contain">
+              <main className="mb-0 min-h-0 w-full flex-1 overflow-y-auto overscroll-y-contain pb-0">
                 <div className="mx-auto flex min-h-full w-full max-w-app flex-col">
                   {children}
                 </div>

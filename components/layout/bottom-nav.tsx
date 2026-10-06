@@ -73,8 +73,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'bottom-nav-safe fixed inset-x-0 bottom-0 z-50 mb-0 w-full md:hidden',
-        'flex items-center pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+        'bottom-nav-safe fixed bottom-0 inset-x-0 z-50 mb-0 w-full md:hidden',
+        'flex items-center pt-2 pb-[env(safe-area-inset-bottom)]',
         'border-t border-neutral-200/80 bg-[#FFFDF9]',
         'dark:border-white/10 dark:bg-[#121212]',
         'pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]',
@@ -88,8 +88,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         margin: 0,
         marginBottom: 0,
         transform: 'none',
-        paddingTop: '0.75rem',
-        paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+        paddingTop: '0.5rem',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
