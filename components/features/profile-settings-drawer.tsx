@@ -140,7 +140,7 @@ export function ProfileSettingsDrawer() {
     <AnimatePresence>
       {open ? (
         <div
-          className="fixed inset-0 z-[90] flex h-full max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212]/95 backdrop-blur-xl"
+          className="fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212]/95 backdrop-blur-xl"
           style={{ top: 0, right: 0, bottom: 0, left: 0, transform: 'none', overscrollBehavior: 'none' }}
           role="dialog"
           aria-modal="true"

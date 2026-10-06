@@ -73,15 +73,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md md:hidden',
+        'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-50 mx-auto max-w-md md:hidden',
         'rounded-2xl bg-[#1a1a1a]/90 backdrop-blur-xl',
         'border border-white/10 shadow-2xl',
         'flex items-center px-1 py-1.5',
         conceal && 'pointer-events-none invisible'
       )}
-      style={{
-        bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
-      }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
