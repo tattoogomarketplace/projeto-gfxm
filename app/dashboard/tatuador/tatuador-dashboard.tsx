@@ -1,6 +1,5 @@
 'use client';
 
-import { Suspense } from 'react';
 import { CalendarDays, Images } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
@@ -82,10 +81,11 @@ export default function TatuadorDashboard() {
       ) : null}
 
       {activeTab === 'chat' ? (
-        <section key="chat" className="screen-fade-in -mx-4 min-h-0 flex-1 sm:-mx-8">
-          <Suspense fallback={<Skeleton className="h-[28rem] w-full rounded-2xl" />}>
-            <ChatWorkspace />
-          </Suspense>
+        <section
+          key="chat"
+          className="-mx-4 min-h-0 flex-1 transform-gpu transition-opacity duration-200 sm:-mx-8"
+        >
+          <ChatWorkspace />
         </section>
       ) : null}
     </div>

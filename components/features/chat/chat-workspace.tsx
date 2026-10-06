@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MessageCircle, Sparkles } from 'lucide-react';
@@ -27,10 +27,34 @@ async function authHeaders(getToken: () => Promise<string | null>): Promise<Head
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function ChatWorkspace() {
-  const router = useRouter();
+type ChatQuery = {
+  artistId: string | null;
+  artworkId: string | null;
+  bookingIntent: boolean;
+};
+
+const EMPTY_QUERY: ChatQuery = { artistId: null, artworkId: null, bookingIntent: false };
+
+let conversationCache: { actorId: string | null; conversas: ChatConversationDto[] } | null = null;
+let conversationsInflight: Promise<void> | null = null;
+
+function ChatQuerySync({ onChange }: { onChange: (next: ChatQuery) => void }) {
   const searchParams = useSearchParams();
+  const artistId = searchParams.get('artistId') || searchParams.get('tatuadorId');
+  const artworkId = searchParams.get('artworkId') || searchParams.get('portfolioId');
+  const bookingIntent = searchParams.get('intent') === 'agendar';
+
+  useEffect(() => {
+    onChange({ artistId, artworkId, bookingIntent });
+  }, [artistId, artworkId, bookingIntent, onChange]);
+
+  return null;
+}
+
+export const ChatWorkspace = memo(function ChatWorkspace() {
+  const router = useRouter();
   const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
   const { triggerHaptic } = useHapticFeedback();
   const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const pendingChatArtwork = useUiStore((s) => s.pendingChatArtwork);
@@ -38,13 +62,26 @@ export function ChatWorkspace() {
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
 
-  const artistIdParam = searchParams.get('artistId') || searchParams.get('tatuadorId');
-  const artworkIdParam = searchParams.get('artworkId') || searchParams.get('portfolioId');
-  const bookingIntent = searchParams.get('intent') === 'agendar';
+  const [query, setQuery] = useState<ChatQuery>(EMPTY_QUERY);
+  const handleQueryChange = useCallback((next: ChatQuery) => {
+    setQuery((current) =>
+      current.artistId === next.artistId &&
+      current.artworkId === next.artworkId &&
+      current.bookingIntent === next.bookingIntent
+        ? current
+        : next
+    );
+  }, []);
 
-  const [actorId, setActorId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<ChatConversationDto[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
+  const artistIdParam = query.artistId;
+  const artworkIdParam = query.artworkId;
+  const bookingIntent = query.bookingIntent;
+
+  const [actorId, setActorId] = useState<string | null>(() => conversationCache?.actorId ?? null);
+  const [conversations, setConversations] = useState<ChatConversationDto[]>(
+    () => conversationCache?.conversas ?? []
+  );
+  const [loadingList, setLoadingList] = useState(() => conversationCache === null);
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
@@ -56,48 +93,67 @@ export function ChatWorkspace() {
   const artworkId = artwork?.id ?? artworkIdParam ?? pendingChatArtwork ?? undefined;
 
   const loadConversations = useCallback(async () => {
+    if (!conversationsInflight) {
+      const request = (async () => {
+        try {
+          const headers = await authHeaders(getTokenRef.current);
+          const res = await fetch('/api/chat/conversas', { headers, cache: 'no-store' });
+          if (!res.ok) return;
+          const json = (await res.json().catch(() => ({}))) as {
+            actorId?: string;
+            conversas?: ChatConversationDto[];
+          };
+          conversationCache = {
+            actorId: json.actorId ?? conversationCache?.actorId ?? null,
+            conversas: json.conversas ?? [],
+          };
+        } catch {
+          return;
+        }
+      })();
+      conversationsInflight = request;
+      try {
+        await request;
+      } finally {
+        if (conversationsInflight === request) conversationsInflight = null;
+      }
+    } else {
+      await conversationsInflight;
+    }
+
+    if (conversationCache) {
+      setActorId(conversationCache.actorId);
+      setConversations(conversationCache.conversas);
+    }
+    setLoadingList(false);
+  }, []);
+
+  const loadContext = useCallback(async (artistId: string, nextArtworkId?: string | null) => {
     try {
-      const headers = await authHeaders(getToken);
-      const res = await fetch('/api/chat/conversas', { headers, cache: 'no-store' });
+      const headers = await authHeaders(getTokenRef.current);
+      const params = new URLSearchParams({ artistId });
+      if (nextArtworkId) params.set('artworkId', nextArtworkId);
+      const res = await fetch(`/api/chat/contexto?${params.toString()}`, {
+        headers,
+        cache: 'no-store',
+      });
       if (!res.ok) return;
-      const json = (await res.json().catch(() => ({}))) as {
-        actorId?: string;
-        conversas?: ChatConversationDto[];
-      };
+      const json = (await res.json().catch(() => ({}))) as ContextPayload;
       if (json.actorId) setActorId(json.actorId);
-      setConversations(json.conversas ?? []);
+      if (json.peer) setSelectedPeer(json.peer);
+      setArtwork(json.artwork ?? null);
+      setMobileThreadOpen(true);
     } catch {
       return;
-    } finally {
-      setLoadingList(false);
     }
-  }, [getToken]);
-
-  const loadContext = useCallback(
-    async (artistId: string, nextArtworkId?: string | null) => {
-      try {
-        const headers = await authHeaders(getToken);
-        const params = new URLSearchParams({ artistId });
-        if (nextArtworkId) params.set('artworkId', nextArtworkId);
-        const res = await fetch(`/api/chat/contexto?${params.toString()}`, {
-          headers,
-          cache: 'no-store',
-        });
-        if (!res.ok) return;
-        const json = (await res.json().catch(() => ({}))) as ContextPayload;
-        if (json.actorId) setActorId(json.actorId);
-        if (json.peer) setSelectedPeer(json.peer);
-        setArtwork(json.artwork ?? null);
-        setMobileThreadOpen(true);
-      } catch {
-        return;
-      }
-    },
-    [getToken]
-  );
+  }, []);
 
   useEffect(() => {
-    setActiveTab('chat');
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
+  useEffect(() => {
+    if (useUiStore.getState().activeTab !== 'chat') setActiveTab('chat');
   }, [setActiveTab]);
 
   useEffect(() => {
@@ -175,7 +231,10 @@ export function ChatWorkspace() {
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 dark:text-white">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
+      <Suspense fallback={null}>
+        <ChatQuerySync onChange={handleQueryChange} />
+      </Suspense>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
@@ -192,14 +251,24 @@ export function ChatWorkspace() {
             <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
             <p className="text-sm font-semibold text-neutral-900 dark:text-white">Conversas</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            {loadingList ? (
-              <div className="space-y-2 p-2">
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-              </div>
-            ) : null}
+          <div className="relative min-h-0 flex-1 overflow-y-auto p-2">
+            <div
+              className={cn(
+                'pointer-events-none absolute inset-x-0 top-0 space-y-2 p-2 transform-gpu transition-opacity duration-200',
+                loadingList && orderedConversations.length === 0 ? 'opacity-100' : 'opacity-0'
+              )}
+              aria-hidden={!loadingList || orderedConversations.length > 0}
+            >
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+            <div
+              className={cn(
+                'transform-gpu transition-opacity duration-200',
+                loadingList && orderedConversations.length === 0 ? 'opacity-0' : 'opacity-100'
+              )}
+            >
             {!loadingList && orderedConversations.length === 0 ? (
               <div className="px-3 py-8 text-center">
                 <Sparkles className="mx-auto h-5 w-5 text-orange-500 dark:text-orange-400" />
@@ -252,6 +321,7 @@ export function ChatWorkspace() {
                 </div>
               );
             })}
+            </div>
           </div>
         </aside>
 
@@ -307,4 +377,4 @@ export function ChatWorkspace() {
       ) : null}
     </div>
   );
-}
+});

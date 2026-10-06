@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { CalendarDays, Sparkles } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
@@ -99,10 +99,11 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'chat' && (
-          <section key="chat" className="screen-fade-in -mx-4 min-h-0 flex-1 sm:-mx-6">
-            <Suspense fallback={<Skeleton className="h-[28rem] w-full rounded-2xl" />}>
-              <ChatWorkspace />
-            </Suspense>
+          <section
+            key="chat"
+            className="-mx-4 min-h-0 flex-1 transform-gpu transition-opacity duration-200 sm:-mx-6"
+          >
+            <ChatWorkspace />
           </section>
         )}
 
