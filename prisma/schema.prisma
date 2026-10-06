@@ -87,6 +87,7 @@ model Perfil {
   responsavel_email              String?
   status_responsavel             StatusResponsavel @default(dispensado)
   accepted_terms                 Boolean    @default(false)
+  language                       String     @default("pt-BR")
   agendamentos_pendentes_repasse Int        @default(0)
   agenda_bloqueada               Boolean    @default(false)
   studio_id                      String?    @db.Uuid
