@@ -4,16 +4,14 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
-import Link from 'next/link';
-import { ChevronRight, LogOut, Settings } from 'lucide-react';
-import { AccountManagement } from '@/components/features/account-management';
-import { PortfolioUpload } from '@/components/features/portfolio-upload';
-import { StudioAffiliationArtist } from '@/components/features/studio-affiliation-artist';
+import { LogOut } from 'lucide-react';
+import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
+import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { isKycApproved, isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
-import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
+import { useUiStore } from '@/hooks/use-ui-store';
+import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -24,11 +22,11 @@ export default function PerfilPage() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
-  const role = useAuthStore((s) => s.role);
+  const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
+  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
 
   const [email, setEmail] = useState('');
   const [nome, setNome] = useState('');
-  const [kycStatus, setKycStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -52,9 +50,6 @@ export default function PerfilPage() {
         }
         const parsedRole = parseAppRole(payload?.perfil?.role);
         if (parsedRole) setRole(parsedRole);
-        if (typeof payload?.perfil?.kyc_status === 'string') {
-          setKycStatus(payload.perfil.kyc_status);
-        }
       } catch {
         if (cancelled) return;
       }
@@ -102,24 +97,15 @@ export default function PerfilPage() {
     return (
       <div className="screen-fade-in min-h-full space-y-4 bg-transparent p-4 pb-6 transition-opacity duration-300 ease-in-out sm:p-6">
         <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-14 w-full rounded-2xl" />
       </div>
     );
   }
 
-  const roleLabel = role ? ROLE_EXPERIENCE[role].label : 'Conta';
   const initials = (nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A';
-  const bio =
-    role === 'tatuador'
-      ? 'Bancada digital com portfólio, credenciais e agenda no mesmo perfil.'
-      : role === 'estudio'
-        ? 'Gestão do ateliê, artistas parceiros e métricas em um só lugar.'
-        : 'Sua jornada na pele: artistas, referências e sessões com segurança.';
-  const kycLabel = isKycApproved(kycStatus) ? 'KYC aprovado' : null;
 
   return (
-    <div className="screen-fade-in flex min-h-full flex-col space-y-5 bg-transparent p-4 pb-6 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
+    <div className="screen-fade-in flex min-h-full flex-col bg-transparent p-4 pb-6 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
@@ -130,74 +116,16 @@ export default function PerfilPage() {
             {initials}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-500 dark:text-orange-400">
-                {roleLabel}
-              </span>
-              {kycLabel ? (
-                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-300">
-                  {kycLabel}
-                </span>
-              ) : null}
-            </div>
-            <h1 className="mt-2 truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              {nome || roleLabel}
+            <h1 className="truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+              {nome || 'Perfil'}
             </h1>
-            <p className="mt-1 text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
-              {bio}
-            </p>
-            <p className="mt-1 truncate text-xs text-neutral-500 dark:text-zinc-500">{maskEmail(email)}</p>
+            <p className="mt-1 truncate text-sm text-neutral-500 dark:text-zinc-400">{maskEmail(email)}</p>
           </div>
-          <Link
-            href="/dashboard/perfil/configuracoes"
-            aria-label="Abrir configurações"
-            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-500 active:scale-[0.98]"
-          >
-            <Settings className="h-5 w-5" strokeWidth={1.75} />
-          </Link>
+          <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={openSettingsDrawer} />
         </div>
       </header>
 
-      {role === 'tatuador' ? (
-        <section className="space-y-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-              Portfólio
-            </p>
-            <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              Peças publicadas
-            </h2>
-          </div>
-          <PortfolioUpload tatuadorId={user.id} />
-        </section>
-      ) : null}
-
-      {role === 'tatuador' ? <StudioAffiliationArtist /> : null}
-
-      <Link
-        href="/dashboard/perfil/configuracoes"
-        className="group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99] dark:border-neutral-800 dark:bg-[#121212]"
-      >
-        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
-          <Settings className="h-5 w-5" strokeWidth={1.75} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Configurações
-          </span>
-          <span className="mt-0.5 block text-xs text-neutral-500 dark:text-zinc-500">
-            {role === 'tatuador'
-              ? 'Tema, expediente, notificações e segurança'
-              : 'Tema, notificações e segurança'}
-          </span>
-        </span>
-        <ChevronRight
-          className="h-5 w-5 min-h-5 min-w-5 text-zinc-500 transition-colors group-hover:text-orange-400"
-          strokeWidth={1.75}
-        />
-      </Link>
-
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+      <div className="mt-auto pt-8">
         <button
           type="button"
           onClick={handleLogout}
@@ -209,13 +137,13 @@ export default function PerfilPage() {
           ) : (
             <>
               <LogOut className="h-5 w-5" strokeWidth={1.75} />
-              Sair da conta
+              Sair da Conta
             </>
           )}
         </button>
-      </section>
+      </div>
 
-      <AccountManagement fallbackRole={role} />
+      <ProfileSettingsDrawer />
     </div>
   );
 }

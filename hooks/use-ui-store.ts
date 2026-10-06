@@ -11,6 +11,10 @@ interface UiState {
   setPendingChatPeer: (id: string | null) => void;
   pendingChatArtwork: string | null;
   setPendingChatArtwork: (id: string | null) => void;
+  settingsDrawerOpen: boolean;
+  openSettingsDrawer: () => void;
+  closeSettingsDrawer: () => void;
+  toggleSettingsDrawer: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -20,4 +24,8 @@ export const useUiStore = create<UiState>((set) => ({
   setPendingChatPeer: (id) => set({ pendingChatPeer: id }),
   pendingChatArtwork: null,
   setPendingChatArtwork: (id) => set({ pendingChatArtwork: id }),
+  settingsDrawerOpen: false,
+  openSettingsDrawer: () => set({ settingsDrawerOpen: true }),
+  closeSettingsDrawer: () => set({ settingsDrawerOpen: false }),
+  toggleSettingsDrawer: () => set((s) => ({ settingsDrawerOpen: !s.settingsDrawerOpen })),
 }));
