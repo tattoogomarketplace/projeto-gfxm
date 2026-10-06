@@ -13,16 +13,19 @@ export function AuthScreen({ children, className }: AuthScreenProps) {
   return (
     <div
       className={cn(
-        'screen-fade-in relative flex min-h-dvh w-full flex-col items-center justify-center bg-[#121212] text-white',
+        'form-page screen-fade-in relative flex min-h-full w-full shrink-0 flex-col items-center justify-start bg-[#121212] text-white',
+        'overflow-x-hidden overflow-y-visible',
         'px-4',
         'pt-[max(1.25rem,env(safe-area-inset-top))]',
-        'pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+        'pb-[max(2rem,env(safe-area-inset-bottom))]',
         'pl-[max(1rem,env(safe-area-inset-left))]',
         'pr-[max(1rem,env(safe-area-inset-right))]',
         className
       )}
     >
-      {children}
+      <div className="my-auto flex w-full max-w-md flex-col items-center">
+        {children}
+      </div>
     </div>
   );
 }
