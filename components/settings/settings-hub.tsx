@@ -75,8 +75,8 @@ export const SettingsHub = memo(function SettingsHub() {
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
   return (
-    <div className="screen-fade-in min-h-full space-y-4 overflow-y-auto bg-transparent p-4 pb-32 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
-      <header className="screen-fade-in relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+    <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-neutral-900 dark:text-white">
+      <header className="relative z-10 mx-4 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none sm:mx-6 sm:mt-6">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
@@ -110,6 +110,8 @@ export const SettingsHub = memo(function SettingsHub() {
         </div>
       </header>
 
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none px-4 pb-32 pt-4 [-webkit-overflow-scrolling:touch] sm:px-6">
+        <div className="space-y-4">
       <SettingsAccordion
         id="appearance"
         title="Aparência e Tema"
@@ -203,6 +205,8 @@ export const SettingsHub = memo(function SettingsHub() {
           />
         </div>
       </SettingsAccordion>
+        </div>
+      </div>
 
       <TermsViewerModal isOpen={showTerms} onClose={closeTerms} />
     </div>
