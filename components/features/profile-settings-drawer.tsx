@@ -186,21 +186,21 @@ export function ProfileSettingsDrawer() {
                   icon={<Palette className="h-5 w-5" strokeWidth={1.75} />}
                   title="Aparência e tema"
                   subtitle="Dark Luxury, claro ou automático"
-                  href="/dashboard/perfil/configuracoes"
+                  href="/dashboard/perfil/configuracoes?section=appearance"
                   onClick={dismiss}
                 />
                 <DrawerRow
                   icon={<BellRing className="h-5 w-5" strokeWidth={1.75} />}
                   title="Notificações"
                   subtitle="Lembretes, chat, propostas e novidades"
-                  href="/dashboard/perfil/configuracoes"
+                  href="/dashboard/perfil/configuracoes?section=notifications"
                   onClick={dismiss}
                 />
                 <DrawerRow
                   icon={<LockKeyhole className="h-5 w-5" strokeWidth={1.75} />}
                   title="Segurança e senha"
                   subtitle="Altere a senha e proteja a sessão"
-                  href="/dashboard/perfil/configuracoes"
+                  href="/dashboard/perfil/configuracoes?section=security"
                   onClick={dismiss}
                 />
                 {role === 'tatuador' ? (
@@ -208,7 +208,7 @@ export function ProfileSettingsDrawer() {
                     icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
                     title="Expediente"
                     subtitle="Disponibilidade semanal, intervalos e folgas"
-                    href="/dashboard/perfil/configuracoes"
+                    href="/dashboard/perfil/configuracoes?section=schedule"
                     onClick={dismiss}
                   />
                 ) : null}
@@ -216,7 +216,7 @@ export function ProfileSettingsDrawer() {
                   icon={<FileText className="h-5 w-5" strokeWidth={1.75} />}
                   title="Termos e privacidade"
                   subtitle="Leia os termos vigentes da plataforma"
-                  href="/dashboard/perfil/configuracoes"
+                  href="/dashboard/perfil/configuracoes?section=privacy&view=terms"
                   onClick={dismiss}
                 />
               </DrawerSection>

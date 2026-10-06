@@ -27,6 +27,7 @@ export const SettingsAccordion = memo(function SettingsAccordion({
 }: SettingsAccordionProps) {
   return (
     <section
+      id={`settings-section-${id}`}
       className="screen-fade-in overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none"
       style={{ animationDelay: `${delayMs}ms` }}
     >

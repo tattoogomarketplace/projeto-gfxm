@@ -1,7 +1,8 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   BellRing,
   ChevronLeft,
@@ -26,12 +27,37 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 
 type SectionId = 'appearance' | 'schedule' | 'notifications' | 'security' | 'privacy';
 
+const SECTION_IDS: SectionId[] = ['appearance', 'schedule', 'notifications', 'security', 'privacy'];
+
+function parseSection(value: string | null): SectionId | null {
+  if (value && SECTION_IDS.includes(value as SectionId)) return value as SectionId;
+  return null;
+}
+
 export const SettingsHub = memo(function SettingsHub() {
   const role = useAuthStore((s) => s.role);
   const isTatuador = role === 'tatuador';
-  const [openSection, setOpenSection] = useState<SectionId | null>(null);
-  const [showTerms, setShowTerms] = useState(false);
+  const searchParams = useSearchParams();
+  const sectionParam = parseSection(searchParams.get('section'));
+  const viewParam = searchParams.get('view');
+  const [openSection, setOpenSection] = useState<SectionId | null>(sectionParam);
+  const [showTerms, setShowTerms] = useState(viewParam === 'terms');
   const { triggerHaptic } = useHapticFeedback();
+
+  useEffect(() => {
+    if (sectionParam) setOpenSection(sectionParam);
+    setShowTerms(viewParam === 'terms');
+  }, [sectionParam, viewParam]);
+
+  useEffect(() => {
+    if (!sectionParam) return;
+    const node = document.getElementById(`settings-section-${sectionParam}`);
+    if (!node) return;
+    const timer = window.setTimeout(() => {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [sectionParam]);
 
   const handleToggle = useCallback(
     (id: string) => {
