@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
 import { ProfileView } from '@/components/features/profile-view';
 import { SettingsHub } from '@/components/settings/settings-hub';
 import { cn } from '@/lib/utils';
@@ -56,8 +55,6 @@ export default function PerfilLayout({
       <div className="hidden" aria-hidden>
         {children}
       </div>
-
-      <ProfileSettingsDrawer />
     </div>
   );
 }

@@ -44,33 +44,14 @@ export default function ClienteDashboard() {
 
   return (
     <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
-      />
+      {activeTab === 'portfolio' ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
+        />
+      ) : null}
 
       <div className="relative space-y-6">
-        <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
-          />
-          <div className="relative flex items-center gap-3">
-            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-white text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
-              <Sparkles className="h-5 w-5" strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-                TattooGo MK
-              </p>
-              <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-                {EXPERIENCE.title}
-              </h1>
-            </div>
-          </div>
-          <p className="relative mt-3 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
-        </header>
-
         {activeTab === 'agendar' && (
           <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <SectionHeading
@@ -127,6 +108,26 @@ export default function ClienteDashboard() {
 
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
+            <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/20 blur-2xl md:block"
+              />
+              <div className="relative flex items-center gap-3">
+                <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-white text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
+                  <Sparkles className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
+                    TattooGo MK
+                  </p>
+                  <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
+                    {EXPERIENCE.title}
+                  </h1>
+                </div>
+              </div>
+              <p className="relative mt-3 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
+            </header>
             <GaleriaEntryCard href="/dashboard/galeria" />
           </section>
         )}

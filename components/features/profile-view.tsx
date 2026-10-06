@@ -5,11 +5,9 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
-import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { useUiStore } from '@/hooks/use-ui-store';
 import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
@@ -22,8 +20,6 @@ export function ProfileView() {
   const cachedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
-  const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
-  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
 
   const clerkEmail = user?.primaryEmailAddress?.emailAddress ?? '';
   const clerkNome = user
@@ -142,7 +138,6 @@ export function ProfileView() {
             </h1>
             <p className="mt-1 truncate text-sm text-neutral-500 dark:text-zinc-400">{maskEmail(displayEmail)}</p>
           </div>
-          <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={openSettingsDrawer} />
         </div>
       </header>
 

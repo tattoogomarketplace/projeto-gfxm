@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Settings } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
+import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
@@ -52,6 +52,8 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
+  const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
+  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
   const tabRole = role ?? 'cliente';
   const pathnameRef = useRef(pathname);
 
@@ -121,7 +123,9 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
   const isDedicatedChat = pathname.startsWith('/dashboard/chat');
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
+  const isGaleria = pathname.startsWith('/dashboard/galeria');
   const hideTabs = isOnboarding || isAiChat || isKycPendente;
+  const showMachineTrigger = !hideTabs;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
   const selectedTab: AppTab = isProfileSettings
@@ -133,15 +137,19 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         : activeTab;
   const headerTitle = isSettingsHub
     ? 'Configurações'
-    : selectedTab === 'perfil'
-      ? 'Perfil'
-      : selectedTab === 'agendar'
-        ? 'Agenda & Sessões'
-        : selectedTab === 'chat'
-          ? 'Chat & Orçamentos'
-          : role
-            ? ROLE_EXPERIENCE[role].dashboard.title
-            : title;
+    : isGaleria
+      ? 'Galeria'
+      : selectedTab === 'perfil'
+        ? 'Perfil'
+        : selectedTab === 'agendar'
+          ? 'Agenda & Sessões'
+          : selectedTab === 'chat'
+            ? 'Chat & Orçamentos'
+            : selectedTab === 'portfolio' && role === 'cliente'
+              ? 'Minha Jornada'
+              : role
+                ? ROLE_EXPERIENCE[role].dashboard.title
+                : title;
 
   const handleTabChange = (tab: AppTab) => {
     // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
@@ -166,36 +174,30 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   return (
     <div
       className={cn(
-        'luxury-canvas relative mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
+        'luxury-canvas relative mx-auto flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
         hideTabs ? 'pb-[env(safe-area-inset-bottom,0px)]' : 'nav-safe-pad'
       )}
     >
       {isAiChat ? null : (
       <header
         className={cn(
-            'z-40 shrink-0 border-b border-neutral-200/80 bg-[#FFFDF9] backdrop-blur-xl dark:border-white/10 dark:bg-[#121212]',
+            'z-40 shrink-0 border-b border-neutral-200/80 bg-[#FFFDF9] dark:border-white/10 dark:bg-[#121212]',
           'pt-[max(0.75rem,env(safe-area-inset-top))]'
         )}
       >
-        <div className="flex min-h-11 items-center justify-between px-4 pb-3">
-          <h1 className="text-[17px] font-semibold tracking-tight">
+        <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
+          <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight">
             {headerTitle}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
                 {!isOnline ? 'Offline' : `${pending} na fila`}
               </span>
             ) : null}
-            {hideTabs || isProfileSettings ? null : (
-              <Link
-                href="/dashboard/perfil/configuracoes"
-                aria-label="Abrir configurações"
-                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-500 active:scale-[0.98]"
-              >
-                <Settings className="h-5 w-5" strokeWidth={1.75} />
-              </Link>
-            )}
+            {showMachineTrigger ? (
+              <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={openSettingsDrawer} />
+            ) : null}
           </div>
         </div>
         {hideTabs ? null : (
@@ -216,12 +218,13 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           'relative flex min-h-0 flex-1 flex-col',
           isAiChat
             ? 'overflow-hidden'
-            : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
+            : 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}
       >
         {children}
       </div>
 
+      {showMachineTrigger ? <ProfileSettingsDrawer /> : null}
       <AiAssistantFab />
     </div>
   );
