@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function SettingsFallback() {
   return (
-    <div className="min-h-full space-y-4 p-4 sm:p-6">
+    <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto px-4 pt-4 pb-40 sm:px-6 sm:pt-6">
       <Skeleton className="h-28 w-full rounded-2xl" />
       <Skeleton className="h-24 w-full rounded-2xl" />
       <Skeleton className="h-24 w-full rounded-2xl" />
