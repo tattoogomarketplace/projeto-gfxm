@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -105,6 +106,11 @@ export function ProfileSettingsDrawer() {
   const closeSettingsDrawer = useUiStore((s) => s.closeSettingsDrawer);
   const role = useAuthStore((s) => s.role);
   const { triggerHaptic } = useHapticFeedback();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -128,33 +134,36 @@ export function ProfileSettingsDrawer() {
     closeSettingsDrawer();
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
-          <div
-            className="fixed inset-0 z-[90] flex flex-col bg-[#121212]/95 backdrop-blur-xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="profile-menu-title"
+        <div
+          className="fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-[#121212]/95 backdrop-blur-xl"
+          style={{ top: 0, right: 0, bottom: 0, left: 0, transform: 'none' }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-menu-title"
+        >
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0"
+            aria-label="Fechar Configurações e atividade"
+            onClick={closeSettingsDrawer}
+          />
+          <motion.aside
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.85 }}
+            className="relative z-10 ml-auto flex h-full min-h-0 w-[min(100%,24.5rem)] flex-col overflow-hidden border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
           >
-            <motion.button
-              type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0"
-              aria-label="Fechar Configurações e atividade"
-              onClick={closeSettingsDrawer}
-            />
-            <motion.aside
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.85 }}
-              className="relative ml-auto flex h-full min-h-0 w-[min(100%,24.5rem)] flex-col border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
-            >
-              <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   TattooGo MK
@@ -224,6 +233,7 @@ export function ProfileSettingsDrawer() {
           </motion.aside>
         </div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
