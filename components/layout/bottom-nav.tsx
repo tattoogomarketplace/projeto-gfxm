@@ -73,7 +73,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'bottom-nav-safe fixed bottom-0 inset-x-0 z-50 mb-0 w-full md:hidden',
+        'bottom-nav-safe fixed bottom-0 inset-x-0 z-50 mb-0 w-full overflow-visible md:hidden',
         'flex items-center pt-2 pb-[env(safe-area-inset-bottom)]',
         'border-t border-neutral-200/80 bg-[#FFFDF9]',
         'dark:border-white/10 dark:bg-[#121212]',
@@ -94,7 +94,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
-      <ul className="mx-auto grid h-12 w-full max-w-app grid-cols-4 px-1">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-[-30px] -z-10 h-24 bg-[#FFFDF9] dark:bg-[#121212]"
+      />
+      <ul className="relative z-10 mx-auto grid h-12 w-full max-w-app grid-cols-4 px-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
