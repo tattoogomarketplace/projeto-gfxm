@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { Images, RotateCcw, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronRight, Images, RotateCcw, Sparkles } from 'lucide-react';
 import { GaleriaCard } from '@/components/features/galeria-card';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,10 +19,11 @@ import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
+  galleryHref?: string;
 };
 
 const HEALING_OPTIONS: { value: GaleriaHealingFilter; label: string }[] = [
-  { value: 'all', label: 'Todas' },
+  { value: 'all', label: 'Cicatrização' },
   { value: 'fresh', label: 'Recém-feita' },
   { value: 'healed', label: 'Cicatrizada' },
 ];
@@ -42,8 +44,8 @@ function Chip({
       className={cn(
         'min-h-11 shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold tracking-tight transition-all active:scale-95',
         selected
-          ? 'border-orange-500 bg-orange-500/15 text-orange-700 shadow-[0_0_16px_rgba(249,115,22,0.28)] dark:text-orange-300'
-          : 'border-neutral-300 bg-white text-neutral-600 hover:border-orange-500/40 hover:text-neutral-900 dark:border-neutral-700 dark:bg-[#161616] dark:text-zinc-400 dark:hover:text-zinc-200'
+          ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
+          : 'border-white/10 bg-[#1a1a1a] text-zinc-400 hover:border-orange-500/40 hover:text-zinc-200'
       )}
     >
       {children}
@@ -51,7 +53,19 @@ function Chip({
   );
 }
 
-export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
+function FilterDivider() {
+  return (
+    <span
+      aria-hidden
+      className="mx-0.5 h-6 w-px shrink-0 self-center bg-white/10"
+    />
+  );
+}
+
+export function GaleriaInspiracoes({
+  onStartConversation,
+  galleryHref,
+}: GaleriaInspiracoesProps) {
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
@@ -77,110 +91,115 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
     setHealed('all');
   };
 
-  return (
-    <div className="space-y-5">
-      <header className="flex items-start gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
-          <Images className="h-5 w-5" strokeWidth={1.75} />
+  const cardClassName =
+    'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]';
+
+  const cardContent = (
+    <>
+      <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+        <Images className="h-5 w-5" strokeWidth={1.75} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold tracking-tight text-white">
+          Galeria de Inspirações
         </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-            Galeria de Inspirações
-          </h2>
-          <p className="mt-0.5 text-sm text-neutral-600 dark:text-zinc-400">
-            Explore artes de tatuadores verificados. Filtre por estilo, parte do corpo e cicatrização.
-          </p>
-        </div>
-      </header>
+        <span className="mt-0.5 block text-xs text-zinc-500">
+          Explore artes de tatuadores verificados
+        </span>
+      </span>
+      {galleryHref ? (
+        <ChevronRight
+          className="h-5 w-5 min-h-5 min-w-5 text-zinc-500 transition-colors group-hover:text-orange-400"
+          strokeWidth={1.75}
+        />
+      ) : null}
+    </>
+  );
 
-      <div className="space-y-3">
-        <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-            Estilo
-          </legend>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Chip
-              selected={!style}
-              onClick={() => {
-                triggerHaptic('light');
-                setStyle('');
-              }}
-            >
-              Todos
-            </Chip>
-            {PORTFOLIO_STYLES.map((item) => (
-              <Chip
-                key={item}
-                selected={style === item}
-                onClick={() => {
-                  triggerHaptic('light');
-                  setStyle((current) => (current === item ? '' : item));
-                }}
-              >
-                {styleLabel(item)}
-              </Chip>
-            ))}
-          </div>
-        </fieldset>
+  return (
+    <div className="space-y-4">
+      {galleryHref ? (
+        <Link href={galleryHref} className={cardClassName}>
+          {cardContent}
+        </Link>
+      ) : (
+        <div className={cardClassName}>{cardContent}</div>
+      )}
 
-        <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-            Parte do corpo
-          </legend>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Chip
-              selected={!bodyPart}
-              onClick={() => {
-                triggerHaptic('light');
-                setBodyPart('');
-              }}
-            >
-              Todas
-            </Chip>
-            {PORTFOLIO_BODY_PARTS.map((item) => (
-              <Chip
-                key={item}
-                selected={bodyPart === item}
-                onClick={() => {
-                  triggerHaptic('light');
-                  setBodyPart((current) => (current === item ? '' : item));
-                }}
-              >
-                {bodyPartLabel(item)}
-              </Chip>
-            ))}
-          </div>
-        </fieldset>
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <Chip
+          selected={!style}
+          onClick={() => {
+            triggerHaptic('light');
+            setStyle('');
+          }}
+        >
+          Estilo
+        </Chip>
+        {PORTFOLIO_STYLES.map((item) => (
+          <Chip
+            key={`style-${item}`}
+            selected={style === item}
+            onClick={() => {
+              triggerHaptic('light');
+              setStyle((current) => (current === item ? '' : item));
+            }}
+          >
+            {styleLabel(item)}
+          </Chip>
+        ))}
 
-        <fieldset className="space-y-2">
-          <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-            Cicatrização
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {HEALING_OPTIONS.map((option) => (
-              <Chip
-                key={option.value}
-                selected={healed === option.value}
-                onClick={() => {
-                  triggerHaptic('light');
-                  setHealed(option.value);
-                }}
-              >
-                {option.label}
-              </Chip>
-            ))}
-          </div>
-        </fieldset>
+        <FilterDivider />
+
+        <Chip
+          selected={!bodyPart}
+          onClick={() => {
+            triggerHaptic('light');
+            setBodyPart('');
+          }}
+        >
+          Corpo
+        </Chip>
+        {PORTFOLIO_BODY_PARTS.map((item) => (
+          <Chip
+            key={`body-${item}`}
+            selected={bodyPart === item}
+            onClick={() => {
+              triggerHaptic('light');
+              setBodyPart((current) => (current === item ? '' : item));
+            }}
+          >
+            {bodyPartLabel(item)}
+          </Chip>
+        ))}
+
+        <FilterDivider />
+
+        {HEALING_OPTIONS.map((option) => (
+          <Chip
+            key={option.value}
+            selected={healed === option.value}
+            onClick={() => {
+              triggerHaptic('light');
+              setHealed(option.value);
+            }}
+          >
+            {option.label}
+          </Chip>
+        ))}
 
         {hasFilters ? (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-neutral-500 transition-colors hover:text-orange-600 dark:text-zinc-400 dark:hover:text-orange-300"
-          >
-            <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Limpar filtros
-          </button>
+          <>
+            <FilterDivider />
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-[#1a1a1a] px-3.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+            >
+              <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Limpar
+            </button>
+          </>
         ) : null}
       </div>
 

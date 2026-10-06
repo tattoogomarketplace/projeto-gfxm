@@ -133,6 +133,7 @@ export default function ClienteDashboard() {
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <GaleriaInspiracoes
+              galleryHref="/dashboard/galeria"
               onStartConversation={(tatuadorId, artworkId) => {
                 setPendingChatPeer(tatuadorId);
                 setPendingChatArtwork(artworkId);
