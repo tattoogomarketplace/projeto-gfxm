@@ -73,32 +73,19 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        'bottom-nav-safe fixed bottom-0 inset-x-0 z-50 mb-0 w-full overflow-visible md:hidden',
-        'flex items-center pt-2 pb-[env(safe-area-inset-bottom)]',
-        'border-t border-neutral-200/80 bg-[#FFFDF9]',
-        'dark:border-white/10 dark:bg-[#121212]',
-        'pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]',
+        'fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md md:hidden',
+        'rounded-2xl bg-[#1a1a1a]/90 backdrop-blur-xl',
+        'border border-white/10 shadow-2xl',
+        'flex items-center px-1 py-1.5',
         conceal && 'pointer-events-none invisible'
       )}
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        margin: 0,
-        marginBottom: 0,
-        transform: 'none',
-        paddingTop: '0.5rem',
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
       }}
       aria-label="Navegação principal"
       aria-hidden={conceal}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-[-30px] -z-10 h-24 bg-[#FFFDF9] dark:bg-[#121212]"
-      />
-      <ul className="relative z-10 mx-auto grid h-12 w-full max-w-app grid-cols-4 px-1">
+      <ul className="grid h-11 w-full grid-cols-4">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -115,11 +102,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 scroll={false}
                 onClick={() => handleSelect(item.tab)}
                 className={cn(
-                  'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-1',
+                  'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
-                  'transition-colors duration-200 active:scale-[0.98]',
+                  'rounded-xl transition-colors duration-200 active:scale-[0.98]',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
-                  active ? 'text-primary' : 'text-muted-foreground'
+                  active ? 'text-primary' : 'text-zinc-400'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
