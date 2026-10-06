@@ -80,7 +80,7 @@ export const SettingsHub = memo(function SettingsHub() {
 
   return (
     <div className="gpu-layer relative flex h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none pb-[max(10rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none pb-[max(20rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
       <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
