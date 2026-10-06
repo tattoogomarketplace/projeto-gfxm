@@ -110,7 +110,7 @@ export function ProfileView() {
 
   if (!hydrated && (!isLoaded || !isSignedIn || !user)) {
     return (
-      <div className="space-y-4 bg-transparent pt-5 transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
+      <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 [-webkit-overflow-scrolling:touch] transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
         <Skeleton className="h-28 w-full rounded-2xl" />
         <Skeleton className="h-14 w-full rounded-2xl" />
       </div>
@@ -122,7 +122,7 @@ export function ProfileView() {
   const initials = (displayNome || displayEmail || 'A').trim().charAt(0)?.toUpperCase() || 'A';
 
   return (
-    <div className="gpu-layer flex transform-gpu flex-col bg-transparent pt-5 text-neutral-900 contain-paint backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
+    <div className="gpu-layer flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-neutral-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden

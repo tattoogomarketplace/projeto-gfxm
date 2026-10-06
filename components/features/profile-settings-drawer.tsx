@@ -190,7 +190,7 @@ export function ProfileSettingsDrawer() {
             </div>
 
             <div
-              className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-36 contain-paint backface-hidden will-change-transform [-webkit-overflow-scrolling:touch]"
+              className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-[max(10rem,env(safe-area-inset-bottom))] contain-paint backface-hidden will-change-transform [-webkit-overflow-scrolling:touch]"
               style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               <DrawerSection title="Central">

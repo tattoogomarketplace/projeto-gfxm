@@ -24,7 +24,7 @@ export default function PerfilLayout({
     <div className="gpu-layer relative flex h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform">
       <div
         className={cn(
-          'gpu-layer flex min-h-0 flex-1 flex-col contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
           isSettings
             ? 'pointer-events-none absolute inset-0 opacity-0 -translate-x-2'
             : 'relative opacity-100 translate-x-0'
@@ -37,7 +37,7 @@ export default function PerfilLayout({
 
       <div
         className={cn(
-          'gpu-layer flex min-h-0 flex-1 flex-col contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
           isSettings
             ? 'relative opacity-100 translate-x-0'
             : 'pointer-events-none absolute inset-0 opacity-0 translate-x-2'
