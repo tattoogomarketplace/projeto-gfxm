@@ -186,10 +186,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col',
-          isSettingsHub
-            ? 'overflow-hidden'
-            : 'overflow-x-hidden overflow-y-auto overscroll-none [-webkit-overflow-scrolling:touch]',
+          'flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none [-webkit-overflow-scrolling:touch]',
           hideTabs ? 'pb-6' : 'pb-0'
         )}
       >

@@ -151,7 +151,7 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll mb-0 min-h-0 h-full w-full flex-1 overflow-y-auto overscroll-none">
-                <div className="mx-auto flex h-full min-h-0 w-full max-w-app flex-col">
+                <div className="mx-auto flex min-h-full w-full max-w-app flex-col">
                   {children}
                 </div>
               </main>
