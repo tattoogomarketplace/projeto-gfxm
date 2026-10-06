@@ -75,8 +75,8 @@ export const SettingsHub = memo(function SettingsHub() {
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
   return (
-    <div className="screen-fade-in flex min-h-full flex-col space-y-4 bg-transparent p-4 pb-6 text-neutral-900 transition-opacity duration-300 ease-in-out sm:p-6 dark:text-white">
-      <header className="screen-fade-in relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+    <div className="flex min-h-0 flex-col space-y-4 bg-transparent p-4 pb-6 text-neutral-900 sm:p-6 dark:text-white">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm backdrop-blur-md dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"

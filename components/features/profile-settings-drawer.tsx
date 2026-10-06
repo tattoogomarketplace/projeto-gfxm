@@ -140,8 +140,8 @@ export function ProfileSettingsDrawer() {
     <AnimatePresence>
       {open ? (
         <div
-          className="fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-[#121212]/95 backdrop-blur-xl"
-          style={{ top: 0, right: 0, bottom: 0, left: 0, transform: 'none' }}
+          className="fixed inset-0 z-[90] flex h-full max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212]/95 backdrop-blur-xl"
+          style={{ top: 0, right: 0, bottom: 0, left: 0, transform: 'none', overscrollBehavior: 'none' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="profile-menu-title"
@@ -161,9 +161,9 @@ export function ProfileSettingsDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.85 }}
-            className="relative z-10 ml-auto flex h-full min-h-0 w-[min(100%,24.5rem)] flex-col overflow-hidden border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
+            className="relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
           >
-            <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <div className="z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#121212] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   TattooGo MK
@@ -185,7 +185,10 @@ export function ProfileSettingsDrawer() {
               </button>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">
+            <div
+              className="flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]"
+              style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch' }}
+            >
               <DrawerSection title="Central">
                 <DrawerRow
                   icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
