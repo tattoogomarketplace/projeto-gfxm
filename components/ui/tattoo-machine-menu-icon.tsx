@@ -52,7 +52,7 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
         triggerHaptic('light');
         onClick();
       }}
-      aria-label="Abrir menu de configurações"
+      aria-label="Abrir Configurações e atividade"
       aria-expanded={open}
       aria-haspopup="dialog"
       className={cn(
