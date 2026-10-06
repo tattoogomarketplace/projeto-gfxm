@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Images, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, Images, RotateCcw, Sparkles } from 'lucide-react';
 import { GaleriaCard } from '@/components/features/galeria-card';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,42 +21,85 @@ type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
 };
 
-const HEALING_OPTIONS: { value: GaleriaHealingFilter; label: string }[] = [
-  { value: 'all', label: 'Cicatrização' },
+const HEALING_OPTIONS: { value: Exclude<GaleriaHealingFilter, 'all'>; label: string }[] = [
   { value: 'fresh', label: 'Recém-feita' },
   { value: 'healed', label: 'Cicatrizada' },
 ];
 
+type FilterCategory = 'style' | 'body' | 'healing' | null;
+
 const ENTRY_CARD_CLASS =
   'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]';
 
-function Chip({
+function FilterTrigger({
+  label,
+  value,
+  open,
+  onClick,
+}: {
+  label: string;
+  value: string | null;
+  open: boolean;
+  onClick: () => void;
+}) {
+  const active = Boolean(value) || open;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      className={cn(
+        'flex min-h-11 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-xl border px-3 py-2 text-left transition-all active:scale-[0.98]',
+        active
+          ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
+          : 'border-white/10 bg-[#1a1a1a] text-zinc-300 hover:border-orange-500/40 hover:text-zinc-100'
+      )}
+    >
+      <span className="min-w-0">
+        <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          {label}
+        </span>
+        <span className="mt-0.5 block truncate text-xs font-semibold tracking-tight">
+          {value ?? 'Todos'}
+        </span>
+      </span>
+      <ChevronDown
+        className={cn(
+          'h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200',
+          open && 'rotate-180 text-orange-400'
+        )}
+        strokeWidth={1.75}
+      />
+    </button>
+  );
+}
+
+function FilterOption({
   selected,
   onClick,
   children,
 }: {
   selected: boolean;
   onClick: () => void;
-  children: ReactNode;
+  children: string;
 }) {
   return (
     <button
       type="button"
+      role="option"
+      aria-selected={selected}
       onClick={onClick}
       className={cn(
-        'min-h-11 shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold tracking-tight transition-all active:scale-95',
+        'flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold tracking-tight transition-colors active:scale-[0.99]',
         selected
-          ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
-          : 'border-white/10 bg-[#1a1a1a] text-zinc-400 hover:border-orange-500/40 hover:text-zinc-200'
+          ? 'bg-orange-500/15 text-orange-300'
+          : 'text-zinc-300 hover:bg-white/[0.04] hover:text-white'
       )}
     >
       {children}
     </button>
   );
-}
-
-function FilterDivider() {
-  return <span aria-hidden className="mx-0.5 h-6 w-px shrink-0 self-center bg-white/10" />;
 }
 
 export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: string }) {
@@ -85,7 +128,17 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
+  const [openCategory, setOpenCategory] = useState<FilterCategory>(null);
   const { triggerHaptic } = useHapticFeedback();
+
+  useEffect(() => {
+    if (!openCategory) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenCategory(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [openCategory]);
 
   const query = useMemo(
     () => ({
@@ -100,12 +153,41 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const items = data ?? [];
   const hasFilters = Boolean(style || bodyPart || healed !== 'all');
 
+  const toggleCategory = (category: Exclude<FilterCategory, null>) => {
+    triggerHaptic('light');
+    setOpenCategory((current) => (current === category ? null : category));
+  };
+
+  const applyStyle = (value: string) => {
+    triggerHaptic('light');
+    setStyle(value);
+    setOpenCategory(null);
+  };
+
+  const applyBodyPart = (value: string) => {
+    triggerHaptic('light');
+    setBodyPart(value);
+    setOpenCategory(null);
+  };
+
+  const applyHealing = (value: GaleriaHealingFilter) => {
+    triggerHaptic('light');
+    setHealed(value);
+    setOpenCategory(null);
+  };
+
   const clearFilters = () => {
     triggerHaptic('light');
     setStyle('');
     setBodyPart('');
     setHealed('all');
+    setOpenCategory(null);
   };
+
+  const styleValue = style ? styleLabel(style) : null;
+  const bodyValue = bodyPart ? bodyPartLabel(bodyPart) : null;
+  const healingValue =
+    healed === 'fresh' ? 'Recém-feita' : healed === 'healed' ? 'Cicatrizada' : null;
 
   return (
     <div className="space-y-4">
@@ -123,80 +205,107 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </span>
       </div>
 
-      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <Chip
-          selected={!style}
-          onClick={() => {
-            triggerHaptic('light');
-            setStyle('');
-          }}
-        >
-          Estilo
-        </Chip>
-        {PORTFOLIO_STYLES.map((item) => (
-          <Chip
-            key={`style-${item}`}
-            selected={style === item}
-            onClick={() => {
-              triggerHaptic('light');
-              setStyle((current) => (current === item ? '' : item));
-            }}
-          >
-            {styleLabel(item)}
-          </Chip>
-        ))}
+      <div>
+        <div className="relative">
+          <div className="relative z-30 grid grid-cols-3 gap-2">
+            <FilterTrigger
+              label="Estilo"
+              value={styleValue}
+              open={openCategory === 'style'}
+              onClick={() => toggleCategory('style')}
+            />
+            <FilterTrigger
+              label="Parte do Corpo"
+              value={bodyValue}
+              open={openCategory === 'body'}
+              onClick={() => toggleCategory('body')}
+            />
+            <FilterTrigger
+              label="Cicatrização"
+              value={healingValue}
+              open={openCategory === 'healing'}
+              onClick={() => toggleCategory('healing')}
+            />
+          </div>
 
-        <FilterDivider />
+          {openCategory ? (
+            <>
+              <button
+                type="button"
+                aria-label="Fechar filtro"
+                className="fixed inset-0 z-20 cursor-default"
+                onClick={() => setOpenCategory(null)}
+              />
+              <div
+                role="listbox"
+                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-[#161616] shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+              >
+              <div className="max-h-72 overflow-y-auto p-2">
+                {openCategory === 'style' ? (
+                  <>
+                    <FilterOption selected={!style} onClick={() => applyStyle('')}>
+                      Todos os estilos
+                    </FilterOption>
+                    {PORTFOLIO_STYLES.map((item) => (
+                      <FilterOption
+                        key={`style-${item}`}
+                        selected={style === item}
+                        onClick={() => applyStyle(item)}
+                      >
+                        {styleLabel(item)}
+                      </FilterOption>
+                    ))}
+                  </>
+                ) : null}
 
-        <Chip
-          selected={!bodyPart}
-          onClick={() => {
-            triggerHaptic('light');
-            setBodyPart('');
-          }}
-        >
-          Corpo
-        </Chip>
-        {PORTFOLIO_BODY_PARTS.map((item) => (
-          <Chip
-            key={`body-${item}`}
-            selected={bodyPart === item}
-            onClick={() => {
-              triggerHaptic('light');
-              setBodyPart((current) => (current === item ? '' : item));
-            }}
-          >
-            {bodyPartLabel(item)}
-          </Chip>
-        ))}
+                {openCategory === 'body' ? (
+                  <>
+                    <FilterOption selected={!bodyPart} onClick={() => applyBodyPart('')}>
+                      Todas as partes
+                    </FilterOption>
+                    {PORTFOLIO_BODY_PARTS.map((item) => (
+                      <FilterOption
+                        key={`body-${item}`}
+                        selected={bodyPart === item}
+                        onClick={() => applyBodyPart(item)}
+                      >
+                        {bodyPartLabel(item)}
+                      </FilterOption>
+                    ))}
+                  </>
+                ) : null}
 
-        <FilterDivider />
-
-        {HEALING_OPTIONS.map((option) => (
-          <Chip
-            key={option.value}
-            selected={healed === option.value}
-            onClick={() => {
-              triggerHaptic('light');
-              setHealed(option.value);
-            }}
-          >
-            {option.label}
-          </Chip>
-        ))}
+                {openCategory === 'healing' ? (
+                  <>
+                    <FilterOption selected={healed === 'all'} onClick={() => applyHealing('all')}>
+                      Todas
+                    </FilterOption>
+                    {HEALING_OPTIONS.map((option) => (
+                      <FilterOption
+                        key={option.value}
+                        selected={healed === option.value}
+                        onClick={() => applyHealing(option.value)}
+                      >
+                        {option.label}
+                      </FilterOption>
+                    ))}
+                  </>
+                ) : null}
+              </div>
+            </div>
+            </>
+          ) : null}
+        </div>
 
         {hasFilters ? (
-          <>
-            <FilterDivider />
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-[#1a1a1a] px-3.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
-            >
-              <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Limpar
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-white/10 bg-[#1a1a1a] px-3.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+          >
+            <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Limpar filtros
+          </button>
         ) : null}
       </div>
 
