@@ -4,15 +4,11 @@ import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BellRing,
   Building2,
   ChevronRight,
-  Clock3,
-  LockKeyhole,
-  Palette,
   PenTool,
+  Settings,
   ShieldAlert,
-  UserRoundCog,
   X,
 } from 'lucide-react';
 import { AccountManagement } from '@/components/features/account-management';
@@ -181,44 +177,14 @@ export function ProfileSettingsDrawer() {
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-              <DrawerSection title="Configurações e Segurança">
+              <DrawerSection title="Central">
                 <DrawerRow
-                  icon={<Palette className="h-5 w-5" strokeWidth={1.75} />}
-                  title="Aparência e Tema"
-                  subtitle="Dark Luxury, claro ou automático"
-                  href="/dashboard/perfil/configuracoes?section=appearance"
+                  icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
+                  title="Configurações"
+                  subtitle="Aparência, notificações, senha e privacidade"
+                  href="/dashboard/perfil/configuracoes"
                   onClick={dismiss}
                 />
-                <DrawerRow
-                  icon={<BellRing className="h-5 w-5" strokeWidth={1.75} />}
-                  title="Central de Notificações"
-                  subtitle="Lembretes, chat, propostas e novidades"
-                  href="/dashboard/perfil/configuracoes?section=notifications"
-                  onClick={dismiss}
-                />
-                <DrawerRow
-                  icon={<LockKeyhole className="h-5 w-5" strokeWidth={1.75} />}
-                  title="Segurança e Senha"
-                  subtitle="Altere a senha e proteja a sessão"
-                  href="/dashboard/perfil/configuracoes?section=security"
-                  onClick={dismiss}
-                />
-                <DrawerRow
-                  icon={<UserRoundCog className="h-5 w-5" strokeWidth={1.75} />}
-                  title="Privacidade e Conta"
-                  subtitle="Idioma, termos e gerenciamento da conta"
-                  href="/dashboard/perfil/configuracoes?section=privacy"
-                  onClick={dismiss}
-                />
-                {role === 'tatuador' ? (
-                  <DrawerRow
-                    icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
-                    title="Gestão de Horários e Expediente"
-                    subtitle="Disponibilidade semanal, intervalos e folgas"
-                    href="/dashboard/perfil/configuracoes?section=schedule"
-                    onClick={dismiss}
-                  />
-                ) : null}
               </DrawerSection>
 
               {role === 'cliente' || role === 'tatuador' ? (
