@@ -1,7 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
-import { ProfileWaiter } from '@/components/features/profile-waiter';
 import { TatuadorKycBlock } from '@/components/features/tatuador-kyc-block';
 import { ensurePerfilFromClerk, findPerfilByClerkId, type LocalPerfil } from '@/lib/services/ensure-perfil';
 import { buildProfileSource, resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
@@ -14,6 +13,14 @@ import {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="luxury-canvas flex h-full min-h-full flex-col bg-[#121212] text-neutral-900 dark:text-white">
+      <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
+    </div>
+  );
+}
 
 export default async function DashboardLayout({
   children,
@@ -31,15 +38,24 @@ export default async function DashboardLayout({
   let clerkUserId: string | null = null;
 
   try {
-    const session = await resolvePerfilSessionFromIncomingRequest();
-    clerkUserId = session.userId;
-    if (clerkUserId) {
-      perfil = await findPerfilByClerkId(clerkUserId);
+    const session = await Promise.race([
+      resolvePerfilSessionFromIncomingRequest(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+    ]);
+    clerkUserId = session?.userId ?? null;
+    if (clerkUserId && session) {
+      perfil = await Promise.race([
+        findPerfilByClerkId(clerkUserId),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+      ]);
       if (!perfil || perfil.deleted_at) {
-        perfil = await ensurePerfilFromClerk(
-          buildProfileSource(clerkUserId, session.user),
-          session.metadataRole
-        );
+        perfil = await Promise.race([
+          ensurePerfilFromClerk(
+            buildProfileSource(clerkUserId, session.user),
+            session.metadataRole
+          ),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+        ]);
       }
     }
   } catch (error) {
@@ -48,26 +64,14 @@ export default async function DashboardLayout({
     perfil = null;
   }
 
-  if (!clerkUserId) {
-    return <ProfileWaiter />;
-  }
-
-  if (!perfil || perfil.deleted_at) {
-    return (
-      <div className="luxury-canvas flex h-full min-h-full flex-col bg-[#121212] text-neutral-900 dark:text-white">
-        <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
-      </div>
-    );
+  if (!clerkUserId || !perfil || perfil.deleted_at) {
+    return <DashboardShell>{children}</DashboardShell>;
   }
 
   if (!isOnboarding && !isOnboardingComplete(perfil)) {
     redirect(ONBOARDING_PATH);
   }
 
-  // Bloqueio global de KYC: um tatuador não homologado não acessa NENHUMA rota
-  // do painel (Portfólio/Agendar/Chat/Perfil). Como o AppShell com a navegação
-  // inferior vive aqui, retornar cedo garante que as abas nem sejam renderizadas.
-  // O onboarding é a exceção: ele precede o KYC e não pode ser bloqueado.
   const isKycPendentePath =
     pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
   if (
@@ -84,9 +88,5 @@ export default async function DashboardLayout({
     return children;
   }
 
-  return (
-    <div className="luxury-canvas flex h-full min-h-full flex-col bg-[#121212] text-neutral-900 dark:text-white">
-      <AppShellBoundary title="TattooGo MK">{children}</AppShellBoundary>
-    </div>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }

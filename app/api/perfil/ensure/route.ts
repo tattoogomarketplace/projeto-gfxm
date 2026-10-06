@@ -19,6 +19,22 @@ import {
 } from '@/lib/services/perfil-session';
 import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
 
+const ENSURE_STEP_TIMEOUT_MS = 4000;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('ensure-timeout')), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function fallbackEmail(userId: string, email?: string | null): string {
   const normalized = String(email || '').trim().toLowerCase();
   return normalized || `${userId}@tattoogo.local`;
@@ -109,13 +125,13 @@ export async function GET(request: Request) {
 
   try {
     try {
-      ({ userId } = await auth());
+      ({ userId } = await withTimeout(auth(), ENSURE_STEP_TIMEOUT_MS));
     } catch (error) {
       console.error('[perfil/ensure] auth() falhou no GET', error);
       userId = null;
     }
 
-    const session = await resolvePerfilSession(request);
+    const session = await withTimeout(resolvePerfilSession(request), ENSURE_STEP_TIMEOUT_MS);
     userId = userId || session.userId;
     email =
       session.user?.primaryEmailAddress?.emailAddress ||
@@ -141,7 +157,7 @@ export async function GET(request: Request) {
 
     let perfil: LocalPerfil | null = null;
     try {
-      perfil = await findPerfilByClerkId(userId);
+      perfil = await withTimeout(findPerfilByClerkId(userId), ENSURE_STEP_TIMEOUT_MS);
       const shouldReconcile =
         !perfil ||
         Boolean(perfil.deleted_at) ||
@@ -153,9 +169,12 @@ export async function GET(request: Request) {
             })
         );
       if (shouldReconcile) {
-        perfil = await ensurePerfilFromClerk(
-          buildProfileSource(userId, session.user),
-          session.metadataRole
+        perfil = await withTimeout(
+          ensurePerfilFromClerk(
+            buildProfileSource(userId, session.user),
+            session.metadataRole
+          ),
+          ENSURE_STEP_TIMEOUT_MS
         );
       }
     } catch (error) {
@@ -164,11 +183,19 @@ export async function GET(request: Request) {
     }
 
     if (!perfil || perfil.deleted_at) {
-      perfil = await provisionBaselinePerfil(
-        userId,
-        email,
-        session.user?.fullName || session.user?.firstName || null
-      );
+      try {
+        perfil = await withTimeout(
+          provisionBaselinePerfil(
+            userId,
+            email,
+            session.user?.fullName || session.user?.firstName || null
+          ),
+          ENSURE_STEP_TIMEOUT_MS
+        );
+      } catch (error) {
+        console.error('[perfil/ensure] provisionamento baseline estourou timeout', { userId, error });
+        perfil = null;
+      }
     }
 
     if (!perfil || perfil.deleted_at) {
@@ -201,12 +228,12 @@ export async function POST(request: Request) {
 
   try {
     try {
-      ({ userId } = await auth());
+      ({ userId } = await withTimeout(auth(), ENSURE_STEP_TIMEOUT_MS));
     } catch {
       userId = null;
     }
 
-    const session = await resolvePerfilSession(request);
+    const session = await withTimeout(resolvePerfilSession(request), ENSURE_STEP_TIMEOUT_MS);
     userId = userId || session.userId;
     email =
       session.user?.primaryEmailAddress?.emailAddress ||
@@ -228,7 +255,7 @@ export async function POST(request: Request) {
 
     let existing: LocalPerfil | null = null;
     try {
-      existing = await findPerfilByClerkId(userId);
+      existing = await withTimeout(findPerfilByClerkId(userId), ENSURE_STEP_TIMEOUT_MS);
     } catch {
       existing = null;
     }
@@ -267,9 +294,12 @@ export async function POST(request: Request) {
     );
     if (!perfil || needsRoleTransition) {
       try {
-        perfil = await ensurePerfilFromClerk(
-          buildProfileSource(userId, session.user),
-          role ?? 'cliente'
+        perfil = await withTimeout(
+          ensurePerfilFromClerk(
+            buildProfileSource(userId, session.user),
+            role ?? 'cliente'
+          ),
+          ENSURE_STEP_TIMEOUT_MS
         );
       } catch (error) {
         console.error('[perfil/ensure] criação falhou', { userId, role, error });
@@ -278,11 +308,22 @@ export async function POST(request: Request) {
     }
 
     if (!perfil || perfil.deleted_at) {
-      perfil = await provisionBaselinePerfil(
-        userId,
-        email,
-        session.user?.fullName || session.user?.firstName || null
-      );
+      try {
+        perfil = await withTimeout(
+          provisionBaselinePerfil(
+            userId,
+            email,
+            session.user?.fullName || session.user?.firstName || null
+          ),
+          ENSURE_STEP_TIMEOUT_MS
+        );
+      } catch (error) {
+        console.error('[perfil/ensure] POST provisionamento baseline estourou timeout', {
+          userId,
+          error,
+        });
+        perfil = null;
+      }
     }
 
     if (!perfil || perfil.deleted_at) {

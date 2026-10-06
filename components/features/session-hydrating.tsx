@@ -1,8 +1,8 @@
 'use client';
 
-import { ProfileWaiter } from '@/components/features/profile-waiter';
+import { DashboardRouteSkeleton } from '@/components/ui/dashboard-route-skeleton';
 
 export function SessionHydrating({ label = 'Carregando sessão...' }: { label?: string }) {
   void label;
-  return <ProfileWaiter />;
+  return <DashboardRouteSkeleton />;
 }
