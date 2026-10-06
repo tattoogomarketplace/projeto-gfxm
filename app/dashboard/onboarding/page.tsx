@@ -196,7 +196,7 @@ export default function DashboardOnboardingPage() {
             disabled={saving}
             className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
           >
-            {saving ? <TattooMachineLoader compact label="Preparando" /> : content.cta}
+            {saving ? <TattooMachineLoader compact label={content.activating} /> : content.cta}
           </button>
         </div>
       </div>

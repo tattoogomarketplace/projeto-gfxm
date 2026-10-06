@@ -1,4 +1,4 @@
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { normalizeAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 /**
  * Narrativa de onboarding guiada pela regra Past-Present-Future:
@@ -111,7 +111,5 @@ export function getRoleExperience(role: AppRole): RoleExperience {
 }
 
 export function getOnboardingLoadingMessage(role?: string | null): string {
-  const parsed = parseAppRole(role);
-  if (parsed) return getRoleExperience(parsed).onboarding.activating;
-  return 'Preparando seu espaço...';
+  return getRoleExperience(normalizeAppRole(role)).onboarding.activating;
 }

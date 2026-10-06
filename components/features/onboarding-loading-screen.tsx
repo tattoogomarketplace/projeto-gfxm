@@ -4,13 +4,17 @@ import { useUser } from '@clerk/nextjs';
 import { Sparkles } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
+import { useAuthStore } from '@/hooks/use-auth-store';
 
-function resolveRole(user: ReturnType<typeof useUser>['user']): string | null {
+function resolveRole(
+  user: ReturnType<typeof useUser>['user'],
+  storedRole?: string | null
+): string | null {
   const publicRole = user?.publicMetadata?.role;
   const unsafeRole = user?.unsafeMetadata?.role;
   if (typeof publicRole === 'string') return publicRole;
   if (typeof unsafeRole === 'string') return unsafeRole;
-  return null;
+  return storedRole ?? null;
 }
 
 export function OnboardingLoadingScreen({
@@ -23,7 +27,8 @@ export function OnboardingLoadingScreen({
   children?: React.ReactNode;
 }) {
   const { user } = useUser();
-  const message = getOnboardingLoadingMessage(resolveRole(user));
+  const storedRole = useAuthStore((s) => s.role);
+  const message = getOnboardingLoadingMessage(resolveRole(user, storedRole));
 
   if (variant === 'sparkles') {
     return (
