@@ -118,7 +118,7 @@ export default function RootLayout({
       afterSignOutUrl="/"
       taskUrls={CLERK_TASK_URLS}
     >
-      <html lang="pt-BR" className="h-full min-h-dvh bg-[#121212] dark" suppressHydrationWarning>
+      <html lang="pt-BR" className="fixed inset-0 h-full w-full overflow-hidden bg-[#121212] dark" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -142,7 +142,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas relative mb-0 flex h-full min-h-dvh flex-col overflow-hidden bg-[#121212] pb-0 font-sans antialiased text-neutral-900 dark:text-white">
+        <body className="luxury-canvas fixed inset-0 mb-0 flex h-full w-full flex-col overflow-hidden bg-[#121212] pb-0 font-sans antialiased text-neutral-900 dark:text-white">
           <Providers>
             <ThemeProvider>
               <PwaRegister />
@@ -150,8 +150,8 @@ export default function RootLayout({
               <StrictSessionGuard />
               <SingleSessionEnforcer />
               <SessionTaskGuard />
-              <main className="mb-0 min-h-0 w-full flex-1 overflow-y-auto overscroll-y-contain pb-0">
-                <div className="mx-auto flex min-h-full w-full max-w-app flex-col">
+              <main className="app-scroll mb-0 min-h-0 h-full w-full flex-1 overflow-y-auto overscroll-none pb-28">
+                <div className="mx-auto flex h-full min-h-full w-full max-w-app flex-col">
                   {children}
                 </div>
               </main>
