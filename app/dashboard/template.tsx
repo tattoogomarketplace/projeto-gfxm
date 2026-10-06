@@ -4,7 +4,7 @@ export default function DashboardTemplate({
   children: React.ReactNode;
 }) {
   return (
-    <div className="screen-fade-in flex h-full min-h-0 w-full flex-col transition-opacity duration-300 ease-in-out">
+    <div className="screen-fade-in gpu-layer flex h-full min-h-0 w-full transform-gpu flex-col backface-hidden will-change-transform">
       {children}
     </div>
   );

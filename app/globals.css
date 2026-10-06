@@ -345,9 +345,19 @@
     animation: tattoo-shake 0.22s ease-in-out infinite;
   }
 
+  .gpu-layer {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
   .screen-fade-in {
     animation: screen-fade-in 300ms ease-in-out both;
-    transition: opacity 300ms ease-in-out;
+    transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: opacity, transform;
   }
 
   .luxury-skeleton {
@@ -395,16 +405,28 @@
   .luxury-shimmer {
     animation: none;
   }
+
+  .screen-fade-in,
+  .gpu-layer {
+    will-change: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .settings-drawer-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 @keyframes screen-fade-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translate3d(0, 6px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 

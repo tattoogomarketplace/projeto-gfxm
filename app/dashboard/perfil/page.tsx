@@ -105,7 +105,7 @@ export default function PerfilPage() {
   const initials = (nome || email || 'A').trim().charAt(0)?.toUpperCase() || 'A';
 
   return (
-    <div className="screen-fade-in flex flex-col bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
+    <div className="screen-fade-in gpu-layer flex transform-gpu flex-col bg-transparent pt-5 text-neutral-900 backface-hidden will-change-transform dark:text-white">
       <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden

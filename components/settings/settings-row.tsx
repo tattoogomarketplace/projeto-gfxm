@@ -52,7 +52,7 @@ export const SettingsRow = memo(function SettingsRow({
   const classes = cn(
     'group flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left',
     'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5',
-    'transition-all duration-200 hover:border-orange-500/40 hover:bg-orange-500/5',
+    'transform-gpu backface-hidden transition-colors duration-200 hover:border-orange-500/40 hover:bg-orange-500/5',
     (href || onClick) && 'active:scale-[0.98]',
     className
   );
