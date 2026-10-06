@@ -122,8 +122,8 @@ export function ProfileView() {
   const initials = (displayNome || displayEmail || 'A').trim().charAt(0)?.toUpperCase() || 'A';
 
   return (
-    <div className="gpu-layer flex transform-gpu flex-col bg-transparent pt-5 text-neutral-900 backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+    <div className="gpu-layer flex transform-gpu flex-col bg-transparent pt-5 text-neutral-900 contain-paint backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/18 blur-2xl md:block"

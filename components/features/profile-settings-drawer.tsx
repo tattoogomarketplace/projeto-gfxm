@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Building2,
   ChevronRight,
@@ -24,7 +24,7 @@ function DrawerSection({ title, children }: { title: string; children: ReactNode
       <h3 className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
         {title}
       </h3>
-      <div className="gpu-layer overflow-hidden rounded-2xl border border-white/10 bg-[#161616] transform-gpu backface-hidden">{children}</div>
+      <div className="gpu-layer overflow-hidden rounded-2xl border border-white/10 bg-[#161616] contain-paint transform-gpu backface-hidden will-change-transform">{children}</div>
     </section>
   );
 }
@@ -139,33 +139,35 @@ export function ProfileSettingsDrawer() {
   if (!mounted) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {open ? (
         <div
-          className="settings-drawer-scrim gpu-layer fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212]/96 backdrop-blur-none contain-paint md:backdrop-blur-sm"
+          className={cn(
+            'settings-drawer-scrim gpu-layer fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none contain-paint transform-gpu backface-hidden will-change-transform',
+            open ? 'pointer-events-auto' : 'pointer-events-none'
+          )}
           style={{ overscrollBehavior: 'none' }}
           role="dialog"
-          aria-modal="true"
+          aria-modal={open}
+          aria-hidden={!open}
           aria-labelledby="profile-menu-title"
+          inert={!open ? true : undefined}
         >
           <motion.button
             type="button"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={false}
+            animate={{ opacity: open ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 transform-gpu backface-hidden will-change-[opacity]"
+            className="absolute inset-0 bg-[#121212]/96 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
             aria-label="Fechar Configurações e atividade"
             onClick={closeSettingsDrawer}
+            tabIndex={open ? 0 : -1}
           />
           <motion.aside
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={false}
+            animate={{ x: open ? 0 : '100%' }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#121212] backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
+            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#121212] contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
           >
-            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#121212] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] transform-gpu backface-hidden">
+            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#121212] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   TattooGo MK
@@ -188,7 +190,7 @@ export function ProfileSettingsDrawer() {
             </div>
 
             <div
-              className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-36 backface-hidden [-webkit-overflow-scrolling:touch]"
+              className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-36 contain-paint backface-hidden will-change-transform [-webkit-overflow-scrolling:touch]"
               style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               <DrawerSection title="Central">
@@ -237,9 +239,7 @@ export function ProfileSettingsDrawer() {
               <AccountManagement fallbackRole={role} variant="rows" />
             </div>
           </motion.aside>
-        </div>
-      ) : null}
-    </AnimatePresence>,
+        </div>,
     document.body
   );
 }

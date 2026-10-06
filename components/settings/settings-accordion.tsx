@@ -63,7 +63,7 @@ export const SettingsAccordion = memo(function SettingsAccordion({
           open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         )}
       >
-        <div className="overflow-hidden">
+        <div className="overflow-hidden contain-paint transform-gpu backface-hidden">
           <div className="border-t border-neutral-200 px-4 py-4 dark:border-neutral-800">{children}</div>
         </div>
       </div>

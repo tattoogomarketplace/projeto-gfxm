@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ProfileView } from '@/components/features/profile-view';
 import { SettingsHub } from '@/components/settings/settings-hub';
@@ -14,10 +14,6 @@ export default function PerfilLayout({
   const pathname = usePathname();
   const router = useRouter();
   const isSettings = pathname.startsWith('/dashboard/perfil/configuracoes');
-  const [settingsMounted, setSettingsMounted] = useState(isSettings);
-  if (isSettings && !settingsMounted) {
-    setSettingsMounted(true);
-  }
 
   useEffect(() => {
     router.prefetch('/dashboard/perfil');
@@ -25,10 +21,10 @@ export default function PerfilLayout({
   }, [router]);
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden transform-gpu backface-hidden will-change-transform">
+    <div className="gpu-layer relative flex h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform">
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'gpu-layer flex min-h-0 flex-1 flex-col contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
           isSettings
             ? 'pointer-events-none absolute inset-0 opacity-0 -translate-x-2'
             : 'relative opacity-100 translate-x-0'
@@ -41,7 +37,7 @@ export default function PerfilLayout({
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'gpu-layer flex min-h-0 flex-1 flex-col contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
           isSettings
             ? 'relative opacity-100 translate-x-0'
             : 'pointer-events-none absolute inset-0 opacity-0 translate-x-2'
@@ -49,7 +45,7 @@ export default function PerfilLayout({
         aria-hidden={!isSettings}
         inert={!isSettings ? true : undefined}
       >
-        {settingsMounted ? <SettingsHub /> : null}
+        <SettingsHub />
       </div>
 
       <div className="hidden" aria-hidden>

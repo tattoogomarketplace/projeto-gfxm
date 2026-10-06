@@ -79,8 +79,8 @@ export const SettingsHub = memo(function SettingsHub() {
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
   return (
-    <div className="gpu-layer relative flex transform-gpu flex-col text-neutral-900 backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transform-gpu backface-hidden dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+    <div className="gpu-layer relative flex transform-gpu flex-col text-neutral-900 contain-paint backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
+      <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/20 blur-2xl md:block"
@@ -115,7 +115,7 @@ export const SettingsHub = memo(function SettingsHub() {
         </div>
       </header>
 
-      <div className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col pt-4 backface-hidden">
+      <div className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col pt-4 contain-paint backface-hidden will-change-transform">
         <div className="space-y-4">
       <SettingsAccordion
         id="appearance"
