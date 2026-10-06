@@ -175,23 +175,11 @@ export function ChatWorkspace() {
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-5 text-neutral-900 dark:text-white">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 dark:text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
       />
-
-      <div className="relative mb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-          TattooGo MK
-        </p>
-        <h1 className="mt-1 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-          Chat & Orçamentos
-        </h1>
-        <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">
-          Converse com o artista sobre a referência e solicite o orçamento na plataforma.
-        </p>
-      </div>
 
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside

@@ -111,7 +111,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       : selectedTab === 'agendar'
         ? 'Agenda & Sessões'
         : selectedTab === 'chat'
-          ? 'Chat & Mensagens'
+          ? 'Chat & Orçamentos'
           : role
             ? ROLE_EXPERIENCE[role].dashboard.title
             : title;
