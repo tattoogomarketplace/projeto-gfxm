@@ -145,11 +145,9 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           ? 'Agenda & Sessões'
           : selectedTab === 'chat'
             ? 'Chat & Orçamentos'
-            : selectedTab === 'portfolio' && role === 'cliente'
-              ? 'Minha Jornada'
-              : role
-                ? ROLE_EXPERIENCE[role].dashboard.title
-                : title;
+            : role && role !== 'cliente'
+              ? ROLE_EXPERIENCE[role].dashboard.title
+              : title;
 
   const handleTabChange = (tab: AppTab) => {
     // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
