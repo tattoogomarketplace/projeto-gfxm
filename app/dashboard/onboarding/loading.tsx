@@ -1,3 +1,3 @@
 export default function OnboardingLoading() {
-  return <div className="min-h-dvh bg-[#121212]" />;
+  return <div className="h-full w-full overflow-hidden bg-background" />;
 }

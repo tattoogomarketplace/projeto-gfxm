@@ -51,7 +51,8 @@ export default function CancelarAgendamentoPage() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-graphite p-4 text-white sm:p-8 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-graphite text-white">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none p-4 pb-36 pt-[max(2rem,env(safe-area-inset-top))] [-webkit-overflow-scrolling:touch] sm:p-8">
       <GlassContainer className="p-8 w-full max-w-md">
         {step === 'validate' ? (
           <>
@@ -77,6 +78,7 @@ export default function CancelarAgendamentoPage() {
           </>
         )}
       </GlassContainer>
+      </div>
     </div>
   );
 }

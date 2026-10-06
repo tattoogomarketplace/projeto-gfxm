@@ -139,7 +139,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   return (
     <div
       className={cn(
-        'luxury-canvas relative mx-auto flex h-full min-h-0 max-h-full w-full flex-col overflow-hidden overscroll-none text-neutral-900 dark:text-white',
+        'luxury-canvas relative mx-auto flex h-full min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
         hideTabs ? 'pb-[env(safe-area-inset-bottom,0px)]' : 'nav-safe-pad'
       )}
     >
@@ -186,11 +186,10 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
 
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col',
-          isSettingsHub
+          'relative flex min-h-0 flex-1 flex-col',
+          isAiChat
             ? 'overflow-hidden'
-            : 'overflow-x-hidden overflow-y-auto overscroll-none [-webkit-overflow-scrolling:touch]',
-          hideTabs ? 'pb-6' : 'pb-0'
+            : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}
       >
         {children}

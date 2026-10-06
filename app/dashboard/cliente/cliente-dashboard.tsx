@@ -43,7 +43,7 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative flex min-h-full flex-col overflow-x-hidden bg-transparent px-4 pb-6 pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:px-6">
+    <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"

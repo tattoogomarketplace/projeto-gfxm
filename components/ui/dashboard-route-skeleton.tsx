@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function DashboardRouteSkeleton() {
   return (
     <div
-      className="screen-fade-in min-h-full space-y-4 p-4 pb-6 transition-opacity duration-300 ease-in-out sm:p-6"
+      className="screen-fade-in space-y-4 pt-5 transition-opacity duration-300 ease-in-out"
       aria-hidden
     >
       <div className="flex items-center gap-3">

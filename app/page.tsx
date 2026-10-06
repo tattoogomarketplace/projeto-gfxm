@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#121212] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-white">
+    <main className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-white select-none">
       <TermsModal
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}
@@ -37,7 +37,7 @@ export default function Home() {
       {/* Efeito de brilho de fundo GFXM */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-orange-500/20 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="z-10 flex flex-col items-center text-center px-4">
+      <div className="z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 text-center [-webkit-overflow-scrolling:touch]">
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
           TattooGo <span className="text-orange-500">MK</span>
         </h1>

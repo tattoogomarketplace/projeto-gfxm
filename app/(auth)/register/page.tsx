@@ -387,7 +387,7 @@ export default function RegisterPage() {
   }, [isEstudio, cnpjValue, razaoSocial, setValue]);
 
   return (
-    <AuthScreen className="p-4 sm:p-6">
+    <AuthScreen>
       <AuthBridgeOverlay visible={sessionBridge || isActivating} label="Entrando" />
       <div
         id="clerk-captcha"

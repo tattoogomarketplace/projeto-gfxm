@@ -13,7 +13,7 @@ export default function EstudioDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   return (
-    <div className="screen-fade-in flex min-h-full flex-col bg-transparent p-4 pb-6 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:p-8">
+    <div className="screen-fade-in flex flex-col bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
       <p className="mb-6 text-sm text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
       

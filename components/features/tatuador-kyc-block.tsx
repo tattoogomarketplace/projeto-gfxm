@@ -52,12 +52,12 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
   const copy = KYC_STATUS_COPY[normalized];
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#121212] text-white">
+    <div className="fixed inset-0 z-[100] flex h-[100dvh] w-full flex-col overflow-hidden bg-background text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_60%)]"
       />
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center space-y-6 p-4 pb-10 sm:p-6">
+      <div className="relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center space-y-6 overflow-y-auto overscroll-none px-4 pb-36 pt-4 [-webkit-overflow-scrolling:touch] sm:px-6">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)]">
             <ShieldAlert className="h-6 w-6" strokeWidth={1.75} />

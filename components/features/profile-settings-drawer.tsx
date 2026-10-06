@@ -186,7 +186,7 @@ export function ProfileSettingsDrawer() {
             </div>
 
             <div
-              className="flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]"
+              className="flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-36 [-webkit-overflow-scrolling:touch]"
               style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               <DrawerSection title="Central">

@@ -23,7 +23,8 @@ export default function GlobalRootError({
   }, [error]);
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[#121212] px-6 text-center text-white">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-white">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-6 pb-36 text-center [-webkit-overflow-scrolling:touch]">
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_22px_rgba(249,115,22,0.25)]">
         <AlertTriangle className="h-7 w-7" strokeWidth={1.75} />
       </span>
@@ -43,6 +44,7 @@ export default function GlobalRootError({
         <RotateCcw className="h-4 w-4" strokeWidth={2} />
         Tentar novamente
       </button>
+      </div>
     </div>
   );
 }

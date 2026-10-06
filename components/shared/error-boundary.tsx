@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-dvh items-center justify-center bg-graphite text-white">
+        <div className="flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden bg-graphite text-white">
           <div className="text-center p-8">
             <h2 className="text-2xl font-bold text-neon-orange mb-4">Algo deu errado.</h2>
             <button 

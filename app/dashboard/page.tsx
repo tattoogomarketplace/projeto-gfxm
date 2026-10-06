@@ -145,8 +145,10 @@ export default function DashboardPage() {
     storedRole;
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#121212] px-4">
-      <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch]">
+        <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
+      </div>
     </div>
   );
 }

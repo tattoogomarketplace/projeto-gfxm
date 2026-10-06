@@ -13,18 +13,14 @@ export function AuthScreen({ children, className }: AuthScreenProps) {
   return (
     <div
       className={cn(
-        'form-page screen-fade-in relative flex min-h-full w-full shrink-0 flex-col items-center justify-start bg-[#121212] text-white',
-        'overflow-x-hidden overflow-y-visible',
-        'px-4',
-        'pt-[max(1.25rem,env(safe-area-inset-top))]',
-        'pb-[max(2rem,env(safe-area-inset-bottom))]',
-        'pl-[max(1rem,env(safe-area-inset-left))]',
-        'pr-[max(1rem,env(safe-area-inset-right))]',
+        'form-page screen-fade-in relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-white select-none',
         className
       )}
     >
-      <div className="my-auto flex w-full max-w-md flex-col items-center">
-        {children}
+      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 pt-[max(1.25rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch]">
+        <div className="my-auto flex w-full max-w-md flex-col items-center">
+          {children}
+        </div>
       </div>
     </div>
   );

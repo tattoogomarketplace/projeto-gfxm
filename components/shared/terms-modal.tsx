@@ -36,11 +36,11 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-8"
           >
             <h2 className="text-2xl font-bold text-amber-500 mb-4">Termos de Uso Obrigatórios</h2>
             <div
-            className="text-zinc-400 text-sm mb-8 h-72 overflow-y-auto border-b border-zinc-800 pb-4"
+            className="mb-8 h-72 min-h-0 overflow-y-auto overscroll-none border-b border-zinc-800 pb-4 text-sm text-zinc-400 [-webkit-overflow-scrolling:touch]"
             onScroll={(e) => {
               const target = e.target as HTMLDivElement;
               if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {

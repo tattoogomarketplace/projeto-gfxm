@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function ChatFallback() {
   return (
-    <div className="space-y-4 px-4 pt-5 sm:px-6">
+    <div className="space-y-4 pt-5">
       <Skeleton className="h-8 w-48 rounded-lg" />
       <Skeleton className="h-[28rem] w-full rounded-2xl" />
     </div>

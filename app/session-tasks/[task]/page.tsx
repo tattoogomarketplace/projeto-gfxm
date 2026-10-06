@@ -33,13 +33,15 @@ export default function SessionTaskPage() {
   if (!task || bypassed) return null;
 
   return (
-    <div className="flex min-h-dvh w-full items-center justify-center bg-[#121212] px-4 py-10">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 py-10 pb-36 [-webkit-overflow-scrolling:touch]">
       {task === 'reset-password' ? (
         <TaskResetPassword redirectUrlComplete={SESSION_TASK_COMPLETE_URL} />
       ) : null}
       {task === 'setup-mfa' ? (
         <TaskSetupMFA redirectUrlComplete={SESSION_TASK_COMPLETE_URL} />
       ) : null}
+      </div>
     </div>
   );
 }

@@ -76,13 +76,15 @@
   html {
     position: fixed;
     inset: 0;
-    width: 100%;
+    width: 100vw;
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
-    background-color: #121212;
+    background-color: var(--background);
     color-scheme: inherit;
+    user-select: none;
+    -webkit-user-select: none;
     transition: background-color 220ms ease, color 220ms ease;
   }
 
@@ -95,14 +97,16 @@
     inset: 0;
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 100vw;
     height: 100dvh;
     max-height: 100dvh;
     margin: 0;
     overflow: hidden;
     overscroll-behavior: none;
-    background-color: #121212;
+    background-color: var(--background);
     color: var(--foreground);
+    user-select: none;
+    -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     transition: background-color 220ms ease, color 220ms ease;
@@ -129,6 +133,14 @@
   button:active:not(:disabled),
   [role="button"]:active {
     transform: scale(0.98);
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
@@ -186,11 +198,14 @@
   .app-frame {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 100vw;
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
+    background-color: var(--background);
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .touch-target {
@@ -218,15 +233,44 @@
 
   .screen-page {
     display: flex;
-    min-height: 100%;
-    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
     flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: none;
     background-color: var(--background);
     color: var(--foreground);
   }
 
   .page-dvh {
-    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+  }
+
+  .page-body {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 9rem;
   }
 
   .nav-safe-pad {
@@ -234,22 +278,24 @@
   }
 
   .app-scroll {
+    display: flex;
+    flex-direction: column;
     flex: 1 1 0%;
     height: 100%;
     max-height: 100%;
     min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
   }
 
   .form-page {
-    height: auto;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   .luxury-canvas {

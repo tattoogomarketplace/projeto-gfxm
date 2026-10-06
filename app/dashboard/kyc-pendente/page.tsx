@@ -103,8 +103,10 @@ export default function KycPendentePage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-[#121212]">
-        <TattooMachineLoader label="Verificando KYC" />
+      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch]">
+          <TattooMachineLoader label="Verificando KYC" />
+        </div>
       </div>
     );
   }
@@ -112,7 +114,8 @@ export default function KycPendentePage() {
   const copy = COPY[status] || COPY.pendente;
 
   return (
-    <div className="min-h-dvh bg-[#121212] text-white flex items-center justify-center p-4">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-white">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 pt-4 [-webkit-overflow-scrolling:touch]">
       <div className="w-full max-w-lg space-y-6">
         <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-8">
           <p className="text-xs uppercase tracking-[0.2em] text-amber-500 mb-3">TattooGo MK</p>
@@ -138,6 +141,7 @@ export default function KycPendentePage() {
             Ir para o painel
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );
