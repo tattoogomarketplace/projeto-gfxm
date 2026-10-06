@@ -16,8 +16,10 @@ function SettingsFallback() {
 
 export default function ConfiguracoesPage() {
   return (
-    <Suspense fallback={<SettingsFallback />}>
-      <SettingsHub />
-    </Suspense>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <Suspense fallback={<SettingsFallback />}>
+        <SettingsHub />
+      </Suspense>
+    </div>
   );
 }
