@@ -18,7 +18,7 @@ import { RoleSelector, type RegisterRole } from '@/components/features/role-sele
 import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { formatCnpj, isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
-import { ONBOARDING_PATH, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { ONBOARDING_PATH, assignAppPath, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
@@ -317,6 +317,26 @@ export default function RegisterPage() {
   }, []);
 
   useEffect(() => {
+    if (!isActivating) return;
+    const nextPath = nextPathRef.current || ONBOARDING_PATH;
+    const soft = window.setTimeout(() => {
+      try {
+        router.push(nextPath);
+      } catch (err) {
+        console.error('Session activation error:', err);
+        assignAppPath(nextPath);
+      }
+    }, 160);
+    const hard = window.setTimeout(() => {
+      assignAppPath(nextPath);
+    }, 4000);
+    return () => {
+      window.clearTimeout(soft);
+      window.clearTimeout(hard);
+    };
+  }, [isActivating, router]);
+
+  useEffect(() => {
     if (!isEstudio) {
       fetchedCnpjRef.current = '';
       return;
@@ -390,16 +410,8 @@ export default function RegisterPage() {
             onResend={handleResendOtp}
             userRole={userRole}
             onSuccess={() => {
-              const nextPath = nextPathRef.current;
-              if (!nextPath) return;
+              if (!nextPathRef.current) nextPathRef.current = ONBOARDING_PATH;
               setIsActivating(true);
-              window.setTimeout(() => {
-                try {
-                  router.push(nextPath);
-                } catch (err) {
-                  console.error('Session activation error:', err);
-                }
-              }, 160);
             }}
           />
           <button

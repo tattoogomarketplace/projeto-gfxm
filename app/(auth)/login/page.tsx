@@ -12,7 +12,7 @@ import { Input } from '@/components/input';
 import Link from 'next/link';
 import { OtpInput } from '@/components/ui/otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
+import { assignAppPath, dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
@@ -110,9 +110,6 @@ export default function LoginPage() {
             console.error('Single-session enforcement error:', err);
           }
           setBridging(true);
-          window.setTimeout(() => {
-            router.push('/dashboard');
-          }, 160);
         } catch (err) {
           console.error('Session activation error:', err);
         }
@@ -148,6 +145,26 @@ export default function LoginPage() {
     const timer = setTimeout(() => setForceShow(true), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!bridging) return;
+    const nextPath = nextPathRef.current || '/dashboard';
+    const soft = window.setTimeout(() => {
+      try {
+        router.push(nextPath);
+      } catch (err) {
+        console.error('Session activation error:', err);
+        assignAppPath(nextPath);
+      }
+    }, 160);
+    const hard = window.setTimeout(() => {
+      assignAppPath(nextPath);
+    }, 4000);
+    return () => {
+      window.clearTimeout(soft);
+      window.clearTimeout(hard);
+    };
+  }, [bridging, router]);
 
   useEffect(() => {
     if (!isVerifying || resendSeconds <= 0) return;
@@ -250,16 +267,8 @@ export default function LoginPage() {
           <OtpInput
             onComplete={handleVerifyOtp}
             onSuccess={() => {
-              const nextPath = nextPathRef.current;
-              if (!nextPath) return;
+              if (!nextPathRef.current) nextPathRef.current = '/dashboard';
               setBridging(true);
-              window.setTimeout(() => {
-                try {
-                  router.push(nextPath);
-                } catch (err) {
-                  console.error('Session activation error:', err);
-                }
-              }, 160);
             }}
             length={6}
           />

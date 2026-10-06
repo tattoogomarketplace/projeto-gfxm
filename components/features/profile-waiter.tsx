@@ -1,67 +1,132 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 import { isOnboardingGrace, markOnboardingGrace } from '@/lib/utils/session';
-import { LOGIN_PATH } from '@/lib/utils/auth-redirect';
+import {
+  assignAppPath,
+  destinationAfterProfileSync,
+  LOGIN_PATH,
+} from '@/lib/utils/auth-redirect';
 
 const SIGNED_OUT_REDIRECT_MS = 8000;
+const FETCH_TIMEOUT_MS = 8000;
+const RETRY_DELAY_MS = 800;
+const MAX_ATTEMPTS = 8;
+const HARD_TIMEOUT_MS = 16000;
+
+type EnsurePayload = {
+  autenticado?: boolean;
+  perfil?: {
+    role?: string | null;
+    kyc_status?: string | null;
+    has_seen_welcome_notice?: boolean | null;
+    onboarding_completed?: boolean | null;
+  } | null;
+  needsOnboarding?: boolean;
+};
 
 export function ProfileWaiter() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const router = useRouter();
   const navigatingRef = useRef(false);
-  const attemptedRef = useRef(false);
   const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    if (!isLoaded || isSignedIn) return;
-    if (isOnboardingGrace()) return;
-    const timer = window.setTimeout(() => {
-      if (isOnboardingGrace() || navigatingRef.current) return;
-      router.push(LOGIN_PATH);
-    }, SIGNED_OUT_REDIRECT_MS);
-    return () => window.clearTimeout(timer);
-  }, [isLoaded, isSignedIn, router]);
-
-  const checkProfile = useCallback(async () => {
+  const leave = useCallback((path: string) => {
     if (navigatingRef.current) return;
-    try {
-      const token = await getToken({ skipCache: true });
-      const response = await fetch('/api/perfil/ensure', {
-        cache: 'no-store',
-        credentials: 'include',
-        headers: {
-          accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      if (navigatingRef.current) return;
-      if (response.status !== 200) {
-        setFailed(true);
-        return;
-      }
-      navigatingRef.current = true;
-      markOnboardingGrace();
-      router.push('/dashboard');
-    } catch {
-      setFailed(true);
-    }
-  }, [getToken, router]);
+    navigatingRef.current = true;
+    markOnboardingGrace();
+    assignAppPath(path);
+  }, []);
 
   useEffect(() => {
-    if (!isLoaded || attemptedRef.current) return;
-    attemptedRef.current = true;
-    void checkProfile();
-  }, [isLoaded, checkProfile]);
+    if (!isLoaded || failed) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const retryTimers: number[] = [];
+
+    const run = async () => {
+      if (cancelled || navigatingRef.current) return;
+
+      const controller = new AbortController();
+      const abortTimer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      try {
+        const token = await getToken({ skipCache: true });
+        if (cancelled || navigatingRef.current) return;
+        const response = await fetch('/api/perfil/ensure', {
+          cache: 'no-store',
+          credentials: 'include',
+          signal: controller.signal,
+          headers: {
+            accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (cancelled || navigatingRef.current) return;
+        if (response.status === 401) {
+          throw new Error('session-initializing');
+        }
+        if (response.status !== 200) {
+          throw new Error('perfil-pending');
+        }
+        const payload = (await response.json().catch(() => ({}))) as EnsurePayload;
+        if (payload?.autenticado === false) {
+          if (isOnboardingGrace()) {
+            throw new Error('session-initializing');
+          }
+          leave(LOGIN_PATH);
+          return;
+        }
+        if (!payload?.perfil) {
+          throw new Error('perfil-pending');
+        }
+        leave(destinationAfterProfileSync(payload.perfil, payload.needsOnboarding));
+      } catch {
+        if (cancelled || navigatingRef.current) return;
+        attempts += 1;
+        if (attempts < MAX_ATTEMPTS) {
+          retryTimers.push(
+            window.setTimeout(() => {
+              if (!cancelled) void run();
+            }, RETRY_DELAY_MS)
+          );
+          return;
+        }
+        setFailed(true);
+      } finally {
+        window.clearTimeout(abortTimer);
+      }
+    };
+
+    if (isSignedIn) {
+      void run();
+    }
+
+    const signedOutTimer =
+      !isSignedIn && !isOnboardingGrace()
+        ? window.setTimeout(() => {
+            if (cancelled || navigatingRef.current || isOnboardingGrace()) return;
+            leave(LOGIN_PATH);
+          }, SIGNED_OUT_REDIRECT_MS)
+        : undefined;
+
+    const hardTimer = window.setTimeout(() => {
+      if (!cancelled && !navigatingRef.current) setFailed(true);
+    }, HARD_TIMEOUT_MS);
+
+    return () => {
+      cancelled = true;
+      if (signedOutTimer) window.clearTimeout(signedOutTimer);
+      window.clearTimeout(hardTimer);
+      retryTimers.forEach((id) => window.clearTimeout(id));
+    };
+  }, [isLoaded, isSignedIn, failed, getToken, leave]);
 
   const handleRetry = useCallback(() => {
     navigatingRef.current = false;
     setFailed(false);
-    void checkProfile();
-  }, [checkProfile]);
+  }, []);
 
   return (
     <OnboardingLoadingScreen variant="sparkles">

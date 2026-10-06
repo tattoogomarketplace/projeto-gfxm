@@ -87,3 +87,22 @@ export function destinationAfterProfileSync(
   }
   return dashboardPathForRole(role);
 }
+
+const ASSIGN_RELOAD_KEY = 'tattoogo:assign-reload-at';
+
+export function assignAppPath(path: string): void {
+  if (typeof window === 'undefined') return;
+  const dest = path.startsWith('/') ? path : `/${path}`;
+  if (window.location.pathname === dest) {
+    try {
+      const last = Number(window.sessionStorage.getItem(ASSIGN_RELOAD_KEY) || 0);
+      if (Date.now() - last < 5000) return;
+      window.sessionStorage.setItem(ASSIGN_RELOAD_KEY, String(Date.now()));
+    } catch {
+      return;
+    }
+    window.location.reload();
+    return;
+  }
+  window.location.assign(dest);
+}

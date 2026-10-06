@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
@@ -10,7 +9,11 @@ import { getOnboardingLoadingMessage, getRoleExperience } from '@/lib/content/ro
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { markOnboardingGrace } from '@/lib/utils/session';
-import { parseAppRole } from '@/lib/utils/auth-redirect';
+import {
+  assignAppPath,
+  destinationAfterProfileSync,
+  parseAppRole,
+} from '@/lib/utils/auth-redirect';
 
 function messageFromOnboardingError(status: number, data: { erro?: unknown }): string {
   const fromApi = typeof data.erro === 'string' ? data.erro.trim() : '';
@@ -29,7 +32,6 @@ function messageFromOnboardingError(status: number, data: { erro?: unknown }): s
 export default function DashboardOnboardingPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
-  const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const setStoreRole = useAuthStore((s) => s.setRole);
   const [selectedRole, setSelectedRole] = useState<RegisterRole | null>(null);
@@ -74,7 +76,17 @@ export default function DashboardOnboardingPage() {
         },
         body: JSON.stringify({ role: submitRole }),
       });
-      const payload = (await response.json().catch(() => ({}))) as { erro?: unknown; perfil?: { role?: string | null; nome?: string | null } };
+      const payload = (await response.json().catch(() => ({}))) as {
+        erro?: unknown;
+        needsOnboarding?: boolean;
+        perfil?: {
+          role?: string | null;
+          nome?: string | null;
+          kyc_status?: string | null;
+          has_seen_welcome_notice?: boolean | null;
+          onboarding_completed?: boolean | null;
+        };
+      };
       if (!response.ok) {
         const errorMessage = messageFromOnboardingError(response.status, payload);
         setSubmitError(errorMessage);
@@ -110,7 +122,7 @@ export default function DashboardOnboardingPage() {
       });
       setStoreRole(persistedRole);
 
-      router.push('/dashboard');
+      assignAppPath(destinationAfterProfileSync(payload.perfil, payload.needsOnboarding));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar perfil';
       setSubmitError(message);

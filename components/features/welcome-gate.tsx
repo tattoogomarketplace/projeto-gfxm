@@ -1,8 +1,8 @@
 'use client';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { NeonButton } from '@/components/ui/neon-button';
-import { type AppRole } from '@/lib/utils/auth-redirect';
+import { assignAppPath, type AppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
 
 interface WelcomeGateProps {
@@ -11,7 +11,7 @@ interface WelcomeGateProps {
 
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const content = getRoleExperience(role).onboarding;
-  const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
 
   return (
     <motion.div 
@@ -28,8 +28,10 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       <p className="text-zinc-400 mb-8 max-w-sm">{content.journey.future}</p>
       <NeonButton
         type="button"
+        disabled={leaving}
         onClick={() => {
-          router.push('/dashboard');
+          setLeaving(true);
+          assignAppPath('/dashboard');
         }}
       >
         {content.cta}
