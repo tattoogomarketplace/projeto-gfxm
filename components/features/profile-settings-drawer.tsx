@@ -131,30 +131,30 @@ export function ProfileSettingsDrawer() {
   return (
     <AnimatePresence>
       {open ? (
-        <div
-          className="fixed inset-0 z-[90]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="profile-menu-title"
-        >
-          <motion.button
-            type="button"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            aria-label="Fechar Configurações e atividade"
-            onClick={closeSettingsDrawer}
-          />
-          <motion.aside
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.85 }}
-            className="absolute inset-y-0 right-0 flex w-[min(100%,24.5rem)] flex-col border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
+          <div
+            className="fixed inset-0 z-[90] flex flex-col bg-[#121212]/95 backdrop-blur-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-menu-title"
           >
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0"
+              aria-label="Fechar Configurações e atividade"
+              onClick={closeSettingsDrawer}
+            />
+            <motion.aside
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.85 }}
+              className="relative ml-auto flex h-full min-h-0 w-[min(100%,24.5rem)] flex-col border-l border-white/10 bg-[#121212] shadow-[-24px_0_48px_rgba(0,0,0,0.45)]"
+            >
+              <div className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   TattooGo MK
@@ -176,7 +176,7 @@ export function ProfileSettingsDrawer() {
               </button>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">
               <DrawerSection title="Central">
                 <DrawerRow
                   icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
