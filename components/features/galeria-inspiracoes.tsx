@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
-  galleryHref?: string;
 };
 
 const HEALING_OPTIONS: { value: GaleriaHealingFilter; label: string }[] = [
@@ -27,6 +26,9 @@ const HEALING_OPTIONS: { value: GaleriaHealingFilter; label: string }[] = [
   { value: 'fresh', label: 'Recém-feita' },
   { value: 'healed', label: 'Cicatrizada' },
 ];
+
+const ENTRY_CARD_CLASS =
+  'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]';
 
 function Chip({
   selected,
@@ -54,18 +56,32 @@ function Chip({
 }
 
 function FilterDivider() {
+  return <span aria-hidden className="mx-0.5 h-6 w-px shrink-0 self-center bg-white/10" />;
+}
+
+export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: string }) {
   return (
-    <span
-      aria-hidden
-      className="mx-0.5 h-6 w-px shrink-0 self-center bg-white/10"
-    />
+    <Link href={href} className={ENTRY_CARD_CLASS}>
+      <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+        <Images className="h-5 w-5" strokeWidth={1.75} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold tracking-tight text-white">
+          Galeria de Inspirações
+        </span>
+        <span className="mt-0.5 block text-xs text-zinc-500">
+          Explore artes de tatuadores verificados
+        </span>
+      </span>
+      <ChevronRight
+        className="h-5 w-5 min-h-5 min-w-5 text-zinc-500 transition-colors group-hover:text-orange-400"
+        strokeWidth={1.75}
+      />
+    </Link>
   );
 }
 
-export function GaleriaInspiracoes({
-  onStartConversation,
-  galleryHref,
-}: GaleriaInspiracoesProps) {
+export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
@@ -91,40 +107,21 @@ export function GaleriaInspiracoes({
     setHealed('all');
   };
 
-  const cardClassName =
-    'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]';
-
-  const cardContent = (
-    <>
-      <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
-        <Images className="h-5 w-5" strokeWidth={1.75} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold tracking-tight text-white">
-          Galeria de Inspirações
-        </span>
-        <span className="mt-0.5 block text-xs text-zinc-500">
-          Explore artes de tatuadores verificados
-        </span>
-      </span>
-      {galleryHref ? (
-        <ChevronRight
-          className="h-5 w-5 min-h-5 min-w-5 text-zinc-500 transition-colors group-hover:text-orange-400"
-          strokeWidth={1.75}
-        />
-      ) : null}
-    </>
-  );
-
   return (
     <div className="space-y-4">
-      {galleryHref ? (
-        <Link href={galleryHref} className={cardClassName}>
-          {cardContent}
-        </Link>
-      ) : (
-        <div className={cardClassName}>{cardContent}</div>
-      )}
+      <div className={ENTRY_CARD_CLASS}>
+        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+          <Images className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold tracking-tight text-white">
+            Galeria de Inspirações
+          </span>
+          <span className="mt-0.5 block text-xs text-zinc-500">
+            Filtre por estilo, parte do corpo e cicatrização
+          </span>
+        </span>
+      </div>
 
       <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Chip

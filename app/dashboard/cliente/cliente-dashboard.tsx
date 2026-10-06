@@ -1,12 +1,11 @@
 'use client';
 
 import { Suspense, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { CalendarDays, Sparkles } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
-import { GaleriaInspiracoes } from '@/components/features/galeria-inspiracoes';
+import { GaleriaEntryCard } from '@/components/features/galeria-inspiracoes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
@@ -39,13 +38,9 @@ function SectionHeading({
 }
 
 export default function ClienteDashboard() {
-  const router = useRouter();
   const { data: agendamentos, isLoading } = useAgendamentos();
 
   const activeTab = useUiStore((s) => s.activeTab);
-  const setActiveTab = useUiStore((s) => s.setActiveTab);
-  const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
-  const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
 
   return (
     <div className="relative flex min-h-full flex-col overflow-x-hidden bg-transparent px-4 pb-6 pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white sm:px-6">
@@ -132,16 +127,7 @@ export default function ClienteDashboard() {
 
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
-            <GaleriaInspiracoes
-              galleryHref="/dashboard/galeria"
-              onStartConversation={(tatuadorId, artworkId) => {
-                setPendingChatPeer(tatuadorId);
-                setPendingChatArtwork(artworkId);
-                setActiveTab('chat');
-                const params = new URLSearchParams({ artistId: tatuadorId, artworkId });
-                router.push(`/dashboard/chat?${params.toString()}`);
-              }}
-            />
+            <GaleriaEntryCard href="/dashboard/galeria" />
           </section>
         )}
       </div>
