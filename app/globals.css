@@ -315,13 +315,18 @@
   }
 
   .tattoo-wallpaper {
+    background-color: #09090b;
     background-image:
       radial-gradient(120% 90% at 50% 0%, rgba(249, 115, 22, 0.06), transparent 60%),
       radial-gradient(90% 70% at 100% 100%, rgba(249, 115, 22, 0.05), transparent 55%),
       url("/tattoo-wallpaper.svg");
     background-repeat: no-repeat, no-repeat, repeat;
-    background-position: center top, right bottom, 0 0;
-    background-size: auto, auto, 200px 200px;
+    background-position: center, center, 0 0;
+    background-size: 100% 100%, 100% 100%, 200px 200px;
+  }
+
+  .light .tattoo-wallpaper {
+    background-color: #fafafa;
   }
 
   .tattoo-machine-buzz {

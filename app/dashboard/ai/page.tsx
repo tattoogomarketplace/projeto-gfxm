@@ -78,12 +78,12 @@ export default function DashboardAiPage() {
   };
 
   return (
-    <div className="tattoo-wallpaper relative mx-auto flex h-full min-h-0 w-full max-w-app flex-col overflow-hidden bg-neutral-50 dark:bg-[#09090b]">
+    <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-app flex-1 flex-col overflow-hidden">
       <AiChatHeader />
 
       <div
         ref={scrollerRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none px-4 pt-4 pb-36 [-webkit-overflow-scrolling:touch]"
+        className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none px-4 pt-4 pb-36 [-webkit-overflow-scrolling:touch]"
       >
         {messages.length === 0 ? (
           <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
