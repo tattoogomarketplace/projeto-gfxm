@@ -214,7 +214,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
       <div
         className={cn(
           'relative flex min-h-0 flex-1 flex-col',
-          isAiChat || isSettingsHub
+          isAiChat || isSettingsHub || isGaleria
             ? 'overflow-hidden'
             : 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}

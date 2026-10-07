@@ -11,12 +11,12 @@ export default function GaleriaClient() {
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
 
   return (
-    <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-neutral-900 dark:text-white">
+    <div className="relative flex h-[100dvh] max-h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-neutral-900 dark:text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
       />
-      <div className="relative">
+      <div className="relative flex-1 overflow-y-auto min-h-0 pb-48 px-4 pt-5 [-webkit-overflow-scrolling:touch]">
         <GaleriaInspiracoes
           onStartConversation={(tatuadorId, artworkId) => {
             setPendingChatPeer(tatuadorId);
