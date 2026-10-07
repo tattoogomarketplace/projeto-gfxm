@@ -46,10 +46,10 @@ export default function TermsPage() {
 
   return (
     <div className="fixed inset-0 z-9999 flex h-[100dvh] w-full flex-col overflow-hidden bg-black/90 p-4 backdrop-blur-md">
-      <div className="mx-auto my-auto flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] p-8">
-        <h2 className="text-2xl font-bold text-white mb-4">Termos de Uso Obrigatórios</h2>
+      <div className="mx-auto my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] p-5 sm:p-8">
+        <h2 className="mb-4 shrink-0 text-xl font-bold text-white sm:text-2xl">Termos de Uso Obrigatórios</h2>
         <div
-          className="mb-8 h-72 min-h-0 overflow-y-auto overscroll-none rounded-xl border border-white/10 p-4 text-sm leading-relaxed text-zinc-400 [-webkit-overflow-scrolling:touch]"
+          className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-white/10 p-4 text-sm leading-relaxed text-zinc-400 [-webkit-overflow-scrolling:touch]"
           onScroll={(e) => {
             const target = e.target as HTMLDivElement;
             if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
@@ -59,7 +59,7 @@ export default function TermsPage() {
         >
           <TermsContent />
         </div>
-        <NeonButton type="button" onClick={handleAccept} disabled={loading || !canAccept} className="w-full">
+        <NeonButton type="button" onClick={handleAccept} disabled={loading || !canAccept} className="w-full shrink-0">
           {loading ? <TattooMachineLoader compact label="Processando" /> : canAccept ? 'Confirmar e Prosseguir' : 'Leia até o final para aceitar'}
         </NeonButton>
       </div>

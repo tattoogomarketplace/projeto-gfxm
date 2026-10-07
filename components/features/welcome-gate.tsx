@@ -17,8 +17,9 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
-      className="fixed inset-0 z-9999 bg-[#121212] flex flex-col items-center justify-center p-6 text-center"
+      className="fixed inset-0 z-9999 flex flex-col items-center justify-center overflow-y-auto overscroll-contain bg-[#121212] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] text-center [-webkit-overflow-scrolling:touch]"
     >
+      <div className="my-auto flex w-full flex-col items-center">
       <div className="w-32 h-32 bg-zinc-900 rounded-full mb-8 flex items-center justify-center border border-zinc-800 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
         <span className="text-4xl">✨</span>
       </div>
@@ -36,6 +37,7 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
       >
         {content.cta}
       </NeonButton>
+      </div>
     </motion.div>
   );
 }

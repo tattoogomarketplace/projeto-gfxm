@@ -170,7 +170,7 @@ export function OtpInput({
         state={status === 'idle' && digits.some(Boolean) ? 'buzzing' : status}
       />
 
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex max-w-full flex-wrap justify-center gap-1.5 sm:gap-2">
         {digits.map((digit, index) => (
           <motion.input
             key={index}

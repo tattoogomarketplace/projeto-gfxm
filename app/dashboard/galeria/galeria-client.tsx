@@ -11,7 +11,7 @@ export default function GaleriaClient() {
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
 
   return (
-    <div className="relative flex h-[100dvh] max-h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-neutral-900 dark:text-white">
+    <div className="relative flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-neutral-900 dark:text-white">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"

@@ -102,7 +102,7 @@ export const SettingsHub = memo(function SettingsHub() {
   }, [becomeTatuador, triggerHaptic, upgradingArtist]);
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
+    <div className="gpu-layer relative flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
       <div className="flex-1 overflow-y-auto min-h-0 pb-48 px-4 [-webkit-overflow-scrolling:touch]">
       <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
         <div

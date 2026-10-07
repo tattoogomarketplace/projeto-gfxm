@@ -7,7 +7,7 @@ function AiWallpaperShell({ children }: { children: React.ReactNode }) {
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-neutral-50 dark:bg-[#09090b]">
       <div
         aria-hidden
-        className="tattoo-wallpaper pointer-events-none absolute inset-0 z-0 h-full min-h-[100dvh] w-full"
+        className="tattoo-wallpaper pointer-events-none absolute inset-0 z-0 h-full min-h-full w-full"
       />
       <div className="relative z-10 flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         {children}

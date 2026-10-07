@@ -73,8 +73,8 @@ export function AtomicBookingSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
-      <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-[#121212]">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
+      <div className="max-h-[min(88vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-[#121212]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
@@ -128,7 +128,7 @@ export function AtomicBookingSheet({
                         : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#161616] dark:text-zinc-300'
                     )}
                   >
-                    <span className="text-[11px] font-semibold uppercase tracking-wide">{day}</span>
+                    <span className="w-full truncate text-[11px] font-semibold uppercase tracking-wide">{day}</span>
                     <span className="text-sm font-semibold">{time}</span>
                   </button>
                 </li>

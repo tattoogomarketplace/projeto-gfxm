@@ -83,7 +83,7 @@ export default function TatuadorDashboard() {
       {activeTab === 'chat' ? (
         <section
           key="chat"
-          className="-mx-4 min-h-0 flex-1 transform-gpu transition-opacity duration-200 sm:-mx-8"
+          className="-mx-4 min-h-0 flex-1 transform-gpu transition-opacity duration-200 sm:-mx-6"
         >
           <ChatWorkspace />
         </section>
