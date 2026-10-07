@@ -22,11 +22,18 @@ export type ChatMessageDto = {
   created_at: string;
 };
 
+export type ChatLifecycleStatus = {
+  kind: 'scheduled' | 'healing';
+  label: string;
+  healingDay: number | null;
+};
+
 export type ChatConversationDto = {
   peer: ChatPeer;
   lastMessage: ChatMessageDto | null;
   unreadCount: number;
   categoria: ChatCategoria;
+  lifecycle: ChatLifecycleStatus | null;
 };
 
 export type ChatArtworkRef = {

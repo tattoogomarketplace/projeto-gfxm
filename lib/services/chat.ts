@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { resolveChatLifecycle, type LifecycleBooking } from '@/lib/chat-lifecycle';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
 import type {
@@ -220,10 +221,44 @@ export async function listConversations(
       lastMessage: toMessageDto(row),
       unreadCount,
       categoria: normalizeCategoria(row.categoria),
+      lifecycle: null,
     });
   }
 
-  return Array.from(conversations.values());
+  const list = Array.from(conversations.values());
+  if (list.length === 0) return list;
+
+  const peerIds = list.map((item) => item.peer.id);
+  const bookings = await prisma.agendamento.findMany({
+    where: {
+      deleted_at: null,
+      status: { in: ['confirmado', 'aguardando_sinal', 'concluido'] },
+      OR: [
+        { cliente_id: actorId, tatuador_id: { in: peerIds } },
+        { tatuador_id: actorId, cliente_id: { in: peerIds } },
+      ],
+    },
+    select: { cliente_id: true, tatuador_id: true, data_hora: true, status: true },
+  });
+
+  const byPeer = new Map<string, LifecycleBooking[]>();
+  for (const booking of bookings) {
+    const peerId =
+      booking.cliente_id === actorId ? booking.tatuador_id : booking.cliente_id;
+    const bucket = byPeer.get(peerId);
+    const entry: LifecycleBooking = { data_hora: booking.data_hora, status: booking.status };
+    if (bucket) {
+      bucket.push(entry);
+    } else {
+      byPeer.set(peerId, [entry]);
+    }
+  }
+
+  const now = new Date();
+  return list.map((item) => ({
+    ...item,
+    lifecycle: resolveChatLifecycle(now, byPeer.get(item.peer.id) ?? []),
+  }));
 }
 
 export async function getHistorico(

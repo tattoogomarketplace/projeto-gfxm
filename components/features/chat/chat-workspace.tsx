@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MessageCircle, ReceiptText, Sparkles } from 'lucide-react';
 import { FlashNotesCarousel } from '@/components/chat/flash-notes-carousel';
+import { ConversationLifecycleBadge } from '@/components/chat/conversation-lifecycle-badge';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatThread } from '@/components/features/chat/chat-thread';
@@ -215,7 +216,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       ];
     }
     return [
-      { peer: selectedPeer, lastMessage: null, unreadCount: 0, categoria: 'ORCAMENTO' },
+      { peer: selectedPeer, lastMessage: null, unreadCount: 0, categoria: 'ORCAMENTO', lifecycle: null },
       ...conversations,
     ];
   }, [conversations, selectedPeer]);
@@ -380,6 +381,11 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                         </span>
                       ) : null}
                     </span>
+                    {item.lifecycle ? (
+                      <span className="mt-1 flex min-w-0">
+                        <ConversationLifecycleBadge status={item.lifecycle} />
+                      </span>
+                    ) : null}
                     <span className="mt-0.5 block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
                       {item.lastMessage?.mensagem ||
                         (activeCategory === 'BUDGET' ? 'Nova solicitação de orçamento' : 'Nova conversa')}
