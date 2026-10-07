@@ -3,6 +3,7 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Check, ChevronRight, Languages, Search } from 'lucide-react';
+import { LanguageFlag } from '@/components/settings/language-flag';
 import { SettingsRow } from '@/components/settings/settings-row';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -10,23 +11,23 @@ import { authedFetch } from '@/lib/utils/authed-fetch';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/lib/i18n/types';
 
-const LOCALE_GLYPHS: Record<Locale, string> = {
-  'pt-BR': 'PT',
-  'pt-PT': 'PT',
-  en: 'EN',
-  es: 'ES',
-  fr: 'FR',
-  de: 'DE',
-  it: 'IT',
-  ja: 'あ',
-  zh: '中',
-  ko: '한',
-  ar: 'ع',
-  ru: 'Я',
-  hi: 'ह',
-  nl: 'NL',
-  tr: 'TR',
-  pl: 'PL',
+const LOCALE_SEARCH_TERMS: Record<Locale, string> = {
+  'pt-BR': 'PT BR Portuguese Brasil Brazil',
+  'pt-PT': 'PT PT Portuguese Portugal',
+  en: 'EN English',
+  es: 'ES Spanish Español España Spain',
+  fr: 'FR French Français France',
+  de: 'DE German Deutsch Germany',
+  it: 'IT Italian Italiano Italy',
+  ja: 'JA JP Japanese 日本語 Japan',
+  zh: 'ZH CN Chinese 中文 China',
+  ko: 'KO KR Korean 한국어 Korea',
+  ar: 'AR Arabic العربية',
+  ru: 'RU Russian Русский Russia',
+  hi: 'HI IN Hindi हिन्दी India',
+  nl: 'NL Dutch Nederlands Netherlands',
+  tr: 'TR Turkish Türkçe Turkey',
+  pl: 'PL Polish Polski Poland',
 };
 
 function persistLanguage(
@@ -59,7 +60,7 @@ export const LanguageSelector = memo(function LanguageSelector() {
     const term = query.trim().toLowerCase();
     if (!term) return locales;
     return locales.filter((id) => {
-      const haystack = `${labels[id]} ${id} ${LOCALE_GLYPHS[id]}`.toLowerCase();
+      const haystack = `${labels[id]} ${id} ${LOCALE_SEARCH_TERMS[id]}`.toLowerCase();
       return haystack.includes(term);
     });
   }, [labels, locales, query]);
@@ -148,17 +149,15 @@ export const LanguageSelector = memo(function LanguageSelector() {
                         : 'border-neutral-200 bg-neutral-50 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-white/5'
                     )}
                   >
-                    <span
+                    <LanguageFlag
+                      locale={id}
                       className={cn(
-                        'flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border text-[13px] font-semibold tracking-[0.06em] transition-all duration-200',
+                        'h-11 w-11 min-h-11 min-w-11 shrink-0 transition-all duration-200 ease-out',
                         selected
-                          ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
-                          : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
+                          ? 'scale-[1.04] shadow-[0_0_0_2px_#F97316,0_0_18px_rgba(249,115,22,0.5)]'
+                          : 'shadow-[0_0_0_1px_rgba(0,0,0,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.16)]'
                       )}
-                      aria-hidden
-                    >
-                      {LOCALE_GLYPHS[id]}
-                    </span>
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
                         {labels[id]}
