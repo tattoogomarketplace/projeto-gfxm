@@ -8,6 +8,7 @@ import {
   type KycStatusValue,
 } from '@/components/features/professional-kyc-panel';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import { useI18n } from '@/hooks/use-i18n';
 
 export type KycStatus = KycStatusValue;
 
@@ -49,6 +50,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
   void _userId;
   const { signOut } = useClerk();
   const router = useRouter();
+  const { t } = useI18n();
   const normalized = normalizeStatus(status);
   const copy = DOCUMENTOS_STATUS_COPY[normalized];
 
@@ -88,7 +90,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
           onClick={() => void signOut()}
           className="mx-auto min-h-11 text-xs font-medium text-zinc-500 underline-offset-4 transition-colors hover:text-orange-400 hover:underline"
         >
-          Sair da conta
+          {t('auth.signOut')}
         </button>
       </div>
     </div>

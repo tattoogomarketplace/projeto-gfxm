@@ -12,11 +12,13 @@ import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
+import { useI18n } from '@/hooks/use-i18n';
 
 export function ProfileView() {
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
   const router = useRouter();
+  const { t } = useI18n();
   const cachedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
@@ -134,7 +136,7 @@ export function ProfileView() {
           </span>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              {displayNome || 'Perfil'}
+              {displayNome || t('profile.title')}
             </h1>
             <p className="mt-1 truncate text-sm text-neutral-500 dark:text-zinc-400">{maskEmail(displayEmail)}</p>
           </div>
@@ -153,7 +155,7 @@ export function ProfileView() {
           ) : (
             <>
               <LogOut className="h-5 w-5" strokeWidth={1.75} />
-              Sair da Conta
+              {t('auth.signOut')}
             </>
           )}
         </button>

@@ -92,7 +92,7 @@ export const PT_BR: MessageDictionary = {
   'profile.settingsAndActivity': 'Configurações e atividade',
 
   'auth.signIn': 'Entrar',
-  'auth.signOut': 'Sair',
+  'auth.signOut': 'Sair da Conta',
   'auth.register': 'Criar conta',
 };
 
@@ -167,7 +167,7 @@ export const EN: MessageDictionary = {
   'profile.settingsAndActivity': 'Settings and activity',
 
   'auth.signIn': 'Sign in',
-  'auth.signOut': 'Sign out',
+  'auth.signOut': 'Sign Out',
   'auth.register': 'Create account',
 };
 
@@ -242,7 +242,7 @@ export const ES: MessageDictionary = {
   'profile.settingsAndActivity': 'Ajustes y actividad',
 
   'auth.signIn': 'Entrar',
-  'auth.signOut': 'Salir',
+  'auth.signOut': 'Cerrar sesión',
   'auth.register': 'Crear cuenta',
 };
 

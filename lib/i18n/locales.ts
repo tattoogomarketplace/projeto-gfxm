@@ -870,7 +870,7 @@ export const PT_PT: Partial<MessageDictionary> = {
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Definições e atividade',
   'auth.signIn': 'Entrar',
-  'auth.signOut': 'Sair',
+  'auth.signOut': 'Sair da Conta',
   'auth.register': 'Criar conta',
 };
 
