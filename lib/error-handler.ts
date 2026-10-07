@@ -102,6 +102,16 @@ function collectText(err: unknown): string {
         asString(data.code)
       );
     }
+    const meta = isRecord(err.meta) ? err.meta : null;
+    if (meta) {
+      const target = meta.target;
+      if (Array.isArray(target)) {
+        chunks.push(target.map((item) => asString(item)).filter(Boolean).join(' '));
+      } else {
+        chunks.push(asString(target));
+      }
+      chunks.push(asString(meta.field_name), asString(meta.modelName));
+    }
   }
   if (err instanceof Error) {
     chunks.push(err.message, err.name);
@@ -132,7 +142,31 @@ function matchByText(haystack: string): MessageKey | null {
   if (haystack.includes('not strong enough') || haystack.includes('password strength') || haystack.includes('password requirements')) {
     return 'errors.clerk.passwordWeak';
   }
+  if (
+    haystack.includes('cpf') &&
+    (haystack.includes('cadastrad') ||
+      haystack.includes('registrad') ||
+      haystack.includes('já existe') ||
+      haystack.includes('ja existe') ||
+      haystack.includes('already') ||
+      haystack.includes('p2002') ||
+      haystack.includes('unique'))
+  ) {
+    return 'errors.clerk.cpfExists';
+  }
   if (haystack.includes('already registered') || haystack.includes('already exists') || haystack.includes('identifier_exists') || haystack.includes('user already')) {
+    return 'errors.clerk.emailExists';
+  }
+  if (
+    (haystack.includes('e-mail') ||
+      haystack.includes('email') ||
+      haystack.includes('correo') ||
+      haystack.includes('correio')) &&
+    (haystack.includes('cadastrad') ||
+      haystack.includes('registrad') ||
+      haystack.includes('já existe') ||
+      haystack.includes('ja existe'))
+  ) {
     return 'errors.clerk.emailExists';
   }
   if (haystack.includes('code is incorrect') || haystack.includes('incorrect code') || haystack.includes('invalid code') || haystack.includes('form_code_incorrect')) {
@@ -160,6 +194,8 @@ function matchByText(haystack: string): MessageKey | null {
     return 'errors.notFound';
   }
   if (haystack.includes('prisma') || haystack.includes('unique constraint') || haystack.includes('p2002')) {
+    if (haystack.includes('cpf')) return 'errors.clerk.cpfExists';
+    if (haystack.includes('email') || haystack.includes('e-mail')) return 'errors.clerk.emailExists';
     return 'errors.conflict';
   }
   if (haystack.includes('p2025')) {

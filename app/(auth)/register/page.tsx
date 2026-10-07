@@ -31,6 +31,20 @@ import { formatAppError } from '@/lib/error-handler';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+const MIN_AGE = 14;
+
+function calculateAge(dataNascimento?: string): number | null {
+  if (!dataNascimento) return null;
+  const birthDate = new Date(dataNascimento);
+  if (Number.isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  if (age < 0 || age > 120) return null;
+  return age;
+}
+
 const registerSchema = z
   .object({
     nome: z.string().min(2, 'Informe seu nome real'),
@@ -71,6 +85,22 @@ const registerSchema = z
         message: 'Data obrigatória',
       });
     }
+    if (data.role !== 'estudio' && data.dataNascimento) {
+      const age = calculateAge(data.dataNascimento);
+      if (age === null) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['dataNascimento'],
+          message: 'Data de nascimento inválida',
+        });
+      } else if (age < MIN_AGE) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['dataNascimento'],
+          message: 'É necessário ter ao menos 14 anos',
+        });
+      }
+    }
     if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
       ctx.addIssue({
         code: 'custom',
@@ -85,13 +115,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 type FaixaEtaria = 'normal' | 'menor_14' | 'menor_18';
 
 function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
-  if (!dataNascimento) return 'normal';
-  const birthDate = new Date(dataNascimento);
-  if (Number.isNaN(birthDate.getTime())) return 'normal';
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+  const age = calculateAge(dataNascimento);
+  if (age === null) return 'normal';
   if (age < 14) return 'menor_14';
   if (age < 18) return 'menor_18';
   return 'normal';
@@ -112,8 +137,6 @@ export default function RegisterPage() {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
   const [forceShow, setForceShow] = useState(false);
-  const [machineFailed, setMachineFailed] = useState(false);
-  const [validationError, setValidationError] = useState('');
   const [isActivating, setIsActivating] = useState(false);
   const [razaoSocial, setRazaoSocial] = useState('');
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
@@ -171,8 +194,6 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    setMachineFailed(false);
-    setValidationError('');
     setUserRole(data.role);
     const emailNorm = data.email.trim().toLowerCase();
     const cpfDigits = isStudio ? '' : onlyCpfDigits(data.cpf || '');
@@ -188,12 +209,10 @@ export default function RegisterPage() {
           ...(cpfDigits ? { cpf: cpfDigits } : {}),
         });
        } catch (dupErr: unknown) {
-         console.error(dupErr);
-         const axiosErr = dupErr as { response?: { status?: number; data?: { erro?: string } } };
+         const axiosErr = dupErr as { response?: { status?: number } };
          const statusCode = axiosErr.response?.status;
-         const message = axiosErr.response?.data?.erro || 'E-mail ou CPF já cadastrado.';
          if (statusCode === 409 || statusCode === 400) {
-           throw new Error(message);
+           throw dupErr;
          }
        }
 
@@ -226,9 +245,7 @@ export default function RegisterPage() {
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
      } catch (err) {
        console.error(err);
-       setMachineFailed(true);
         const clerkMsg = formatAppError(err, 'signup');
-       setValidationError((prev) => (prev && prev !== 'Erro de validação' ? prev : clerkMsg || 'Erro de validação'));
        toast.error(clerkMsg);
      } finally {
       setLoading(false);
@@ -454,8 +471,6 @@ export default function RegisterPage() {
                 responsavelCpf: '',
               });
               setUserRole(role);
-              setMachineFailed(false);
-              setValidationError('');
             }}
           />
           <input type="hidden" {...register('role')} />
@@ -610,15 +625,6 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {machineFailed ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-red-600/40 bg-red-950/30 p-4">
-              <TattooMachineLoader compact failed label="Erro de validação" />
-              <p className="text-center text-sm font-semibold text-red-400">
-                {validationError || 'Erro de validação'}
-              </p>
-            </div>
-          ) : null}
-
           <button
             type="submit"
             disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !documentIsValid}
@@ -626,8 +632,6 @@ export default function RegisterPage() {
           >
             {loading ? (
               <TattooMachineLoader compact label={loadingText || 'Processando'} />
-            ) : machineFailed ? (
-              <TattooMachineLoader compact failed label="Erro de validação" />
             ) : (
               'Cadastrar'
             )}

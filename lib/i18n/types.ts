@@ -227,6 +227,7 @@ export type MessageKey =
   | 'errors.clerk.codeInvalid'
   | 'errors.clerk.codeExpired'
   | 'errors.clerk.emailExists'
+  | 'errors.clerk.cpfExists'
   | 'errors.clerk.identifierNotFound'
   | 'errors.clerk.notReady'
   | 'errors.clerk.authFailed'

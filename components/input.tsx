@@ -14,6 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, label, error, ...props }, ref) => {
     const [showPassword, setShowPassword] = React.useState(false)
     const isPassword = type === "password"
+    const isDate = type === "date"
     const resolvedType = isPassword && showPassword ? "text" : type
 
     return (
@@ -32,6 +33,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               "dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500",
               "scheme-light dark:scheme-dark",
               isPassword && "pr-12",
+              isDate &&
+                "appearance-none min-h-12 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-date-and-time-value]:text-left",
               error && "border-red-500 focus:ring-red-500",
               className,
               "border-neutral-200 bg-white text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
