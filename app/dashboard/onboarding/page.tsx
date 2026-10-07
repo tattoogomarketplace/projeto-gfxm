@@ -137,7 +137,7 @@ export default function DashboardOnboardingPage() {
 
   if (!isLoaded) {
     return (
-      <div className="gpu-layer relative flex h-full max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background">
+      <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background">
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch]">
           <TattooMachineLoader label={getOnboardingLoadingMessage(role)} />
         </div>
@@ -148,61 +148,62 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex h-full max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background text-white">
-      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col space-y-8 overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
-      <div className="flex flex-col items-center space-y-4 pt-4 text-center">
+    <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background text-white">
+      <header className="mx-auto flex w-full max-w-lg flex-shrink-0 flex-col items-center space-y-3 px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-2 text-center sm:px-6">
         <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
           <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
         </div>
-        <header className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-            {content.badge}
-          </p>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-            {content.journey.past}
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            {firstName ? `Olá, ${firstName}!` : 'Olá!'}
-          </h1>
-          <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
-          <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
-            {content.journey.future}
-          </p>
-        </header>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
+          {content.badge}
+        </p>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+          {content.journey.past}
+        </p>
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-4 py-4 [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto flex w-full max-w-lg flex-col space-y-8">
+          <div className="space-y-3 text-center">
+            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {firstName ? `Olá, ${firstName}!` : 'Olá!'}
+            </h1>
+            <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
+            <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
+              {content.journey.future}
+            </p>
+          </div>
+
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+            <RoleSelector
+              value={role}
+              onChange={(nextRole) => {
+                setSubmitError(null);
+                setSelectedRole(nextRole);
+              }}
+              lockedRole={lockedRole}
+            />
+          </section>
+
+          {submitError ? (
+            <div
+              role="alert"
+              className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+            >
+              {submitError}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <RoleSelector
-          value={role}
-          onChange={(nextRole) => {
-            setSubmitError(null);
-            setSelectedRole(nextRole);
-          }}
-          lockedRole={lockedRole}
-        />
-      </section>
-
-      {submitError ? (
-        <div
-          role="alert"
-          className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+      <div className="flex-shrink-0 border-t border-border/20 bg-background/95 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur sm:px-6">
+        <button
+          type="button"
+          onClick={handleAdvance}
+          disabled={saving}
+          className="mx-auto flex min-h-14 w-full max-w-lg items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
-          {submitError}
-        </div>
-      ) : null}
-
-      </div>
-      <div className="shrink-0 border-t border-white/10 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-app px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6">
-          <button
-            type="button"
-            onClick={handleAdvance}
-            disabled={saving}
-            className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
-          >
-            {saving ? <TattooMachineLoader compact label={content.activating} /> : content.cta}
-          </button>
-        </div>
+          {saving ? <TattooMachineLoader compact label={content.activating} /> : content.cta}
+        </button>
       </div>
     </div>
   );
