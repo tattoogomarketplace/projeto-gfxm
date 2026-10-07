@@ -8,7 +8,10 @@ export const revalidate = 0;
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="luxury-canvas relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
+    <div
+      data-viewport-root
+      className="luxury-canvas relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white"
+    >
       <AppShellBoundary title={BRAND_NAME}>{children}</AppShellBoundary>
     </div>
   );
