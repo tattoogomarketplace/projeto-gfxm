@@ -148,7 +148,7 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-background text-white">
+    <div className="gpu-layer relative flex h-[100dvh] w-full flex-col justify-between overflow-hidden bg-background text-white">
       <header className="mx-auto flex w-full max-w-lg flex-shrink-0 flex-col items-center space-y-2.5 px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-2 text-center sm:space-y-3 sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)]">
         <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
           <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
@@ -175,14 +175,16 @@ export default function DashboardOnboardingPage() {
             </div>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-              <RoleSelector
-                value={role}
-                onChange={(nextRole) => {
-                  setSubmitError(null);
-                  setSelectedRole(nextRole);
-                }}
-                lockedRole={lockedRole}
-              />
+              <div className="max-h-[35vh] overflow-y-auto overscroll-contain pr-1">
+                <RoleSelector
+                  value={role}
+                  onChange={(nextRole) => {
+                    setSubmitError(null);
+                    setSelectedRole(nextRole);
+                  }}
+                  lockedRole={lockedRole}
+                />
+              </div>
             </section>
 
             {submitError ? (
