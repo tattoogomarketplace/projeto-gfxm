@@ -57,7 +57,7 @@ export function TermsViewerModal({
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
             className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)]"
           >
-            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center gap-3 border-b border-white/10 px-5 py-4">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
               </span>
@@ -74,11 +74,11 @@ export function TermsViewerModal({
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-5 py-5 [-webkit-overflow-scrolling:touch]">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-4 py-4 [-webkit-overflow-scrolling:touch]">
               <TermsContent />
             </div>
 
-            <div className="border-t border-white/10 px-5 py-4">
+            <div className="flex-shrink-0 border-t border-white/10 bg-[#121212] px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 type="button"
                 onClick={onClose}
