@@ -56,7 +56,7 @@ export default function ClienteDashboard() {
 
       <div className="relative space-y-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
+          <section key="agendar" className="space-y-4">
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
               title={t('home.appointments')}
@@ -111,7 +111,7 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'portfolio' && (
-          <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
+          <section key="portfolio" className="space-y-4">
             <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
               <div
                 aria-hidden

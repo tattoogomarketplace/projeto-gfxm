@@ -21,13 +21,13 @@ export default function PerfilLayout({
   }, [router]);
 
   return (
-    <div className="gpu-layer relative flex h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform">
+    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden">
       <div
         className={cn(
-          'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden',
           isSettings
-            ? 'pointer-events-none absolute inset-0 opacity-0 -translate-x-2'
-            : 'relative opacity-100 translate-x-0'
+            ? 'pointer-events-none absolute inset-0 opacity-0'
+            : 'relative opacity-100'
         )}
         aria-hidden={isSettings}
         inert={isSettings ? true : undefined}
@@ -37,10 +37,10 @@ export default function PerfilLayout({
 
       <div
         className={cn(
-          'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+          'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden',
           isSettings
-            ? 'relative opacity-100 translate-x-0'
-            : 'pointer-events-none absolute inset-0 opacity-0 translate-x-2'
+            ? 'relative opacity-100'
+            : 'pointer-events-none absolute inset-0 opacity-0'
         )}
         aria-hidden={!isSettings}
         inert={!isSettings ? true : undefined}

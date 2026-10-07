@@ -21,7 +21,7 @@ export default function TatuadorDashboard() {
   return (
     <div className="flex flex-col bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
       {activeTab === 'portfolio' ? (
-        <section key="portfolio" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
+        <section key="portfolio" className="space-y-4">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <Images className="h-5 w-5" strokeWidth={1.75} />
@@ -43,7 +43,7 @@ export default function TatuadorDashboard() {
       ) : null}
 
       {activeTab === 'agendar' ? (
-        <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
+        <section key="agendar" className="space-y-4">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <CalendarDays className="h-5 w-5" strokeWidth={1.75} />

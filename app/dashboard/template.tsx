@@ -4,7 +4,7 @@ export default function DashboardTemplate({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full min-h-0 w-full flex-col transform-gpu backface-hidden will-change-transform">
+    <div className="flex h-full min-h-0 w-full flex-col">
       {children}
     </div>
   );
