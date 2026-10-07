@@ -22,8 +22,10 @@ export default async function DashboardLayout({
   const isOnboarding = isOnboardingPath(pathname);
   const isKycPendentePath =
     pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
+  const isArtistVerificationPath =
+    pathname === '/dashboard/seja-tatuador' || pathname.startsWith('/dashboard/seja-tatuador/');
 
-  if (isOnboarding || isKycPendentePath) {
+  if (isOnboarding || isKycPendentePath || isArtistVerificationPath) {
     return <>{children}</>;
   }
 
