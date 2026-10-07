@@ -16,6 +16,10 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { passwordSchema } from '@/lib/utils/password-strength';
+import {
+  calculateExactAge,
+  MINIMUM_REGISTRATION_AGE,
+} from '@/lib/utils/age-calculator';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { formatCnpj, isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { ONBOARDING_PATH, assignAppPath, normalizeAppRole } from '@/lib/utils/auth-redirect';
@@ -31,18 +35,11 @@ import { formatAppError } from '@/lib/error-handler';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const MIN_AGE = 14;
+const MIN_AGE = MINIMUM_REGISTRATION_AGE;
 
 function calculateAge(dataNascimento?: string): number | null {
-  if (!dataNascimento) return null;
-  const birthDate = new Date(dataNascimento);
-  if (Number.isNaN(birthDate.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-  if (age < 0 || age > 120) return null;
-  return age;
+  const { age, isValid } = calculateExactAge(dataNascimento);
+  return isValid ? age : null;
 }
 
 const registerSchema = z
@@ -180,6 +177,17 @@ export default function RegisterPage() {
       return;
     }
     const isStudio = data.role === 'estudio';
+    if (!isStudio) {
+      const ageResult = calculateExactAge(data.dataNascimento);
+      if (!ageResult.isValid) {
+        toast.error('Data de nascimento inválida.');
+        return;
+      }
+      if (ageResult.age < MIN_AGE) {
+        toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+        return;
+      }
+    }
     if (isStudio) {
       if (!isValidCnpj(data.cnpj)) {
         toast.error('CNPJ inválido.');
@@ -572,7 +580,20 @@ export default function RegisterPage() {
               <Input
                 label="Data de Nascimento"
                 type="date"
-                {...register('dataNascimento')}
+                {...register('dataNascimento', {
+                  onChange: (e) => {
+                    const raw = String(e.target.value || '');
+                    if (!raw) return;
+                    const result = calculateExactAge(raw);
+                    if (!result.isValid) {
+                      toast.error('Data de nascimento inválida.');
+                      return;
+                    }
+                    if (result.age < MIN_AGE) {
+                      toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                    }
+                  },
+                })}
                 className="focus:ring-orange-500"
                 error={errors.dataNascimento?.message}
               />
