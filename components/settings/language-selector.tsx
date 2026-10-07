@@ -12,6 +12,7 @@ import type { Locale } from '@/lib/i18n/types';
 
 const LOCALE_GLYPHS: Record<Locale, string> = {
   'pt-BR': 'PT',
+  'pt-PT': 'PT',
   en: 'EN',
   es: 'ES',
   fr: 'FR',
@@ -89,18 +90,13 @@ export const LanguageSelector = memo(function LanguageSelector() {
         subtitle={labels[locale]}
         onClick={handleToggle}
         trailing={
-          <span className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-orange-500 dark:text-orange-400">
-              {t('settings.languageActive')}
-            </span>
-            <ChevronRight
-              className={cn(
-                'h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-500 transform-gpu backface-hidden transition-transform duration-300 ease-out will-change-transform',
-                open && 'rotate-90 text-orange-500'
-              )}
-              strokeWidth={1.75}
-            />
-          </span>
+          <ChevronRight
+            className={cn(
+              'h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-500 transform-gpu backface-hidden transition-transform duration-300 ease-out will-change-transform',
+              open && 'rotate-90 text-orange-500'
+            )}
+            strokeWidth={1.75}
+          />
         }
       />
 

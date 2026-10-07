@@ -1,5 +1,6 @@
 export const LOCALES = [
   'pt-BR',
+  'pt-PT',
   'en',
   'es',
   'fr',
@@ -26,6 +27,7 @@ export const LOCALE_STORAGE_KEY = 'tattoogo-locale';
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   'pt-BR': 'Português (Brasil)',
+  'pt-PT': 'Português (Portugal)',
   en: 'English',
   es: 'Español',
   fr: 'Français',
@@ -44,6 +46,7 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 
 export const LOCALE_HTML_LANG: Record<Locale, string> = {
   'pt-BR': 'pt-BR',
+  'pt-PT': 'pt-PT',
   en: 'en',
   es: 'es',
   fr: 'fr',
@@ -65,8 +68,8 @@ export const LOCALE_ALIASES: Record<string, Locale> = {
   'pt-br': 'pt-BR',
   pt_br: 'pt-BR',
   'pt-BR': 'pt-BR',
-  'pt-pt': 'pt-BR',
-  'pt-PT': 'pt-BR',
+  'pt-pt': 'pt-PT',
+  'pt-PT': 'pt-PT',
   en: 'en',
   'en-us': 'en',
   'en-US': 'en',

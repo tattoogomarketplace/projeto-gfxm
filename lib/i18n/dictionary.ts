@@ -9,6 +9,7 @@ import {
   KO,
   NL,
   PL,
+  PT_PT,
   RU,
   TR,
   ZH,
@@ -233,12 +234,16 @@ export const ES: MessageDictionary = {
   'auth.register': 'Crear cuenta',
 };
 
-function withFallback(overrides: Partial<MessageDictionary>): MessageDictionary {
-  return { ...EN, ...overrides };
+function withFallback(
+  overrides: Partial<MessageDictionary>,
+  base: MessageDictionary = EN
+): MessageDictionary {
+  return { ...base, ...overrides };
 }
 
 export const DICTIONARIES: Record<Locale, MessageDictionary> = {
   'pt-BR': PT_BR,
+  'pt-PT': withFallback(PT_PT, PT_BR),
   en: EN,
   es: ES,
   fr: withFallback(FR),
