@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { agendamentoService, AgendamentoClientError } from '@/lib/services/agendamento-service';
 
 export const useAgendamentos = () => {

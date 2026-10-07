@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { getOnboardingLoadingMessage, getRoleExperience } from '@/lib/content/role-experience';

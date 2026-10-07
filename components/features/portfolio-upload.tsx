@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Clock3, ImagePlus, MapPin, Sparkles, X } from 'lucide-react';
 import { NeonButton } from '@/components/ui/neon-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';

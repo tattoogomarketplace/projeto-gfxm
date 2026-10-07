@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { GlassContainer } from '@/components/ui/glass-container';
 
 export default function CancelarAgendamentoPage() {

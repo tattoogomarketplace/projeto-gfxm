@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { OtpInput, type OtpUserRole } from '@/components/ui/otp-input';
 
 const RESEND_COOLDOWN_SEC = 60;

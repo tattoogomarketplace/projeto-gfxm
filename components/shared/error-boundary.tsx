@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface Props {
   children: ReactNode;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { NeonButton } from '@/components/ui/neon-button';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';

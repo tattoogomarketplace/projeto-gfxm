@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { AlertTriangle, Building2, ChevronRight, PauseCircle, PenTool, ShieldAlert, Trash2, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { deactivateAccount, scheduleAccountDeletion } from '@/app/actions/user-lifecycle';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';

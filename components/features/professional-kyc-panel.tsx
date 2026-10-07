@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, XCircle } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Button } from '@/components/ui/button';

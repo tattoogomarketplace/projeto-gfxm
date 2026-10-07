@@ -8,7 +8,7 @@ import {
   Megaphone,
   ScrollText,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import {
   getNotificationPrefsServerSnapshot,

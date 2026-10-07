@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useCallback, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';

@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Clock3, Coffee, Plus, Save, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authedFetch } from '@/lib/utils/authed-fetch';

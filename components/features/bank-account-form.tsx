@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useUser } from '@clerk/nextjs';
 
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getCancelAction } from '@/lib/utils/scheduling';
 
 export function AgendamentoActions({ agendamento }: { agendamento: { data_hora: string } }) {
