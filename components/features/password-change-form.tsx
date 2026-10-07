@@ -1,14 +1,17 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useReverification, useUser } from '@clerk/nextjs';
 import { isReverificationCancelledError } from '@clerk/nextjs/errors';
+import type { SessionVerificationLevel } from '@clerk/nextjs/types';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
+import { ClerkSessionReverification } from '@/components/features/clerk-session-reverification';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +24,12 @@ type PasswordUpdateParams = {
   newPassword: string;
 };
 
+type PendingReverification = {
+  complete: () => void;
+  cancel: () => void;
+  level: SessionVerificationLevel | undefined;
+};
+
 export const PasswordChangeForm = memo(function PasswordChangeForm({
   embedded = false,
 }: PasswordChangeFormProps) {
@@ -28,8 +37,21 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reverification, setReverification] = useState<PendingReverification | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const pendingReverificationRef = useRef<PendingReverification | null>(null);
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
+
+  const handleNeedsReverification = useCallback(
+    ({ complete, cancel, level }: PendingReverification) => {
+      const pending = { complete, cancel, level };
+      pendingReverificationRef.current = pending;
+      setVerificationError(null);
+      setReverification(pending);
+    },
+    []
+  );
 
   const updatePasswordWithVerification = useReverification(
     useCallback(
@@ -44,8 +66,33 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
         });
       },
       [user]
-    )
+    ),
+    { onNeedsReverification: handleNeedsReverification }
   );
+
+  const handleReverificationComplete = useCallback(() => {
+    const pending = pendingReverificationRef.current;
+    pendingReverificationRef.current = null;
+    setReverification(null);
+    pending?.complete();
+  }, []);
+
+  const handleReverificationCancel = useCallback(() => {
+    const pending = pendingReverificationRef.current;
+    pendingReverificationRef.current = null;
+    setReverification(null);
+    pending?.cancel();
+  }, []);
+
+  const handleReverificationError = useCallback((error: unknown) => {
+    const pending = pendingReverificationRef.current;
+    pendingReverificationRef.current = null;
+    setReverification(null);
+    const message = formatAppError(error, 'password');
+    setVerificationError(message);
+    toast.error(message);
+    pending?.cancel();
+  }, []);
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
@@ -73,6 +120,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       return;
     }
 
+    setVerificationError(null);
     setLoading(true);
     try {
       await updatePasswordWithVerification({ currentPassword, newPassword });
@@ -125,8 +173,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             label="Senha atual"
             autoComplete="current-password"
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
+            onChange={(e) => {
+              setCurrentPassword(e.target.value);
+              if (verificationError) setVerificationError(null);
+            }}
             disabled={loading}
+            error={verificationError ?? undefined}
           />
           <div className="space-y-2">
             <Input
@@ -164,6 +216,16 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           Clerk.
         </p>
       )}
+
+      {reverification ? (
+        <ClerkSessionReverification
+          level={reverification.level}
+          password={currentPassword}
+          onComplete={handleReverificationComplete}
+          onCancel={handleReverificationCancel}
+          onError={handleReverificationError}
+        />
+      ) : null}
     </div>
   );
 });
