@@ -141,8 +141,8 @@ export default function SejaTatuadorPage() {
 
   if (!isLoaded) {
     return (
-      <div className="gpu-layer relative flex h-[100dvh] flex-col overflow-hidden bg-background text-white">
-        <div className="flex flex-1 items-center justify-center px-4">
+      <div className="gpu-layer relative flex h-full min-h-[100dvh] w-full flex-col justify-between overflow-y-auto bg-background py-6 px-4 pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+        <div className="flex flex-1 items-center justify-center">
           <TattooMachineLoader label="Preparando verificação" />
         </div>
       </div>
@@ -152,9 +152,8 @@ export default function SejaTatuadorPage() {
   const firstName = (user?.firstName || '').trim();
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] flex-col overflow-hidden bg-background text-white">
-      <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 pb-48 [-webkit-overflow-scrolling:touch] sm:px-6">
-        <div className="mx-auto w-full max-w-lg space-y-6">
+    <div className="gpu-layer relative flex h-full min-h-[100dvh] w-full flex-col justify-between overflow-y-auto bg-background py-6 px-4 pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
           <button
             type="button"
             onClick={() => {
@@ -354,7 +353,6 @@ export default function SejaTatuadorPage() {
               />
             </>
           ) : null}
-        </div>
       </div>
     </div>
   );
