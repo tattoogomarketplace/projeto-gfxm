@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       mensagem?: unknown;
       artworkId?: unknown;
       artwork_id?: unknown;
+      categoria?: unknown;
     } = {};
     try {
       body = (await request.json()) as typeof body;
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
       destinatarioId,
       mensagem,
       artworkId,
+      categoria: body.categoria,
     });
 
     return NextResponse.json({

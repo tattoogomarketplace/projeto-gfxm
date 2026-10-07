@@ -84,4 +84,20 @@ async function marcarLido(req, res) {
   }
 }
 
-module.exports = { enviar, historico, marcarLido };
+async function conversas(req, res) {
+  try {
+    const data = await chatService.listarConversas({
+      userId: req.user.id,
+      categoria: req.query.categoria ?? req.query.tab,
+    });
+    return res.status(200).json({ sucesso: true, actorId: req.user.id, ...data });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log.error({ err }, "Erro ao listar conversas");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao listar conversas." });
+  }
+}
+
+module.exports = { enviar, historico, marcarLido, conversas };

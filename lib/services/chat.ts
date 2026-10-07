@@ -4,10 +4,12 @@ import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
 import type {
   ChatArtworkRef,
+  ChatCategoria,
   ChatContextDto,
   ChatConversationDto,
   ChatMessageDto,
   ChatPeer,
+  ChatTab,
 } from '@/lib/types/chat';
 
 export class ChatError extends Error {
@@ -28,6 +30,8 @@ const UUID_RE =
 const MAX_MESSAGE_LENGTH = 1000;
 const HISTORY_LIMIT = 200;
 const CONVERSATION_SCAN_LIMIT = 400;
+
+const BUDGET_CATEGORIES: ChatCategoria[] = ['BUDGET', 'ORCAMENTO'];
 
 type ActorPerfil = {
   id: string;
@@ -85,6 +89,7 @@ function toMessageDto(row: {
   mensagem: string;
   bloqueada: boolean;
   status: string;
+  categoria?: ChatCategoria | string | null;
   created_at: Date;
 }): ChatMessageDto {
   return {
@@ -94,8 +99,31 @@ function toMessageDto(row: {
     mensagem: row.mensagem,
     bloqueada: row.bloqueada,
     status: row.status,
+    categoria: normalizeCategoria(row.categoria),
     created_at: row.created_at.toISOString(),
   };
+}
+
+export function normalizeCategoria(value: unknown): ChatCategoria {
+  const raw = typeof value === 'string' ? value.trim().toUpperCase() : '';
+  if (raw === 'BUDGET' || raw === 'ORCAMENTO' || raw === 'DIRECT') {
+    return raw;
+  }
+  return 'DIRECT';
+}
+
+export function parseCategoriaFilter(value: unknown): ChatTab | undefined {
+  if (value == null || value === '') return undefined;
+  const raw = typeof value === 'string' ? value.trim().toUpperCase() : '';
+  if (raw === 'DIRECT') return 'DIRECT';
+  if (raw === 'BUDGET' || raw === 'ORCAMENTO') return 'BUDGET';
+  throw new ChatError(400, 'Categoria inválida. Use DIRECT ou BUDGET.');
+}
+
+function categoriaWhere(tab?: ChatTab) {
+  if (tab === 'DIRECT') return { categoria: 'DIRECT' as const };
+  if (tab === 'BUDGET') return { categoria: { in: BUDGET_CATEGORIES } };
+  return {};
 }
 
 export function parseChatId(value: unknown, label: string): string {
@@ -142,10 +170,14 @@ export function chatErrorResponse(error: unknown) {
   return NextResponse.json({ sucesso: false, erro: 'Falha no chat.' }, { status: 500 });
 }
 
-export async function listConversations(actorId: string): Promise<ChatConversationDto[]> {
+export async function listConversations(
+  actorId: string,
+  tab?: ChatTab
+): Promise<ChatConversationDto[]> {
   const rows = await prisma.mensagemChat.findMany({
     where: {
       deleted_at: null,
+      ...categoriaWhere(tab),
       OR: [{ remetente_id: actorId }, { destinatario_id: actorId }],
     },
     orderBy: { created_at: 'desc' },
@@ -157,6 +189,7 @@ export async function listConversations(actorId: string): Promise<ChatConversati
       mensagem: true,
       bloqueada: true,
       status: true,
+      categoria: true,
       created_at: true,
       lido_em: true,
       remetente: {
@@ -186,6 +219,7 @@ export async function listConversations(actorId: string): Promise<ChatConversati
       peer: toPeer(peerRow),
       lastMessage: toMessageDto(row),
       unreadCount,
+      categoria: normalizeCategoria(row.categoria),
     });
   }
 
@@ -290,6 +324,7 @@ export async function enviarMensagem(params: {
   destinatarioId: string;
   mensagem: string;
   artworkId?: string;
+  categoria?: unknown;
 }): Promise<ChatMessageDto> {
   const destinatarioId = parseChatId(params.destinatarioId, 'destinatario_id');
   if (destinatarioId === params.actorId) {
@@ -327,6 +362,7 @@ export async function enviarMensagem(params: {
   }
 
   let composed = escapeMessage(trimmed);
+  let inferredCategoria: ChatCategoria | undefined;
   if (params.artworkId) {
     const artworkId = parseChatId(params.artworkId, 'artworkId');
     const artwork = await prisma.portfolio.findFirst({
@@ -337,8 +373,13 @@ export async function enviarMensagem(params: {
       const style = artwork.estilo || 'arte';
       const part = artwork.body_part ? ` · ${artwork.body_part}` : '';
       composed = `[Referência de projeto: ${style}${part}]\n${composed}`;
+      inferredCategoria = 'ORCAMENTO';
     }
   }
+
+  const categoria = params.categoria != null
+    ? normalizeCategoria(params.categoria)
+    : inferredCategoria ?? 'DIRECT';
 
   const created = await prisma.mensagemChat.create({
     data: {
@@ -347,6 +388,7 @@ export async function enviarMensagem(params: {
       mensagem: composed,
       bloqueada: false,
       status: 'enviado',
+      categoria,
     },
   });
 

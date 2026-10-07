@@ -57,7 +57,29 @@ async function logCompliance({ userId, termoDetectado, acaoTomada }) {
   }
 }
 
-async function persistirAuditoria({ remetenteId, destinatarioId, mensagem, bloqueada, status }) {
+function normalizeCategoria(value) {
+  const raw = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (raw === "BUDGET" || raw === "ORCAMENTO" || raw === "DIRECT") return raw;
+  return "DIRECT";
+}
+
+function parseCategoriaFilter(value) {
+  if (value == null || value === "") return undefined;
+  const raw = String(value).trim().toUpperCase();
+  if (raw === "DIRECT") return "DIRECT";
+  if (raw === "BUDGET" || raw === "ORCAMENTO") return "BUDGET";
+  const error = new Error("Categoria inválida. Use DIRECT ou BUDGET.");
+  error.status = 400;
+  throw error;
+}
+
+function categoriaWhere(tab) {
+  if (tab === "DIRECT") return { categoria: "DIRECT" };
+  if (tab === "BUDGET") return { categoria: { in: ["BUDGET", "ORCAMENTO"] } };
+  return {};
+}
+
+async function persistirAuditoria({ remetenteId, destinatarioId, mensagem, bloqueada, status, categoria }) {
   return prisma.mensagemChat.create({
     data: {
       remetente_id: remetenteId,
@@ -65,6 +87,7 @@ async function persistirAuditoria({ remetenteId, destinatarioId, mensagem, bloqu
       mensagem,
       bloqueada,
       status: status || "enviado",
+      categoria: normalizeCategoria(categoria),
     },
   });
 }
@@ -207,6 +230,57 @@ async function historico({ userId, interlocutorId }) {
   });
 }
 
+async function listarConversas({ userId, categoria }) {
+  const tab = parseCategoriaFilter(categoria);
+  const rows = await prisma.mensagemChat.findMany({
+    where: {
+      deleted_at: null,
+      ...categoriaWhere(tab),
+      OR: [{ remetente_id: userId }, { destinatario_id: userId }],
+    },
+    orderBy: { created_at: "desc" },
+    take: 400,
+    select: {
+      id: true,
+      remetente_id: true,
+      destinatario_id: true,
+      mensagem: true,
+      bloqueada: true,
+      status: true,
+      categoria: true,
+      created_at: true,
+      lido_em: true,
+      remetente: {
+        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+      },
+      destinatario: {
+        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+      },
+    },
+  });
+
+  const conversations = new Map();
+  for (const row of rows) {
+    const peerRow = row.remetente_id === userId ? row.destinatario : row.remetente;
+    if (!peerRow || conversations.has(peerRow.id)) continue;
+    const unreadCount = rows.filter(
+      (item) =>
+        item.destinatario_id === userId &&
+        item.remetente_id === peerRow.id &&
+        item.lido_em == null &&
+        !item.bloqueada
+    ).length;
+    conversations.set(peerRow.id, {
+      peer: peerRow,
+      lastMessage: row,
+      unreadCount,
+      categoria: normalizeCategoria(row.categoria),
+    });
+  }
+
+  return { categoria: tab ?? null, conversas: Array.from(conversations.values()) };
+}
+
 module.exports = {
   TERMOS_PROIBIDOS_REGEX,
   isMensagemProibida,
@@ -216,4 +290,7 @@ module.exports = {
   marcarEntregue,
   marcarLido,
   historico,
+  listarConversas,
+  normalizeCategoria,
+  parseCategoriaFilter,
 };

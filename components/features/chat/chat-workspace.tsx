@@ -193,7 +193,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       ];
     }
     return [
-      { peer: selectedPeer, lastMessage: null, unreadCount: 0 },
+      { peer: selectedPeer, lastMessage: null, unreadCount: 0, categoria: 'ORCAMENTO' },
       ...conversations,
     ];
   }, [conversations, selectedPeer]);

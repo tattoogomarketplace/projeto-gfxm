@@ -51,6 +51,14 @@ enum ChatMensagemStatus {
   @@map("chat_mensagem_status")
 }
 
+enum ChatCategoria {
+  DIRECT
+  BUDGET
+  ORCAMENTO
+
+  @@map("chat_categoria")
+}
+
 enum EstudioConviteStatus {
   pendente
   aceito
@@ -115,6 +123,7 @@ model Perfil {
   convitesEnviados         EstudioConvite[]  @relation("ConviteEstudio")
   convitesRecebidos        EstudioConvite[]  @relation("ConviteTatuador")
   artistSchedule           ArtistSchedule?
+  flashNotes               FlashNote[]
 
   @@unique([email], map: "perfis_email_unique_idx")
   @@index([role], map: "perfis_role_idx")
@@ -220,6 +229,7 @@ model MensagemChat {
   mensagem        String
   bloqueada       Boolean            @default(false)
   status          ChatMensagemStatus @default(enviado)
+  categoria       ChatCategoria      @default(DIRECT)
   entregue_em     DateTime?          @db.Timestamptz(6)
   lido_em         DateTime?          @db.Timestamptz(6)
   created_at      DateTime           @default(now()) @db.Timestamptz(6)
@@ -230,8 +240,25 @@ model MensagemChat {
 
   @@index([remetente_id, destinatario_id, created_at], map: "mensagens_chat_thread_idx")
   @@index([status], map: "mensagens_chat_status_idx")
+  @@index([categoria], map: "mensagens_chat_categoria_idx")
   @@index([deleted_at], map: "mensagens_chat_deleted_at_idx")
   @@map("mensagens_chat")
+}
+
+model FlashNote {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String   @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  ativa     Boolean  @default(true)
+
+  user Perfil @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId], map: "flash_notes_user_id_idx")
+  @@index([expiresAt], map: "flash_notes_expires_at_idx")
+  @@index([ativa, expiresAt], map: "flash_notes_ativa_expira_idx")
+  @@map("flash_notes")
 }
 
 model EstudioConvite {
