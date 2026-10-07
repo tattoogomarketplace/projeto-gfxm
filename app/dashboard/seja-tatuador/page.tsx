@@ -141,7 +141,7 @@ export default function SejaTatuadorPage() {
 
   if (!isLoaded) {
     return (
-      <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background py-6 px-4 pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+      <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
         <div className="flex flex-1 items-center justify-center">
           <TattooMachineLoader label="Preparando verificação" />
         </div>
@@ -152,7 +152,7 @@ export default function SejaTatuadorPage() {
   const firstName = (user?.firstName || '').trim();
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background py-6 px-4 pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
           <button
             type="button"
