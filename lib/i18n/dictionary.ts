@@ -1,4 +1,18 @@
 import type { Locale, MessageDictionary, MessageKey } from '@/lib/i18n/types';
+import {
+  AR,
+  DE,
+  FR,
+  HI,
+  IT,
+  JA,
+  KO,
+  NL,
+  PL,
+  RU,
+  TR,
+  ZH,
+} from '@/lib/i18n/locales';
 
 export const PT_BR: MessageDictionary = {
   'nav.home': 'Início',
@@ -219,10 +233,26 @@ export const ES: MessageDictionary = {
   'auth.register': 'Crear cuenta',
 };
 
+function withFallback(overrides: Partial<MessageDictionary>): MessageDictionary {
+  return { ...EN, ...overrides };
+}
+
 export const DICTIONARIES: Record<Locale, MessageDictionary> = {
   'pt-BR': PT_BR,
   en: EN,
   es: ES,
+  fr: withFallback(FR),
+  de: withFallback(DE),
+  it: withFallback(IT),
+  ja: withFallback(JA),
+  zh: withFallback(ZH),
+  ko: withFallback(KO),
+  ar: withFallback(AR),
+  ru: withFallback(RU),
+  hi: withFallback(HI),
+  nl: withFallback(NL),
+  tr: withFallback(TR),
+  pl: withFallback(PL),
 };
 
 export const MESSAGE_KEYS = Object.keys(PT_BR) as MessageKey[];

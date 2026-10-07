@@ -1,5 +1,13 @@
-import { DEFAULT_LOCALE, LOCALES, LOCALE_STORAGE_KEY, type Locale, type MessageKey, type TranslateVars } from '@/lib/i18n/types';
-import { DICTIONARIES, PT_BR } from '@/lib/i18n/dictionary';
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  LOCALE_ALIASES,
+  LOCALE_STORAGE_KEY,
+  type Locale,
+  type MessageKey,
+  type TranslateVars,
+} from '@/lib/i18n/types';
+import { DICTIONARIES, EN, PT_BR } from '@/lib/i18n/dictionary';
 
 const listeners = new Set<() => void>();
 
@@ -7,33 +15,31 @@ let cachedLocale: Locale | null = null;
 let cachedDictionary = DICTIONARIES[DEFAULT_LOCALE];
 let storageBound = false;
 
-const ALIASES: Record<string, Locale> = {
-  pt: 'pt-BR',
-  'pt-br': 'pt-BR',
-  'pt_BR': 'pt-BR',
-  'pt-BR': 'pt-BR',
-  en: 'en',
-  'en-us': 'en',
-  'en-US': 'en',
-  es: 'es',
-  'es-es': 'es',
-  'es-ES': 'es',
-  'es-mx': 'es',
-  'es-MX': 'es',
-};
+const NORMALIZED_ALIASES = new Map<string, Locale>();
+for (const [alias, locale] of Object.entries(LOCALE_ALIASES)) {
+  NORMALIZED_ALIASES.set(alias.toLowerCase().replace('_', '-'), locale);
+}
+
+function primarySubtag(value: string): string {
+  return value.trim().toLowerCase().replace('_', '-').split('-')[0];
+}
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
 
 export function normalizeLocale(value: unknown): Locale {
-  if (typeof value !== 'string' || value.length === 0) return DEFAULT_LOCALE;
-  const exact = ALIASES[value] ?? ALIASES[value.trim()];
-  if (exact) return exact;
-  const lower = value.trim().toLowerCase();
-  if (lower.startsWith('pt')) return 'pt-BR';
-  if (lower.startsWith('en')) return 'en';
-  if (lower.startsWith('es')) return 'es';
+  if (typeof value !== 'string') return DEFAULT_LOCALE;
+  const trimmed = value.trim();
+  if (!trimmed) return DEFAULT_LOCALE;
+  if (isLocale(trimmed)) return trimmed;
+  const lowered = trimmed.toLowerCase().replace('_', '-');
+  const alias = NORMALIZED_ALIASES.get(lowered);
+  if (alias) return alias;
+  const primary = primarySubtag(trimmed);
+  if (isLocale(primary)) return primary;
+  const primaryAlias = NORMALIZED_ALIASES.get(primary);
+  if (primaryAlias) return primaryAlias;
   return DEFAULT_LOCALE;
 }
 
@@ -66,7 +72,7 @@ function writeToStorage(locale: Locale) {
 
 function applyLocale(locale: Locale) {
   cachedLocale = locale;
-  cachedDictionary = DICTIONARIES[locale];
+  cachedDictionary = DICTIONARIES[locale] ?? DICTIONARIES[DEFAULT_LOCALE];
 }
 
 function notify() {
@@ -126,11 +132,11 @@ export function setLocale(nextValue: unknown): Locale {
 }
 
 export function t(key: MessageKey, vars?: TranslateVars, locale: Locale = getLocale()): string {
-  const dict = locale === cachedLocale ? cachedDictionary : DICTIONARIES[locale];
-  const template = dict[key] ?? PT_BR[key] ?? key;
+  const dictionary = locale === cachedLocale ? cachedDictionary : DICTIONARIES[locale];
+  const template = dictionary[key] ?? EN[key] ?? PT_BR[key] ?? key;
   return interpolate(template, vars);
 }
 
 export function getDictionary(locale: Locale = getLocale()) {
-  return locale === cachedLocale ? cachedDictionary : DICTIONARIES[locale];
+  return locale === cachedLocale ? cachedDictionary : DICTIONARIES[locale] ?? DICTIONARIES[DEFAULT_LOCALE];
 }
