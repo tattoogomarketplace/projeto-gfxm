@@ -512,3 +512,23 @@
     box-shadow: 0 0 28px rgba(249, 115, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
+
+/*
+ * Fluxo "Quero ser Tatuador" (/dashboard/seja-tatuador).
+ *
+ * O Safari do iOS aplica auto-zoom no visual viewport quando um input recebe
+ * foco com font-size computado abaixo de 16px. Os campos de e-mail e CPF da
+ * verificação usam `text-sm` (14px), o que deixava a escala presa ao voltar
+ * para as abas principais. Forçamos 16px apenas em telas de toque para
+ * eliminar o zoom na origem, sem alterar o layout de desktop.
+ */
+.artist-verification-screen {
+  touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  .artist-verification-screen input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']) {
+    font-size: 16px;
+  }
+}
+

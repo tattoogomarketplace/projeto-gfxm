@@ -21,6 +21,7 @@ import { toast } from '@/lib/toast';
 import { ProfessionalKycPanel } from '@/components/settings/professional-kyc-panel';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useArtistViewportGuard } from '@/hooks/use-artist-viewport-guard';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { cn } from '@/lib/utils';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
@@ -61,6 +62,7 @@ export default function SejaTatuadorPage() {
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const { triggerHaptic } = useHapticFeedback();
+  useArtistViewportGuard();
 
   const gateRef = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -152,7 +154,7 @@ export default function SejaTatuadorPage() {
   const firstName = (user?.firstName || '').trim();
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+    <div className="artist-verification-screen relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
           <button
             type="button"
