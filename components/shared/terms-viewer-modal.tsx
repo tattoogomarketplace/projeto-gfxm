@@ -55,9 +55,9 @@ export function TermsViewerModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="gpu-layer flex h-[85vh] max-h-[85vh] w-full max-w-2xl min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform [max-height:min(85vh,calc(100dvh-1.5rem))]"
+            className="gpu-layer flex min-h-0 w-[95vw] max-h-[80dvh] flex-col overflow-hidden p-0 rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-w-md"
           >
-            <div className="flex flex-shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="relative flex flex-shrink-0 items-center gap-3 border-b border-border/50 p-4 pr-14">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
               </span>
@@ -68,17 +68,17 @@ export function TermsViewerModal({
                 type="button"
                 onClick={onClose}
                 aria-label="Fechar termos"
-                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-400 active:scale-95"
+                className="absolute top-4 right-4 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
               >
                 <X className="h-5 w-5" strokeWidth={1.75} />
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-4 py-4 [-webkit-overflow-scrolling:touch]">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-none p-4 [-webkit-overflow-scrolling:touch]">
               <TermsContent />
             </div>
 
-            <div className="flex-shrink-0 border-t border-white/10 bg-background/95 px-4 pt-3 pb-safe backdrop-blur-md sm:px-5">
+            <div className="flex-shrink-0 border-t border-border/50 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <button
                 type="button"
                 onClick={onClose}
