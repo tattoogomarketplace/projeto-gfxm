@@ -191,6 +191,7 @@ export default function RegisterPage() {
   const documentIsValid = isEstudio ? isValidCnpj(cnpjValue) : isValidCpf(cpfValue);
   const studioFieldsLocked = isEstudio && !isValidCnpj(cnpjValue);
   const fetchedCnpjRef = useRef('');
+  const pendingBirthDateRef = useRef('');
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
@@ -601,33 +602,48 @@ export default function RegisterPage() {
               <Input
                 label="Data de Nascimento"
                 type="date"
-                {...register('dataNascimento', {
-                  onChange: (e) => {
-                    const raw = String(e.target.value || '');
-                    const previous = String(dataNascimento || '');
-                    if (!raw || (!previous && isIsoCalendarToday(raw))) {
-                      if (e.target instanceof HTMLInputElement) e.target.value = '';
-                      setValue('dataNascimento', '', {
-                        shouldValidate: false,
-                        shouldDirty: false,
-                        shouldTouch: false,
-                      });
-                      return;
-                    }
-                    const result = calculateExactAge(raw);
-                    if (!result.isValid) {
-                      toast.error('Data de nascimento inválida.');
-                      return;
-                    }
-                    if (result.age < MIN_AGE) {
-                      toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
-                    }
+                {...register('dataNascimento')}
+                onChange={(e) => {
+                  // Buffer the raw value only. Committing to react-hook-form on
+                  // every native picker tick re-renders the form (age status,
+                  // validation, layout) and force-closes the iOS picker.
+                  pendingBirthDateRef.current = String(e.target.value || '');
+                }}
+                onBlur={(e) => {
+                  const raw = String(e.target.value || pendingBirthDateRef.current || '');
+                  pendingBirthDateRef.current = '';
+                  const previous = String(dataNascimento || '');
+                  if (!raw || (!previous && isIsoCalendarToday(raw))) {
+                    if (e.target instanceof HTMLInputElement) e.target.value = '';
+                    setValue('dataNascimento', '', {
+                      shouldValidate: false,
+                      shouldDirty: false,
+                      shouldTouch: false,
+                    });
                     releaseIosDateInputTouch(e.target);
-                  },
-                  onBlur: (e) => {
+                    return;
+                  }
+                  const result = calculateExactAge(raw);
+                  if (!result.isValid) {
+                    toast.error('Data de nascimento inválida.');
+                    setValue('dataNascimento', raw, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    });
                     releaseIosDateInputTouch(e.target);
-                  },
-                })}
+                    return;
+                  }
+                  if (result.age < MIN_AGE) {
+                    toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                  }
+                  setValue('dataNascimento', raw, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                  releaseIosDateInputTouch(e.target);
+                }}
                 className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
