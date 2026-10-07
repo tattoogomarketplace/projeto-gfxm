@@ -2,11 +2,12 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
-import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, XCircle } from 'lucide-react';
+import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, X, XCircle } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
-import { Button } from '@/components/ui/button';
 import { authedFetch } from '@/lib/utils/authed-fetch';
+import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
 export type KycStatusValue =
@@ -17,25 +18,14 @@ export type KycStatusValue =
   | 'nao_aplicavel';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/avif',
-  'image/heic',
-  'image/heif',
-  'application/pdf',
-]);
+const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']);
+const ACCEPTED_INPUT_TYPES = 'application/pdf,image/jpeg,image/png';
+const FORMAT_HINT = 'PDF, JPG ou PNG';
 
 const CONTENT_TYPE_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
   png: 'image/png',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  heic: 'image/heic',
-  heif: 'image/heif',
   pdf: 'application/pdf',
 };
 
@@ -46,6 +36,12 @@ function resolveUploadContentType(file: File): string {
   }
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   return CONTENT_TYPE_BY_EXT[ext] ?? '';
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function describeUploadFailure(err: unknown): string {
@@ -91,6 +87,13 @@ const STATUS_UI: Record<
 
 type UploadPhase = 'idle' | 'presigning' | 'uploading' | 'validating';
 
+const PHASE_PROGRESS: Record<UploadPhase, number> = {
+  idle: 0,
+  presigning: 18,
+  uploading: 62,
+  validating: 92,
+};
+
 type ProfessionalKycPanelProps = {
   status: KycStatusValue | string;
   onStatusChange?: (status: KycStatusValue) => void;
@@ -102,15 +105,18 @@ function normalizeStatus(status: string): KycStatusValue {
 
 export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKycPanelProps) {
   const { getToken } = useAuth();
+  const { triggerHaptic } = useHapticFeedback();
   const inputRef = useRef<HTMLInputElement>(null);
   const [currentStatus, setCurrentStatus] = useState<KycStatusValue>(normalizeStatus(status));
   const [phase, setPhase] = useState<UploadPhase>('idle');
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [extractedName, setExtractedName] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const busy = phase !== 'idle';
+  const canSubmit = Boolean(pendingFile) && !busy;
+  const progress = PHASE_PROGRESS[phase];
   const ui = STATUS_UI[currentStatus];
   const StatusIcon = ui.icon;
 
@@ -122,24 +128,47 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
     [onStatusChange]
   );
 
-  const handleFile = useCallback(
-    async (file: File) => {
+  const handleSelect = useCallback(
+    (file: File) => {
       setError(null);
       setExtractedName(null);
       setConfidence(null);
 
       const contentType = resolveUploadContentType(file);
       if (!contentType || !ALLOWED_TYPES.has(contentType)) {
-        setError('Envie um PDF ou imagem (JPG, PNG, WEBP, HEIC).');
+        const message = `Formato inválido. Envie ${FORMAT_HINT}.`;
+        setError(message);
+        toast.error(message);
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        setError('Arquivo acima de 10 MB.');
+        const message = 'Arquivo acima de 10 MB.';
+        setError(message);
+        toast.error(message);
         return;
       }
 
-      setFileName(file.name);
+      setPendingFile(file);
+      triggerHaptic('light');
+    },
+    [triggerHaptic]
+  );
+
+  const handleRemove = useCallback(() => {
+    setPendingFile(null);
+    setError(null);
+    if (inputRef.current) inputRef.current.value = '';
+    triggerHaptic('light');
+  }, [triggerHaptic]);
+
+  const uploadFile = useCallback(
+    async (file: File) => {
+      setError(null);
+      setExtractedName(null);
+      setConfidence(null);
       setPhase('presigning');
+
+      const contentType = resolveUploadContentType(file);
 
       try {
         const tokenFn = () => getToken({ skipCache: true });
@@ -217,6 +246,10 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         if (result.extractedName) setExtractedName(result.extractedName);
         if (typeof result.confidenceScore === 'number') setConfidence(result.confidenceScore);
 
+        setPendingFile(null);
+        if (inputRef.current) inputRef.current.value = '';
+        triggerHaptic('success');
+
         if (next === 'aprovado') {
           toast.success('Documento aprovado. Sua bancada será liberada.');
         } else if (next === 'rejeitado') {
@@ -234,8 +267,13 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         if (inputRef.current) inputRef.current.value = '';
       }
     },
-    [applyStatus, getToken]
+    [applyStatus, getToken, triggerHaptic]
   );
+
+  const handleSubmit = useCallback(() => {
+    if (!pendingFile || busy) return;
+    void uploadFile(pendingFile);
+  }, [busy, pendingFile, uploadFile]);
 
   const phaseLabel =
     phase === 'presigning'
@@ -279,35 +317,101 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,application/pdf"
+            accept={ACCEPTED_INPUT_TYPES}
             className="sr-only"
             disabled={busy}
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) void handleFile(file);
+              if (file) handleSelect(file);
+              event.target.value = '';
             }}
           />
-          <button
+
+          <AnimatePresence mode="wait" initial={false}>
+            {pendingFile ? (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-white/5 p-3 backdrop-blur-md dark:bg-white/[0.04]"
+              >
+                <span className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
+                  <FileText className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">
+                    {pendingFile.name}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-zinc-500">
+                    {formatFileSize(pendingFile.size)} · pronto para envio
+                  </span>
+                </span>
+                <motion.button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={busy}
+                  aria-label="Remover arquivo"
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 text-zinc-400 transition-colors hover:border-red-500/50 hover:text-red-400 disabled:opacity-50"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.button
+                key="dropzone"
+                type="button"
+                disabled={busy}
+                onClick={() => inputRef.current?.click()}
+                whileHover={!busy ? { scale: 1.01 } : undefined}
+                whileTap={!busy ? { scale: 0.985 } : undefined}
+                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                className="group flex min-h-28 w-full flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-white/5 px-4 py-7 text-center backdrop-blur-md transition-colors hover:border-orange-500/70 hover:bg-orange-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60 disabled:opacity-60 dark:bg-white/[0.04]"
+              >
+                <Upload className="mb-2 h-6 w-6 text-amber-500 transition-transform duration-300 group-hover:-translate-y-0.5" strokeWidth={1.75} />
+                <span className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  Toque para enviar o documento
+                </span>
+                <span className="mt-1 text-xs text-zinc-500">{FORMAT_HINT}, até 10 MB</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <motion.button
             type="button"
-            disabled={busy}
-            onClick={() => inputRef.current?.click()}
-            className="flex min-h-24 w-full flex-col items-center justify-center rounded-xl border border-dashed border-amber-500/40 bg-neutral-50 px-4 py-6 text-center transition-colors hover:border-amber-500 hover:bg-amber-500/5 disabled:opacity-60 dark:bg-[#121212]"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            whileHover={canSubmit ? { scale: 1.01 } : undefined}
+            whileTap={canSubmit ? { scale: 0.985 } : undefined}
+            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+            className="relative flex min-h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-orange-500 py-3 text-sm font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.28)] transition-colors hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400 disabled:shadow-none"
           >
-            <Upload className="mb-2 h-6 w-6 text-amber-500" />
-            <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {fileName ? fileName : 'Toque para enviar o documento'}
+            {busy ? (
+              <motion.span
+                aria-hidden
+                className="absolute inset-y-0 left-0 bg-black/15"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ ease: 'easeOut', duration: 0.45 }}
+              />
+            ) : null}
+            <span className="relative z-10 flex items-center gap-2">
+              {busy ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                  {phaseLabel}
+                </>
+              ) : pendingFile ? (
+                'Enviar documentos'
+              ) : (
+                'Selecione um documento'
+              )}
             </span>
-            <span className="mt-1 text-xs text-zinc-500">PDF ou imagem, até 10 MB</span>
-          </button>
-          <Button
-            type="button"
-            className="w-full"
-            isLoading={busy}
-            disabled={busy}
-            onClick={() => inputRef.current?.click()}
-          >
-            {busy ? phaseLabel : 'Enviar documentos'}
-          </Button>
+          </motion.button>
         </>
       )}
 
