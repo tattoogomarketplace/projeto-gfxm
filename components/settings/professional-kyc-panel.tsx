@@ -10,15 +10,17 @@ import {
   Images,
   Loader2,
   ShieldAlert,
+  Sparkles,
   Upload,
   X,
+  XCircle,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
-export type ProfessionalDocumentStatus = 'pendente' | 'enviado' | 'em_analise';
+export type ProfessionalDocumentStatus = 'pendente' | 'enviado' | 'em_analise' | 'aprovado' | 'rejeitado';
 
 export type ProfessionalDocumentKey = 'pessoal' | 'habilidade';
 
@@ -92,6 +94,16 @@ const STATUS_UI: Record<ProfessionalDocumentStatus, StatusUi> = {
     tone: 'text-sky-300 border-sky-500/30 bg-sky-500/10',
     icon: Loader2,
     spin: true,
+  },
+  aprovado: {
+    label: 'Aprovado',
+    tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
+    icon: CheckCircle2,
+  },
+  rejeitado: {
+    label: 'Rejeitado',
+    tone: 'text-red-300 border-red-500/30 bg-red-500/10',
+    icon: XCircle,
   },
 };
 
@@ -309,19 +321,30 @@ function DocumentSlotCard({
   );
 }
 
+export type ArtistVerificationResult = {
+  status: 'aprovado' | 'rejeitado' | 'em_analise';
+  role?: 'tatuador' | 'estudio' | 'cliente';
+  extractedName?: string;
+  confidenceScore?: number;
+  erro?: string;
+};
+
 export type ProfessionalKycPanelProps = {
   onSubmit?: (submission: ProfessionalDocumentSubmission) => void | Promise<void>;
+  onApproved?: (result: ArtistVerificationResult) => void | Promise<void>;
+  onRejected?: (reason: string) => void;
 };
+
+type AnalysisPhase = 'idle' | 'uploading' | 'analyzing' | 'approved' | 'rejected';
 
 /**
  * Interface de verificação profissional com dois documentos distintos:
  * Documentos Pessoais (RG/CNH) e Comprovação de Habilidade/Diploma.
  *
- * Realiza apenas o upload para o storage e o controle de estado local. Não
- * altera o papel do usuário nem o status de verificação no banco — a análise
- * por IA e a promoção de papel ficam a cargo da etapa seguinte (Parte 3).
+ * Faz o upload, dispara a verificação por IA e, em caso de aprovação,
+ * promove o papel para tatuador no backend.
  */
-export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
+export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: ProfessionalKycPanelProps) {
   const { getToken } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
   const [slots, setSlots] = useState<Record<ProfessionalDocumentKey, DocumentSlot>>(() => ({
@@ -329,6 +352,9 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
     habilidade: { file: null, status: 'pendente', error: null },
   }));
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<AnalysisPhase>('idle');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [extractedName, setExtractedName] = useState<string | null>(null);
 
   const handleSelect = useCallback(
     (key: ProfessionalDocumentKey, file: File) => {
@@ -345,6 +371,8 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
         toast.error(message);
         return;
       }
+      setPhase('idle');
+      setRejectionReason(null);
       setSlots((prev) => ({ ...prev, [key]: { file, status: 'enviado', error: null } }));
       triggerHaptic('light');
     },
@@ -353,6 +381,8 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
 
   const handleRemove = useCallback(
     (key: ProfessionalDocumentKey) => {
+      setPhase('idle');
+      setRejectionReason(null);
       setSlots((prev) => ({ ...prev, [key]: { file: null, status: 'pendente', error: null } }));
       triggerHaptic('light');
     },
@@ -360,11 +390,15 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
   );
 
   const bothReady = Boolean(slots.pessoal.file && slots.habilidade.file);
-  const allAnalyzing = slots.pessoal.status === 'em_analise' && slots.habilidade.status === 'em_analise';
+  const allAnalyzing = phase === 'analyzing' || (slots.pessoal.status === 'em_analise' && slots.habilidade.status === 'em_analise');
+  const approved = phase === 'approved';
+  const rejected = phase === 'rejected';
 
   const handleConfirm = useCallback(async () => {
-    if (busy || !bothReady || allAnalyzing) return;
+    if (busy || !bothReady || allAnalyzing || approved) return;
     setBusy(true);
+    setPhase('uploading');
+    setRejectionReason(null);
     try {
       const tokenFn = () => getToken({ skipCache: true });
       const submission: ProfessionalDocumentSubmission = {};
@@ -376,18 +410,86 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
       }
 
       setSlots((prev) => ({
-        pessoal: { ...prev.pessoal, status: 'em_analise' },
-        habilidade: { ...prev.habilidade, status: 'em_analise' },
+        pessoal: { ...prev.pessoal, status: 'em_analise', error: null },
+        habilidade: { ...prev.habilidade, status: 'em_analise', error: null },
+      }));
+      setPhase('analyzing');
+      triggerHaptic('medium');
+
+      const formData = new FormData();
+      if (submission.pessoal?.fileKey) formData.append('pessoalFileKey', submission.pessoal.fileKey);
+      if (submission.pessoal?.publicUrl) formData.append('pessoalPublicUrl', submission.pessoal.publicUrl);
+      if (submission.pessoal?.fileName) formData.append('pessoalFileName', submission.pessoal.fileName);
+      if (submission.habilidade?.fileKey) formData.append('habilidadeFileKey', submission.habilidade.fileKey);
+      if (submission.habilidade?.publicUrl) {
+        formData.append('habilidadePublicUrl', submission.habilidade.publicUrl);
+      }
+      if (submission.habilidade?.fileName) {
+        formData.append('habilidadeFileName', submission.habilidade.fileName);
+      }
+
+      const verifyRes = await authedFetch(
+        '/api/artist/verify-ai',
+        { method: 'POST', body: formData },
+        tokenFn
+      );
+      const result = (await verifyRes.json().catch(() => ({}))) as {
+        sucesso?: boolean;
+        isValid?: boolean;
+        status?: ArtistVerificationResult['status'];
+        role?: ArtistVerificationResult['role'];
+        extractedName?: string;
+        confidenceScore?: number;
+        erro?: string;
+      };
+
+      await onSubmit?.(submission);
+
+      if (!verifyRes.ok || !result.sucesso || result.status !== 'aprovado') {
+        const reason =
+          result.erro || 'Os documentos não passaram na verificação automática. Envie arquivos oficiais e nítidos.';
+        setPhase('rejected');
+        setRejectionReason(reason);
+        setSlots((prev) => ({
+          pessoal: { ...prev.pessoal, status: 'rejeitado', error: reason },
+          habilidade: { ...prev.habilidade, status: 'rejeitado', error: reason },
+        }));
+        triggerHaptic('heavy');
+        toast.error(reason);
+        onRejected?.(reason);
+        return;
+      }
+
+      setExtractedName(result.extractedName || null);
+      setPhase('approved');
+      setSlots((prev) => ({
+        pessoal: { ...prev.pessoal, status: 'aprovado', error: null },
+        habilidade: { ...prev.habilidade, status: 'aprovado', error: null },
       }));
       triggerHaptic('success');
-      toast.success('Documentos enviados para análise.');
-      await onSubmit?.(submission);
+      toast.success('Documentos aprovados. Sua bancada de tatuador está liberada.');
+      await onApproved?.({
+        status: 'aprovado',
+        role: result.role || 'tatuador',
+        extractedName: result.extractedName,
+        confidenceScore: result.confidenceScore,
+      });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao enviar os documentos.');
+      const message = err instanceof Error ? err.message : 'Falha ao enviar os documentos.';
+      setPhase('rejected');
+      setRejectionReason(message);
+      setSlots((prev) => ({
+        pessoal: { ...prev.pessoal, status: 'rejeitado', error: message },
+        habilidade: { ...prev.habilidade, status: 'rejeitado', error: message },
+      }));
+      toast.error(message);
+      onRejected?.(message);
     } finally {
       setBusy(false);
     }
-  }, [allAnalyzing, bothReady, busy, getToken, onSubmit, slots, triggerHaptic]);
+  }, [allAnalyzing, approved, bothReady, busy, getToken, onApproved, onRejected, onSubmit, slots, triggerHaptic]);
+
+  const controlsLocked = busy || allAnalyzing || approved;
 
   return (
     <div className="gpu-layer space-y-5">
@@ -402,51 +504,106 @@ export function ProfessionalKycPanel({ onSubmit }: ProfessionalKycPanelProps) {
         </p>
       </header>
 
-      {SLOTS.map((definition) => (
-        <DocumentSlotCard
-          key={definition.key}
-          definition={definition}
-          slot={slots[definition.key]}
-          busy={busy}
-          onSelect={(file) => handleSelect(definition.key, file)}
-          onRemove={() => handleRemove(definition.key)}
-        />
-      ))}
-
-      <button
-        type="button"
-        onClick={() => void handleConfirm()}
-        disabled={!bothReady || busy || allAnalyzing}
-        className={cn(
-          'flex min-h-12 w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
-          allAnalyzing
-            ? 'border border-sky-500/30 bg-sky-500/10 text-sky-300'
-            : 'bg-orange-500 text-black shadow-[0_0_18px_rgba(249,115,22,0.28)] hover:bg-orange-600 active:scale-95',
-          (!bothReady || busy) && !allAnalyzing && 'cursor-not-allowed bg-zinc-700 text-zinc-400 shadow-none'
-        )}
-      >
-        {busy ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-            Enviando documentos…
-          </>
-        ) : allAnalyzing ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-            Documentos em análise
-          </>
+      <AnimatePresence mode="wait" initial={false}>
+        {approved ? (
+          <motion.section
+            key="approved"
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+            className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-300">
+              <BadgeCheck className="h-6 w-6" strokeWidth={1.75} />
+            </span>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
+              APROVADO
+            </p>
+            <h4 className="mt-1 text-lg font-bold text-white">Bancada de tatuador liberada</h4>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-100/80">
+              {extractedName
+                ? `Documentos homologados para ${extractedName}. Seu papel agora é TATUADOR.`
+                : 'Documentos homologados. Seu papel agora é TATUADOR e o painel do artista está desbloqueado.'}
+            </p>
+          </motion.section>
         ) : (
-          <>
-            <Upload className="h-4 w-4" strokeWidth={2} />
-            Confirmar envio
-          </>
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="space-y-5"
+          >
+            {SLOTS.map((definition) => (
+              <DocumentSlotCard
+                key={definition.key}
+                definition={definition}
+                slot={slots[definition.key]}
+                busy={controlsLocked}
+                onSelect={(file) => handleSelect(definition.key, file)}
+                onRemove={() => handleRemove(definition.key)}
+              />
+            ))}
+
+            {rejected && rejectionReason ? (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs leading-relaxed text-red-300" role="alert">
+                {rejectionReason}
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void handleConfirm()}
+              disabled={!bothReady || controlsLocked}
+              className={cn(
+                'relative flex min-h-12 w-full items-center justify-center overflow-hidden rounded-xl py-3 text-sm font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
+                allAnalyzing
+                  ? 'border border-sky-500/30 bg-sky-500/10 text-sky-300'
+                  : 'bg-orange-500 text-black shadow-[0_0_18px_rgba(249,115,22,0.28)] hover:bg-orange-600 active:scale-95',
+                (!bothReady || busy) && !allAnalyzing && 'cursor-not-allowed bg-zinc-700 text-zinc-400 shadow-none'
+              )}
+            >
+              {allAnalyzing ? (
+                <motion.span
+                  aria-hidden
+                  className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(56,189,248,0.18),transparent)]"
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }}
+                />
+              ) : null}
+              <span className="relative z-10 flex items-center gap-2">
+                {phase === 'uploading' || (busy && phase !== 'analyzing') ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                    Enviando documentos…
+                  </>
+                ) : allAnalyzing ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-pulse" strokeWidth={2} />
+                    IA analisando documentos...
+                  </>
+                ) : rejected ? (
+                  <>
+                    <Upload className="h-4 w-4" strokeWidth={2} />
+                    Reenviar documentos
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" strokeWidth={2} />
+                    Enviar documentos
+                  </>
+                )}
+              </span>
+            </button>
+          </motion.div>
         )}
-      </button>
+      </AnimatePresence>
 
       <p className="flex items-start gap-2 text-[11px] leading-relaxed text-zinc-500">
         <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500/80" strokeWidth={1.75} />
-        A análise por IA e a promoção de papel acontecem na etapa seguinte. Nesta etapa você
-        permanece um usuário padrão.
+        A IA valida autenticidade, metadados e estrutura dos dois documentos. A aprovação promove
+        automaticamente o papel para TATUADOR.
       </p>
     </div>
   );

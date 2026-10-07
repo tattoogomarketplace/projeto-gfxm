@@ -59,6 +59,7 @@ export default function SejaTatuadorPage() {
   const { isLoaded, user } = useUser();
   const router = useRouter();
   const role = useAuthStore((s) => s.role);
+  const setRole = useAuthStore((s) => s.setRole);
   const { triggerHaptic } = useHapticFeedback();
 
   const gateRef = useRef<HTMLDivElement>(null);
@@ -335,7 +336,22 @@ export default function SejaTatuadorPage() {
                 </div>
               </div>
 
-              <ProfessionalKycPanel />
+              <ProfessionalKycPanel
+                onApproved={async (result) => {
+                  if (result.role === 'tatuador' || result.role === 'estudio') {
+                    setRole(result.role);
+                  } else {
+                    setRole('tatuador');
+                  }
+                  try {
+                    await user?.reload();
+                  } catch {
+                    // Clerk metadata pode atrasar; o banco já está promovido.
+                  }
+                  toast.success('Painel do artista desbloqueado.');
+                  router.push('/dashboard/tatuador');
+                }}
+              />
             </>
           ) : null}
         </div>
