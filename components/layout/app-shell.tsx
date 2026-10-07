@@ -18,25 +18,8 @@ import {
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
+import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
-
-const baseTabs = (primaryLabel: string): { value: AppTab; label: string }[] => [
-  { value: 'portfolio', label: primaryLabel },
-  { value: 'agendar', label: 'Agendar' },
-  { value: 'chat', label: 'Chat' },
-  { value: 'perfil', label: 'Perfil' },
-];
-
-const TABS_BY_ROLE: Record<AppRole, { value: AppTab; label: string }[]> = {
-  cliente: baseTabs(ROLE_EXPERIENCE.cliente.dashboard.primaryTab),
-  tatuador: [
-    { value: 'portfolio', label: ROLE_EXPERIENCE.tatuador.dashboard.primaryTab },
-    { value: 'agendar', label: 'Agenda' },
-    { value: 'chat', label: 'Chat' },
-    { value: 'perfil', label: 'Perfil' },
-  ],
-  estudio: baseTabs(ROLE_EXPERIENCE.estudio.dashboard.primaryTab),
-};
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -54,8 +37,30 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
   const pending = useOfflineQueue((s) => s.queue.length);
   const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
   const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
+  const { t } = useI18n();
   const tabRole = role ?? 'cliente';
   const pathnameRef = useRef(pathname);
+
+  const tabsByRole: Record<AppRole, { value: AppTab; label: string }[]> = {
+    cliente: [
+      { value: 'portfolio', label: t('nav.gallery') },
+      { value: 'agendar', label: t('nav.book') },
+      { value: 'chat', label: t('nav.chat') },
+      { value: 'perfil', label: t('nav.profile') },
+    ],
+    tatuador: [
+      { value: 'portfolio', label: ROLE_EXPERIENCE.tatuador.dashboard.primaryTab },
+      { value: 'agendar', label: t('nav.schedule') },
+      { value: 'chat', label: t('nav.chat') },
+      { value: 'perfil', label: t('nav.profile') },
+    ],
+    estudio: [
+      { value: 'portfolio', label: ROLE_EXPERIENCE.estudio.dashboard.primaryTab },
+      { value: 'agendar', label: t('nav.book') },
+      { value: 'chat', label: t('nav.chat') },
+      { value: 'perfil', label: t('nav.profile') },
+    ],
+  };
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -136,15 +141,15 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         ? 'portfolio'
         : activeTab;
   const headerTitle = isSettingsHub
-    ? 'Configurações'
+    ? t('settings.title')
     : isGaleria
-      ? 'Galeria'
+      ? t('nav.gallery')
       : selectedTab === 'perfil'
-        ? 'Perfil'
+        ? t('profile.title')
         : selectedTab === 'agendar'
-          ? 'Agenda & Sessões'
+          ? t('nav.schedule')
           : selectedTab === 'chat'
-            ? 'Chat & Orçamentos'
+            ? t('chat.title')
             : role && role !== 'cliente'
               ? ROLE_EXPERIENCE[role].dashboard.title
               : title;
@@ -190,7 +195,7 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
           <div className="flex shrink-0 items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-                {!isOnline ? 'Offline' : `${pending} na fila`}
+                {!isOnline ? t('common.offline') : `${pending} na fila`}
               </span>
             ) : null}
             {showMachineTrigger ? (
@@ -201,10 +206,10 @@ export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
         {hideTabs ? null : (
           <div className="hidden px-4 pb-3 md:block">
             <SegmentedControl
-              options={TABS_BY_ROLE[tabRole]}
+              options={tabsByRole[tabRole]}
               value={selectedTab}
               onChange={handleTabChange}
-              ariaLabel="Navegação principal"
+              ariaLabel={t('nav.home')}
             />
           </div>
         )}

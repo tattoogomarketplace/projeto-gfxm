@@ -2,6 +2,7 @@ import {
   DEFAULT_LOCALE,
   LOCALES,
   LOCALE_ALIASES,
+  LOCALE_HTML_LANG,
   LOCALE_STORAGE_KEY,
   type Locale,
   type MessageKey,
@@ -10,6 +11,7 @@ import {
 import { DICTIONARIES, EN, PT_BR } from '@/lib/i18n/dictionary';
 
 const listeners = new Set<() => void>();
+const LOCALE_CHANGE_EVENT = 'tattoogo-locale-change';
 
 let cachedLocale: Locale | null = null;
 let cachedDictionary = DICTIONARIES[DEFAULT_LOCALE];
@@ -70,13 +72,28 @@ function writeToStorage(locale: Locale) {
   }
 }
 
+function applyDocumentLang(locale: Locale) {
+  if (typeof document === 'undefined') return;
+  const html = document.documentElement;
+  const lang = LOCALE_HTML_LANG[locale] ?? locale;
+  html.lang = lang;
+  html.setAttribute('lang', lang);
+  html.dir = locale === 'ar' ? 'rtl' : 'ltr';
+}
+
 function applyLocale(locale: Locale) {
   cachedLocale = locale;
   cachedDictionary = DICTIONARIES[locale] ?? DICTIONARIES[DEFAULT_LOCALE];
+  applyDocumentLang(locale);
 }
 
 function notify() {
   listeners.forEach((listener) => listener());
+}
+
+function broadcast(locale: Locale) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(LOCALE_CHANGE_EVENT, { detail: locale }));
 }
 
 function onStorage(event: StorageEvent) {
@@ -87,9 +104,17 @@ function onStorage(event: StorageEvent) {
   notify();
 }
 
+function onLocaleChange(event: Event) {
+  const next = normalizeLocale((event as CustomEvent).detail ?? cachedLocale);
+  if (next === cachedLocale) return;
+  applyLocale(next);
+  notify();
+}
+
 function bindStorage() {
   if (storageBound || typeof window === 'undefined') return;
   window.addEventListener('storage', onStorage);
+  window.addEventListener(LOCALE_CHANGE_EVENT, onLocaleChange);
   storageBound = true;
 }
 
@@ -102,11 +127,8 @@ export function getLocale(): Locale {
 }
 
 export function getLocaleSnapshot(): Locale {
-  const next = readFromStorage();
   bindStorage();
-  if (cachedLocale === next) return cachedLocale;
-  applyLocale(next);
-  return next;
+  return cachedLocale ?? getLocale();
 }
 
 export function getLocaleServerSnapshot(): Locale {
@@ -124,10 +146,14 @@ export function subscribeLocale(listener: () => void) {
 export function setLocale(nextValue: unknown): Locale {
   const next = normalizeLocale(nextValue);
   const current = getLocale();
-  if (next === current) return current;
   applyLocale(next);
   writeToStorage(next);
-  notify();
+  if (next !== current) {
+    notify();
+    broadcast(next);
+  } else {
+    notify();
+  }
   return next;
 }
 

@@ -6,19 +6,21 @@ import { usePathname } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { cn } from '@/lib/utils';
+import type { MessageKey } from '@/lib/i18n/types';
 
 const ITEMS: Array<{
   tab: AppTab;
-  label: string;
+  labelKey: MessageKey;
   icon: typeof Home;
 }> = [
-  { tab: 'portfolio', label: 'Início', icon: Home },
-  { tab: 'agendar', label: 'Agenda', icon: CalendarDays },
-  { tab: 'chat', label: 'Chat', icon: MessageCircle },
-  { tab: 'perfil', label: 'Perfil', icon: UserRound },
+  { tab: 'portfolio', labelKey: 'nav.home', icon: Home },
+  { tab: 'agendar', labelKey: 'nav.schedule', icon: CalendarDays },
+  { tab: 'chat', labelKey: 'nav.chat', icon: MessageCircle },
+  { tab: 'perfil', labelKey: 'nav.profile', icon: UserRound },
 ];
 
 type BottomNavProps = {
@@ -56,6 +58,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const role = useAuthStore((s) => s.role);
   const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
   const conceal = hidden || shouldHideNav(pathname);
@@ -79,7 +82,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         'flex items-center px-1 py-1.5',
         conceal && 'pointer-events-none invisible'
       )}
-      aria-label="Navegação principal"
+      aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
       <ul className="grid h-11 w-full grid-cols-4">
@@ -108,7 +111,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 aria-current={active ? 'page' : undefined}
               >
                 <NavIcon icon={item.icon} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </Link>
             </li>
           );

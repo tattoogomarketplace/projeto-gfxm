@@ -4,6 +4,7 @@ import { ptBR } from "@clerk/localizations";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { I18nProvider } from "@/providers/i18n-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
@@ -122,7 +123,7 @@ export default function RootLayout({
         <head>
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem("tattoogo-theme")||"dark";var d=t==="system"?(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;var r=document.documentElement;r.classList.remove("light","dark");r.classList.add(d==="light"?"light":"dark");r.style.colorScheme=d==="light"?"light":"dark";}catch(e){}})();`,
+              __html: `(function(){try{var t=localStorage.getItem("tattoogo-theme")||"dark";var d=t==="system"?(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;var r=document.documentElement;r.classList.remove("light","dark");r.classList.add(d==="light"?"light":"dark");r.style.colorScheme=d==="light"?"light":"dark";var l=localStorage.getItem("tattoogo-locale")||"pt-BR";var a={pt:"pt-BR","pt-br":"pt-BR","pt-pt":"pt-PT",en:"en","en-us":"en",es:"es",fr:"fr",de:"de",it:"it",ja:"ja",zh:"zh","zh-cn":"zh",ko:"ko",ar:"ar",ru:"ru",hi:"hi",nl:"nl",tr:"tr",pl:"pl"};var n=String(l).replace("_","-");var k=n.toLowerCase();var loc=a[k]||a[k.split("-")[0]]||( /^(pt-BR|pt-PT|en|es|fr|de|it|ja|zh|ko|ar|ru|hi|nl|tr|pl)$/.test(n)?n:"pt-BR");var h={ "pt-BR":"pt-BR","pt-PT":"pt-PT",en:"en",es:"es",fr:"fr",de:"de",it:"it",ja:"ja",zh:"zh-CN",ko:"ko",ar:"ar",ru:"ru",hi:"hi",nl:"nl",tr:"tr",pl:"pl"};r.lang=h[loc]||loc;r.dir=loc==="ar"?"rtl":"ltr";}catch(e){}})();`,
             }}
           />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
@@ -145,6 +146,7 @@ export default function RootLayout({
         <body className="luxury-canvas app-frame fixed inset-0 mb-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pb-0 font-sans antialiased text-neutral-900 select-none dark:text-white">
           <Providers>
             <ThemeProvider>
+              <I18nProvider>
               <PwaRegister />
               <Eruda />
               <StrictSessionGuard />
@@ -156,6 +158,7 @@ export default function RootLayout({
                 </div>
               </main>
               <BottomNav />
+              </I18nProvider>
             </ThemeProvider>
           </Providers>
         </body>

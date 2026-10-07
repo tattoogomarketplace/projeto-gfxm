@@ -16,6 +16,7 @@ import { AccountManagement } from '@/components/features/account-management';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { cn } from '@/lib/utils';
 
@@ -110,6 +111,7 @@ export function ProfileSettingsDrawer() {
   const role = useAuthStore((s) => s.role);
   const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -159,7 +161,7 @@ export function ProfileSettingsDrawer() {
             animate={{ opacity: open ? 1 : 0 }}
             transition={{ duration: 0.2 }}
             className="absolute inset-0 bg-[#121212]/96 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
-            aria-label="Fechar Configurações e atividade"
+            aria-label={t('common.close')}
             onClick={closeSettingsDrawer}
             tabIndex={open ? 0 : -1}
           />
@@ -178,13 +180,13 @@ export function ProfileSettingsDrawer() {
                   id="profile-menu-title"
                   className="mt-0.5 truncate text-[17px] font-semibold tracking-tight text-white"
                 >
-                  Configurações e atividade
+                  {t('profile.settingsAndActivity')}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={closeSettingsDrawer}
-                aria-label="Fechar"
+                aria-label={t('common.close')}
                 className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl text-zinc-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-500 active:scale-[0.98]"
               >
                 <X className="h-5 w-5" strokeWidth={1.75} />
@@ -195,11 +197,11 @@ export function ProfileSettingsDrawer() {
               className="gpu-layer flex min-h-0 flex-1 transform-gpu flex-col gap-6 overflow-x-hidden overflow-y-auto overscroll-none p-4 pb-[max(10rem,env(safe-area-inset-bottom))] contain-paint backface-hidden will-change-transform [-webkit-overflow-scrolling:touch]"
               style={{ overscrollBehavior: 'none', WebkitOverflowScrolling: 'touch' }}
             >
-              <DrawerSection title="Central">
+              <DrawerSection title={t('settings.hub')}>
                 <DrawerRow
                   icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
-                  title="Configurações"
-                  subtitle="Aparência, notificações, senha e privacidade"
+                  title={t('settings.title')}
+                  subtitle={t('settings.privacySubtitle')}
                   href="/dashboard/perfil/configuracoes"
                   prefetch
                   onClick={dismiss}
