@@ -137,8 +137,8 @@ export default function DashboardOnboardingPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background p-10">
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none pb-36 [-webkit-overflow-scrolling:touch]">
+      <div className="gpu-layer relative flex h-full max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch]">
           <TattooMachineLoader label={getOnboardingLoadingMessage(role)} />
         </div>
       </div>
@@ -148,8 +148,8 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="relative mx-auto flex h-full min-h-0 w-full max-w-lg flex-col overflow-hidden text-white">
-      <div className="flex min-h-0 flex-1 flex-col space-y-8 overflow-y-auto overscroll-none px-4 pb-36 pt-4 [-webkit-overflow-scrolling:touch] sm:px-6">
+    <div className="gpu-layer relative flex h-full max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background text-white">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col space-y-8 overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
       <div className="flex flex-col items-center space-y-4 pt-4 text-center">
         <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)]">
           <Sparkles className="h-9 w-9 text-orange-500" strokeWidth={1.5} />
@@ -192,8 +192,8 @@ export default function DashboardOnboardingPage() {
       ) : null}
 
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-app p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6">
+      <div className="shrink-0 border-t border-white/10 bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-app px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6">
           <button
             type="button"
             onClick={handleAdvance}
