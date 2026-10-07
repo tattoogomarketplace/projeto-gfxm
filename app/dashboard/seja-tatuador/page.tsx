@@ -18,7 +18,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { ProfessionalKycPanel } from '@/components/features/professional-kyc-panel';
+import { ProfessionalKycPanel } from '@/components/settings/professional-kyc-panel';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -335,7 +335,7 @@ export default function SejaTatuadorPage() {
                 </div>
               </div>
 
-              <ProfessionalKycPanel status="pendente" />
+              <ProfessionalKycPanel />
             </>
           ) : null}
         </div>
