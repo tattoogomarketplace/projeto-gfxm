@@ -148,7 +148,7 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] w-full flex-col justify-between overflow-hidden bg-background text-white">
+    <div className="gpu-layer relative flex min-h-[100dvh] w-full flex-col justify-between overflow-y-auto bg-background py-6 text-white sm:py-8">
       <header className="mx-auto flex w-full max-w-lg flex-shrink-0 flex-col items-center space-y-2.5 px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-2 text-center sm:space-y-3 sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)]">
         <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
           <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
@@ -161,9 +161,9 @@ export default function DashboardOnboardingPage() {
         </p>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch]">
-        <div className="mx-auto flex min-h-full w-full max-w-lg flex-col py-4 sm:py-6">
-          <div className="my-auto flex w-full flex-col gap-6 sm:gap-8">
+      <div className="flex-1 px-4">
+        <div className="mx-auto flex w-full max-w-lg flex-col py-4 sm:py-6">
+          <div className="flex w-full flex-col gap-6 sm:gap-8">
             <div className="space-y-3 text-center">
               <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
                 {firstName ? `Olá, ${firstName}!` : 'Olá!'}
@@ -175,16 +175,14 @@ export default function DashboardOnboardingPage() {
             </div>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-              <div className="max-h-[35vh] overflow-y-auto overscroll-contain pr-1">
-                <RoleSelector
-                  value={role}
-                  onChange={(nextRole) => {
-                    setSubmitError(null);
-                    setSelectedRole(nextRole);
-                  }}
-                  lockedRole={lockedRole}
-                />
-              </div>
+              <RoleSelector
+                value={role}
+                onChange={(nextRole) => {
+                  setSubmitError(null);
+                  setSelectedRole(nextRole);
+                }}
+                lockedRole={lockedRole}
+              />
             </section>
 
             {submitError ? (
@@ -199,7 +197,7 @@ export default function DashboardOnboardingPage() {
         </div>
       </div>
 
-      <div className="flex-shrink-0 border-t border-border/20 bg-background/95 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur sm:px-6">
+      <div className="mt-8 flex-shrink-0 border-t border-border/20 bg-background/95 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)] backdrop-blur sm:px-6">
         <button
           type="button"
           onClick={handleAdvance}
