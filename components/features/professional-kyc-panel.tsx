@@ -272,7 +272,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
       {currentStatus === 'aprovado' ? (
         <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-          KYC homologado{extractedName ? ` para ${extractedName}` : ''}.
+          Documentos Pessoais homologados{extractedName ? ` para ${extractedName}` : ''}.
         </p>
       ) : (
         <>

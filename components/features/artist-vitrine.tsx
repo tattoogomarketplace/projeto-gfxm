@@ -90,7 +90,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
               {artist.kycApproved ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
                   <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
-                  KYC aprovado
+                  Documentos Pessoais aprovados
                 </span>
               ) : (
                 <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500 dark:border-neutral-700 dark:bg-[#161616] dark:text-zinc-500">

@@ -113,7 +113,7 @@ function resolveAcceptedTerms(source: ClerkProfileSource): boolean {
 type KycStatusValue = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'nao_aplicavel';
 
 /**
- * O KYC é exigência exclusiva de profissionais (tatuador/estúdio). Clientes não
+ * Os Documentos Pessoais são exigência exclusiva de profissionais (tatuador/estúdio). Clientes não
  * passam por verificação documental e recebem um status não bloqueante, evitando
  * que fiquem presos em 'pendente'.
  */
@@ -212,7 +212,7 @@ export type ReconcileIdentityByCpfParams = {
  * O CPF é globalmente único (`perfis_cpf_unique_idx`). Quando um novo login do
  * Clerk informa um CPF que já existe:
  * - conta soft-deleted: religa `clerk_id` + e-mail, reativa o registro e aplica
- *   transição de papel (ex.: cliente → tatuador) resetando KYC pendente;
+ *   transição de papel (ex.: cliente → tatuador) resetando Documentos Pessoais pendente;
  * - conta ativa com o mesmo e-mail: permite upgrade cliente → tatuador;
  * - conta ativa com e-mail divergente: `active_conflict` (CPF já em uso).
  *

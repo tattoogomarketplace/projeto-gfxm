@@ -23,7 +23,7 @@ function isUniqueConstraintError(error: unknown): boolean {
  * espelha o CNPJ no perfil para consultas de catálogo.
  *
  * Não altera `kyc_status`/`role`: esses campos são protegidos por trigger de
- * banco e o KYC documental é responsabilidade de `/api/kyc/validate-document`.
+ * banco e os Documentos Pessoais são responsabilidade de `/api/kyc/validate-document`.
  */
 export async function POST(request: Request) {
   const { userId } = await resolvePerfilSession(request);

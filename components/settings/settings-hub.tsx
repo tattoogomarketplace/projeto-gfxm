@@ -18,6 +18,7 @@ import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 import { NotificationPreferences } from '@/components/layout/notification-preferences';
 import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
+import { AccountManagement } from '@/components/features/account-management';
 import { SettingsAccordion } from '@/components/settings/settings-accordion';
 import { SettingsRow } from '@/components/settings/settings-row';
 import { LanguageSelector } from '@/components/settings/language-selector';
@@ -43,6 +44,7 @@ export const SettingsHub = memo(function SettingsHub() {
   const [openSection, setOpenSection] = useState<SectionId | null>(null);
   const [deepLinkedSection, setDeepLinkedSection] = useState<SectionId | null>(null);
   const [showTerms, setShowTerms] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
 
   useEffect(() => {
@@ -53,6 +55,10 @@ export const SettingsHub = memo(function SettingsHub() {
       setDeepLinkedSection(section);
     }
     setShowTerms(params.get('view') === 'terms');
+    if (params.get('view') === 'account') {
+      setOpenSection('privacy');
+      setShowAccount(true);
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -79,6 +85,12 @@ export const SettingsHub = memo(function SettingsHub() {
   }, [triggerHaptic]);
 
   const closeTerms = useCallback(() => setShowTerms(false), []);
+
+  const openAccount = useCallback(() => {
+    triggerHaptic('light');
+    setOpenSection('privacy');
+    setShowAccount(true);
+  }, [triggerHaptic]);
 
   return (
     <div className="gpu-layer relative flex h-[100dvh] max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
@@ -197,9 +209,10 @@ export const SettingsHub = memo(function SettingsHub() {
             icon={<UserRoundCog className="h-5 w-5" strokeWidth={1.75} />}
             title={t('settings.manageAccount')}
             subtitle={t('settings.manageAccountSubtitle')}
-            href="/dashboard/perfil"
+            onClick={openAccount}
             chevron
           />
+          {showAccount ? <AccountManagement fallbackRole={role} /> : null}
         </div>
       </SettingsAccordion>
         </div>

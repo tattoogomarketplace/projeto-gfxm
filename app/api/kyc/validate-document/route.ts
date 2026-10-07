@@ -105,10 +105,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
     }
 
-    // KYC é exigência exclusiva de profissionais (tatuador/estúdio).
+    // Documentos Pessoais são exigência exclusiva de profissionais (tatuador/estúdio).
     if (perfil.role === 'cliente') {
       return NextResponse.json(
-        { sucesso: false, erro: 'Verificação KYC não aplicável a clientes.' },
+        { sucesso: false, erro: 'Verificação de Documentos Pessoais não aplicável a clientes.' },
         { status: 409 }
       );
     }
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
     try {
       await prisma.perfil.update({ where: { id: perfil.id }, data });
     } catch (error) {
-      console.error('[kyc/validate-document] falha ao persistir status KYC', {
+      console.error('[kyc/validate-document] falha ao persistir status de Documentos Pessoais', {
         userId,
         perfilId: perfil.id,
         status,
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       status,
     });
   } catch (error) {
-    console.error('[KYC_AI_ERROR]', error);
+    console.error('[DOCUMENTOS_AI_ERROR]', error);
     return NextResponse.json(
       {
         error: 'Erro interno na análise',

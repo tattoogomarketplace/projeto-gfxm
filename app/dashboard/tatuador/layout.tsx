@@ -8,13 +8,13 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 /**
- * Barreira de KYC do painel do tatuador.
+ * Barreira de Documentos Pessoais do painel do tatuador.
  *
  * Atua em duas frentes: é a proteção primária da subárvore `/dashboard/tatuador`
  * (quando o guard global do layout pai não consegue resolver o pathname) e uma
  * segunda camada de defesa contra o bypass das abas (Portfólio, Agendar, Chat).
  * Enquanto a conta não estiver `aprovado`, os `children` nunca são renderizados
- * e o bloco de KYC assume a tela.
+ * e o bloco de Documentos Pessoais assume a tela.
  */
 export default async function TatuadorLayout({
   children,

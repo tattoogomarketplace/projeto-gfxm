@@ -740,5 +740,5 @@ GRANT EXECUTE ON FUNCTION public.aceitar_termos() TO service_role;
 -- 2. Nunca confie em IDs enviados pelo client; policies amarram tudo a auth.uid().
 -- 3. Mutex de slot (unique index) evita double-booking na janela de sinal (25%).
 -- 4. version habilita optimistic locking em updates de agendamento/perfil.
--- 5. Para produção: mover pagamentos/KYC para RPCs SECURITY DEFINER auditadas.
+-- 5. Para produção: mover pagamentos/Documentos Pessoais para RPCs SECURITY DEFINER auditadas.
 

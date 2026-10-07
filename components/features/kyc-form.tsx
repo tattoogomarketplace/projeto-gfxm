@@ -2,7 +2,7 @@
 
 import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
 
-export function KYCForm({
+export function DocumentosPessoaisForm({
   userId: _userId,
   status = 'pendente',
   onStatusChange,

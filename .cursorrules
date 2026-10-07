@@ -34,7 +34,7 @@ AUDITE OS SEGUINTES REQUISITOS OBRIGATÓRIOS:
 
 ### 4. PAINÉIS E REGRAS DE NEGÓCIO (RBAC)
 - [ ] PAINEL DO CLIENTE: O layout contém Feed de Inspiração? A função de curtir usa "Optimistic UI" (Cor Laranja imediata no click)? 
-- [ ] PAINEL DO TATUADOR: Existe a exigência de envio de documentos (KYC/Sanitária)? Há independência total da conta dele, sem submissão administrativa ao Estúdio? 
+- [ ] PAINEL DO TATUADOR: Existe a exigência de envio de documentos (Documentos Pessoais/Sanitária)? Há independência total da conta dele, sem submissão administrativa ao Estúdio? 
 - [ ] PAINEL DO ESTÚDIO: O layout permite visualizar a lista de tatuadores parceiros e a soma geral de curtidas do estúdio sem quebrar o anonimato de quem curtiu? Validação de CNPJ ativa?
 
 ### 5. CHAT E MODERAÇÃO IA

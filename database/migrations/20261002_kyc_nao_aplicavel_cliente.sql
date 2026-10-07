@@ -1,4 +1,4 @@
--- TATTOOGO MK — KYC não bloqueante para clientes (Neon / PostgreSQL 15+)
+-- TATTOOGO MK — Documentos Pessoais não bloqueante para clientes (Neon / PostgreSQL 15+)
 -- Adiciona o status 'nao_aplicavel' ao enum public.kyc_status e normaliza os
 -- perfis de clientes que ficaram presos em status exclusivos de profissionais.
 --

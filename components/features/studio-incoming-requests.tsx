@@ -123,7 +123,7 @@ export function StudioIncomingRequests() {
                   <p className="text-xs text-zinc-500">
                     {[pedido?.tatuador?.cidade, pedido?.tatuador?.estado].filter(Boolean).join(' / ') ||
                       'Local não informado'}{' '}
-                    · KYC {(pedido?.tatuador?.kyc_status ?? 'pendente').replace('_', ' ')}
+                    · Documentos Pessoais {(pedido?.tatuador?.kyc_status ?? 'pendente').replace('_', ' ')}
                   </p>
                 </div>
                 <div className="flex gap-2">

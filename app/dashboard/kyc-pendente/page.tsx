@@ -20,16 +20,16 @@ const COPY: Record<KycStatus, { title: string; body: string }> = {
     body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
   },
   rejeitado: {
-    title: 'KYC rejeitado',
+    title: 'Documentos Pessoais rejeitados',
     body: 'Houve inconsistência nos documentos. Envie um documento oficial nítido para nova análise.',
   },
   aprovado: {
-    title: 'KYC aprovado',
+    title: 'Documentos Pessoais aprovados',
     body: 'Sua bancada está liberada. Redirecionando para o painel do artista.',
   },
   nao_aplicavel: {
     title: 'Verificação não aplicável',
-    body: 'A verificação KYC é exclusiva de tatuadores e estúdios. Redirecionando para o seu painel.',
+    body: 'A verificação de Documentos Pessoais é exclusiva de tatuadores e estúdios. Redirecionando para o seu painel.',
   },
 };
 
@@ -105,7 +105,7 @@ export default function KycPendentePage() {
     return (
       <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch]">
-          <TattooMachineLoader label="Verificando KYC" />
+          <TattooMachineLoader label="Verificando Documentos Pessoais" />
         </div>
       </div>
     );

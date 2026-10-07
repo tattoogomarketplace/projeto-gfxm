@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
- * Resultado estruturado da análise de um documento de KYC.
+ * Resultado estruturado da análise de Documentos Pessoais.
  */
 export type KycDocumentAnalysis = {
   isValid: boolean;
@@ -15,7 +15,7 @@ export type KycAnalysisInput = {
   mimeType: string;
 };
 
-const KYC_PROMPT = `Você é um validador forense de documentos de identificação (KYC) de um marketplace profissional de tatuagens.
+const DOCUMENTOS_PROMPT = `Você é um validador forense de documentos de identificação (Documentos Pessoais) de um marketplace profissional de tatuagens.
 Analise o documento enviado e responda EXCLUSIVAMENTE com um objeto JSON no formato:
 { "isValid": boolean, "extractedName": string, "confidenceScore": number }
 
@@ -81,7 +81,7 @@ export async function analyzeKycDocument(
   });
 
   const result = await model.generateContent([
-    KYC_PROMPT,
+    DOCUMENTOS_PROMPT,
     { inlineData: { data: input.base64, mimeType: input.mimeType } },
   ]);
 

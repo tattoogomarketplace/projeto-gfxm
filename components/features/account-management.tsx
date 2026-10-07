@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { AlertTriangle, Building2, ChevronRight, PauseCircle, PenTool, ShieldAlert, Trash2, X } from 'lucide-react';
@@ -9,6 +10,7 @@ import { deactivateAccount, scheduleAccountDeletion } from '@/app/actions/user-l
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { clearClientSession } from '@/lib/utils/session';
+import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 
 type ConfirmKind = 'deactivate' | 'delete' | null;
 
@@ -20,8 +22,10 @@ type AccountManagementProps = {
 export function AccountManagement({ fallbackRole = null, variant = 'cards' }: AccountManagementProps) {
   const { signOut, userId } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [busy, setBusy] = useState(false);
+  const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
 
   const metadataRole = parseAppRole(
     (user?.publicMetadata as Record<string, unknown> | undefined)?.role as string | undefined
@@ -244,15 +248,23 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             Quero me tornar Tatuador
           </h2>
           <p className="text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
-            Abra sua bancada profissional, envie o KYC e publique seu portfólio. Este fluxo é exclusivo
+            Abra sua bancada profissional, envie os Documentos Pessoais e publique seu portfólio. Este fluxo é exclusivo
             para clientes.
           </p>
           <button
             type="button"
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95"
+            onClick={() => void becomeTatuador()}
+            disabled={upgrading}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
           >
-            <PenTool className="h-5 w-5" strokeWidth={1.75} />
-            Quero me tornar Tatuador
+            {upgrading ? (
+              <TattooMachineLoader compact label="Evoluindo" />
+            ) : (
+              <>
+                <PenTool className="h-5 w-5" strokeWidth={1.75} />
+                Quero me tornar Tatuador
+              </>
+            )}
           </button>
         </section>
       ) : null}
@@ -271,6 +283,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
           </p>
           <button
             type="button"
+            onClick={() => router.push('/dashboard/estudio')}
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95"
           >
             <Building2 className="h-5 w-5" strokeWidth={1.75} />

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AccountManagement } from '@/components/features/account-management';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { cn } from '@/lib/utils';
@@ -107,6 +108,7 @@ export function ProfileSettingsDrawer() {
   const open = useUiStore((s) => s.settingsDrawerOpen);
   const closeSettingsDrawer = useUiStore((s) => s.closeSettingsDrawer);
   const role = useAuthStore((s) => s.role);
+  const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
   const { triggerHaptic } = useHapticFeedback();
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -210,16 +212,19 @@ export function ProfileSettingsDrawer() {
                     <DrawerRow
                       icon={<PenTool className="h-5 w-5" strokeWidth={1.75} />}
                       title="Quero me tornar Tatuador"
-                      subtitle="Abra sua bancada, envie o KYC e publique o portfólio"
-                      href="/dashboard/kyc-pendente"
-                      onClick={dismiss}
+                      subtitle="Abra sua bancada, envie os Documentos Pessoais e publique o portfólio"
+                      disabled={upgrading}
+                      onClick={() => {
+                        dismiss();
+                        void becomeTatuador();
+                      }}
                     />
                   ) : null}
                   {role === 'tatuador' ? (
                     <>
                       <DrawerRow
                         icon={<ShieldAlert className="h-5 w-5" strokeWidth={1.75} />}
-                        title="Documentos e KYC"
+                        title="Documentos Pessoais"
                         subtitle="Envie credenciais sanitárias para liberar a bancada"
                         href="/dashboard/kyc-pendente"
                         onClick={dismiss}

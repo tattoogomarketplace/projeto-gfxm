@@ -10,7 +10,7 @@ import {
 
 export type KycStatus = KycStatusValue;
 
-export const KYC_STATUS_COPY: Record<KycStatus, { title: string; body: string }> = {
+export const DOCUMENTOS_STATUS_COPY: Record<KycStatus, { title: string; body: string }> = {
   pendente: {
     title: 'Conta em análise',
     body: 'Envie seus documentos sanitários para liberar agenda, portfólio e recebimentos. Sua conta de tatuador é independente do estúdio.',
@@ -20,25 +20,25 @@ export const KYC_STATUS_COPY: Record<KycStatus, { title: string; body: string }>
     body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
   },
   rejeitado: {
-    title: 'KYC rejeitado',
+    title: 'Documentos Pessoais rejeitados',
     body: 'Houve inconsistência nos documentos. Envie um documento oficial nítido para nova análise.',
   },
   aprovado: {
-    title: 'KYC aprovado',
+    title: 'Documentos Pessoais aprovados',
     body: 'Sua bancada está liberada.',
   },
   nao_aplicavel: {
     title: 'Verificação não aplicável',
-    body: 'A verificação KYC é exclusiva de tatuadores e estúdios.',
+    body: 'A verificação de Documentos Pessoais é exclusiva de tatuadores e estúdios.',
   },
 };
 
 function normalizeStatus(status: string): KycStatus {
-  return (status in KYC_STATUS_COPY ? status : 'pendente') as KycStatus;
+  return (status in DOCUMENTOS_STATUS_COPY ? status : 'pendente') as KycStatus;
 }
 
 /**
- * Bloqueio global de KYC para tatuadores não homologados.
+ * Bloqueio global de Documentos Pessoais para tatuadores não homologados.
  *
  * Renderizado no lugar dos `children` do painel (e sobreposto a qualquer
  * casca/navegação que o envolva), garante que o usuário não alcance abas,
@@ -49,7 +49,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
   const { signOut } = useClerk();
   const router = useRouter();
   const normalized = normalizeStatus(status);
-  const copy = KYC_STATUS_COPY[normalized];
+  const copy = DOCUMENTOS_STATUS_COPY[normalized];
 
   return (
     <div className="fixed inset-0 z-[100] flex h-[100dvh] w-full flex-col overflow-hidden bg-background text-white">

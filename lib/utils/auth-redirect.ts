@@ -28,7 +28,7 @@ export function isOnboardingPath(pathname: string | null | undefined): boolean {
 }
 
 /**
- * KYC aprovado é o único estado que libera a bancada do profissional. Todos os
+ * Documentos Pessoais aprovados são o único estado que libera a bancada do profissional. Todos os
  * demais (`pendente`, `em_analise`, `rejeitado`, `nao_aplicavel`) mantêm o
  * bloqueio global — a verificação é feita no servidor, não apenas na UI.
  */
@@ -72,7 +72,7 @@ type SyncedPerfil = {
 /**
  * Destino canônico após `/api/perfil/ensure` confirmar o registro local.
  * Onboarding incompleto permanece em `/dashboard/onboarding`; senão o painel
- * do papel (tatuador sem KYC vai para a tela de documentos).
+ * do papel (tatuador sem Documentos Pessoais vai para a tela de documentos).
  */
 export function destinationAfterProfileSync(
   perfil: SyncedPerfil,

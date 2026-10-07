@@ -15,7 +15,7 @@ import {
  * task UI to render; Clerk remains the owner of the actual verification flow.
  *
  * Organization selection is never rendered — users are sent to `/dashboard`
- * where the custom Studio / KYC onboarding lives.
+ * where the custom Studio / Documentos Pessoais onboarding lives.
  */
 export default function SessionTaskPage() {
   const params = useParams();
