@@ -148,9 +148,9 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex min-h-[100dvh] w-full flex-col items-center justify-between overflow-y-auto bg-background px-4 py-6 text-white">
+    <div className="gpu-layer relative flex min-h-[100dvh] w-full flex-col items-center justify-between overflow-y-auto bg-background px-4 py-6 pt-[calc(env(safe-area-inset-top)+2rem)] text-white sm:pt-[calc(env(safe-area-inset-top)+3rem)]">
       <div className="flex w-full max-w-md flex-1 flex-col">
-        <header className="flex w-full flex-col items-center space-y-2.5 text-center sm:space-y-3">
+        <header className="flex w-full flex-col items-center space-y-2.5 pt-8 text-center sm:space-y-3 sm:pt-12">
           <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
             <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
           </div>
@@ -173,7 +173,7 @@ export default function DashboardOnboardingPage() {
         </div>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-          <div className="max-h-[28vh] overflow-y-auto overscroll-contain pr-1">
+          <div className="max-h-[26vh] overflow-y-auto overscroll-contain pr-1">
             <RoleSelector
               value={role}
               onChange={(nextRole) => {
