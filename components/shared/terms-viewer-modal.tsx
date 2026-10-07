@@ -45,7 +45,7 @@ export function TermsViewerModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+          className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Termos de Uso e Política de Privacidade"
@@ -55,9 +55,9 @@ export function TermsViewerModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)]"
+            className="gpu-layer flex h-[85vh] max-h-[85vh] w-full max-w-2xl min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform [max-height:min(85vh,calc(100dvh-1.5rem))]"
           >
-            <div className="flex flex-shrink-0 items-center gap-3 border-b border-white/10 px-5 py-4">
+            <div className="flex flex-shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
               </span>
@@ -78,7 +78,7 @@ export function TermsViewerModal({
               <TermsContent />
             </div>
 
-            <div className="flex-shrink-0 border-t border-white/10 bg-[#121212] px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="flex-shrink-0 border-t border-white/10 bg-background/95 px-4 pt-3 pb-safe backdrop-blur-md sm:px-5">
               <button
                 type="button"
                 onClick={onClose}

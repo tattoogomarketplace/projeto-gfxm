@@ -60,6 +60,7 @@ const config: Config = {
         "safe-bottom": "env(safe-area-inset-bottom)",
         "safe-left": "env(safe-area-inset-left)",
         "safe-right": "env(safe-area-inset-right)",
+        safe: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
       },
     },
   },

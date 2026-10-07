@@ -8,6 +8,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-card: var(--card);
+  --spacing-safe: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
