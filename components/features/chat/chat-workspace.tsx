@@ -4,6 +4,7 @@ import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MessageCircle, Sparkles } from 'lucide-react';
+import { FlashNotesCarousel } from '@/components/chat/flash-notes-carousel';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -239,6 +240,15 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
       />
+
+      <div
+        className={cn(
+          'relative mb-3 shrink-0 px-1 lg:mb-4',
+          mobileThreadOpen ? 'hidden lg:block' : 'block'
+        )}
+      >
+        <FlashNotesCarousel />
+      </div>
 
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside
