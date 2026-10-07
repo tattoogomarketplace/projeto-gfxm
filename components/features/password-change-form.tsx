@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useUser } from '@clerk/nextjs';
+import { useReverification, useUser } from '@clerk/nextjs';
+import { isReverificationCancelledError } from '@clerk/nextjs/errors';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
@@ -15,6 +16,11 @@ type PasswordChangeFormProps = {
   embedded?: boolean;
 };
 
+type PasswordUpdateParams = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export const PasswordChangeForm = memo(function PasswordChangeForm({
   embedded = false,
 }: PasswordChangeFormProps) {
@@ -24,6 +30,22 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [loading, setLoading] = useState(false);
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
+
+  const updatePasswordWithVerification = useReverification(
+    useCallback(
+      ({ currentPassword: current, newPassword: next }: PasswordUpdateParams) => {
+        if (!user) {
+          throw new Error('missing-user');
+        }
+        return user.updatePassword({
+          currentPassword: current,
+          newPassword: next,
+          signOutOfOtherSessions: true,
+        });
+      },
+      [user]
+    )
+  );
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
@@ -53,21 +75,20 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
 
     setLoading(true);
     try {
-      await user.updatePassword({
-        currentPassword,
-        newPassword,
-        signOutOfOtherSessions: true,
-      });
+      await updatePasswordWithVerification({ currentPassword, newPassword });
       toast.success('Senha atualizada com sucesso.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
+      if (isReverificationCancelledError(err)) {
+        return;
+      }
       toast.fromError(err, 'password');
     } finally {
       setLoading(false);
     }
-  }, [user, currentPassword, newPassword, confirmPassword, t]);
+  }, [user, currentPassword, newPassword, confirmPassword, updatePasswordWithVerification, t]);
 
   if (!isLoaded) return null;
 
