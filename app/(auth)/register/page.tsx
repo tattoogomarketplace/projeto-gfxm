@@ -129,6 +129,17 @@ function releaseIosDateInputTouch(target: EventTarget | null) {
   });
 }
 
+function isIsoCalendarToday(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return false;
+  const today = new Date();
+  return (
+    Number(match[1]) === today.getFullYear() &&
+    Number(match[2]) === today.getMonth() + 1 &&
+    Number(match[3]) === today.getDate()
+  );
+}
+
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
@@ -592,20 +603,26 @@ export default function RegisterPage() {
                 type="date"
                 {...register('dataNascimento', {
                   onChange: (e) => {
-                    try {
-                      const raw = String(e.target.value || '');
-                      if (!raw) return;
-                      const result = calculateExactAge(raw);
-                      if (!result.isValid) {
-                        toast.error('Data de nascimento inválida.');
-                        return;
-                      }
-                      if (result.age < MIN_AGE) {
-                        toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
-                      }
-                    } finally {
-                      releaseIosDateInputTouch(e.target);
+                    const raw = String(e.target.value || '');
+                    const previous = String(dataNascimento || '');
+                    if (!raw || (!previous && isIsoCalendarToday(raw))) {
+                      if (e.target instanceof HTMLInputElement) e.target.value = '';
+                      setValue('dataNascimento', '', {
+                        shouldValidate: false,
+                        shouldDirty: false,
+                        shouldTouch: false,
+                      });
+                      return;
                     }
+                    const result = calculateExactAge(raw);
+                    if (!result.isValid) {
+                      toast.error('Data de nascimento inválida.');
+                      return;
+                    }
+                    if (result.age < MIN_AGE) {
+                      toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                    }
+                    releaseIosDateInputTouch(e.target);
                   },
                   onBlur: (e) => {
                     releaseIosDateInputTouch(e.target);
