@@ -247,7 +247,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           : null;
 
   return (
-    <GlassContainer className="space-y-5 p-5 sm:p-6">
+    <GlassContainer className="space-y-5 border-border/50 p-5 sm:p-6 dark:border-border/50">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
