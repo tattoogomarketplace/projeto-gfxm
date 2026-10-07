@@ -148,61 +148,55 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex min-h-[100dvh] w-full flex-col justify-between overflow-y-auto bg-background py-6 text-white sm:py-8">
-      <header className="mx-auto flex w-full max-w-lg flex-shrink-0 flex-col items-center space-y-2.5 px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-2 text-center sm:space-y-3 sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)]">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
-          <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
-        </div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-          {content.badge}
-        </p>
-        <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-          {content.journey.past}
-        </p>
-      </header>
-
-      <div className="flex-1 px-4">
-        <div className="mx-auto flex w-full max-w-lg flex-col py-4 sm:py-6">
-          <div className="flex w-full flex-col gap-6 sm:gap-8">
-            <div className="space-y-3 text-center">
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
-                {firstName ? `Olá, ${firstName}!` : 'Olá!'}
-              </h1>
-              <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
-              <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
-                {content.journey.future}
-              </p>
-            </div>
-
-            <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-              <RoleSelector
-                value={role}
-                onChange={(nextRole) => {
-                  setSubmitError(null);
-                  setSelectedRole(nextRole);
-                }}
-                lockedRole={lockedRole}
-              />
-            </section>
-
-            {submitError ? (
-              <div
-                role="alert"
-                className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
-              >
-                {submitError}
-              </div>
-            ) : null}
+    <div className="gpu-layer relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-y-auto bg-background p-4 text-white sm:p-6">
+      <div className="my-auto w-full max-w-md space-y-6 pb-12 pt-4 sm:space-y-8">
+        <header className="flex w-full flex-col items-center space-y-2.5 text-center sm:space-y-3">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
+            <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
           </div>
-        </div>
-      </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
+            {content.badge}
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+            {content.journey.past}
+          </p>
+        </header>
 
-      <div className="mt-8 flex-shrink-0 border-t border-border/20 bg-background/95 p-4 pb-[calc(env(safe-area-inset-bottom)+2rem)] backdrop-blur sm:px-6">
+        <div className="space-y-3 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+            {firstName ? `Olá, ${firstName}!` : 'Olá!'}
+          </h1>
+          <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
+            {content.journey.future}
+          </p>
+        </div>
+
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
+          <RoleSelector
+            value={role}
+            onChange={(nextRole) => {
+              setSubmitError(null);
+              setSelectedRole(nextRole);
+            }}
+            lockedRole={lockedRole}
+          />
+        </section>
+
+        {submitError ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+          >
+            {submitError}
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={handleAdvance}
           disabled={saving}
-          className="mx-auto flex min-h-14 w-full max-w-lg items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
+          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
           {saving ? <TattooMachineLoader compact label={content.activating} /> : content.cta}
         </button>
