@@ -2,12 +2,11 @@
 
 import { memo, useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { passwordErrorMessage } from '@/lib/error-handler';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
@@ -24,20 +23,11 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { isLoaded, user } = useUser();
-  const clerk = useClerk();
   const { t } = useI18n();
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
   const passwordEnabled = Boolean(user?.passwordEnabled);
-
-  const handleOpenClerkProfile = useCallback(() => {
-    try {
-      clerk.openUserProfile();
-    } catch {
-      toast.error(t('errors.password.openProfileFailed'));
-    }
-  }, [clerk, t]);
 
   const handleUpdate = useCallback(async () => {
     if (!user) {
@@ -68,12 +58,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
         newPassword,
         signOutOfOtherSessions: true,
       });
-      toast.success('Senha alterada com sucesso.');
+      toast.success('Senha atualizada com sucesso.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      toast.error(passwordErrorMessage(err));
+      toast.fromError(err, 'password');
     } finally {
       setLoading(false);
     }
@@ -153,14 +143,6 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           Clerk.
         </p>
       )}
-
-      <button
-        type="button"
-        onClick={handleOpenClerkProfile}
-        className="min-h-11 w-full rounded-xl border border-orange-500/40 px-6 py-2 font-semibold text-orange-400 transition-all hover:border-orange-500 hover:bg-orange-500/10 active:scale-[0.98]"
-      >
-        Abrir segurança da conta
-      </button>
     </div>
   );
 });
