@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
@@ -64,8 +64,23 @@ export default function SejaTatuadorPage() {
   const { triggerHaptic } = useHapticFeedback();
   useArtistViewportGuard();
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const gateRef = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+
+  // Garante que entrar/sair desta tela sempre parta do topo, sem herdar a
+  // rolagem de uma visita anterior (o que empurrava o cabeçalho para fora do
+  // enquadramento e "cortava" o rodapé).
+  useEffect(() => {
+    const node = containerRef.current;
+    window.scrollTo(0, 0);
+    if (node) node.scrollTop = 0;
+
+    return () => {
+      if (node) node.scrollTop = 0;
+      window.scrollTo(0, 0);
+    };
+  }, []);
 
   const metadataRole = parseAppRole(
     (user?.unsafeMetadata as Record<string, unknown> | undefined)?.role as string | undefined
@@ -154,7 +169,10 @@ export default function SejaTatuadorPage() {
   const firstName = (user?.firstName || '').trim();
 
   return (
-    <div className="artist-verification-screen relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+    <div
+      ref={containerRef}
+      className="artist-verification-screen relative flex h-[100dvh] w-full flex-col justify-between overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+4rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]"
+    >
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
           <button
             type="button"

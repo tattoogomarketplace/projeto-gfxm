@@ -19,7 +19,14 @@ import { useEffect } from 'react';
 const CANONICAL_VIEWPORT =
   'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
 
-function assertNativeViewport() {
+const EDITABLE_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
+
+function isEditingElement(element: Element | null): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+  return EDITABLE_TAGS.has(element.tagName) || element.isContentEditable;
+}
+
+function resetViewportScale(forceBlur = false) {
   if (typeof document === 'undefined') return;
 
   const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="viewport"]');
@@ -29,14 +36,14 @@ function assertNativeViewport() {
     }
   });
 
-  // Blur explícito: o Safari só colapsa o zoom de foco quando o campo perde
-  // o foco. Em navegações client-side o input pode ser removido sem blur,
-  // deixando a escala presa.
-  const active = document.activeElement;
-  if (active instanceof HTMLElement) active.blur();
+  // Só removemos o foco quando ninguém mais está editando. Sem essa guarda o
+  // reset fecharia o teclado ao pular de um campo para o outro.
+  if (forceBlur || !isEditingElement(document.activeElement)) {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+  }
 
-  // Qualquer `zoom` inline herdado do funil é removido para que nenhum
-  // artefato de escala permaneça no <html>/<body>.
+  // Nenhum artefato de escala inline deve permanecer no <html>/<body>.
   document.documentElement.style.removeProperty('zoom');
   document.body.style.removeProperty('zoom');
 
@@ -47,17 +54,20 @@ function assertNativeViewport() {
 
 export function useArtistViewportGuard() {
   useEffect(() => {
-    assertNativeViewport();
+    resetViewportScale(true);
 
     const handleFocusOut = () => {
-      window.setTimeout(assertNativeViewport, 0);
+      window.setTimeout(() => {
+        // Ignora a transição entre campos; só restaura ao encerrar a edição.
+        if (!isEditingElement(document.activeElement)) resetViewportScale();
+      }, 0);
     };
 
     window.addEventListener('focusout', handleFocusOut);
 
     return () => {
       window.removeEventListener('focusout', handleFocusOut);
-      assertNativeViewport();
+      resetViewportScale(true);
     };
   }, []);
 }
