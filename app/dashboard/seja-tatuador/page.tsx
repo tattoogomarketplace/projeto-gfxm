@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
@@ -47,6 +47,36 @@ const BENEFITS: Array<{ icon: typeof CalendarDays; title: string; description: s
   },
 ];
 
+// `useLayoutEffect` roda antes do paint para eliminar o "flash" de conteúdo
+// cortado na reentrada; no servidor caímos para `useEffect` para evitar o aviso
+// de SSR. Referência ao padrão clássico "useIsomorphicLayoutEffect".
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+/**
+ * Zera a rolagem do container da tela e de TODA a cadeia de ancestrais.
+ *
+ * Ao navegar no cliente, a AppShell (DashboardShell) é preservada pelo App
+ * Router e continua sendo o mesmo nó de DOM — inclusive com o `scrollTop`
+ * herdado da tela anterior. Como esta rota é montada por baixo dela, sem zerar
+ * a cadeia inteira o cabeçalho entra fora do enquadramento e o rodapé some
+ * ("clipping") em toda reentrada. Aqui reafirmamos o topo em cada montagem.
+ */
+function resetScrollChain(node: HTMLElement | null) {
+  if (typeof window === 'undefined') return;
+
+  window.scrollTo(0, 0);
+  const scrolling = document.scrollingElement;
+  if (scrolling) scrolling.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  let current: HTMLElement | null = node;
+  while (current) {
+    current.scrollTop = 0;
+    current = current.parentElement;
+  }
+}
+
 /**
  * Entrada segura do fluxo de verificação de artista.
  *
@@ -70,17 +100,13 @@ export default function SejaTatuadorPage() {
 
   // Garante que entrar/sair desta tela sempre parta do topo, sem herdar a
   // rolagem de uma visita anterior (o que empurrava o cabeçalho para fora do
-  // enquadramento e "cortava" o rodapé).
-  useEffect(() => {
-    const node = containerRef.current;
-    window.scrollTo(0, 0);
-    if (node) node.scrollTop = 0;
-
-    return () => {
-      if (node) node.scrollTop = 0;
-      window.scrollTo(0, 0);
-    };
-  }, []);
+  // enquadramento e "cortava" o rodapé). Dependemos de `isLoaded` porque no
+  // primeiro acesso o Clerk ainda está hidratando: só quando ele resolve é que
+  // o container real monta, e é aí que a cadeia de rolagem precisa ser zerada.
+  useIsomorphicLayoutEffect(() => {
+    resetScrollChain(containerRef.current);
+    return () => resetScrollChain(containerRef.current);
+  }, [isLoaded]);
 
   const metadataRole = parseAppRole(
     (user?.unsafeMetadata as Record<string, unknown> | undefined)?.role as string | undefined
@@ -158,7 +184,7 @@ export default function SejaTatuadorPage() {
 
   if (!isLoaded) {
     return (
-      <div className="relative flex h-[100dvh] w-full flex-col overflow-y-auto bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6">
+      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]">
         <div className="flex flex-1 items-center justify-center">
           <TattooMachineLoader label="Preparando verificação" />
         </div>
@@ -171,7 +197,7 @@ export default function SejaTatuadorPage() {
   return (
     <div
       ref={containerRef}
-      className="artist-verification-screen relative flex h-[100dvh] w-full flex-col justify-between overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+4rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]"
+      className="artist-verification-screen relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+4rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]"
     >
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
           <button
