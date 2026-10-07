@@ -634,7 +634,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="pointer-events-auto relative isolate z-20 mt-8 flex items-start gap-3">
+          <div className="pointer-events-auto relative isolate z-30 mt-16 flex items-start gap-3 p-3">
             <input
               type="checkbox"
               id="register-terms"
