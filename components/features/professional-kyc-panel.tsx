@@ -253,7 +253,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
             Verificação profissional
           </p>
-           <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Documento sanitário / identidade</h3>
+          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Verificação de Documentos Pessoais</h3>
           <p className="mt-1 text-sm leading-relaxed text-zinc-400">
             Sua conta de tatuador é independente do estúdio. Envie RG, CNH ou comprovante oficial
             para liberar agenda e recebimentos.

@@ -10,6 +10,7 @@ import {
   FileText,
   LockKeyhole,
   Palette,
+  PenTool,
   Settings,
   ShieldCheck,
   UserRoundCog,
@@ -24,6 +25,7 @@ import { SettingsRow } from '@/components/settings/settings-row';
 import { LanguageSelector } from '@/components/settings/language-selector';
 import { WorkingHoursSchedule } from '@/components/settings/working-hours-schedule';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -46,6 +48,7 @@ export const SettingsHub = memo(function SettingsHub() {
   const [showTerms, setShowTerms] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
   const { triggerHaptic } = useHapticFeedback();
+  const { becomeTatuador, busy: upgradingArtist } = useBecomeTatuador();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -91,6 +94,12 @@ export const SettingsHub = memo(function SettingsHub() {
     setOpenSection('privacy');
     setShowAccount(true);
   }, [triggerHaptic]);
+
+  const handleBecomeTatuador = useCallback(() => {
+    if (upgradingArtist) return;
+    triggerHaptic('light');
+    void becomeTatuador();
+  }, [becomeTatuador, triggerHaptic, upgradingArtist]);
 
   return (
     <div className="gpu-layer relative flex h-[100dvh] max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
@@ -198,6 +207,15 @@ export const SettingsHub = memo(function SettingsHub() {
       >
         <div className="space-y-2">
           <LanguageSelector />
+          {role === 'cliente' ? (
+            <SettingsRow
+              icon={<PenTool className="h-5 w-5" strokeWidth={1.75} />}
+              title="Quero me tornar Tatuador"
+              subtitle="Envie seus Documentos Pessoais e abra sua bancada profissional"
+              onClick={handleBecomeTatuador}
+              chevron
+            />
+          ) : null}
           <SettingsRow
             icon={<FileText className="h-5 w-5" strokeWidth={1.75} />}
             title={t('settings.terms')}

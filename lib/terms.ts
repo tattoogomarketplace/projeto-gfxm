@@ -93,7 +93,7 @@ export const TERMS_SECTIONS: TermsClause[] = [
     ],
   },
   {
-    id: 'kyc',
+    id: 'documentos-pessoais',
     title: '7. Verificação de Documentos Pessoais e Segurança Sanitária',
     paragraphs: [
       'Tatuadores e estúdios declaram e garantem que os dados fornecidos (CPF/CNPJ, documentos sanitários, alvarás, diplomas e certificações) são verdadeiros, válidos e atualizados.',

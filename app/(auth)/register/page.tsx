@@ -568,13 +568,15 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <Input
-              label="Data de Nascimento"
-              type="date"
-              {...register('dataNascimento')}
-              className="focus:ring-orange-500"
-              error={errors.dataNascimento?.message}
-            />
+            <div className="relative z-0">
+              <Input
+                label="Data de Nascimento"
+                type="date"
+                {...register('dataNascimento')}
+                className="focus:ring-orange-500"
+                error={errors.dataNascimento?.message}
+              />
+            </div>
           ) : null}
 
           {status === 'menor_18' && (
@@ -605,19 +607,26 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="mt-4 flex items-start gap-2">
+          <div className="relative z-10 mt-4 flex items-start gap-3">
             <input
               type="checkbox"
-              id="terms"
+              id="register-terms"
+              name="register-terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-orange-500"
+              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-neutral-300 accent-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60 dark:border-neutral-700"
             />
-            <p className="text-xs leading-relaxed text-zinc-400">
-              <label htmlFor="terms">Li e concordo com os </label>
+            <p className="min-w-0 flex-1 text-xs leading-relaxed text-zinc-400">
+              <label htmlFor="register-terms" className="cursor-pointer select-none">
+                Li e concordo com os{' '}
+              </label>
               <button
                 type="button"
-                onClick={() => setIsTermsModalOpen(true)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIsTermsModalOpen(true);
+                }}
                 className="font-semibold text-orange-500 underline underline-offset-2 transition-colors hover:text-orange-400"
               >
                 Termos de Uso e Privacidade
