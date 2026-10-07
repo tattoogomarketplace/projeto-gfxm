@@ -1,5 +1,7 @@
+import { BRAND_NAME } from '@/lib/i18n/brands';
+
 export const TERMS_TITLE = 'Termos de Uso e Política de Privacidade';
-export const TERMS_BRAND = 'TattooGo MK';
+export const TERMS_BRAND = BRAND_NAME;
 export const TERMS_VERSION = '3.0';
 export const TERMS_UPDATED_AT = '2026-01-01';
 

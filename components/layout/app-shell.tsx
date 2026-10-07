@@ -19,6 +19,7 @@ import {
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -26,7 +27,7 @@ interface AppShellProps {
   title?: string;
 }
 
-export function AppShell({ children, title = 'TattooGo MK' }: AppShellProps) {
+export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const activeTab = useUiStore((s) => s.activeTab);

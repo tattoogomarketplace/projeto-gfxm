@@ -18,6 +18,7 @@ import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import { cn } from '@/lib/utils';
 
 function DrawerSection({ title, children }: { title: string; children: ReactNode }) {
@@ -174,7 +175,7 @@ export function ProfileSettingsDrawer() {
             <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#121212] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
-                  TattooGo MK
+                  {BRAND_NAME}
                 </p>
                 <h2
                   id="profile-menu-title"
@@ -209,12 +210,12 @@ export function ProfileSettingsDrawer() {
               </DrawerSection>
 
               {role === 'cliente' || role === 'tatuador' ? (
-                <DrawerSection title="Evolução de Perfil">
+                <DrawerSection title={t('profile.evolution')}>
                   {role === 'cliente' ? (
                     <DrawerRow
                       icon={<PenTool className="h-5 w-5" strokeWidth={1.75} />}
-                      title="Quero me tornar Tatuador"
-                      subtitle="Abra sua bancada, envie os Documentos Pessoais e publique o portfólio"
+                      title={t('profile.becomeArtist')}
+                      subtitle={t('profile.becomeArtistSubtitle')}
                       disabled={upgrading}
                       onClick={() => {
                         dismiss();
@@ -226,15 +227,15 @@ export function ProfileSettingsDrawer() {
                     <>
                       <DrawerRow
                         icon={<ShieldAlert className="h-5 w-5" strokeWidth={1.75} />}
-                        title="Documentos Pessoais"
-                        subtitle="Envie credenciais sanitárias para liberar a bancada"
+                        title={t('profile.personalDocuments')}
+                        subtitle={t('profile.personalDocumentsSubtitle')}
                         href="/dashboard/kyc-pendente"
                         onClick={dismiss}
                       />
                       <DrawerRow
                         icon={<Building2 className="h-5 w-5" strokeWidth={1.75} />}
-                        title="Abrir/Registrar um Estúdio"
-                        subtitle="Homologue o ateliê com CNPJ e gerencie artistas"
+                        title={t('profile.openStudio')}
+                        subtitle={t('profile.openStudioSubtitle')}
                         href="/dashboard/estudio"
                         onClick={dismiss}
                       />

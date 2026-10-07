@@ -1,6 +1,11 @@
 import type { Locale, MessageDictionary, MessageKey } from '@/lib/i18n/types';
 import { ERROR_MESSAGES } from '@/lib/i18n/error-messages';
 import {
+  EXTRA_EN,
+  EXTRA_ES,
+  EXTRA_PT_BR,
+} from '@/lib/i18n/coverage';
+import {
   AR,
   DE,
   FR,
@@ -81,6 +86,7 @@ export const PT_BR: MessageDictionary = {
   'chat.selectArtistHint': 'Escolha uma conversa ou inicie um orçamento a partir da galeria de inspirações.',
   'chat.newQuote': 'Nova conversa de orçamento',
   'chat.book': 'Agendar',
+  ...EXTRA_PT_BR,
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Configurações e atividade',
@@ -155,6 +161,7 @@ export const EN: MessageDictionary = {
   'chat.selectArtistHint': 'Choose a conversation or start a quote from the inspiration gallery.',
   'chat.newQuote': 'New quote conversation',
   'chat.book': 'Book',
+  ...EXTRA_EN,
 
   'profile.title': 'Profile',
   'profile.settingsAndActivity': 'Settings and activity',
@@ -229,6 +236,7 @@ export const ES: MessageDictionary = {
   'chat.selectArtistHint': 'Elige una conversación o inicia un presupuesto desde la galería.',
   'chat.newQuote': 'Nueva conversación de presupuesto',
   'chat.book': 'Reservar',
+  ...EXTRA_ES,
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Ajustes y actividad',

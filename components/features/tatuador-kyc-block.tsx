@@ -7,6 +7,7 @@ import {
   ProfessionalKycPanel,
   type KycStatusValue,
 } from '@/components/features/professional-kyc-panel';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 export type KycStatus = KycStatusValue;
 
@@ -63,7 +64,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
             <ShieldAlert className="h-6 w-6" strokeWidth={1.75} />
           </span>
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
-            TattooGo MK
+            {BRAND_NAME}
           </p>
           <h1 className="mt-2 text-2xl font-bold">{copy.title}</h1>
           <p className="mt-3 text-sm leading-relaxed text-zinc-400">{copy.body}</p>

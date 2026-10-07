@@ -210,8 +210,8 @@ export const SettingsHub = memo(function SettingsHub() {
           {role === 'cliente' ? (
             <SettingsRow
               icon={<PenTool className="h-5 w-5" strokeWidth={1.75} />}
-              title="Quero me tornar Tatuador"
-              subtitle="Envie seus Documentos Pessoais e abra sua bancada profissional"
+              title={t('profile.becomeArtist')}
+              subtitle={t('profile.becomeArtistSubtitle')}
               onClick={handleBecomeTatuador}
               chevron
             />

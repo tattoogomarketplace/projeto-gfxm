@@ -8,6 +8,7 @@ import { Calendar, ShieldCheck, Sparkles } from 'lucide-react';
 import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { dashboardPathForRole, isOnboardingComplete, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 type KycStatus = KycStatusValue;
 
@@ -172,7 +173,7 @@ export default function KycPendentePage() {
           </section>
 
           <div className="rounded-2xl border border-border/50 bg-white/5 p-6 backdrop-blur-md sm:p-8">
-            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-amber-500">TattooGo MK</p>
+            <p className="mb-3 text-xs uppercase tracking-[0.2em] text-amber-500">{BRAND_NAME}</p>
             <h2 className="mb-3 text-2xl font-bold">{copy.title}</h2>
             <p className="mb-6 text-sm leading-relaxed text-zinc-400">{copy.body}</p>
             <div className="flex items-center gap-2 text-xs text-zinc-500">

@@ -8,6 +8,7 @@ import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 import {
   PORTFOLIO_BODY_PARTS,
   PORTFOLIO_STYLES,
@@ -103,6 +104,7 @@ function FilterOption({
 }
 
 export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: string }) {
+  const { t } = useI18n();
   return (
     <Link href={href} className={ENTRY_CARD_CLASS}>
       <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
@@ -110,10 +112,10 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold tracking-tight text-white">
-          Galeria de Inspirações
+          {t('gallery.title')}
         </span>
         <span className="mt-0.5 block text-xs text-zinc-500">
-          Explore artes de tatuadores verificados
+          {t('gallery.explore')}
         </span>
       </span>
       <ChevronRight
@@ -130,6 +132,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
   const [openCategory, setOpenCategory] = useState<FilterCategory>(null);
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!openCategory) return;
@@ -197,10 +200,10 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold tracking-tight text-white">
-            Galeria de Inspirações
+            {t('gallery.title')}
           </span>
           <span className="mt-0.5 block text-xs text-zinc-500">
-            Filtre por estilo, parte do corpo e cicatrização
+            {t('gallery.subtitle')}
           </span>
         </span>
       </div>

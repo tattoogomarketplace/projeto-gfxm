@@ -11,6 +11,7 @@ import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs'
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { bodyPartLabel, styleLabel } from '@/lib/portfolio-metadata';
 import type { ChatArtworkRef, ChatConversationDto, ChatPeer, ChatTab } from '@/lib/types/chat';
@@ -66,6 +67,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const pendingChatArtwork = useUiStore((s) => s.pendingChatArtwork);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
@@ -248,7 +250,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
     return counts;
   }, [conversationsByCategory]);
 
-  const activeCategoryLabel = activeCategory === 'BUDGET' ? 'Orçamentos' : 'Conversas';
+  const activeCategoryLabel = activeCategory === 'BUDGET' ? t('chat.quotes') : t('chat.conversations');
 
   const openBooking = useCallback(
     async (artistId: string, nextArtworkId?: string) => {
@@ -336,12 +338,10 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               <div className="px-3 py-8 text-center">
                 <Sparkles className="mx-auto h-5 w-5 text-orange-500 dark:text-orange-400" />
                 <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
-                  {activeCategory === 'BUDGET' ? 'Nenhum orçamento ainda.' : 'Nenhuma conversa ainda.'}
+                  {activeCategory === 'BUDGET' ? t('chat.emptyQuotes') : t('chat.empty')}
                 </p>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-                  {activeCategory === 'BUDGET'
-                    ? 'Peça um orçamento a partir da galeria de inspirações.'
-                    : 'Toque em Iniciar Conversa na galeria para pedir um orçamento.'}
+                  {activeCategory === 'BUDGET' ? t('chat.emptyQuotesHint') : t('chat.emptyHint')}
                 </p>
               </div>
             ) : null}
@@ -388,7 +388,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                     ) : null}
                     <span className="mt-0.5 block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
                       {item.lastMessage?.mensagem ||
-                        (activeCategory === 'BUDGET' ? 'Nova solicitação de orçamento' : 'Nova conversa')}
+                        (activeCategory === 'BUDGET' ? t('chat.newQuoteRequest') : t('chat.newConversation'))}
                     </span>
                   </button>
                 </div>
@@ -407,7 +407,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                 className="mb-3 flex min-h-11 items-center gap-2 text-sm text-neutral-500 dark:text-zinc-400 lg:hidden"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Conversas
+                {t('chat.conversations')}
               </button>
             ) : null}
             <ChatThread

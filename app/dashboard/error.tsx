@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 /**
  * Error boundary do segmento `/dashboard`.
@@ -35,7 +36,7 @@ export default function DashboardError({
         </span>
         <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-            TattooGo MK
+            {BRAND_NAME}
           </p>
           <h1 className="text-xl font-bold tracking-tight">Algo saiu do traço</h1>
           <p className="text-sm leading-relaxed text-zinc-400">

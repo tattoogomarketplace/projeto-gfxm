@@ -9,6 +9,7 @@ import {
   type TranslateVars,
 } from '@/lib/i18n/types';
 import { DICTIONARIES, EN, PT_BR } from '@/lib/i18n/dictionary';
+import { isProtectedBrand } from '@/lib/i18n/brands';
 
 const listeners = new Set<() => void>();
 const LOCALE_CHANGE_EVENT = 'tattoogo-locale-change';
@@ -46,6 +47,7 @@ export function normalizeLocale(value: unknown): Locale {
 }
 
 function interpolate(template: string, vars?: TranslateVars): string {
+  if (isProtectedBrand(template)) return template;
   if (!vars) return template;
   let out = template;
   for (const key in vars) {
@@ -160,6 +162,7 @@ export function setLocale(nextValue: unknown): Locale {
 export function t(key: MessageKey, vars?: TranslateVars, locale: Locale = getLocale()): string {
   const dictionary = locale === cachedLocale ? cachedDictionary : DICTIONARIES[locale];
   const template = dictionary[key] ?? EN[key] ?? PT_BR[key] ?? key;
+  if (isProtectedBrand(template)) return template;
   return interpolate(template, vars);
 }
 

@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 
 export function TattooMachineMenuIcon({ className }: { className?: string }) {
   return (
@@ -30,6 +31,7 @@ type TattooMachineMenuTriggerProps = {
 
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
 
   return (
     <button
@@ -38,7 +40,7 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
         triggerHaptic('light');
         onClick();
       }}
-      aria-label="Abrir Configurações e atividade"
+      aria-label={t('profile.settingsAndActivity')}
       aria-expanded={open}
       aria-haspopup="dialog"
       className={cn(

@@ -11,6 +11,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { clearClientSession } from '@/lib/utils/session';
 import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
+import { useI18n } from '@/hooks/use-i18n';
 
 type ConfirmKind = 'deactivate' | 'delete' | null;
 
@@ -26,6 +27,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [busy, setBusy] = useState(false);
   const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
+  const { t } = useI18n();
 
   const metadataRole = parseAppRole(
     (user?.publicMetadata as Record<string, unknown> | undefined)?.role as string | undefined
@@ -183,7 +185,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       <>
         <section className="space-y-2">
           <h3 className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-            Gerenciamento de Conta
+            {t('account.management')}
           </h3>
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#161616]">
             <button
@@ -197,10 +199,10 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold tracking-tight text-white">
-                  Desativar temporariamente
+                  {t('account.deactivate')}
                 </span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-zinc-500">
-                  Pause a conta e reative depois com o mesmo e-mail
+                  {t('account.deactivateSubtitle')}
                 </span>
               </span>
               <ChevronRight
@@ -219,10 +221,10 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold tracking-tight text-red-400">
-                  Excluir definitivamente
+                  {t('account.delete')}
                 </span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-zinc-500">
-                  90 dias de carência antes da exclusão permanente
+                  {t('account.deleteSubtitle')}
                 </span>
               </span>
               <ChevronRight
@@ -242,10 +244,10 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       {currentRole === 'cliente' ? (
         <section className="space-y-3 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-            Evolução de perfil
+            {t('profile.evolution')}
           </p>
           <h2 className="text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Quero me tornar Tatuador
+            {t('profile.becomeArtist')}
           </h2>
           <p className="text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
             Abra sua bancada profissional, envie os Documentos Pessoais e publique seu portfólio. Este fluxo é exclusivo
@@ -262,7 +264,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             ) : (
               <>
                 <PenTool className="h-5 w-5" strokeWidth={1.75} />
-                Quero me tornar Tatuador
+                {t('profile.becomeArtist')}
               </>
             )}
           </button>
@@ -272,10 +274,10 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       {currentRole === 'tatuador' ? (
         <section className="space-y-3 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-            Evolução de perfil
+            {t('profile.evolution')}
           </p>
           <h2 className="text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Abrir/Registrar um Estúdio
+            {t('profile.openStudio')}
           </h2>
           <p className="text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
             Homologue o ateliê com CNPJ e gerencie tatuadores parceiros. Este fluxo é exclusivo para
@@ -287,7 +289,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95"
           >
             <Building2 className="h-5 w-5" strokeWidth={1.75} />
-            Abrir/Registrar um Estúdio
+            {t('profile.openStudio')}
           </button>
         </section>
       ) : null}
@@ -299,10 +301,10 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              Gerenciamento de conta
+              {t('account.management')}
             </h2>
             <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-              Pause a conta ou agende a exclusão definitiva com 90 dias de carência.
+              {t('account.managementSubtitle')}
             </p>
           </div>
         </div>
@@ -314,7 +316,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
           className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/50 py-3 font-bold text-orange-400 transition-all hover:border-orange-500 hover:bg-orange-500/10 active:scale-95 disabled:opacity-50"
         >
           <PauseCircle className="h-5 w-5" strokeWidth={1.75} />
-          Desativar Temporariamente
+          {t('account.deactivate')}
         </button>
 
         <button
@@ -323,7 +325,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
           disabled={busy || !userId}
           className="min-h-11 w-full rounded-xl py-3 text-sm font-bold text-red-500 transition-all hover:bg-red-500/10 hover:text-red-400 active:scale-95 disabled:opacity-50"
         >
-          Excluir Definitivamente
+          {t('account.delete')}
         </button>
       </section>
 

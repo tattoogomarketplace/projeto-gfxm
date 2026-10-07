@@ -2,12 +2,14 @@
 
 import { MessageCircle, ReceiptText } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 import type { ChatTab } from '@/lib/types/chat';
+import type { MessageKey } from '@/lib/i18n/types';
 import { cn } from '@/lib/utils';
 
-const TABS: { value: ChatTab; label: string; aria: string }[] = [
-  { value: 'DIRECT', label: 'Conversas', aria: 'Conversas diretas' },
-  { value: 'BUDGET', label: 'Orçamentos', aria: 'Orçamentos e solicitações' },
+const TABS: { value: ChatTab; labelKey: MessageKey; ariaKey: MessageKey }[] = [
+  { value: 'DIRECT', labelKey: 'chat.conversations', ariaKey: 'chat.directAria' },
+  { value: 'BUDGET', labelKey: 'chat.quotes', ariaKey: 'chat.quotesAria' },
 ];
 
 type ChatCategoryTabsProps = {
@@ -19,12 +21,13 @@ type ChatCategoryTabsProps = {
 
 export function ChatCategoryTabs({ value, onChange, counts, className }: ChatCategoryTabsProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const activeIndex = Math.max(0, TABS.findIndex((tab) => tab.value === value));
 
   return (
     <div
       role="tablist"
-      aria-label="Filtrar conversas por categoria"
+      aria-label={t('chat.filterAria')}
       className={cn(
         'relative grid w-full rounded-2xl border border-neutral-200 bg-neutral-100 p-1 backdrop-blur-xl',
         'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/10 dark:bg-white/10',
@@ -51,7 +54,7 @@ export function ChatCategoryTabs({ value, onChange, counts, className }: ChatCat
             type="button"
             role="tab"
             aria-selected={selected}
-            aria-label={tab.aria}
+            aria-label={t(tab.ariaKey)}
             onClick={() => {
               if (selected) return;
               triggerHaptic('light');
@@ -67,7 +70,7 @@ export function ChatCategoryTabs({ value, onChange, counts, className }: ChatCat
             )}
           >
             <Icon className="h-4 w-4 shrink-0" strokeWidth={selected ? 2.25 : 1.9} />
-            <span>{tab.label}</span>
+            <span>{t(tab.labelKey)}</span>
             {count > 0 ? (
               <span
                 className={cn(

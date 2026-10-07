@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 function resolveRole(
   user: ReturnType<typeof useUser>['user'],
@@ -45,7 +46,7 @@ export function OnboardingLoadingScreen({
           </span>
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-              TattooGo MK
+              {BRAND_NAME}
             </p>
             <h1 className="text-xl font-bold tracking-tight text-white">{message}</h1>
             <p className="mx-auto max-w-xs text-sm leading-relaxed text-zinc-400">

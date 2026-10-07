@@ -1,4 +1,5 @@
 import { normalizeAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 /**
  * Narrativa de onboarding guiada pela regra Past-Present-Future:
@@ -48,7 +49,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
     role: 'cliente',
     label: 'Cliente',
     onboarding: {
-      badge: 'Bem-vindo ao TattooGo MK',
+      badge: `Bem-vindo ao ${BRAND_NAME}`,
       journey: {
         past: 'Toda pele guarda uma história.',
         present: 'Sua primeira ou próxima arte te espera.',
@@ -68,7 +69,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
     role: 'tatuador',
     label: 'Tatuador',
     onboarding: {
-      badge: 'Bem-vindo ao TattooGo MK',
+      badge: `Bem-vindo ao ${BRAND_NAME}`,
       journey: {
         past: 'Sua arte já fala por você.',
         present: 'Bancada montada e máquina regulada.',
@@ -88,7 +89,7 @@ export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
     role: 'estudio',
     label: 'Estúdio',
     onboarding: {
-      badge: 'Bem-vindo ao TattooGo MK',
+      badge: `Bem-vindo ao ${BRAND_NAME}`,
       journey: {
         past: 'Seu ateliê já tem nome e história.',
         present: 'Gestão master conectada.',

@@ -1,3 +1,5 @@
+export { BRAND_MARKETPLACE, BRAND_NAME, PROTECTED_BRANDS, isProtectedBrand, protectBrand } from '@/lib/i18n/brands';
+export type { ProtectedBrand } from '@/lib/i18n/brands';
 export type { Locale, MessageDictionary, MessageKey, TranslateVars } from '@/lib/i18n/types';
 export {
   DEFAULT_LOCALE,

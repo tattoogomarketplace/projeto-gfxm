@@ -10,6 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import type { Agendamento } from '@/lib/types/database';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 const EXPERIENCE = getRoleExperience('cliente').dashboard;
 
@@ -39,6 +41,7 @@ function SectionHeading({
 
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
+  const { t } = useI18n();
 
   const activeTab = useUiStore((s) => s.activeTab);
 
@@ -56,7 +59,7 @@ export default function ClienteDashboard() {
           <section key="agendar" className="screen-fade-in space-y-4 transition-opacity duration-300 ease-in-out">
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
-              title={EXPERIENCE.heading}
+              title={t('home.appointments')}
               subtitle="Acompanhe o status das suas sessões."
             />
             {isLoading ? (
@@ -120,10 +123,10 @@ export default function ClienteDashboard() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-                    TattooGo MK
+                    {BRAND_NAME}
                   </p>
                   <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-                    {EXPERIENCE.title}
+                    {t('home.journey')}
                   </h1>
                 </div>
               </div>
