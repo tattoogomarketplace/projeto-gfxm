@@ -1,6 +1,8 @@
 import type { MessageDictionary } from '@/lib/i18n/types';
+import { ERROR_MESSAGES } from '@/lib/i18n/error-messages';
 
 export const FR: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.fr,
   'nav.home': 'Accueil',
   'nav.schedule': 'Agenda',
   'nav.book': 'Réserver',
@@ -72,6 +74,7 @@ export const FR: Partial<MessageDictionary> = {
 };
 
 export const DE: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.de,
   'nav.home': 'Startseite',
   'nav.schedule': 'Termine',
   'nav.book': 'Buchen',
@@ -143,6 +146,7 @@ export const DE: Partial<MessageDictionary> = {
 };
 
 export const IT: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.it,
   'nav.home': 'Home',
   'nav.schedule': 'Agenda',
   'nav.book': 'Prenota',
@@ -213,6 +217,7 @@ export const IT: Partial<MessageDictionary> = {
 };
 
 export const JA: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.ja,
   'nav.home': 'ホーム',
   'nav.schedule': '予定',
   'nav.book': '予約',
@@ -282,6 +287,7 @@ export const JA: Partial<MessageDictionary> = {
 };
 
 export const ZH: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.zh,
   'nav.home': '首页',
   'nav.schedule': '日程',
   'nav.book': '预约',
@@ -349,6 +355,7 @@ export const ZH: Partial<MessageDictionary> = {
 };
 
 export const KO: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.ko,
   'nav.home': '홈',
   'nav.schedule': '일정',
   'nav.book': '예약',
@@ -417,6 +424,7 @@ export const KO: Partial<MessageDictionary> = {
 };
 
 export const AR: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.ar,
   'nav.home': 'الرئيسية',
   'nav.schedule': 'المواعيد',
   'nav.book': 'احجز',
@@ -486,6 +494,7 @@ export const AR: Partial<MessageDictionary> = {
 };
 
 export const RU: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.ru,
   'nav.home': 'Главная',
   'nav.schedule': 'Расписание',
   'nav.book': 'Записаться',
@@ -556,6 +565,7 @@ export const RU: Partial<MessageDictionary> = {
 };
 
 export const HI: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.hi,
   'nav.home': 'होम',
   'nav.schedule': 'शेड्यूल',
   'nav.book': 'बुक करें',
@@ -625,6 +635,7 @@ export const HI: Partial<MessageDictionary> = {
 };
 
 export const NL: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.nl,
   'nav.home': 'Home',
   'nav.schedule': 'Agenda',
   'nav.book': 'Boeken',
@@ -695,6 +706,7 @@ export const NL: Partial<MessageDictionary> = {
 };
 
 export const TR: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.tr,
   'nav.home': 'Ana Sayfa',
   'nav.schedule': 'Takvim',
   'nav.book': 'Randevu Al',
@@ -765,6 +777,7 @@ export const TR: Partial<MessageDictionary> = {
 };
 
 export const PT_PT: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES['pt-PT'],
   'nav.home': 'Início',
   'nav.schedule': 'Agenda',
   'nav.book': 'Reservar',
@@ -835,6 +848,7 @@ export const PT_PT: Partial<MessageDictionary> = {
 };
 
 export const PL: Partial<MessageDictionary> = {
+  ...ERROR_MESSAGES.pl,
   'nav.home': 'Strona główna',
   'nav.schedule': 'Harmonogram',
   'nav.book': 'Rezerwuj',

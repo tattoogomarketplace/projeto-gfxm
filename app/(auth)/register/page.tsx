@@ -27,6 +27,7 @@ import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
+import { formatAppError } from '@/lib/error-handler';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -94,21 +95,6 @@ function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
   if (age < 14) return 'menor_14';
   if (age < 18) return 'menor_18';
   return 'normal';
-}
-
-function clerkErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'errors' in err) {
-    const errors = (err as { errors?: { longMessage?: string; message?: string; code?: string }[] }).errors;
-    const first = errors?.[0];
-    const code = (first?.code || '').toLowerCase();
-    const msg = (first?.longMessage || first?.message || '').toLowerCase();
-    if (code.includes('already') || msg.includes('already registered') || msg.includes('user already')) {
-      return 'Este e-mail já está cadastrado.';
-    }
-    return first?.longMessage || first?.message || 'Erro ao realizar cadastro.';
-  }
-  if (err instanceof Error) return err.message;
-  return 'Erro ao realizar cadastro.';
 }
 
 export default function RegisterPage() {
@@ -241,7 +227,7 @@ export default function RegisterPage() {
      } catch (err) {
        console.error(err);
        setMachineFailed(true);
-       const clerkMsg = clerkErrorMessage(err);
+        const clerkMsg = formatAppError(err, 'signup');
        setValidationError((prev) => (prev && prev !== 'Erro de validação' ? prev : clerkMsg || 'Erro de validação'));
        toast.error(clerkMsg);
      } finally {

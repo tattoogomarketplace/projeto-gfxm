@@ -7,32 +7,14 @@ import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { passwordErrorMessage } from '@/lib/error-handler';
+import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
 
 type PasswordChangeFormProps = {
   embedded?: boolean;
 };
-
-function clerkErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'errors' in err) {
-    const errors = (err as { errors?: { longMessage?: string; message?: string; code?: string }[] })
-      .errors;
-    const first = errors?.[0];
-    if (first?.code === 'form_password_incorrect') {
-      return 'Senha atual incorreta.';
-    }
-    if (first?.code === 'form_password_pwned') {
-      return 'Esta senha apareceu em vazamentos. Escolha outra.';
-    }
-    if (first?.code === 'form_password_not_strong_enough') {
-      return 'A nova senha não atende aos requisitos de segurança.';
-    }
-    return first?.longMessage || first?.message || 'Falha ao alterar a senha.';
-  }
-  if (err instanceof Error) return err.message;
-  return 'Falha ao alterar a senha.';
-}
 
 export const PasswordChangeForm = memo(function PasswordChangeForm({
   embedded = false,
@@ -43,6 +25,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [loading, setLoading] = useState(false);
   const { isLoaded, user } = useUser();
   const clerk = useClerk();
+  const { t } = useI18n();
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
@@ -52,29 +35,29 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     try {
       clerk.openUserProfile();
     } catch {
-      toast.error('Não foi possível abrir o painel de segurança da conta.');
+      toast.error(t('errors.password.openProfileFailed'));
     }
-  }, [clerk]);
+  }, [clerk, t]);
 
   const handleUpdate = useCallback(async () => {
     if (!user) {
-      toast.error('Sessão expirada. Faça login novamente.');
+      toast.error(t('errors.sessionExpired'));
       return;
     }
     if (!currentPassword.trim()) {
-      toast.error('Informe sua senha atual.');
+      toast.error(t('errors.password.currentRequired'));
       return;
     }
     if (!getPasswordStrength(newPassword).isComplete) {
-      toast.error('A nova senha não atende aos requisitos de segurança.');
+      toast.error(t('errors.clerk.passwordWeak'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem.');
+      toast.error(t('errors.password.mismatch'));
       return;
     }
     if (newPassword === currentPassword) {
-      toast.error('A nova senha deve ser diferente da atual.');
+      toast.error(t('errors.password.sameAsCurrent'));
       return;
     }
 
@@ -90,11 +73,11 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      toast.error(clerkErrorMessage(err));
+      toast.error(passwordErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [user, currentPassword, newPassword, confirmPassword]);
+  }, [user, currentPassword, newPassword, confirmPassword, t]);
 
   if (!isLoaded) return null;
 
@@ -153,7 +136,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={loading}
             error={
-              confirmPassword && !passwordsMatch ? 'As senhas não coincidem' : undefined
+              confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
             }
           />
           <button

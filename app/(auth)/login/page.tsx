@@ -17,6 +17,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
+import { formatAppError } from '@/lib/error-handler';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -24,15 +25,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-
-function clerkErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'errors' in err) {
-    const errors = (err as { errors?: { longMessage?: string; message?: string }[] }).errors;
-    return errors?.[0]?.longMessage || errors?.[0]?.message || 'Erro ao autenticar.';
-  }
-  if (err instanceof Error) return err.message;
-  return 'Erro ao autenticar.';
-}
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -135,7 +127,7 @@ export default function LoginPage() {
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
       console.error('CLERK ERROR:', err);
-      toast.error(clerkErrorMessage(err) || 'Erro ao enviar o código.');
+      toast.error(formatAppError(err, 'auth'));
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +174,7 @@ export default function LoginPage() {
       setResendSeconds(60);
       toast.success('Novo código enviado.');
     } catch (err) {
-      toast.error(clerkErrorMessage(err) || 'Falha ao reenviar o código.');
+      toast.error(formatAppError(err, 'auth'));
     } finally {
       setResending(false);
     }
@@ -238,7 +230,7 @@ export default function LoginPage() {
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
-      toast.error(clerkErrorMessage(err) || 'Código inválido.');
+      toast.error(formatAppError(err, 'auth'));
       return false;
     }
   };

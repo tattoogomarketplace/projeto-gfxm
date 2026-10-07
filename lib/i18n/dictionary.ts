@@ -1,4 +1,5 @@
 import type { Locale, MessageDictionary, MessageKey } from '@/lib/i18n/types';
+import { ERROR_MESSAGES } from '@/lib/i18n/error-messages';
 import {
   AR,
   DE,
@@ -16,6 +17,7 @@ import {
 } from '@/lib/i18n/locales';
 
 export const PT_BR: MessageDictionary = {
+  ...ERROR_MESSAGES['pt-BR'],
   'nav.home': 'Início',
   'nav.schedule': 'Agenda',
   'nav.book': 'Agendar',
@@ -89,6 +91,7 @@ export const PT_BR: MessageDictionary = {
 };
 
 export const EN: MessageDictionary = {
+  ...ERROR_MESSAGES.en,
   'nav.home': 'Home',
   'nav.schedule': 'Schedule',
   'nav.book': 'Book',
@@ -162,6 +165,7 @@ export const EN: MessageDictionary = {
 };
 
 export const ES: MessageDictionary = {
+  ...ERROR_MESSAGES.es,
   'nav.home': 'Inicio',
   'nav.schedule': 'Agenda',
   'nav.book': 'Reservar',

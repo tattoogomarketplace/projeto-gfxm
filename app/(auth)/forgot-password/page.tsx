@@ -17,6 +17,7 @@ import { passwordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
+import { formatAppError } from '@/lib/error-handler';
 
 const credentialsSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -39,15 +40,6 @@ const passwordSchemaForm = z
 type CredentialsValues = z.infer<typeof credentialsSchema>;
 type PasswordValues = z.infer<typeof passwordSchemaForm>;
 type ResetStep = 'credentials' | 'otp' | 'password';
-
-function clerkErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'errors' in err) {
-    const errors = (err as { errors?: { longMessage?: string; message?: string }[] }).errors;
-    return errors?.[0]?.longMessage || errors?.[0]?.message || 'Erro ao redefinir senha.';
-  }
-  if (err instanceof Error) return err.message;
-  return 'Erro ao redefinir senha.';
-}
 
 export default function ForgotPasswordPage() {
   const { isLoaded, signIn } = useSignIn();
@@ -138,7 +130,7 @@ export default function ForgotPasswordPage() {
       setResendSeconds(60);
       toast.success('Código de 6 dígitos enviado para o seu e-mail.');
     } catch (err) {
-      toast.error(clerkErrorMessage(err) || 'Não foi possível iniciar a redefinição.');
+      toast.error(formatAppError(err, 'reset'));
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +151,7 @@ export default function ForgotPasswordPage() {
       setStep('password');
       return true;
     } catch (err) {
-      toast.error(clerkErrorMessage(err) || 'Código inválido.');
+      toast.error(formatAppError(err, 'reset'));
       return false;
     }
   };
@@ -172,7 +164,7 @@ export default function ForgotPasswordPage() {
       setResendSeconds(60);
       toast.success('Novo código enviado.');
     } catch (err) {
-      toast.error(clerkErrorMessage(err) || 'Falha ao reenviar o código.');
+      toast.error(formatAppError(err, 'reset'));
     } finally {
       setResending(false);
     }
@@ -196,7 +188,7 @@ export default function ForgotPasswordPage() {
       toast.success('Senha redefinida com sucesso.');
       setResetComplete(true);
     } catch (err) {
-      toast.error(clerkErrorMessage(err) || 'Não foi possível salvar a nova senha.');
+      toast.error(formatAppError(err, 'reset'));
       setIsLoading(false);
     }
   };

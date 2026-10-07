@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { formatAppError, type ErrorContext } from '@/lib/error-handler';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -101,12 +102,20 @@ function emit(type: ToastType, title: string, options?: ToastOptions): string {
   });
 }
 
+function resolveErrorTitle(titleOrErr: unknown, context: ErrorContext = 'generic'): string {
+  if (typeof titleOrErr === 'string' && titleOrErr.trim()) return titleOrErr;
+  return formatAppError(titleOrErr, context);
+}
+
 export const toast = {
   success: (title: string, options?: ToastOptions) => emit('success', title, options),
-  error: (title: string, options?: ToastOptions) => emit('error', title, options),
+  error: (titleOrErr: unknown, options?: ToastOptions) =>
+    emit('error', resolveErrorTitle(titleOrErr), options),
   warning: (title: string, options?: ToastOptions) => emit('warning', title, options),
   info: (title: string, options?: ToastOptions) => emit('info', title, options),
   message: (title: string, options?: ToastOptions) => emit('info', title, options),
+  fromError: (err: unknown, context: ErrorContext = 'generic', options?: ToastOptions) =>
+    emit('error', formatAppError(err, context), options),
   dismiss: (id: string) => useToastStore.getState().dismiss(id),
   clear: () => useToastStore.getState().clear(),
 };

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiErrorMessage } from '@/lib/error-handler';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || '',
@@ -22,6 +23,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('tattoogo_token');
+    }
+    if (error && typeof error === 'object') {
+      (error as { localizedMessage?: string }).localizedMessage = apiErrorMessage(error);
     }
     return Promise.reject(error);
   }
