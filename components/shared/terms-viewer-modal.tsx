@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, type MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, X } from 'lucide-react';
 import { TermsContent } from '@/components/shared/terms-content';
@@ -38,6 +38,14 @@ export function TermsViewerModal({
     };
   }, [isOpen, onClose]);
 
+  const handleClose = (event: MouseEvent<HTMLButtonElement>) => {
+    // Isola o toque do botão do restante da árvore: no mobile, o evento pode
+    // borbulhar para camadas com transform/backdrop-filter e atrasar/perder o
+    // clique. Interrompemos a propagação e fechamos imediatamente.
+    event.stopPropagation();
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -66,9 +74,9 @@ export function TermsViewerModal({
               </h2>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Fechar termos"
-                className="absolute top-4 right-4 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
+                className="pointer-events-auto absolute top-4 right-4 z-50 flex h-11 w-11 min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
               >
                 <X className="h-5 w-5" strokeWidth={1.75} />
               </button>
@@ -81,8 +89,8 @@ export function TermsViewerModal({
             <div className="flex-shrink-0 border-t border-border/50 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <button
                 type="button"
-                onClick={onClose}
-                className="min-h-11 w-full rounded-xl bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
+                onClick={handleClose}
+                className="pointer-events-auto relative z-50 min-h-11 w-full cursor-pointer touch-manipulation rounded-xl bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
               >
                 {closeLabel}
               </button>
