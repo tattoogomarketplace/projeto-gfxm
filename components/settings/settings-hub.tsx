@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   Clock3,
   FileText,
-  Languages,
   LockKeyhole,
   Palette,
   Settings,
@@ -21,9 +20,11 @@ import { PasswordChangeForm } from '@/components/features/password-change-form';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { SettingsAccordion } from '@/components/settings/settings-accordion';
 import { SettingsRow } from '@/components/settings/settings-row';
+import { LanguageSelector } from '@/components/settings/language-selector';
 import { WorkingHoursSchedule } from '@/components/settings/working-hours-schedule';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useI18n } from '@/hooks/use-i18n';
 
 type SectionId = 'appearance' | 'schedule' | 'notifications' | 'security' | 'privacy';
 
@@ -38,6 +39,7 @@ export const SettingsHub = memo(function SettingsHub() {
   const role = useAuthStore((s) => s.role);
   const isTatuador = role === 'tatuador';
   const pathname = usePathname();
+  const { t } = useI18n();
   const [openSection, setOpenSection] = useState<SectionId | null>(null);
   const [deepLinkedSection, setDeepLinkedSection] = useState<SectionId | null>(null);
   const [showTerms, setShowTerms] = useState(false);
@@ -93,7 +95,7 @@ export const SettingsHub = memo(function SettingsHub() {
             className="inline-flex min-h-11 min-w-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transform-gpu backface-hidden transition-transform transition-opacity duration-300 ease-out hover:text-orange-500 active:scale-[0.98]"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.75} />
-            Voltar ao perfil
+            {t('settings.backToProfile')}
           </Link>
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-500 dark:text-orange-400">
@@ -101,15 +103,13 @@ export const SettingsHub = memo(function SettingsHub() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-                Central
+                {t('settings.hub')}
               </p>
               <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-                Configurações
+                {t('settings.title')}
               </h1>
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
-                {isTatuador
-                  ? 'Tema, expediente, notificações, senha e privacidade.'
-                  : 'Tema, notificações, senha e privacidade.'}
+                {isTatuador ? t('settings.subtitleArtist') : t('settings.subtitleClient')}
               </p>
             </div>
           </div>
@@ -120,8 +120,8 @@ export const SettingsHub = memo(function SettingsHub() {
         <div className="space-y-4 pb-48">
       <SettingsAccordion
         id="appearance"
-        title="Aparência e Tema"
-        subtitle="Dark Luxury, claro ou automático"
+        title={t('settings.appearance')}
+        subtitle={t('settings.appearanceSubtitle')}
         icon={<Palette className="h-5 w-5" strokeWidth={1.75} />}
         open={openSection === 'appearance'}
         onToggle={handleToggle}
@@ -133,8 +133,8 @@ export const SettingsHub = memo(function SettingsHub() {
       {isTatuador ? (
         <SettingsAccordion
           id="schedule"
-          title="Gestão de Horários e Expediente"
-          subtitle="Disponibilidade semanal, intervalos e folgas"
+          title={t('settings.schedule')}
+          subtitle={t('settings.scheduleSubtitle')}
           icon={<Clock3 className="h-5 w-5" strokeWidth={1.75} />}
           open={openSection === 'schedule'}
           onToggle={handleToggle}
@@ -146,8 +146,8 @@ export const SettingsHub = memo(function SettingsHub() {
 
       <SettingsAccordion
         id="notifications"
-        title="Central de Notificações"
-        subtitle="Lembretes, chat, propostas e novidades"
+        title={t('settings.notifications')}
+        subtitle={t('settings.notificationsSubtitle')}
         icon={<BellRing className="h-5 w-5" strokeWidth={1.75} />}
         open={openSection === 'notifications'}
         onToggle={handleToggle}
@@ -158,8 +158,8 @@ export const SettingsHub = memo(function SettingsHub() {
 
       <SettingsAccordion
         id="security"
-        title="Segurança e Senha"
-        subtitle="Altere a senha e proteja a sessão"
+        title={t('settings.security')}
+        subtitle={t('settings.securitySubtitle')}
         icon={<LockKeyhole className="h-5 w-5" strokeWidth={1.75} />}
         open={openSection === 'security'}
         onToggle={handleToggle}
@@ -169,43 +169,34 @@ export const SettingsHub = memo(function SettingsHub() {
           <PasswordChangeForm embedded />
           <SettingsRow
             icon={<ShieldCheck className="h-5 w-5" strokeWidth={1.75} />}
-            title="Proteção da sessão"
-            subtitle="Autenticação Clerk com verificação em duas etapas quando exigida."
+            title={t('settings.sessionProtection')}
+            subtitle={t('settings.sessionProtectionSubtitle')}
           />
         </div>
       </SettingsAccordion>
 
       <SettingsAccordion
         id="privacy"
-        title="Privacidade e Conta"
-        subtitle="Idioma, termos e gerenciamento da conta"
+        title={t('settings.privacy')}
+        subtitle={t('settings.privacySubtitle')}
         icon={<UserRoundCog className="h-5 w-5" strokeWidth={1.75} />}
         open={openSection === 'privacy'}
         onToggle={handleToggle}
         delayMs={160}
       >
         <div className="space-y-2">
-          <SettingsRow
-            icon={<Languages className="h-5 w-5" strokeWidth={1.75} />}
-            title="Idioma"
-            subtitle="Português (Brasil)"
-            trailing={
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                Ativo
-              </span>
-            }
-          />
+          <LanguageSelector />
           <SettingsRow
             icon={<FileText className="h-5 w-5" strokeWidth={1.75} />}
-            title="Termos de Uso e Privacidade"
-            subtitle="Leia os termos vigentes da plataforma"
+            title={t('settings.terms')}
+            subtitle={t('settings.termsSubtitle')}
             onClick={openTerms}
             chevron
           />
           <SettingsRow
             icon={<UserRoundCog className="h-5 w-5" strokeWidth={1.75} />}
-            title="Gerenciar conta"
-            subtitle="Desativar, excluir ou evoluir o perfil."
+            title={t('settings.manageAccount')}
+            subtitle={t('settings.manageAccountSubtitle')}
             href="/dashboard/perfil"
             chevron
           />
