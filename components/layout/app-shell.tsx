@@ -20,6 +20,7 @@ import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -41,6 +42,24 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const { t } = useI18n();
   const tabRole = role ?? 'cliente';
   const pathnameRef = useRef(pathname);
+
+  // Detecção de rota derivada do pathname (cliente). É avaliada a cada render,
+  // então nunca fica fora de sincronia com a navegação — ao contrário de uma
+  // decisão tomada no layout do servidor, que é congelada entre navegações.
+  const isOnboarding = pathname.startsWith('/dashboard/onboarding');
+  const isAiChat = pathname.startsWith('/dashboard/ai');
+  const isKycPendente = pathname.startsWith('/dashboard/kyc-pendente');
+  const isArtistVerification = pathname.startsWith('/dashboard/seja-tatuador');
+  const isProfileSettings = pathname.startsWith('/dashboard/perfil');
+  const isDedicatedChat = pathname.startsWith('/dashboard/chat');
+  const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
+  const isGaleria = pathname.startsWith('/dashboard/galeria');
+  // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
+  // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
+  const isChromeLess =
+    isOnboarding || isAiChat || isKycPendente || isArtistVerification;
+  const hideTabs = isChromeLess;
+  const showMachineTrigger = !isChromeLess;
 
   const tabsByRole: Record<AppRole, { value: AppTab; label: string }[]> = {
     cliente: [
@@ -68,6 +87,12 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   }, [pathname]);
 
   useEffect(() => {
+    // Rotas "sem casco" (onboarding, KYC, Atelier Digital/IA e "Quero ser
+    // Tatuador") não participam da sincronização de papel da dock: elas já
+    // dirigem a própria sessão e redirecionamentos. Esse efeito só pertence ao
+    // casco padrão, exatamente como antes de o AppShell cobrir essas rotas.
+    if (isChromeLess) return;
+
     let cancelled = false;
 
     const loadRole = async () => {
@@ -106,7 +131,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     return () => {
       cancelled = true;
     };
-  }, [router, setRole]);
+  }, [isChromeLess, router, setRole]);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/chat')) {
@@ -123,15 +148,6 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     }
   }, [pathname, setActiveTab]);
 
-  const isOnboarding = pathname.startsWith('/dashboard/onboarding');
-  const isAiChat = pathname.startsWith('/dashboard/ai');
-  const isKycPendente = pathname.startsWith('/dashboard/kyc-pendente');
-  const isProfileSettings = pathname.startsWith('/dashboard/perfil');
-  const isDedicatedChat = pathname.startsWith('/dashboard/chat');
-  const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
-  const isGaleria = pathname.startsWith('/dashboard/galeria');
-  const hideTabs = isOnboarding || isAiChat || isKycPendente;
-  const showMachineTrigger = !hideTabs;
   // Na tela de perfil a aba "Perfil" é a dona do estado ativo; fora dela,
   // ignoramos um `activeTab` residual de 'perfil' para não marcar a aba errada.
   const selectedTab: AppTab = isProfileSettings
@@ -156,6 +172,15 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               : title;
 
   const handleTabChange = (tab: AppTab) => {
+    // Hard clean-up: ao trocar de aba a partir de uma sub-rota "sem casco"
+    // (ex.: "Quero ser Tatuador"), descartamos qualquer foco/transform/escala
+    // residual de viewport antes de montar o casco padrão. Sem isso, o iOS
+    // devolvia o visual viewport ampliado ao container raiz e a dock ficava
+    // desalinhada.
+    if (isChromeLess) {
+      resetViewportScale({ forceBlur: true });
+      forceViewportRecalibration();
+    }
     // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
     // papel leem `activeTab` para decidir o conteúdo e 'perfil' os deixaria
     // em branco). A aba ativa é derivada do pathname.
@@ -179,10 +204,12 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <div
       className={cn(
         'luxury-canvas relative mx-auto flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
-        hideTabs ? 'pb-[env(safe-area-inset-bottom,0px)]' : 'nav-safe-pad'
+        // Rotas "sem casco" gerenciam o próprio safe-area (eram montadas fora
+        // do AppShell antes); não adicionamos clearance de dock a elas.
+        isChromeLess ? '' : 'nav-safe-pad'
       )}
     >
-      {isAiChat ? null : (
+      {isChromeLess ? null : (
       <header
         className={cn(
             'z-40 shrink-0 border-b border-neutral-200/80 bg-[#FFFDF9] dark:border-white/10 dark:bg-[#121212]',
@@ -220,7 +247,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       <div
         className={cn(
           'relative flex min-h-0 flex-1 flex-col',
-          isAiChat || isSettingsHub || isGaleria
+          isChromeLess || isSettingsHub || isGaleria
             ? 'overflow-hidden'
             : 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}

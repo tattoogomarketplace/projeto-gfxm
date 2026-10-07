@@ -9,6 +9,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import { cn } from '@/lib/utils';
 import type { MessageKey } from '@/lib/i18n/types';
 
@@ -45,6 +46,22 @@ function shouldHideNav(pathname: string): boolean {
   );
 }
 
+/**
+ * Sub-rotas que renderizam fora do casco padrão ("sem casco"). Ao tocar numa
+ * aba global a partir delas, precisamos de um hard clean-up: desfocar campos,
+ * remover transforms/escala residuais e reafirmar o viewport 1:1 antes de
+ * montar a dock. Caso contrário o iOS mantém o visual viewport ampliado e o
+ * container raiz fica distorcido (bug do fluxo "Quero ser Tatuador").
+ */
+function isShellBypassedRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith('/dashboard/seja-tatuador') ||
+    pathname.startsWith('/dashboard/onboarding') ||
+    pathname.startsWith('/dashboard/ai') ||
+    pathname.startsWith('/dashboard/kyc-pendente')
+  );
+}
+
 const NavIcon = memo(function NavIcon({
   icon: Icon,
 }: {
@@ -68,9 +85,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const handleSelect = useCallback(
     (tab: AppTab) => {
       triggerHaptic('light');
+      // "Hard clean-up" ao sair de uma sub-rota sem casco: purga foco, zoom e
+      // transforms residuais imediatamente e agenda uma segunda passada após o
+      // iOS restaurar a escala de forma assíncrona, evitando que o sub-route
+      // estados vazem para o container raiz da aba de destino.
+      if (isShellBypassedRoute(pathname)) {
+        resetViewportScale({ forceBlur: true });
+        forceViewportRecalibration();
+        window.requestAnimationFrame(() => {
+          resetViewportScale({ forceBlur: true });
+          forceViewportRecalibration();
+        });
+      }
       if (tab !== 'perfil') setActiveTab(tab);
     },
-    [setActiveTab, triggerHaptic]
+    [pathname, setActiveTab, triggerHaptic]
   );
 
   return (

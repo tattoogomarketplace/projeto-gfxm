@@ -1,11 +1,29 @@
-import { headers } from 'next/headers';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
-import { isOnboardingPath } from '@/lib/utils/auth-redirect';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+/**
+ * Shell do painel.
+ *
+ * A estrutura raiz é intencionalmente determinística: TODAS as rotas sob
+ * `/dashboard` são embrulhadas pelo mesmo `data-viewport-root` + `AppShell`.
+ *
+ * Antes, este layout decidia a presença do shell lendo o header `x-pathname`
+ * via `headers()` e retornando um fragmento puro para as rotas "sem casco"
+ * (`onboarding`, `kyc-pendente`, `seja-tatuador`). Como um layout do App Router
+ * é preservado entre navegações de cliente do mesmo segmento, essa decisão era
+ * avaliada uma única vez e congelada pelo resto da sessão. Assim, ao entrar numa
+ * sub-rota "sem casco" e depois tocar na barra inferior (Início, Agenda, Chat),
+ * o destino era montado SEM shell/`data-viewport-root`, corrompendo o container
+ * raiz e deixando a escala de viewport residual do iOS presa.
+ *
+ * A decisão de exibir ou não o chrome agora é 100% do cliente (`AppShell`), que
+ * lê `usePathname()` e re-renderiza em cada transição — nunca sai de sincronia
+ * com a rota atual. Este arquivo não deve voltar a ramificar estrutura por
+ * pathname/headers.
+ */
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -17,21 +35,10 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = (await headers()).get('x-pathname') ?? '';
-  const isOnboarding = isOnboardingPath(pathname);
-  const isKycPendentePath =
-    pathname === '/dashboard/kyc-pendente' || pathname.startsWith('/dashboard/kyc-pendente/');
-  const isArtistVerificationPath =
-    pathname === '/dashboard/seja-tatuador' || pathname.startsWith('/dashboard/seja-tatuador/');
-
-  if (isOnboarding || isKycPendentePath || isArtistVerificationPath) {
-    return <>{children}</>;
-  }
-
   return <DashboardShell>{children}</DashboardShell>;
 }

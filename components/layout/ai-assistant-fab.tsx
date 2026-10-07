@@ -11,7 +11,15 @@ export function AiAssistantFab() {
   const router = useRouter();
   const constraintsRef = useRef<HTMLDivElement>(null);
 
-  if (pathname.startsWith('/dashboard/onboarding') || pathname.startsWith('/dashboard/ai')) {
+  // O FAB só pertence ao casco padrão. Nas rotas "sem casco" (onboarding, IA,
+  // KYC e "Quero ser Tatuador") ele não era renderizado antes de o AppShell
+  // passar a cobri-las, então mantemos o mesmo comportamento.
+  if (
+    pathname.startsWith('/dashboard/onboarding') ||
+    pathname.startsWith('/dashboard/ai') ||
+    pathname.startsWith('/dashboard/kyc-pendente') ||
+    pathname.startsWith('/dashboard/seja-tatuador')
+  ) {
     return null;
   }
 
