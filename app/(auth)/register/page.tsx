@@ -119,6 +119,16 @@ function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
   return 'normal';
 }
 
+function releaseIosDateInputTouch(target: EventTarget | null) {
+  if (!(target instanceof HTMLInputElement)) return;
+  target.blur();
+  const previousPointerEvents = target.style.pointerEvents;
+  target.style.pointerEvents = 'none';
+  requestAnimationFrame(() => {
+    target.style.pointerEvents = previousPointerEvents;
+  });
+}
+
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
@@ -576,31 +586,32 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <div className="relative isolate z-0 mb-6">
+            <div className="pointer-events-auto relative isolate z-0 mb-6">
               <Input
                 label="Data de Nascimento"
                 type="date"
                 {...register('dataNascimento', {
                   onChange: (e) => {
-                    const raw = String(e.target.value || '');
-                    if (!raw) return;
-                    const result = calculateExactAge(raw);
-                    if (!result.isValid) {
-                      toast.error('Data de nascimento inválida.');
-                      return;
-                    }
-                    if (result.age < MIN_AGE) {
-                      toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                    try {
+                      const raw = String(e.target.value || '');
+                      if (!raw) return;
+                      const result = calculateExactAge(raw);
+                      if (!result.isValid) {
+                        toast.error('Data de nascimento inválida.');
+                        return;
+                      }
+                      if (result.age < MIN_AGE) {
+                        toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                      }
+                    } finally {
+                      releaseIosDateInputTouch(e.target);
                     }
                   },
+                  onBlur: (e) => {
+                    releaseIosDateInputTouch(e.target);
+                  },
                 })}
-                onBlur={(event) => {
-                  // iOS mantém a camada expandida do date picker ativa após a
-                  // seleção; o blur explícito colapsa a hitbox para que ela não
-                  // avance sobre o checkbox de termos abaixo.
-                  event.currentTarget.blur();
-                }}
-                className="focus:ring-orange-500"
+                className="pointer-events-auto focus:ring-orange-500"
                 error={errors.dataNascimento?.message}
               />
             </div>
