@@ -3,15 +3,16 @@
 import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MessageCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, MessageCircle, ReceiptText, Sparkles } from 'lucide-react';
 import { FlashNotesCarousel } from '@/components/chat/flash-notes-carousel';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
+import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { bodyPartLabel, styleLabel } from '@/lib/portfolio-metadata';
-import type { ChatArtworkRef, ChatConversationDto, ChatPeer } from '@/lib/types/chat';
+import type { ChatArtworkRef, ChatConversationDto, ChatPeer, ChatTab } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
 type ContextPayload = {
@@ -36,8 +37,15 @@ type ChatQuery = {
 
 const EMPTY_QUERY: ChatQuery = { artistId: null, artworkId: null, bookingIntent: false };
 
-let conversationCache: { actorId: string | null; conversas: ChatConversationDto[] } | null = null;
-let conversationsInflight: Promise<void> | null = null;
+type CategoryConversations = Record<ChatTab, ChatConversationDto[]>;
+
+const EMPTY_CATEGORY_DATA: CategoryConversations = { DIRECT: [], BUDGET: [] };
+
+let conversationCache: {
+  actorId: string | null;
+  byCategory: CategoryConversations;
+} | null = null;
+const categoryInflight: Partial<Record<ChatTab, Promise<void>>> = {};
 
 function ChatQuerySync({ onChange }: { onChange: (next: ChatQuery) => void }) {
   const searchParams = useSearchParams();
@@ -79,10 +87,16 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const bookingIntent = query.bookingIntent;
 
   const [actorId, setActorId] = useState<string | null>(() => conversationCache?.actorId ?? null);
-  const [conversations, setConversations] = useState<ChatConversationDto[]>(
-    () => conversationCache?.conversas ?? []
+  const [activeCategory, setActiveCategory] = useState<ChatTab>('DIRECT');
+  const [conversationsByCategory, setConversationsByCategory] = useState<CategoryConversations>(
+    () => conversationCache?.byCategory ?? EMPTY_CATEGORY_DATA
   );
-  const [loadingList, setLoadingList] = useState(() => conversationCache === null);
+  const [loadedCategories, setLoadedCategories] = useState<Record<ChatTab, boolean>>(() =>
+    conversationCache ? { DIRECT: true, BUDGET: true } : { DIRECT: false, BUDGET: false }
+  );
+
+  const conversations = conversationsByCategory[activeCategory];
+  const loadingList = !loadedCategories[activeCategory];
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
@@ -93,40 +107,47 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const selectedId = selectedPeer?.id ?? artistIdParam ?? pendingChatPeer;
   const artworkId = artwork?.id ?? artworkIdParam ?? pendingChatArtwork ?? undefined;
 
-  const loadConversations = useCallback(async () => {
-    if (!conversationsInflight) {
+  const loadCategory = useCallback(async (category: ChatTab) => {
+    const inflight = categoryInflight[category];
+    if (inflight) {
+      await inflight;
+    } else {
       const request = (async () => {
         try {
           const headers = await authHeaders(getTokenRef.current);
-          const res = await fetch('/api/chat/conversas', { headers, cache: 'no-store' });
+          const res = await fetch(`/api/chat/conversas?categoria=${category}`, {
+            headers,
+            cache: 'no-store',
+          });
           if (!res.ok) return;
           const json = (await res.json().catch(() => ({}))) as {
             actorId?: string;
             conversas?: ChatConversationDto[];
           };
+          const previous = conversationCache?.byCategory ?? EMPTY_CATEGORY_DATA;
           conversationCache = {
             actorId: json.actorId ?? conversationCache?.actorId ?? null,
-            conversas: json.conversas ?? [],
+            byCategory: { ...previous, [category]: json.conversas ?? [] },
           };
         } catch {
           return;
         }
       })();
-      conversationsInflight = request;
+      categoryInflight[category] = request;
       try {
         await request;
       } finally {
-        if (conversationsInflight === request) conversationsInflight = null;
+        if (categoryInflight[category] === request) delete categoryInflight[category];
       }
-    } else {
-      await conversationsInflight;
     }
 
     if (conversationCache) {
       setActorId(conversationCache.actorId);
-      setConversations(conversationCache.conversas);
+      setConversationsByCategory(conversationCache.byCategory);
     }
-    setLoadingList(false);
+    setLoadedCategories((current) =>
+      current[category] ? current : { ...current, [category]: true }
+    );
   }, []);
 
   const loadContext = useCallback(async (artistId: string, nextArtworkId?: string | null) => {
@@ -159,10 +180,10 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
 
   useEffect(() => {
     const run = async () => {
-      await loadConversations();
+      await Promise.all([loadCategory('DIRECT'), loadCategory('BUDGET')]);
     };
     void run();
-  }, [loadConversations]);
+  }, [loadCategory]);
 
   useEffect(() => {
     const targetArtist = artistIdParam || pendingChatPeer;
@@ -207,6 +228,27 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
     router.replace(`/dashboard/chat?artistId=${encodeURIComponent(peer.id)}`, { scroll: false });
   };
 
+  const handleCategoryChange = useCallback(
+    (category: ChatTab) => {
+      setActiveCategory(category);
+      void loadCategory(category);
+    },
+    [loadCategory]
+  );
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<ChatTab, number> = { DIRECT: 0, BUDGET: 0 };
+    (Object.keys(conversationsByCategory) as ChatTab[]).forEach((key) => {
+      counts[key] = conversationsByCategory[key].reduce(
+        (total, item) => total + (item.unreadCount || 0),
+        0
+      );
+    });
+    return counts;
+  }, [conversationsByCategory]);
+
+  const activeCategoryLabel = activeCategory === 'BUDGET' ? 'Orçamentos' : 'Conversas';
+
   const openBooking = useCallback(
     async (artistId: string, nextArtworkId?: string) => {
       triggerHaptic('medium');
@@ -241,13 +283,17 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
       />
 
-      <div
-        className={cn(
-          'relative mb-3 shrink-0 px-1 lg:mb-4',
-          mobileThreadOpen ? 'hidden lg:block' : 'block'
-        )}
-      >
-        <FlashNotesCarousel />
+      <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
+        <div className="relative mb-3 px-1 lg:mb-4">
+          <FlashNotesCarousel />
+        </div>
+        <div className="relative mb-3 px-1 lg:mb-4">
+          <ChatCategoryTabs
+            value={activeCategory}
+            onChange={handleCategoryChange}
+            counts={categoryCounts}
+          />
+        </div>
       </div>
 
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
@@ -258,8 +304,14 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
           )}
         >
           <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
-            <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-            <p className="text-sm font-semibold text-neutral-900 dark:text-white">Conversas</p>
+            {activeCategory === 'BUDGET' ? (
+              <ReceiptText className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+            ) : (
+              <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+            )}
+            <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+              {activeCategoryLabel}
+            </p>
           </div>
           <div className="relative min-h-0 flex-1 overflow-y-auto p-2">
             <div
@@ -282,9 +334,13 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
             {!loadingList && orderedConversations.length === 0 ? (
               <div className="px-3 py-8 text-center">
                 <Sparkles className="mx-auto h-5 w-5 text-orange-500 dark:text-orange-400" />
-                <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">Nenhuma conversa ainda.</p>
+                <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
+                  {activeCategory === 'BUDGET' ? 'Nenhum orçamento ainda.' : 'Nenhuma conversa ainda.'}
+                </p>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-                  Toque em Iniciar Conversa na galeria para pedir um orçamento.
+                  {activeCategory === 'BUDGET'
+                    ? 'Peça um orçamento a partir da galeria de inspirações.'
+                    : 'Toque em Iniciar Conversa na galeria para pedir um orçamento.'}
                 </p>
               </div>
             ) : null}
@@ -325,7 +381,8 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                       ) : null}
                     </span>
                     <span className="mt-0.5 block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
-                      {item.lastMessage?.mensagem || 'Nova conversa de orçamento'}
+                      {item.lastMessage?.mensagem ||
+                        (activeCategory === 'BUDGET' ? 'Nova solicitação de orçamento' : 'Nova conversa')}
                     </span>
                   </button>
                 </div>
