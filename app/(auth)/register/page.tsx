@@ -586,7 +586,7 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <div className="pointer-events-auto relative isolate z-0 mb-6">
+            <div className="pointer-events-auto relative isolate z-0">
               <Input
                 label="Data de Nascimento"
                 type="date"
@@ -611,6 +611,13 @@ export default function RegisterPage() {
                     releaseIosDateInputTouch(e.target);
                   },
                 })}
+                onTouchEnd={(event) => {
+                  const el = event.currentTarget;
+                  requestAnimationFrame(() => {
+                    if (document.activeElement === el) return;
+                    releaseIosDateInputTouch(el);
+                  });
+                }}
                 className="pointer-events-auto focus:ring-orange-500"
                 error={errors.dataNascimento?.message}
               />
@@ -645,7 +652,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="pointer-events-auto relative isolate z-30 mt-16 flex items-start gap-3 p-3">
+          <div className="relative z-30 mt-4 flex items-start gap-3 pointer-events-auto touch-manipulation">
             <input
               type="checkbox"
               id="register-terms"
