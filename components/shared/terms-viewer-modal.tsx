@@ -53,7 +53,7 @@ export function TermsViewerModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:p-4"
+          className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] flex-col justify-end overflow-hidden bg-black/90 p-3 backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:justify-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Termos de Uso e Política de Privacidade"
@@ -63,9 +63,9 @@ export function TermsViewerModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="gpu-layer flex min-h-0 w-[95vw] max-h-[80dvh] flex-col overflow-hidden p-0 rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-w-md"
+            className="gpu-layer flex min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] p-0 shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-h-[80vh] sm:max-w-md"
           >
-            <div className="relative flex flex-shrink-0 items-center gap-3 border-b border-border/50 p-4 pr-14">
+            <div className="relative flex shrink-0 items-center gap-3 border-b border-border/50 p-4 pr-14">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
               </span>
@@ -82,11 +82,11 @@ export function TermsViewerModal({
               </button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-none p-4 [-webkit-overflow-scrolling:touch]">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch]">
               <TermsContent />
             </div>
 
-            <div className="flex-shrink-0 border-t border-border/50 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="shrink-0 border-t border-border/50 bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <button
                 type="button"
                 onClick={handleClose}
