@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +17,7 @@ interface SegmentedControlProps<T extends string> {
   ariaLabel?: string;
 }
 
-export function SegmentedControl<T extends string>({
+function SegmentedControlBase<T extends string>({
   options,
   value,
   onChange,
@@ -75,3 +76,5 @@ export function SegmentedControl<T extends string>({
     </div>
   );
 }
+
+export const SegmentedControl = memo(SegmentedControlBase) as typeof SegmentedControlBase;

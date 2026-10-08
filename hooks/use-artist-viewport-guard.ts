@@ -37,7 +37,7 @@ export function useArtistViewportGuard() {
       }, IOS_ZOOM_SETTLE_MS);
     };
 
-    window.addEventListener('focusout', handleFocusOut);
+    window.addEventListener('focusout', handleFocusOut, { passive: true });
 
     return () => {
       if (settleTimer !== null) window.clearTimeout(settleTimer);

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface TattooMachineLoaderProps {
@@ -9,7 +10,7 @@ interface TattooMachineLoaderProps {
   failed?: boolean;
 }
 
-export function TattooMachineLoader({
+function TattooMachineLoaderBase({
   label = 'Tatuando...',
   className,
   compact = false,
@@ -77,3 +78,5 @@ export function TattooMachineLoader({
     </div>
   );
 }
+
+export const TattooMachineLoader = memo(TattooMachineLoaderBase);

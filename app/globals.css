@@ -126,6 +126,28 @@
     min-height: var(--touch-min);
   }
 
+  /*
+   * TOUCH RESPONSE HARDENING (Apple-tier)
+   *
+   * `touch-action: manipulation` remove o atraso de ~300ms de duplo-toque e
+   * mantém pan/pinch fluidos; `-webkit-tap-highlight-color` zera o flash cinza
+   * do WebView. Aplicado a todos os alvos interativos para resposta instantânea
+   * e consistente entre iOS e Android, sem custo de layout.
+   */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  label,
+  summary,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]) {
     cursor: pointer;
@@ -352,6 +374,22 @@
     -webkit-backface-visibility: hidden;
     will-change: transform, opacity;
     contain: paint;
+  }
+
+  /*
+   * Isola um elemento em uma camada composta pela GPU apenas durante a
+   * animação/transição de entrada. Deve ser usado em containeres de rota e
+   * bottom sheets em movimento — não de forma permanente — para evitar
+   * inchaço de memória de GPU.
+   */
+  .composite-layer {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .composite-animating {
+    will-change: opacity, transform;
   }
 
   .screen-fade-in {

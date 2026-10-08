@@ -1,8 +1,9 @@
 'use client';
 
+import { memo } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 
-export function AppShellBoundary({
+function AppShellBoundaryBase({
   children,
   title,
 }: {
@@ -11,3 +12,5 @@ export function AppShellBoundary({
 }) {
   return <AppShell title={title}>{children}</AppShell>;
 }
+
+export const AppShellBoundary = memo(AppShellBoundaryBase);

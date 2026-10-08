@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
@@ -61,26 +61,32 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const hideTabs = isChromeLess;
   const showMachineTrigger = !isChromeLess;
 
-  const tabsByRole: Record<AppRole, { value: AppTab; label: string }[]> = {
-    cliente: [
-      { value: 'portfolio', label: t('nav.gallery') },
-      { value: 'agendar', label: t('nav.book') },
-      { value: 'chat', label: t('nav.chat') },
-      { value: 'perfil', label: t('nav.profile') },
-    ],
-    tatuador: [
-      { value: 'portfolio', label: t(ROLE_EXPERIENCE.tatuador.dashboard.primaryTab) },
-      { value: 'agendar', label: t('nav.schedule') },
-      { value: 'chat', label: t('nav.chat') },
-      { value: 'perfil', label: t('nav.profile') },
-    ],
-    estudio: [
-      { value: 'portfolio', label: t(ROLE_EXPERIENCE.estudio.dashboard.primaryTab) },
-      { value: 'agendar', label: t('nav.book') },
-      { value: 'chat', label: t('nav.chat') },
-      { value: 'perfil', label: t('nav.profile') },
-    ],
-  };
+  // Estável entre renders (só muda com o locale): evita recriar o array de
+  // opções a cada render e mantém a referência limpa para o SegmentedControl
+  // memoizado, deixando o header fora do ciclo de re-render das telas.
+  const tabsByRole: Record<AppRole, { value: AppTab; label: string }[]> = useMemo(
+    () => ({
+      cliente: [
+        { value: 'portfolio', label: t('nav.gallery') },
+        { value: 'agendar', label: t('nav.book') },
+        { value: 'chat', label: t('nav.chat') },
+        { value: 'perfil', label: t('nav.profile') },
+      ],
+      tatuador: [
+        { value: 'portfolio', label: t(ROLE_EXPERIENCE.tatuador.dashboard.primaryTab) },
+        { value: 'agendar', label: t('nav.schedule') },
+        { value: 'chat', label: t('nav.chat') },
+        { value: 'perfil', label: t('nav.profile') },
+      ],
+      estudio: [
+        { value: 'portfolio', label: t(ROLE_EXPERIENCE.estudio.dashboard.primaryTab) },
+        { value: 'agendar', label: t('nav.book') },
+        { value: 'chat', label: t('nav.chat') },
+        { value: 'perfil', label: t('nav.profile') },
+      ],
+    }),
+    [t]
+  );
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -171,34 +177,37 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               ? t(ROLE_EXPERIENCE[role].dashboard.title)
               : title;
 
-  const handleTabChange = (tab: AppTab) => {
-    // Hard clean-up: ao trocar de aba a partir de uma sub-rota "sem casco"
-    // (ex.: "Quero ser Tatuador"), descartamos qualquer foco/transform/escala
-    // residual de viewport antes de montar o casco padrão. Sem isso, o iOS
-    // devolvia o visual viewport ampliado ao container raiz e a dock ficava
-    // desalinhada.
-    if (isChromeLess) {
-      resetViewportScale({ forceBlur: true });
-      forceViewportRecalibration();
-    }
-    // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
-    // papel leem `activeTab` para decidir o conteúdo e 'perfil' os deixaria
-    // em branco). A aba ativa é derivada do pathname.
-    if (tab === 'perfil') {
-      router.push('/dashboard/perfil');
-      return;
-    }
-    if (tab === 'chat') {
-      setActiveTab('chat');
-      router.push('/dashboard/chat');
-      return;
-    }
-    setActiveTab(tab);
-    const params = new URLSearchParams(window.location.search);
-    params.set('tab', tab);
-    const targetPath = dashboardPathForRole(tabRole);
-    router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
-  };
+  const handleTabChange = useCallback(
+    (tab: AppTab) => {
+      // Hard clean-up: ao trocar de aba a partir de uma sub-rota "sem casco"
+      // (ex.: "Quero ser Tatuador"), descartamos qualquer foco/transform/escala
+      // residual de viewport antes de montar o casco padrão. Sem isso, o iOS
+      // devolvia o visual viewport ampliado ao container raiz e a dock ficava
+      // desalinhada.
+      if (isChromeLess) {
+        resetViewportScale({ forceBlur: true });
+        forceViewportRecalibration();
+      }
+      // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
+      // papel leem `activeTab` para decidir o conteúdo e 'perfil' os deixaria
+      // em branco). A aba ativa é derivada do pathname.
+      if (tab === 'perfil') {
+        router.push('/dashboard/perfil');
+        return;
+      }
+      if (tab === 'chat') {
+        setActiveTab('chat');
+        router.push('/dashboard/chat');
+        return;
+      }
+      setActiveTab(tab);
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', tab);
+      const targetPath = dashboardPathForRole(tabRole);
+      router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
+    },
+    [isChromeLess, router, setActiveTab, tabRole]
+  );
 
   return (
     <div

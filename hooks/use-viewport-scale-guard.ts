@@ -34,6 +34,7 @@ export function useViewportScaleGuard() {
   const pathname = usePathname();
   const settleTimer = useRef<number | null>(null);
   const rafId = useRef<number | null>(null);
+  const viewportRaf = useRef<number | null>(null);
 
   const clearScheduled = () => {
     if (settleTimer.current !== null) {
@@ -43,6 +44,10 @@ export function useViewportScaleGuard() {
     if (rafId.current !== null) {
       window.cancelAnimationFrame(rafId.current);
       rafId.current = null;
+    }
+    if (viewportRaf.current !== null) {
+      window.cancelAnimationFrame(viewportRaf.current);
+      viewportRaf.current = null;
     }
   };
 
@@ -68,14 +73,23 @@ export function useViewportScaleGuard() {
   useEffect(() => {
     let focusTimer: number | null = null;
 
-    const handleViewportChange = () => {
-      const vv = window.visualViewport;
-      if (!vv) return;
-      // Enquanto o usuário digita, a escala fica sob controle do sistema e não
-      // lutamos contra o teclado; só corrigimos escalas residuais fora de edição.
-      if (Math.abs(vv.scale - 1) > 0.01 && !isEditingElement(document.activeElement)) {
-        enforceReset(false);
-      }
+    // O visual viewport dispara `scroll`/`resize` em alta frequência durante o
+    // gesto de zoom e o movimento do teclado. Coalescemos cada rajada em um
+    // único frame (rAF) para não executar leituras/escritas de layout a cada
+    // evento e eliminar o layout thrashing no main thread.
+    const scheduleViewportCheck = () => {
+      if (viewportRaf.current !== null) return;
+      viewportRaf.current = window.requestAnimationFrame(() => {
+        viewportRaf.current = null;
+        const vv = window.visualViewport;
+        if (!vv) return;
+        // Enquanto o usuário digita, a escala fica sob controle do sistema e
+        // não lutamos contra o teclado; só corrigimos escalas residuais fora
+        // de edição.
+        if (Math.abs(vv.scale - 1) > 0.01 && !isEditingElement(document.activeElement)) {
+          enforceReset(false);
+        }
+      });
     };
 
     const handleFocusOut = () => {
@@ -89,19 +103,19 @@ export function useViewportScaleGuard() {
 
     const handlePageShow = () => enforceReset(true);
 
-    window.addEventListener('focusout', handleFocusOut);
-    window.addEventListener('pageshow', handlePageShow);
-    window.addEventListener('orientationchange', handleViewportChange);
-    window.visualViewport?.addEventListener('resize', handleViewportChange);
-    window.visualViewport?.addEventListener('scroll', handleViewportChange);
+    window.addEventListener('focusout', handleFocusOut, { passive: true });
+    window.addEventListener('pageshow', handlePageShow, { passive: true });
+    window.addEventListener('orientationchange', scheduleViewportCheck, { passive: true });
+    window.visualViewport?.addEventListener('resize', scheduleViewportCheck, { passive: true });
+    window.visualViewport?.addEventListener('scroll', scheduleViewportCheck, { passive: true });
 
     return () => {
       if (focusTimer !== null) window.clearTimeout(focusTimer);
       window.removeEventListener('focusout', handleFocusOut);
       window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('orientationchange', handleViewportChange);
-      window.visualViewport?.removeEventListener('resize', handleViewportChange);
-      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+      window.removeEventListener('orientationchange', scheduleViewportCheck);
+      window.visualViewport?.removeEventListener('resize', scheduleViewportCheck);
+      window.visualViewport?.removeEventListener('scroll', scheduleViewportCheck);
       clearScheduled();
     };
   }, []);

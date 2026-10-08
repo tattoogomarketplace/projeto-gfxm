@@ -1,12 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function AiAssistantFab() {
+function AiAssistantFabBase() {
   const pathname = usePathname();
   const router = useRouter();
   const constraintsRef = useRef<HTMLDivElement>(null);
@@ -59,3 +59,5 @@ export function AiAssistantFab() {
     </div>
   );
 }
+
+export const AiAssistantFab = memo(AiAssistantFabBase);

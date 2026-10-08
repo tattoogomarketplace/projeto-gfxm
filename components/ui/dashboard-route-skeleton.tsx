@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function DashboardRouteSkeleton() {
+function DashboardRouteSkeletonBase() {
   return (
     <div
       className="flex min-h-0 flex-1 flex-col gap-3 pt-5 transform-gpu backface-hidden"
@@ -13,3 +14,5 @@ export function DashboardRouteSkeleton() {
     </div>
   );
 }
+
+export const DashboardRouteSkeleton = memo(DashboardRouteSkeletonBase);

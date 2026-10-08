@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { MessageCircle, ReceiptText } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -19,7 +20,7 @@ type ChatCategoryTabsProps = {
   className?: string;
 };
 
-export function ChatCategoryTabs({ value, onChange, counts, className }: ChatCategoryTabsProps) {
+function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCategoryTabsProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
   const activeIndex = Math.max(0, TABS.findIndex((tab) => tab.value === value));
@@ -89,3 +90,5 @@ export function ChatCategoryTabs({ value, onChange, counts, className }: ChatCat
     </div>
   );
 }
+
+export const ChatCategoryTabs = memo(ChatCategoryTabsBase);

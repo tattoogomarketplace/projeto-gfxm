@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
@@ -9,7 +10,7 @@ type AuthScreenProps = {
   className?: string;
 };
 
-export function AuthScreen({ children, className }: AuthScreenProps) {
+function AuthScreenBase({ children, className }: AuthScreenProps) {
   return (
     <div
       className={cn(
@@ -31,7 +32,7 @@ type AuthBridgeOverlayProps = {
   label?: string;
 };
 
-export function AuthBridgeOverlay({
+function AuthBridgeOverlayBase({
   visible,
   label = 'Carregando',
 }: AuthBridgeOverlayProps) {
@@ -48,3 +49,6 @@ export function AuthBridgeOverlay({
     </div>
   );
 }
+
+export const AuthScreen = memo(AuthScreenBase);
+export const AuthBridgeOverlay = memo(AuthBridgeOverlayBase);
