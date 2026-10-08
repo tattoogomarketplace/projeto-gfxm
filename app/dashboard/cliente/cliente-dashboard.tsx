@@ -1,19 +1,13 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { CalendarDays, Sparkles } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
-import { GlassContainer } from '@/components/ui/glass-container';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
-import { GaleriaEntryCard } from '@/components/features/galeria-inspiracoes';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getRoleExperience } from '@/lib/content/role-experience';
-import type { Agendamento } from '@/lib/types/database';
+import { HomeDiscover } from '@/components/features/home-discover';
+import { AgendaTimeline } from '@/components/features/agenda-timeline';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
-import { BRAND_NAME } from '@/lib/i18n/brands';
-
-const EXPERIENCE = getRoleExperience('cliente').dashboard;
 
 function SectionHeading({
   icon,
@@ -56,48 +50,13 @@ export default function ClienteDashboard() {
 
       <div className="relative space-y-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="space-y-4">
+          <section key="agendar" className="space-y-5">
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
-              title={t('home.appointments')}
-              subtitle={t('dashboard.appointmentsStatus')}
+              title={t('agenda.timeline')}
+              subtitle={t('agenda.timelineSubtitle')}
             />
-            {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-24 w-full rounded-xl" />
-                <Skeleton className="h-24 w-full rounded-xl" />
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {agendamentos?.map((ag: Agendamento, index: number) => (
-                  <GlassContainer
-                    key={ag?.id ?? `agendamento-${index}`}
-                    className="group relative min-h-11 overflow-hidden p-4 transition-colors hover:border-orange-500/40"
-                  >
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-orange-500/0 blur-2xl transition-colors group-hover:bg-orange-500/15"
-                    />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">
-                        {ag?.status ?? 'pendente'}
-                      </span>
-                      <span className="text-xs font-medium text-neutral-500 dark:text-zinc-400">
-                        {ag?.data_hora ? new Date(ag.data_hora).toLocaleDateString() : '—'}
-                      </span>
-                    </div>
-                  </GlassContainer>
-                ))}
-                {(!agendamentos || agendamentos.length === 0) && (
-                  <GlassContainer className="border-dashed p-6 text-center">
-                    <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('dashboard.emptyAppointments')}</p>
-                    <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-                      {t('dashboard.emptyAppointmentsHint')}
-                    </p>
-                  </GlassContainer>
-                )}
-              </div>
-            )}
+            <AgendaTimeline agendamentos={agendamentos} isLoading={isLoading} />
           </section>
         )}
 
@@ -111,28 +70,8 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'portfolio' && (
-          <section key="portfolio" className="space-y-4">
-            <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/20 blur-2xl md:block"
-              />
-              <div className="relative flex items-center gap-3">
-                <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-white text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.3)] dark:bg-[#1a1a1a] dark:text-orange-400">
-                  <Sparkles className="h-5 w-5" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-                    {BRAND_NAME}
-                  </p>
-                  <h1 className="mt-0.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
-                    {t('home.journey')}
-                  </h1>
-                </div>
-              </div>
-              <p className="relative mt-3 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">{t(EXPERIENCE.subtitle)}</p>
-            </header>
-            <GaleriaEntryCard href="/dashboard/galeria" />
+          <section key="portfolio">
+            <HomeDiscover />
           </section>
         )}
       </div>

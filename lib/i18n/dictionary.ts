@@ -4,6 +4,9 @@ import {
   EXTRA_EN,
   EXTRA_ES,
   EXTRA_PT_BR,
+  DISCOVERY_EN,
+  DISCOVERY_ES,
+  DISCOVERY_PT_BR,
 } from '@/lib/i18n/coverage';
 import { VIEW_MESSAGES } from '@/lib/i18n/views';
 import {
@@ -92,6 +95,7 @@ export const PT_BR: MessageDictionary = {
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Configurações e atividade',
+  ...DISCOVERY_PT_BR,
 
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Sair da Conta',
@@ -168,6 +172,7 @@ export const EN: MessageDictionary = {
 
   'profile.title': 'Profile',
   'profile.settingsAndActivity': 'Settings and activity',
+  ...DISCOVERY_EN,
 
   'auth.signIn': 'Sign in',
   'auth.signOut': 'Sign Out',
@@ -244,6 +249,7 @@ export const ES: MessageDictionary = {
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Ajustes y actividad',
+  ...DISCOVERY_ES,
 
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Cerrar sesión',

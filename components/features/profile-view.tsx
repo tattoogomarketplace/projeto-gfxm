@@ -1,18 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
-import { LogOut } from 'lucide-react';
+import { BadgeCheck, CalendarCheck, Heart, LogOut, Sparkles } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
+import type { MessageKey } from '@/lib/i18n/types';
 
 export function ProfileView() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -22,6 +25,7 @@ export function ProfileView() {
   const cachedUser = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
+  const { data: agendamentos } = useAgendamentos();
 
   const clerkEmail = user?.primaryEmailAddress?.emailAddress ?? '';
   const clerkNome = user
@@ -110,6 +114,16 @@ export function ProfileView() {
     }
   };
 
+  const stats = useMemo(() => {
+    const list = agendamentos ?? [];
+    const completed = list.filter((item) => item?.status === 'concluido').length;
+    return [
+      { key: 'profile.sessions' as MessageKey, value: list.length, Icon: CalendarCheck },
+      { key: 'profile.completed' as MessageKey, value: completed, Icon: Sparkles },
+      { key: 'profile.favorites' as MessageKey, value: 0, Icon: Heart },
+    ];
+  }, [agendamentos]);
+
   if (!hydrated && (!isLoaded || !isSignedIn || !user)) {
     return (
       <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 [-webkit-overflow-scrolling:touch] transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
@@ -125,30 +139,74 @@ export function ProfileView() {
 
   return (
     <div className="gpu-layer flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-neutral-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/18 blur-2xl md:block"
-        />
-        <div className="relative flex items-start gap-4">
-          <span className="flex h-16 w-16 min-h-16 min-w-16 items-center justify-center rounded-full border border-orange-500/40 bg-white text-2xl font-semibold uppercase text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.28)] dark:bg-[#1a1a1a] dark:text-orange-400">
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              {displayNome || t('profile.title')}
-            </h1>
-            <p className="mt-1 truncate text-sm text-neutral-500 dark:text-zinc-400">{maskEmail(displayEmail)}</p>
+      <header className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/5 dark:bg-white/[0.02] dark:shadow-none">
+        <div className="relative h-28 w-full overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[radial-gradient(140%_120%_at_15%_0%,rgba(255,255,255,0.35),transparent_55%)]"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-10 -top-14 h-44 w-44 rounded-full bg-white/25 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-8 top-2 h-36 w-36 rounded-full bg-emerald-400/30 blur-3xl"
+          />
+          <p className="absolute left-5 top-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/90">
+            {BRAND_NAME}
+          </p>
+        </div>
+
+        <div className="relative px-5 pb-5">
+          <div className="flex items-end gap-4">
+            <span className="-mt-12 flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-3xl border-4 border-white bg-neutral-900 text-2xl font-semibold uppercase text-orange-400 shadow-[0_8px_24px_rgba(0,0,0,0.35)] dark:border-[#0a0a0a]">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1 pb-1">
+              <div className="flex items-center gap-1.5">
+                <h1 className="truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+                  {displayNome || t('profile.title')}
+                </h1>
+                <BadgeCheck className="h-5 w-5 min-h-5 min-w-5 shrink-0 text-emerald-500" strokeWidth={2} />
+              </div>
+              <p className="mt-1 truncate text-sm text-neutral-500 dark:text-zinc-400">
+                {maskEmail(displayEmail)}
+              </p>
+            </div>
           </div>
         </div>
       </header>
+
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {stats.map(({ key, value, Icon }) => (
+          <div
+            key={key}
+            className="glass-chrome rounded-2xl border border-black/[0.06] px-2 py-4 text-center dark:border-white/10"
+          >
+            <span className="mx-auto flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+              <Icon className="h-4 w-4" strokeWidth={1.9} />
+            </span>
+            <p className="mt-2 text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+              {value}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
+              {t(key)}
+            </p>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-auto pt-8">
         <button
           type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 py-3 text-sm font-semibold text-orange-500 transform-gpu backface-hidden transition-transform transition-opacity duration-300 ease-out hover:border-orange-500 hover:bg-orange-500/10 active:scale-[0.98] disabled:opacity-50 dark:text-orange-400"
+          className="apple-press flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 py-3 text-sm font-semibold text-orange-500 transition-transform transition-opacity duration-300 ease-out hover:border-orange-500 hover:bg-orange-500/10 disabled:opacity-50 dark:text-orange-400"
         >
           {loggingOut ? (
             <TattooMachineLoader compact label="Saindo" />

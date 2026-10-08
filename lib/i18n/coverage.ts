@@ -523,3 +523,122 @@ export const EXTRA_PL: ExtraMessages = {
   'home.journey': 'Moja podróż',
   'home.appointments': 'Twoje wizyty',
 };
+
+/**
+ * Vocabulário das telas reconstruídas (Home Discover, Agenda Timeline e
+ * Estatísticas de Perfil). Mantido fora de `ExtraMessages` para não exigir
+ * tradução dos 16 idiomas; os locales não primários herdam o inglês via
+ * `withFallback`, enquanto PT-BR, EN e ES fornecem as três vozes oficiais.
+ */
+export type DiscoveryMessages = Pick<
+  MessageDictionary,
+  | 'home.discover'
+  | 'home.discoverSubtitle'
+  | 'home.featuredArtists'
+  | 'home.trendingStyles'
+  | 'home.viewAll'
+  | 'home.noFeaturedArtists'
+  | 'home.noTrendingStyles'
+  | 'agenda.timeline'
+  | 'agenda.timelineSubtitle'
+  | 'agenda.stagesPreview'
+  | 'agenda.statusAwaitingPayment'
+  | 'agenda.statusConfirmed'
+  | 'agenda.statusActionRequired'
+  | 'agenda.statusActionRequiredHint'
+  | 'agenda.statusCompleted'
+  | 'agenda.statusCanceled'
+  | 'agenda.empty'
+  | 'agenda.emptyHint'
+  | 'agenda.session'
+  | 'agenda.signDocument'
+  | 'agenda.payDeposit'
+  | 'profile.sessions'
+  | 'profile.favorites'
+  | 'profile.completed'
+  | 'profile.verified'
+>;
+
+export const DISCOVERY_PT_BR: DiscoveryMessages = {
+  'home.discover': 'Descubra sua próxima arte',
+  'home.discoverSubtitle': 'Artistas verificados, estilos em alta e inspirações para a sua pele.',
+  'home.featuredArtists': 'Artistas em Destaque',
+  'home.trendingStyles': 'Estilos em Alta',
+  'home.viewAll': 'Ver tudo',
+  'home.noFeaturedArtists': 'Novos artistas chegam em breve.',
+  'home.noTrendingStyles': 'Explore os estilos direto na galeria.',
+  'agenda.timeline': 'Linha do Tempo',
+  'agenda.timelineSubtitle': 'Acompanhe cada etapa da sua sessão.',
+  'agenda.stagesPreview': 'Etapas da sua jornada',
+  'agenda.statusAwaitingPayment': 'Aguardando Pagamento',
+  'agenda.statusConfirmed': 'Confirmado',
+  'agenda.statusActionRequired': 'Ação Necessária',
+  'agenda.statusActionRequiredHint': 'Assine o documento para liberar a sessão.',
+  'agenda.statusCompleted': 'Concluído',
+  'agenda.statusCanceled': 'Cancelado',
+  'agenda.empty': 'Nenhuma sessão na linha do tempo.',
+  'agenda.emptyHint': 'Sua próxima obra-prima começa com um agendamento.',
+  'agenda.session': 'Sessão de tatuagem',
+  'agenda.signDocument': 'Assinar Documento',
+  'agenda.payDeposit': 'Pagar sinal',
+  'profile.sessions': 'Sessões',
+  'profile.favorites': 'Favoritos',
+  'profile.completed': 'Concluídas',
+  'profile.verified': 'Perfil verificado',
+};
+
+export const DISCOVERY_EN: DiscoveryMessages = {
+  'home.discover': 'Discover your next piece',
+  'home.discoverSubtitle': 'Verified artists, trending styles and inspiration for your skin.',
+  'home.featuredArtists': 'Featured Artists',
+  'home.trendingStyles': 'Trending Styles',
+  'home.viewAll': 'View all',
+  'home.noFeaturedArtists': 'New artists are coming soon.',
+  'home.noTrendingStyles': 'Explore styles right in the gallery.',
+  'agenda.timeline': 'Timeline',
+  'agenda.timelineSubtitle': 'Track every step of your session.',
+  'agenda.stagesPreview': 'Your journey stages',
+  'agenda.statusAwaitingPayment': 'Awaiting Payment',
+  'agenda.statusConfirmed': 'Confirmed',
+  'agenda.statusActionRequired': 'Action Required',
+  'agenda.statusActionRequiredHint': 'Sign the document to unlock the session.',
+  'agenda.statusCompleted': 'Completed',
+  'agenda.statusCanceled': 'Canceled',
+  'agenda.empty': 'No sessions on the timeline yet.',
+  'agenda.emptyHint': 'Your next masterpiece starts with a booking.',
+  'agenda.session': 'Tattoo session',
+  'agenda.signDocument': 'Sign Document',
+  'agenda.payDeposit': 'Pay deposit',
+  'profile.sessions': 'Sessions',
+  'profile.favorites': 'Favorites',
+  'profile.completed': 'Completed',
+  'profile.verified': 'Verified profile',
+};
+
+export const DISCOVERY_ES: DiscoveryMessages = {
+  'home.discover': 'Descubre tu próximo arte',
+  'home.discoverSubtitle': 'Artistas verificados, estilos en tendencia e inspiración para tu piel.',
+  'home.featuredArtists': 'Artistas Destacados',
+  'home.trendingStyles': 'Estilos en Tendencia',
+  'home.viewAll': 'Ver todo',
+  'home.noFeaturedArtists': 'Pronto llegarán nuevos artistas.',
+  'home.noTrendingStyles': 'Explora los estilos en la galería.',
+  'agenda.timeline': 'Cronología',
+  'agenda.timelineSubtitle': 'Sigue cada etapa de tu sesión.',
+  'agenda.stagesPreview': 'Las etapas de tu viaje',
+  'agenda.statusAwaitingPayment': 'Esperando Pago',
+  'agenda.statusConfirmed': 'Confirmado',
+  'agenda.statusActionRequired': 'Acción Necesaria',
+  'agenda.statusActionRequiredHint': 'Firma el documento para liberar la sesión.',
+  'agenda.statusCompleted': 'Completado',
+  'agenda.statusCanceled': 'Cancelado',
+  'agenda.empty': 'Aún no hay sesiones en la cronología.',
+  'agenda.emptyHint': 'Tu próxima obra maestra empieza con una cita.',
+  'agenda.session': 'Sesión de tatuaje',
+  'agenda.signDocument': 'Firmar Documento',
+  'agenda.payDeposit': 'Pagar señal',
+  'profile.sessions': 'Sesiones',
+  'profile.favorites': 'Favoritos',
+  'profile.completed': 'Completadas',
+  'profile.verified': 'Perfil verificado',
+};
