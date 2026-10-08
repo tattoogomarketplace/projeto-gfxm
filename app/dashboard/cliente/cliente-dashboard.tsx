@@ -40,10 +40,10 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      <div className="relative space-y-6">
+    <div className="relative flex w-full flex-1 flex-col overflow-x-hidden bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
+      <div className="relative w-full flex-1 space-y-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="space-y-5">
+          <section key="agendar" className="w-full flex-1 space-y-5">
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
               title={t('agenda.timeline')}
@@ -63,7 +63,7 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'portfolio' && (
-          <section key="portfolio">
+          <section key="portfolio" className="w-full flex-1">
             <HomeDiscover />
           </section>
         )}

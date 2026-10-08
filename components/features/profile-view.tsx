@@ -138,8 +138,8 @@ export function ProfileView() {
   const initials = (displayNome || displayEmail || 'A').trim().charAt(0)?.toUpperCase() || 'A';
 
   return (
-    <div className="gpu-layer flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-neutral-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="relative overflow-hidden rounded-3xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+    <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
+      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative h-28 w-full overflow-hidden border-b border-black/[0.04] bg-neutral-100 dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div
             aria-hidden
@@ -174,12 +174,12 @@ export function ProfileView() {
         {stats.map(({ key, value, Icon }) => (
           <div
             key={key}
-            className="glass-chrome rounded-2xl border border-black/[0.04] px-2 py-4 text-center dark:border-white/[0.05] dark:bg-white/[0.03]"
+            className="w-full rounded-2xl border border-black/[0.04] bg-white px-2 py-4 text-center dark:border-white/[0.05] dark:bg-white/[0.03]"
           >
             <span className="mx-auto flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <Icon className="h-4 w-4" strokeWidth={1.9} />
             </span>
-            <p className="mt-2 text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
+            <p className="mt-2 text-xl font-bold tracking-tight text-gray-900 dark:text-white">
               {value}
             </p>
             <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-400">

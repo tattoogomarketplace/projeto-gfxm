@@ -49,7 +49,7 @@ function SectionHeader({
         <span className="flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_16px_rgba(249,115,22,0.18)] dark:text-orange-400">
           {icon}
         </span>
-        <h2 className="text-base font-bold tracking-tight text-neutral-900 dark:text-white">
+        <h2 className="text-base font-bold tracking-tight text-gray-900 dark:text-white">
           {title}
         </h2>
       </div>
@@ -172,8 +172,8 @@ export function HomeDiscover() {
   };
 
   return (
-    <div className="space-y-7">
-      <header className="relative overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+    <div className="w-full flex-1 space-y-7">
+      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
             {BRAND_NAME}
@@ -286,7 +286,7 @@ export function HomeDiscover() {
                 onClick={openGallery}
                 className={cn(
                   TAP_SCALE,
-                  'relative w-36 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/[0.04] text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:shadow-none'
+                  'relative w-36 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/[0.04] bg-white text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none'
                 )}
               >
                 <div

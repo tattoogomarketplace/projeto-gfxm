@@ -119,7 +119,7 @@ export default function RootLayout({
       afterSignOutUrl="/"
       taskUrls={CLERK_TASK_URLS}
     >
-      <html lang="pt-BR" className="fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background select-none dark" suppressHydrationWarning>
+      <html lang="pt-BR" className="fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background select-none" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{

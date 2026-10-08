@@ -104,7 +104,7 @@ export const SettingsHub = memo(function SettingsHub() {
   return (
     <div className="gpu-layer relative flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
       <div className="flex-1 overflow-y-auto min-h-0 pb-48 px-4 [-webkit-overflow-scrolling:touch]">
-      <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+      <header className="gpu-layer relative z-10 mt-4 w-full shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative space-y-3">
           <Link
             href="/dashboard/perfil"

@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useSyncExternalStore } from 'react';
+import { memo, useCallback, useSyncExternalStore, type MouseEvent } from 'react';
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -59,6 +59,15 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
     [setTheme, triggerHaptic]
   );
 
+  const onThemeClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>, next: AppTheme) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handleSelect(next);
+    },
+    [handleSelect]
+  );
+
   return (
     <div role="radiogroup" aria-label="Seleção de tema" className="space-y-2">
       {THEMES.map((option) => {
@@ -70,7 +79,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
             type="button"
             role="radio"
             aria-checked={selected}
-            onClick={() => handleSelect(option.id)}
+            onClick={(event) => onThemeClick(event, option.id)}
             className={cn(
               'group flex min-h-11 w-full transform-gpu items-center gap-3 rounded-2xl border px-3 py-3 text-left',
               'transition-[transform,background-color,border-color,box-shadow] duration-100 ease-out active:scale-[0.97]',
@@ -90,7 +99,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
               <Icon className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium text-neutral-900 dark:text-white">
+              <span className="block text-sm font-medium text-gray-900 dark:text-white">
                 {option.title}
               </span>
               <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">

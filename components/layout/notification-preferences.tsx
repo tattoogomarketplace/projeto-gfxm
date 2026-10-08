@@ -144,7 +144,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
               <span className="min-w-0 flex-1">
                 <span
                   id={labelId}
-                  className="block text-sm font-medium text-neutral-900 dark:text-white"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
                 >
                   {option.title}
                 </span>

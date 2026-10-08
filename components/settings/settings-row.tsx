@@ -32,7 +32,7 @@ export const SettingsRow = memo(function SettingsRow({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">{title}</span>
+        <span className="block text-sm font-semibold tracking-tight text-gray-900 dark:text-white">{title}</span>
         {subtitle ? (
           <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
             {subtitle}

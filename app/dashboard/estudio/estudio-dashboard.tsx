@@ -15,7 +15,7 @@ export default function EstudioDashboard() {
   const { t } = useI18n();
 
   return (
-    <div className="flex flex-col bg-transparent pt-5 text-neutral-900 dark:text-white">
+    <div className="flex w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{t(EXPERIENCE.heading)}</h1>
       <p className="mb-6 text-sm text-neutral-600 dark:text-zinc-400">{t(EXPERIENCE.subtitle)}</p>
       
