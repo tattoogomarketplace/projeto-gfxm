@@ -513,6 +513,69 @@
   }
 }
 
+.splash-gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: opacity, transform;
+  isolation: isolate;
+  contain: layout paint style;
+}
+
+.splash-enter {
+  animation: splash-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-icon-enter {
+  animation: splash-icon-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-glow {
+  animation: splash-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes splash-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes splash-icon-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes splash-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-enter,
+  .splash-icon-enter,
+  .splash-glow {
+    animation: none;
+  }
+}
+
 /*
  * Fluxo "Quero ser Tatuador" (/dashboard/seja-tatuador).
  *
