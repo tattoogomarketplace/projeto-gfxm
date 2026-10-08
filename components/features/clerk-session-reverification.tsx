@@ -197,17 +197,17 @@ export function ClerkSessionReverification({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
-            Confirmação de segurança
+            {t('security.title')}
           </h3>
           <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-            Reautenticação nativa TattooGo MK. Sem janelas externas.
+            {t('security.nativeHint')}
           </p>
         </div>
       </div>
 
       {status === 'preparing' ? (
         <div className="flex min-h-12 items-center justify-center">
-          <TattooMachineLoader compact label="Confirmando" />
+          <TattooMachineLoader compact label={t('security.confirming')} />
         </div>
       ) : null}
 
@@ -215,8 +215,8 @@ export function ClerkSessionReverification({
         <div className="space-y-3">
           <p className="text-xs leading-relaxed text-zinc-500">
             {secondFactor?.strategy === 'phone_code'
-              ? 'Digite o código de 6 dígitos enviado por SMS.'
-              : 'Digite o código de 6 dígitos do seu autenticador.'}
+              ? t('security.smsHint')
+              : t('security.totpHint')}
           </p>
           <OtpInput
             length={6}
@@ -232,7 +232,7 @@ export function ClerkSessionReverification({
       {status === 'second_factor' && secondFactor?.strategy === 'backup_code' ? (
         <form className="space-y-3" onSubmit={handleBackupSubmit}>
           <Input
-            label="Código de backup"
+            label={t('security.backupCode')}
             autoComplete="one-time-code"
             value={backupCode}
             onChange={(event) => {
@@ -247,7 +247,11 @@ export function ClerkSessionReverification({
             disabled={submitting || !backupCode.trim()}
             className="min-h-11 w-full rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
           >
-            {submitting ? <TattooMachineLoader compact label="Confirmando" /> : 'Confirmar código'}
+            {submitting ? (
+              <TattooMachineLoader compact label={t('security.confirming')} />
+            ) : (
+              t('security.confirmCode')
+            )}
           </button>
         </form>
       ) : null}
@@ -257,7 +261,7 @@ export function ClerkSessionReverification({
         onClick={onCancel}
         className="flex min-h-11 w-full items-center justify-center text-center text-xs font-semibold text-zinc-500 transition-colors hover:text-brand-copper active:scale-[0.98]"
       >
-        Cancelar
+        {t('common.cancel')}
       </button>
     </div>
   );

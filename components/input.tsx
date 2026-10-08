@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Eye, EyeOff } from "lucide-react"
+import { useI18n } from "@/hooks/use-i18n"
 import { cn } from "@/lib/utils"
 
 export interface InputProps
@@ -13,6 +14,7 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, label, error, ...props }, ref) => {
     const [showPassword, setShowPassword] = React.useState(false)
+    const { t } = useI18n()
     const isPassword = type === "password"
     const isDate = type === "date"
     const resolvedType = isPassword && showPassword ? "text" : type
@@ -50,7 +52,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 "absolute inset-y-0 right-0 z-20 flex w-12 cursor-pointer items-center justify-center pointer-events-auto transition-colors",
                 showPassword ? "text-orange-500" : "text-zinc-500"
               )}
-              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              aria-label={showPassword ? t("password.hide") : t("password.show")}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>

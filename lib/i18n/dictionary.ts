@@ -9,6 +9,7 @@ import {
   DISCOVERY_PT_BR,
 } from '@/lib/i18n/coverage';
 import { VIEW_MESSAGES } from '@/lib/i18n/views';
+import { UI_MESSAGES } from '@/lib/i18n/ui';
 import {
   AR,
   DE,
@@ -27,6 +28,7 @@ import {
 
 export const PT_BR: MessageDictionary = {
   ...ERROR_MESSAGES['pt-BR'],
+  ...UI_MESSAGES['pt-BR'],
   'nav.home': 'Início',
   'nav.schedule': 'Agenda',
   'nav.book': 'Agendar',
@@ -104,6 +106,7 @@ export const PT_BR: MessageDictionary = {
 
 export const EN: MessageDictionary = {
   ...ERROR_MESSAGES.en,
+  ...UI_MESSAGES.en,
   'nav.home': 'Home',
   'nav.schedule': 'Schedule',
   'nav.book': 'Book',
@@ -181,6 +184,7 @@ export const EN: MessageDictionary = {
 
 export const ES: MessageDictionary = {
   ...ERROR_MESSAGES.es,
+  ...UI_MESSAGES.es,
   'nav.home': 'Inicio',
   'nav.schedule': 'Agenda',
   'nav.book': 'Reservar',
@@ -265,21 +269,21 @@ function withFallback(
 
 export const DICTIONARIES: Record<Locale, MessageDictionary> = {
   'pt-BR': PT_BR,
-  'pt-PT': withFallback(PT_PT, PT_BR),
+  'pt-PT': withFallback({ ...UI_MESSAGES['pt-PT'], ...PT_PT }, PT_BR),
   en: EN,
   es: ES,
-  fr: withFallback(FR),
-  de: withFallback(DE),
-  it: withFallback(IT),
-  ja: withFallback(JA),
-  zh: withFallback(ZH),
-  ko: withFallback(KO),
-  ar: withFallback(AR),
-  ru: withFallback(RU),
-  hi: withFallback(HI),
-  nl: withFallback(NL),
-  tr: withFallback(TR),
-  pl: withFallback(PL),
+  fr: withFallback({ ...UI_MESSAGES.fr, ...FR }),
+  de: withFallback({ ...UI_MESSAGES.de, ...DE }),
+  it: withFallback({ ...UI_MESSAGES.it, ...IT }),
+  ja: withFallback({ ...UI_MESSAGES.ja, ...JA }),
+  zh: withFallback({ ...UI_MESSAGES.zh, ...ZH }),
+  ko: withFallback({ ...UI_MESSAGES.ko, ...KO }),
+  ar: withFallback({ ...UI_MESSAGES.ar, ...AR }),
+  ru: withFallback({ ...UI_MESSAGES.ru, ...RU }),
+  hi: withFallback({ ...UI_MESSAGES.hi, ...HI }),
+  nl: withFallback({ ...UI_MESSAGES.nl, ...NL }),
+  tr: withFallback({ ...UI_MESSAGES.tr, ...TR }),
+  pl: withFallback({ ...UI_MESSAGES.pl, ...PL }),
 };
 
 export const MESSAGE_KEYS = Object.keys(PT_BR) as MessageKey[];

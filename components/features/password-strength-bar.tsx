@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
 
@@ -39,7 +40,8 @@ const TONE_INK = {
 };
 
 export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
-  const strength = getPasswordStrength(password);
+  const { t } = useI18n();
+  const strength = getPasswordStrength(password, t);
   const active = strength.score > 0;
 
   return (

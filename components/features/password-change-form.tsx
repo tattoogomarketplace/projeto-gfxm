@@ -132,7 +132,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
         throw new Error('reverification-incomplete');
       }
 
-      toast.success('Senha atualizada com sucesso.');
+      toast.success(t('password.updated'));
       resetFields();
     } catch (err) {
       if (isReverificationCancelledError(err)) {
@@ -197,9 +197,11 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">Alterar senha</h3>
+          <h3 className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
+            {t('password.changeTitle')}
+          </h3>
           <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-            Confirmação segura da sua identidade. Outras sessões serão encerradas após a troca.
+            {t('password.changeSubtitle')}
           </p>
         </div>
       </div>
@@ -223,7 +225,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           >
             <Input
               type="password"
-              label="Senha atual"
+              label={t('password.current')}
               autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -233,7 +235,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             <div className="space-y-2">
               <Input
                 type="password"
-                label="Nova senha"
+                label={t('password.new')}
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -244,7 +246,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             </div>
             <Input
               type="password"
-              label="Confirmar nova senha"
+              label={t('password.confirmNew')}
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -260,17 +262,16 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
               className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
             >
               {isUpdating ? (
-                <TattooMachineLoader compact label="Atualizando" />
+                <TattooMachineLoader compact label={t('password.updating')} />
               ) : (
-                'Atualizar Senha'
+                t('password.update')
               )}
             </button>
           </form>
         )
       ) : (
         <p className="text-sm text-zinc-400">
-          Esta conta não possui senha local (login social). A alteração de senha não se aplica a
-          este acesso.
+          {t('password.socialOnly')}
         </p>
       )}
     </div>

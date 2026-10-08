@@ -1,82 +1,102 @@
 import { z } from 'zod';
+import { t as translate } from '@/lib/i18n/store';
+import type { MessageKey, TranslateVars } from '@/lib/i18n/types';
 
-export const PASSWORD_RULES = [
+export type TranslateFn = (key: MessageKey, vars?: TranslateVars) => string;
+
+export type PasswordRuleId = 'length' | 'upper' | 'lower' | 'number' | 'special';
+
+export type PasswordRule = {
+  id: PasswordRuleId;
+  labelKey: MessageKey;
+  shortKey: MessageKey;
+  test: (value: string) => boolean;
+};
+
+export const PASSWORD_RULES: PasswordRule[] = [
   {
     id: 'length',
-    label: 'Mínimo 8 caracteres',
-    short: '8 caracteres',
+    labelKey: 'password.rule.length',
+    shortKey: 'password.rule.lengthShort',
     test: (value: string) => value.length >= 8,
   },
   {
     id: 'upper',
-    label: '1 letra maiúscula',
-    short: 'maiúscula',
+    labelKey: 'password.rule.upper',
+    shortKey: 'password.rule.upperShort',
     test: (value: string) => /[A-Z]/.test(value),
   },
   {
     id: 'lower',
-    label: '1 letra minúscula',
-    short: 'minúscula',
+    labelKey: 'password.rule.lower',
+    shortKey: 'password.rule.lowerShort',
     test: (value: string) => /[a-z]/.test(value),
   },
   {
     id: 'number',
-    label: '1 número',
-    short: 'número',
+    labelKey: 'password.rule.number',
+    shortKey: 'password.rule.numberShort',
     test: (value: string) => /\d/.test(value),
   },
   {
     id: 'special',
-    label: '1 caractere especial',
-    short: 'símbolo',
+    labelKey: 'password.rule.special',
+    shortKey: 'password.rule.specialShort',
     test: (value: string) => /[^A-Za-z0-9]/.test(value),
   },
-] as const;
+];
 
-export const passwordSchema = z
-  .string()
-  .min(8, 'Senha deve ter no mínimo 8 caracteres')
-  .regex(/[A-Z]/, 'Precisa de 1 letra maiúscula')
-  .regex(/[a-z]/, 'Precisa de 1 letra minúscula')
-  .regex(/\d/, 'Precisa de 1 número')
-  .regex(/[^A-Za-z0-9]/, 'Precisa de 1 caractere especial');
+export function createPasswordSchema(t: TranslateFn = translate) {
+  return z
+    .string()
+    .min(8, t('password.zod.min'))
+    .regex(/[A-Z]/, t('password.zod.upper'))
+    .regex(/[a-z]/, t('password.zod.lower'))
+    .regex(/\d/, t('password.zod.number'))
+    .regex(/[^A-Za-z0-9]/, t('password.zod.special'));
+}
+
+export const passwordSchema = createPasswordSchema();
 
 export type PasswordCheck = {
-  id: string;
+  id: PasswordRuleId;
   label: string;
   short: string;
   passed: boolean;
 };
 
-export function getPasswordStrength(password: string) {
+export function getPasswordStrength(password: string, t: TranslateFn = translate) {
   const checks: PasswordCheck[] = PASSWORD_RULES.map((rule) => ({
     id: rule.id,
-    label: rule.label,
-    short: rule.short,
+    label: t(rule.labelKey),
+    short: t(rule.shortKey),
     passed: rule.test(password),
   }));
   const score = checks.filter((check) => check.passed).length;
   const missing = checks.filter((check) => !check.passed);
   const percent = (score / PASSWORD_RULES.length) * 100;
 
-  let label = 'Digite sua senha';
+  let label = t('password.strength.empty');
   let tone: 'muted' | 'red' | 'yellow' | 'orange' | 'green' = 'muted';
   if (password) {
     if (score <= 1) {
-      label = 'Muito fraca';
+      label = t('password.strength.veryWeak');
       tone = 'red';
     } else if (score === 2) {
-      label = 'Fraca';
+      label = t('password.strength.weak');
       tone = 'red';
     } else if (score === 3) {
-      label = `Falta ${missing[0]?.short}`;
+      label = t('password.strength.missing', { item: missing[0]?.short ?? '' });
       tone = 'yellow';
     } else if (score === 4) {
       const miss = missing[0];
-      label = miss?.id === 'special' ? 'Falta um símbolo' : `Falta ${miss?.short}`;
+      label =
+        miss?.id === 'special'
+          ? t('password.strength.missingSymbol')
+          : t('password.strength.missing', { item: miss?.short ?? '' });
       tone = 'yellow';
     } else {
-      label = 'Blindada';
+      label = t('password.strength.armored');
       tone = 'green';
     }
   }

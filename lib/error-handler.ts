@@ -137,8 +137,28 @@ function matchByText(haystack: string): MessageKey | null {
   ) {
     return 'errors.clerk.requiresVerification';
   }
-  if (haystack.includes('form_password_incorrect') || haystack.includes('password is incorrect') || haystack.includes('incorrect password') || haystack.includes('current password')) {
+  if (haystack.includes('form_password_incorrect') || haystack.includes('password is incorrect') || haystack.includes('incorrect password') || haystack.includes('current password') || haystack.includes('senha incorreta') || haystack.includes('senha inválida') || haystack.includes('senha invalida') || haystack.includes('senha atual incorreta')) {
     return 'errors.clerk.passwordIncorrect';
+  }
+  if (haystack.includes('clerk not ready') || haystack.includes('clerk is not') || haystack.includes('clerk não') || haystack.includes('clerk nao') || haystack.includes('not_ready') || haystack.includes('not ready')) {
+    return 'errors.clerk.notReady';
+  }
+  if (haystack.includes('cnpj') && (haystack.includes('não encontrado') || haystack.includes('nao encontrado') || haystack.includes('not found'))) {
+    return 'auth.cnpjNotFound';
+  }
+  if (haystack.includes('cnpj') && (haystack.includes('inválido') || haystack.includes('invalido') || haystack.includes('invalid'))) {
+    return 'auth.invalidCnpj';
+  }
+  if (
+    (haystack.includes('e-mail ou cpf') ||
+      haystack.includes('email ou cpf') ||
+      haystack.includes('não conferem') ||
+      haystack.includes('nao conferem') ||
+      haystack.includes('não coincidem') ||
+      haystack.includes('no coinciden') ||
+      haystack.includes('do not match'))
+  ) {
+    return 'auth.emailCpfMismatch';
   }
   if (haystack.includes('pwned') || haystack.includes('data breach') || haystack.includes('found in a data')) {
     return 'errors.clerk.passwordPwned';
