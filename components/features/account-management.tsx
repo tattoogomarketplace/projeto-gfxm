@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth, useUser } from '@clerk/nextjs';
@@ -28,6 +29,11 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
   const [busy, setBusy] = useState(false);
   const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
   const { t } = useI18n();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const metadataRole = parseAppRole(
     (user?.publicMetadata as Record<string, unknown> | undefined)?.role as string | undefined
@@ -180,6 +186,8 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       </AnimatePresence>
   );
 
+  const lifecyclePortal = mounted ? createPortal(lifecycleDialog, document.body) : null;
+
   if (variant === 'rows') {
     return (
       <>
@@ -234,7 +242,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             </button>
           </div>
         </section>
-        {lifecycleDialog}
+        {lifecyclePortal}
       </>
     );
   }
@@ -329,7 +337,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
         </button>
       </section>
 
-      {lifecycleDialog}
+      {lifecyclePortal}
     </>
   );
 }
