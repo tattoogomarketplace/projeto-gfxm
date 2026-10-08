@@ -638,7 +638,7 @@ export default function RegisterPage() {
           ) : null}
 
           {status === 'menor_18' && (
-            <div className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <div className="space-y-4 rounded-lg border border-black/[0.04] bg-neutral-50 p-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
               <Input
                 label="Nome Completo do Responsável Legal"
                 {...register('responsavelNome')}
@@ -672,7 +672,7 @@ export default function RegisterPage() {
               name="register-terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="pointer-events-auto relative z-20 mt-0.5 h-5 w-5 shrink-0 cursor-pointer touch-manipulation rounded border-neutral-300 accent-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60 dark:border-neutral-700"
+              className="pointer-events-auto relative z-20 mt-0.5 h-5 w-5 shrink-0 cursor-pointer touch-manipulation rounded border-neutral-300 accent-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60 dark:border-white/[0.05]"
             />
             <p className="pointer-events-auto min-w-0 flex-1 text-xs leading-relaxed text-zinc-400">
               <label htmlFor="register-terms" className="pointer-events-auto relative z-20 cursor-pointer select-none">

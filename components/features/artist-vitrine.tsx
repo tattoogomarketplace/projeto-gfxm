@@ -55,12 +55,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   };
 
   return (
-    <div className="relative overflow-x-hidden bg-transparent pt-5 text-neutral-900 dark:text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
-      />
-
+    <div className="relative overflow-x-hidden bg-transparent pt-5 text-gray-900 dark:text-white">
       <button
         type="button"
         onClick={() => router.back()}
@@ -70,20 +65,16 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         Voltar
       </button>
 
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-[0_0_40px_rgba(249,115,22,0.08)]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
-        />
+      <header className="relative overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative flex items-start gap-4">
-          <span className="flex h-16 w-16 min-h-16 min-w-16 items-center justify-center rounded-full border border-orange-500/40 bg-white text-2xl font-semibold uppercase text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.28)] dark:bg-[#1a1a1a] dark:text-orange-400">
+          <span className="flex h-16 w-16 min-h-16 min-w-16 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/10 text-2xl font-semibold uppercase text-orange-500 dark:text-orange-400">
             {artist.initial}
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
               Vitrine do artista
             </p>
-            <h1 className="mt-1 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
               {artist.name}
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -93,7 +84,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
                   Documentos Pessoais aprovados
                 </span>
               ) : (
-                <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500 dark:border-neutral-700 dark:bg-[#161616] dark:text-zinc-500">
+                <span className="rounded-full border border-black/[0.04] bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-500">
                   Credencial em análise
                 </span>
               )}
@@ -115,7 +106,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             {scheduleSummary.slice(0, 4).map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[10px] font-medium text-neutral-600 dark:border-neutral-700 dark:bg-[#161616] dark:text-zinc-400"
+                className="rounded-full border border-black/[0.04] bg-neutral-50 px-2.5 py-1 text-[10px] font-medium text-neutral-600 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-400"
               >
                 {item}
               </span>
@@ -151,7 +142,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
           Portfólio
         </h2>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-800 dark:bg-[#0a0a0a]">
+          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
             <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma peça publicada ainda.</p>
           </div>
         ) : (
@@ -159,7 +150,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none"
+                className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none"
               >
                 <div className="relative h-48 w-full overflow-hidden">
                   <OptimizedImage

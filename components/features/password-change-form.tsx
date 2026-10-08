@@ -145,7 +145,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       className={cn(
         'space-y-4',
         !embedded &&
-          'rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none'
+          'rounded-xl border border-black/[0.04] bg-white p-4 shadow-sm transition-all hover:border-orange-500/40 dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none'
       )}
     >
       <div className="flex items-start gap-3">

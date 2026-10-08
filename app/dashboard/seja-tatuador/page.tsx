@@ -212,21 +212,14 @@ export default function SejaTatuadorPage() {
             Voltar
           </button>
 
-          <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-b from-orange-500/15 via-transparent to-transparent p-6 sm:p-8">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl"
-            />
+          <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
             <div className="relative">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
                 Atelier Digital
               </span>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                {firstName ? `${firstName}, transforme` : 'Transforme'} sua arte em{' '}
-                <span className="bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">
-                  profissão.
-                </span>
+                {firstName ? `${firstName}, transforme` : 'Transforme'} sua arte em profissão.
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
                 Abra sua bancada profissional com verificação segura. Você mantém total

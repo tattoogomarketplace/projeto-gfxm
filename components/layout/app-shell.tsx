@@ -226,7 +226,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       {isChromeLess ? null : (
       <header
         className={cn(
-            'glass-chrome z-40 shrink-0 border-b border-black/[0.06] dark:border-white/5',
+            'glass-chrome z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]',
           'pt-[max(0.75rem,env(safe-area-inset-top))]'
         )}
       >

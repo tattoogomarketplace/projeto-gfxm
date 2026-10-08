@@ -173,7 +173,7 @@ export function StudioAffiliationArtist() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar estúdio por nome ou cidade"
-              className="h-12 w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-amber-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
+              className="h-12 w-full rounded-lg border border-black/[0.04] bg-white pl-10 pr-3 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-amber-500 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             />
           </div>
           <Button type="submit" isLoading={searching} className="shrink-0">
@@ -187,7 +187,7 @@ export function StudioAffiliationArtist() {
           {(studios ?? []).map((studio) => (
             <li
               key={studio?.id ?? studio?.nome}
-                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-[#0a0a0a]"
+                className="flex items-center justify-between gap-3 rounded-xl border border-black/[0.04] bg-neutral-50 p-3 dark:border-white/[0.05] dark:bg-white/[0.03]"
             >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 truncate font-semibold text-neutral-900 dark:text-white">
@@ -221,7 +221,7 @@ export function StudioAffiliationArtist() {
           {(pedidos ?? []).map((pedido) => (
             <div
               key={pedido?.id ?? pedido?.estudio?.nome}
-              className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-white/10"
+              className="flex items-center justify-between gap-3 rounded-lg border border-black/[0.04] px-3 py-2 text-sm dark:border-white/[0.05]"
             >
               <div>
                 <p className="font-medium text-neutral-900 dark:text-white">{pedido?.estudio?.nome ?? 'Estúdio'}</p>

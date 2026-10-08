@@ -131,7 +131,7 @@ function StatusPreviewCard({ status }: { status: AgendaStatus }) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 p-4 dark:border-white/10'
+        'relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 p-4 dark:border-white/[0.05]'
       )}
     >
       <span

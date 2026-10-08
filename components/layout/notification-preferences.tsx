@@ -128,7 +128,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
                 'flex min-h-11 items-center gap-3 rounded-xl border px-3 py-3 transition-all duration-200',
                 checked
                   ? 'border-[#F97316]/30 bg-[#F97316]/5'
-                  : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5'
+                  : 'border-black/[0.04] bg-neutral-50 dark:border-white/[0.05] dark:bg-white/5'
               )}
             >
               <span
@@ -136,7 +136,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
                   'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                   checked
                     ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
-                    : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
+                    : 'border-black/[0.04] bg-white text-neutral-500 dark:border-white/[0.05] dark:bg-white/5 dark:text-zinc-400'
                 )}
               >
                 <Icon className="h-5 w-5" strokeWidth={1.75} />
@@ -166,7 +166,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
   if (embedded) return list;
 
   return (
-    <section className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
+    <section className="space-y-4 rounded-xl border border-black/[0.04] bg-white p-4 shadow-sm transition-all duration-300 hover:border-[#F97316]/40 dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] shadow-[0_0_18px_rgba(249,115,22,0.22)]">
           <BellRing className="h-5 w-5" strokeWidth={1.75} />

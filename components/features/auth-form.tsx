@@ -18,7 +18,7 @@ export function AuthForm() {
   };
 
   if (message) return (
-    <div className="rounded-2xl border border-amber-500/30 bg-white p-8 text-center shadow-2xl dark:border-neutral-800 dark:bg-[#0a0a0a]">
+    <div className="rounded-2xl border border-amber-500/30 bg-white p-8 text-center shadow-2xl dark:border-white/[0.05] dark:bg-white/[0.03]">
       <h2 className="mb-4 text-2xl font-bold text-amber-500">Quase lá...</h2>
       <p className="text-neutral-600 dark:text-zinc-300">{message}</p>
       <button 
@@ -31,23 +31,23 @@ export function AuthForm() {
   );
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#0a0a0a]">
+    <div className="rounded-xl border border-black/[0.04] bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]">
       <h2 className="mb-6 text-xl font-bold text-neutral-900 dark:text-white">Criar Conta</h2>
       <input 
         type="email" 
         onChange={(e) => setEmail(e.target.value)} 
         placeholder="Email" 
-        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
+        className="mb-4 w-full rounded-lg border border-black/[0.04] bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <input 
         type="password" 
         onChange={(e) => setPassword(e.target.value)} 
         placeholder="Senha" 
-        className="mb-4 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
+        className="mb-4 w-full rounded-lg border border-black/[0.04] bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
       />
       <select 
         onChange={(e) => setRole(e.target.value)} 
-        className="mb-6 w-full rounded-lg border border-neutral-200 bg-white p-3 text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white"
+        className="mb-6 w-full rounded-lg border border-black/[0.04] bg-white p-3 text-neutral-900 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white"
       >
         <option value="cliente">Cliente</option>
         <option value="tatuador">Tatuador</option>

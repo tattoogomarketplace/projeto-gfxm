@@ -137,20 +137,13 @@ export default function KycPendentePage() {
     <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-white">
       <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
         <div className="mx-auto w-full max-w-lg space-y-6 pb-8">
-          <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-b from-orange-500/10 via-transparent to-transparent p-6 sm:p-8">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl"
-            />
+          <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
                 Atelier Digital
               </p>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Eleve a sua arte ao{' '}
-                <span className="bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">
-                  próximo nível.
-                </span>
+                Eleve a sua arte ao próximo nível.
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
                 Junte-se à elite. Desbloqueie sua agenda inteligente, receba pagamentos seguros e

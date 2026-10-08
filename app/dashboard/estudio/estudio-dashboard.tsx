@@ -36,7 +36,7 @@ export default function EstudioDashboard() {
           <div className="mt-6">
             <h3 className="font-bold mb-4">{t('dashboard.artistsOverview')}</h3>
             {agendamentos?.map((ag: Agendamento, index: number) => (
-              <div key={ag?.id ?? `agendamento-${index}`} className="border-b border-neutral-200 py-2 text-sm dark:border-white/10">
+              <div key={ag?.id ?? `agendamento-${index}`} className="border-b border-black/[0.04] py-2 text-sm dark:border-white/[0.05]">
                 {t('dashboard.artistStatus', {
                   id: `${(ag?.tatuador_id ?? '').slice(0, 8) || '—'}...`,
                   status: ag?.status ?? 'pendente',

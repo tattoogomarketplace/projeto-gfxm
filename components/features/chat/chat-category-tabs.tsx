@@ -30,8 +30,8 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
       role="tablist"
       aria-label={t('chat.filterAria')}
       className={cn(
-        'relative grid w-full rounded-2xl border border-neutral-200 bg-neutral-100 p-1 backdrop-blur-xl',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/10 dark:bg-white/10',
+        'relative grid w-full rounded-2xl border border-black/[0.04] bg-neutral-100 p-1 backdrop-blur-xl',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/[0.05] dark:bg-white/10',
         className
       )}
       style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}

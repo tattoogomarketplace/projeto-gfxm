@@ -24,7 +24,7 @@ function SectionHeading({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <h2 className="bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
+        <h2 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
           {title}
         </h2>
         {subtitle ? <p className="mt-0.5 text-sm text-neutral-600 dark:text-zinc-400">{subtitle}</p> : null}
@@ -40,14 +40,7 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-neutral-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      {activeTab === 'portfolio' ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_65%)]"
-        />
-      ) : null}
-
+    <div className="relative flex flex-col overflow-x-hidden bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <div className="relative space-y-6">
         {activeTab === 'agendar' && (
           <section key="agendar" className="space-y-5">

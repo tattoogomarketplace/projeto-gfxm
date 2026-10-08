@@ -258,7 +258,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
+      <div className="relative overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-orange-500/15 blur-3xl"
@@ -269,7 +269,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         <p className="relative mb-4 max-w-sm text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
           Estilo, parte do corpo, duração e cicatrização antes de entrar na galeria.
         </p>
-        <label className="relative flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:border-orange-500 dark:border-neutral-700 dark:bg-[#161616]">
+        <label className="relative flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:border-orange-500 dark:border-white/[0.05] dark:bg-white/[0.04]">
           <ImagePlus className="mb-2 h-5 w-5 text-orange-400" strokeWidth={1.75} />
           <span className="text-sm text-zinc-400">
             {checking ? 'Verificando conteúdo...' : 'Tirar foto ou escolher da galeria'}
@@ -292,7 +292,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
           <Skeleton className="h-28 w-full rounded-2xl" />
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-800 dark:bg-[#0a0a0a]">
+        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
           <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma peça publicada ainda.</p>
         </div>
       ) : (
@@ -300,7 +300,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
           {items.map((item) => (
             <li
               key={item.id}
-              className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-[#0a0a0a]"
+              className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white dark:border-white/[0.05] dark:bg-white/[0.03]"
             >
               <div className="relative h-40 w-full overflow-hidden">
                 <OptimizedImage src={item.imageUrl} alt={styleLabel(item.style)} className="h-full w-full" />
@@ -336,7 +336,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
       {modalOpen ? (
         <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/70 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
-          <div className="max-h-[min(92vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-orange-500/30 bg-white p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)] dark:bg-[#0a0a0a]">
+          <div className="max-h-[min(92vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-orange-500/30 bg-white p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)] dark:bg-white/[0.03]">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
@@ -409,7 +409,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
                   value={notes}
                   onChange={(event) => setNotes(event.target.value.slice(0, 180))}
                   rows={3}
-                  className="min-h-20 w-full resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#161616] dark:text-white dark:placeholder:text-zinc-500"
+                  className="min-h-20 w-full resize-none rounded-xl border border-black/[0.04] bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-white dark:placeholder:text-zinc-500"
                   placeholder="Opcional. A curadoria converte em legenda formal de studio."
                 />
               </label>

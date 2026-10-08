@@ -76,7 +76,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
               'transition-[transform,background-color,border-color,box-shadow] duration-100 ease-out active:scale-[0.97]',
               selected
                 ? 'border-[#F97316]/30 bg-[#F97316]/5 shadow-[0_0_16px_rgba(249,115,22,0.16)]'
-                : 'border-[#EAEAEA] bg-black/[0.02] hover:border-[#F97316]/40 dark:border-white/5 dark:bg-white/[0.02]'
+                : 'border-black/[0.04] bg-black/[0.02] hover:border-[#F97316]/40 dark:border-white/5 dark:bg-white/[0.02]'
             )}
           >
             <span
@@ -84,7 +84,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
                 'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
                 selected
                   ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
-                  : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
+                  : 'border-black/[0.04] bg-white text-neutral-500 dark:border-white/[0.05] dark:bg-white/5 dark:text-zinc-400'
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.75} />

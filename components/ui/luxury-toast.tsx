@@ -20,7 +20,7 @@ export function LuxuryToaster() {
           actionButton:
             'rounded-lg bg-[#F97316] px-3 py-1.5 text-xs font-bold text-white shadow-[0_0_14px_rgba(249,115,22,0.35)]',
           cancelButton:
-            'rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-600 dark:border-neutral-700 dark:text-zinc-300',
+            'rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-600 dark:border-white/[0.05] dark:text-zinc-300',
           error: 'border-red-500/40 dark:border-red-500/45',
           success: 'border-[#F97316]/50',
           warning: 'border-amber-400/50',

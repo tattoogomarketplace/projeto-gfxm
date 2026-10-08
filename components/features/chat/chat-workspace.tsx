@@ -281,10 +281,6 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       <Suspense fallback={null}>
         <ChatQuerySync onChange={handleQueryChange} />
       </Suspense>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_65%)]"
-      />
 
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
         <div className="relative mb-3 px-1 lg:mb-4">
@@ -302,11 +298,11 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside
           className={cn(
-            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none',
+            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none',
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
-          <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+          <div className="flex items-center gap-2 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
             {activeCategory === 'BUDGET' ? (
               <ReceiptText className="h-4 w-4 text-orange-500 dark:text-orange-400" />
             ) : (
@@ -354,7 +350,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                     'mb-1 flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all',
                     active
                       ? 'border-orange-500/50 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
-                      : 'border-transparent hover:border-neutral-200 hover:bg-neutral-50 dark:hover:border-neutral-800 dark:hover:bg-white/5'
+                      : 'border-transparent hover:border-black/[0.04] hover:bg-neutral-50 dark:hover:border-white/[0.05] dark:hover:bg-white/5'
                   )}
                 >
                   <button
@@ -363,7 +359,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                       triggerHaptic('light');
                       router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
                     }}
-                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400"
+                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400"
                     aria-label={t('chat.openVitrine', { name: item.peer.name })}
                   >
                     {item.peer.initial}

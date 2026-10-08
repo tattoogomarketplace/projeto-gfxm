@@ -118,11 +118,11 @@ function deriveTrendingStyles(items: GaleriaItem[]): { style: string; count: num
 }
 
 const STYLE_GRADIENTS = [
-  'from-orange-500/90 via-orange-600/70 to-amber-500/60',
-  'from-emerald-500/85 via-teal-600/70 to-green-500/60',
-  'from-rose-500/85 via-orange-600/70 to-red-500/60',
-  'from-indigo-500/80 via-purple-600/70 to-fuchsia-500/60',
-  'from-amber-400/90 via-orange-500/75 to-orange-700/60',
+  'from-neutral-700 via-neutral-800 to-neutral-950',
+  'from-emerald-600/40 via-neutral-800 to-neutral-950',
+  'from-orange-500/40 via-neutral-800 to-neutral-950',
+  'from-neutral-600/70 via-neutral-800 to-neutral-950',
+  'from-emerald-500/30 via-neutral-700 to-neutral-950',
 ];
 
 function styleGradient(seed: string): string {
@@ -173,20 +173,12 @@ export function HomeDiscover() {
 
   return (
     <div className="space-y-7">
-      <header className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:border-white/5 dark:bg-white/[0.02] dark:shadow-none">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full bg-orange-500/25 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-emerald-500/15 blur-3xl"
-        />
+      <header className="relative overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
             {BRAND_NAME}
           </p>
-          <h1 className="mt-1.5 bg-gradient-to-r from-neutral-900 via-orange-700 to-orange-500 bg-clip-text text-[26px] font-bold leading-tight tracking-tight text-transparent dark:from-white dark:via-orange-100 dark:to-orange-400">
+          <h1 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight text-gray-900 dark:text-white">
             {t('home.discover')}
           </h1>
           <p className="mt-2 max-w-[34ch] text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">
@@ -209,7 +201,7 @@ export function HomeDiscover() {
             <ArtistCardSkeleton />
           </div>
         ) : artists.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/10 dark:text-zinc-400">
+          <p className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/[0.05] dark:text-zinc-400">
             {t('home.noFeaturedArtists')}
           </p>
         ) : (
@@ -222,8 +214,8 @@ export function HomeDiscover() {
                 onClick={() => openArtist(artist.id)}
                 className={cn(
                   TAP_SCALE,
-                  'group relative w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 text-left shadow-sm',
-                  'dark:border-white/5 dark:bg-white/[0.03]'
+                  'group relative w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/[0.04] bg-white text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)]',
+                  'dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none'
                 )}
               >
                 <div className="relative h-44 w-full overflow-hidden">
@@ -281,7 +273,7 @@ export function HomeDiscover() {
             <StyleCardSkeleton />
           </div>
         ) : styles.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/10 dark:text-zinc-400">
+          <p className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/[0.05] dark:text-zinc-400">
             {t('home.noTrendingStyles')}
           </p>
         ) : (
@@ -294,7 +286,7 @@ export function HomeDiscover() {
                 onClick={openGallery}
                 className={cn(
                   TAP_SCALE,
-                  'relative w-36 shrink-0 snap-start overflow-hidden rounded-2xl border border-neutral-200 text-left shadow-sm dark:border-white/5'
+                  'relative w-36 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/[0.04] text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:shadow-none'
                 )}
               >
                 <div

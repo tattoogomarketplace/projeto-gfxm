@@ -74,7 +74,7 @@ export function AtomicBookingSheet({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
-      <div className="max-h-[min(88vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl dark:border-neutral-800 dark:bg-[#0a0a0a]">
+      <div className="max-h-[min(88vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-black/[0.04] bg-white p-5 shadow-xl dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
@@ -91,7 +91,7 @@ export function AtomicBookingSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-neutral-200 text-neutral-500 hover:border-orange-500/40 hover:text-orange-500 dark:border-neutral-700 dark:text-zinc-400"
+            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-black/[0.04] text-neutral-500 hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:text-zinc-400"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
@@ -105,7 +105,7 @@ export function AtomicBookingSheet({
         ) : null}
 
         {slots.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:text-zinc-400">
+          <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/[0.05] dark:text-zinc-400">
             Nenhum horário livre nos próximos 14 dias.
           </p>
         ) : (
@@ -125,7 +125,7 @@ export function AtomicBookingSheet({
                       'flex min-h-11 w-full flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]',
                       selected
                         ? 'border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-300'
-                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-orange-500/40 dark:border-neutral-800 dark:bg-[#161616] dark:text-zinc-300'
+                        : 'border-black/[0.04] bg-neutral-50 text-neutral-700 hover:border-orange-500/40 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-300'
                     )}
                   >
                     <span className="w-full truncate text-[11px] font-semibold uppercase tracking-wide">{day}</span>

@@ -104,11 +104,7 @@ export const SettingsHub = memo(function SettingsHub() {
   return (
     <div className="gpu-layer relative flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
       <div className="flex-1 overflow-y-auto min-h-0 pb-48 px-4 [-webkit-overflow-scrolling:touch]">
-      <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm contain-paint transform-gpu backface-hidden will-change-transform dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/20 blur-2xl md:block"
-        />
+      <header className="gpu-layer relative z-10 mt-4 shrink-0 overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative space-y-3">
           <Link
             href="/dashboard/perfil"
@@ -126,7 +122,7 @@ export const SettingsHub = memo(function SettingsHub() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
                 {t('settings.hub')}
               </p>
-              <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+              <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight text-gray-900 dark:text-white">
                 {t('settings.title')}
               </h1>
               <p className="mt-1 text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">

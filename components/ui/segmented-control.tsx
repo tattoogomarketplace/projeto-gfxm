@@ -32,7 +32,7 @@ function SegmentedControlBase<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'relative grid w-full rounded-2xl border border-[#EAEAEA] bg-black/[0.03] p-1 backdrop-blur-xl',
+        'relative grid w-full rounded-2xl border border-black/[0.04] bg-black/[0.03] p-1 backdrop-blur-xl',
         'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/5 dark:bg-white/[0.04]',
         className
       )}

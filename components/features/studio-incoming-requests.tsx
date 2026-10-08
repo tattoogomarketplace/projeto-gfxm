@@ -116,7 +116,7 @@ export function StudioIncomingRequests() {
             {(pendentes ?? []).map((pedido) => (
               <li
                 key={pedido?.id ?? pedido?.tatuador?.id}
-                className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-[#0a0a0a] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-black/[0.04] bg-neutral-50 p-3 dark:border-white/[0.05] dark:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-neutral-900 dark:text-white">{pedido?.tatuador?.nome || 'Artista'}</p>

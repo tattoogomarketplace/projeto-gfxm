@@ -28,20 +28,18 @@ export default function Home() {
   };
 
   return (
-    <main className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-white select-none">
+    <main className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-gray-900 select-none dark:text-white">
       <TermsModal
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}
         onAccept={handleAcceptTerms}
       />
-      {/* Efeito de brilho de fundo GFXM */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-orange-500/20 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 text-center [-webkit-overflow-scrolling:touch]">
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
           TattooGo <span className="text-orange-500">MK</span>
         </h1>
-        <p className="text-zinc-400 text-lg md:text-xl mb-10 max-w-lg">
+        <p className="text-neutral-600 text-lg md:text-xl mb-10 max-w-lg dark:text-zinc-400">
           O ecossistema definitivo para Estúdios, Artistas e Clientes. 
           Performance extrema e design linear.
         </p>

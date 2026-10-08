@@ -139,37 +139,25 @@ export function ProfileView() {
 
   return (
     <div className="gpu-layer flex h-full min-h-0 w-full flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-neutral-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/5 dark:bg-white/[0.02] dark:shadow-none">
-        <div className="relative h-28 w-full overflow-hidden">
+      <header className="relative overflow-hidden rounded-3xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] contain-paint transform-gpu backface-hidden will-change-transform dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+        <div className="relative h-28 w-full overflow-hidden border-b border-black/[0.04] bg-neutral-100 dark:border-white/[0.05] dark:bg-white/[0.03]">
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500"
+            className="absolute inset-0 bg-gradient-to-b from-transparent to-black/[0.03] dark:to-white/[0.02]"
           />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[radial-gradient(140%_120%_at_15%_0%,rgba(255,255,255,0.35),transparent_55%)]"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-10 -top-14 h-44 w-44 rounded-full bg-white/25 blur-3xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-8 top-2 h-36 w-36 rounded-full bg-emerald-400/30 blur-3xl"
-          />
-          <p className="absolute left-5 top-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/90">
+          <p className="absolute left-5 top-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500 dark:text-zinc-400">
             {BRAND_NAME}
           </p>
         </div>
 
         <div className="relative px-5 pb-5">
           <div className="flex items-end gap-4">
-            <span className="-mt-12 flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-3xl border-4 border-white bg-neutral-900 text-2xl font-semibold uppercase text-orange-400 shadow-[0_8px_24px_rgba(0,0,0,0.35)] dark:border-[#0a0a0a]">
+            <span className="-mt-12 flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-3xl border-4 border-white bg-neutral-900 text-2xl font-semibold uppercase text-orange-400 shadow-[0_8px_24px_rgba(0,0,0,0.18)] dark:border-[#0a0a0a]">
               {initials}
             </span>
             <div className="min-w-0 flex-1 pb-1">
               <div className="flex items-center gap-1.5">
-                <h1 className="truncate text-[22px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+                <h1 className="truncate text-[22px] font-semibold tracking-tight text-gray-900 dark:text-white">
                   {displayNome || t('profile.title')}
                 </h1>
                 <BadgeCheck className="h-5 w-5 min-h-5 min-w-5 shrink-0 text-emerald-500" strokeWidth={2} />
@@ -186,7 +174,7 @@ export function ProfileView() {
         {stats.map(({ key, value, Icon }) => (
           <div
             key={key}
-            className="glass-chrome rounded-2xl border border-black/[0.06] px-2 py-4 text-center dark:border-white/10"
+            className="glass-chrome rounded-2xl border border-black/[0.04] px-2 py-4 text-center dark:border-white/[0.05] dark:bg-white/[0.03]"
           >
             <span className="mx-auto flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
               <Icon className="h-4 w-4" strokeWidth={1.9} />

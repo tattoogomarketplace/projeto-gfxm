@@ -94,9 +94,9 @@ const TimeField = memo(function TimeField({
         onChange={(event) => onChange(event.target.value)}
         className={cn(
           'h-11 w-full min-h-11 rounded-xl border px-3 text-sm font-medium',
-          'border-neutral-200 bg-white text-neutral-900 caret-neutral-900',
+          'border-black/[0.04] bg-white text-neutral-900 caret-neutral-900',
           'transition-all duration-200 focus:border-[#F97316] focus:outline-none focus:ring-1 focus:ring-[#F97316]',
-          'dark:border-neutral-800 dark:bg-[#1a1a1a] dark:text-white dark:caret-white',
+          'dark:border-white/[0.05] dark:bg-white/[0.05] dark:text-white dark:caret-white',
           'scheme-light dark:scheme-dark',
           'disabled:cursor-not-allowed disabled:opacity-40'
         )}
@@ -139,7 +139,7 @@ const BreakRow = memo(function BreakRow({
         aria-label="Remover intervalo"
         disabled={disabled}
         onClick={() => onRemove(interval.id)}
-        className="inline-flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-neutral-500 transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-800 dark:text-zinc-500"
+        className="inline-flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-black/[0.04] text-neutral-500 transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.05] dark:text-zinc-500"
       >
         <Trash2 className="h-4 w-4" strokeWidth={1.75} />
       </button>
@@ -174,7 +174,7 @@ const DayRow = memo(function DayRow({
         'rounded-2xl border px-3 py-3 transition-all duration-200',
         day.active
           ? 'border-[#F97316]/30 bg-[#F97316]/5'
-          : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-white/5'
+          : 'border-black/[0.04] bg-neutral-50 dark:border-white/[0.05] dark:bg-white/5'
       )}
     >
       <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ const DayRow = memo(function DayRow({
             'flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border transition-all duration-200',
             day.active
               ? 'border-[#F97316]/50 bg-[#F97316]/15 text-[#F97316]'
-              : 'border-neutral-200 bg-white text-neutral-500 dark:border-neutral-800 dark:bg-white/5 dark:text-zinc-400'
+              : 'border-black/[0.04] bg-white text-neutral-500 dark:border-white/[0.05] dark:bg-white/5 dark:text-zinc-400'
           )}
         >
           <Clock3 className="h-5 w-5" strokeWidth={1.75} />

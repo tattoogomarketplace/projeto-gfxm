@@ -25,10 +25,6 @@ export default function DashboardError({
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.16),transparent_60%)]"
-      />
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-6 pb-36 text-center [-webkit-overflow-scrolling:touch]">
       <div className="relative flex w-full max-w-sm flex-col items-center gap-5">
         <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_22px_rgba(249,115,22,0.25)]">

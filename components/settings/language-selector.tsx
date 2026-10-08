@@ -123,7 +123,7 @@ export const LanguageSelector = memo(function LanguageSelector() {
                 aria-label={t('common.search')}
                 autoComplete="off"
                 spellCheck={false}
-                className="min-h-11 w-full rounded-xl border border-neutral-200 bg-neutral-50 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors duration-200 placeholder:text-zinc-400 focus:border-[#F97316]/50 focus:ring-2 focus:ring-[#F97316]/20 dark:border-neutral-800 dark:bg-white/5 dark:text-white"
+                className="min-h-11 w-full rounded-xl border border-black/[0.04] bg-neutral-50 pl-9 pr-3 text-sm text-neutral-900 outline-none transition-colors duration-200 placeholder:text-zinc-400 focus:border-[#F97316]/50 focus:ring-2 focus:ring-[#F97316]/20 dark:border-white/[0.05] dark:bg-white/5 dark:text-white"
               />
             </div>
 
@@ -146,7 +146,7 @@ export const LanguageSelector = memo(function LanguageSelector() {
                       'transform-gpu backface-hidden transition-all duration-200 ease-out active:scale-[0.98]',
                       selected
                         ? 'border-[#F97316]/30 bg-[#F97316]/5 shadow-[0_0_16px_rgba(249,115,22,0.16)]'
-                        : 'border-neutral-200 bg-neutral-50 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-white/5'
+                        : 'border-black/[0.04] bg-neutral-50 hover:border-[#F97316]/40 dark:border-white/[0.05] dark:bg-white/5'
                     )}
                   >
                     <LanguageFlag

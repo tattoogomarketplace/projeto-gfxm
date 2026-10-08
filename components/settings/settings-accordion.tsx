@@ -28,7 +28,7 @@ export const SettingsAccordion = memo(function SettingsAccordion({
   return (
     <section
       id={`settings-section-${id}`}
-      className="gpu-layer overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none"
+      className="gpu-layer overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none"
       style={delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
     >
       <button
@@ -64,7 +64,7 @@ export const SettingsAccordion = memo(function SettingsAccordion({
         )}
       >
         <div className="overflow-hidden contain-paint transform-gpu backface-hidden">
-          <div className="border-t border-neutral-200 px-4 py-4 dark:border-neutral-800">{children}</div>
+          <div className="border-t border-black/[0.04] px-4 py-4 dark:border-white/[0.05]">{children}</div>
         </div>
       </div>
     </section>

@@ -29,7 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={resolvedType}
             className={cn(
               "relative z-0 flex h-12 w-full rounded-xl border px-4 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50",
-              "border-[#EAEAEA] bg-white text-[#0A0A0A] caret-[#0A0A0A] placeholder:text-neutral-400 focus:border-orange-500 focus:ring-orange-500/60",
+              "border-black/[0.04] bg-white text-[#0A0A0A] caret-[#0A0A0A] placeholder:text-neutral-400 focus:border-orange-500 focus:ring-orange-500/60",
               "dark:border-white/5 dark:bg-white/[0.02] dark:text-white dark:caret-white dark:placeholder:text-neutral-500 dark:backdrop-blur-xl dark:focus:border-orange-500 dark:focus:ring-orange-500/60",
               "scheme-light dark:scheme-dark",
               isPassword && "pr-12",

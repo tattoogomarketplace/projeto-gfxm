@@ -34,10 +34,6 @@ export function OnboardingLoadingScreen({
   if (variant === 'sparkles') {
     return (
       <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background px-6 text-center text-white">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_100%_at_50%_0%,rgba(249,115,22,0.18),transparent_60%)]"
-        />
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto overscroll-none pb-36 [-webkit-overflow-scrolling:touch]">
           <span className="relative flex h-20 w-20 items-center justify-center">
             <span className="absolute inset-0 rounded-full border-2 border-orange-500/20" />

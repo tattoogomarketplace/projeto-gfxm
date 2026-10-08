@@ -70,7 +70,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
     <motion.article
       whileHover={{ y: -6 }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="group relative break-inside-avoid overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/50 hover:shadow-[0_0_32px_rgba(249,115,22,0.22)] dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-lg"
+      className="group relative break-inside-avoid overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all hover:border-orange-500/50 hover:shadow-[0_0_32px_rgba(249,115,22,0.22)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-orange-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
@@ -107,7 +107,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] p-3 opacity-100 sm:translate-y-2 sm:opacity-0 sm:transition-all sm:duration-300 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
           <div className="rounded-xl border border-white/10 bg-black/55 p-3 backdrop-blur-xl">
             <div className="flex w-full items-center gap-2 text-left">
-              <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold uppercase text-orange-400">
+              <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-orange-500/40 bg-white/[0.06] text-sm font-semibold uppercase text-orange-400 backdrop-blur-md">
                 {item.artist?.initial || artistName.charAt(0) || 'A'}
               </span>
               <div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
         </div>
       </div>
 
-      <div className="space-y-3 bg-neutral-50 p-4 dark:bg-[#0a0a0a]">
+      <div className="space-y-3 border-t border-black/[0.04] bg-white p-4 dark:border-white/[0.05] dark:bg-transparent">
         <div className="flex items-start justify-between gap-3">
           <button
             type="button"
@@ -168,12 +168,12 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
 
         <div className="flex flex-wrap items-center gap-1.5">
           {item.bodyPart ? (
-            <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-neutral-700 dark:bg-transparent dark:text-zinc-400">
+            <span className="rounded-full border border-black/[0.04] bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-white/[0.05] dark:bg-transparent dark:text-zinc-400">
               {bodyPartLabel(item.bodyPart)}
             </span>
           ) : null}
           {item.sessionDuration ? (
-            <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-neutral-700 dark:bg-transparent dark:text-zinc-400">
+            <span className="rounded-full border border-black/[0.04] bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:border-white/[0.05] dark:bg-transparent dark:text-zinc-400">
               {sessionDurationLabel(item.sessionDuration)}
             </span>
           ) : null}

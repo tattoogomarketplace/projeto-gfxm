@@ -302,7 +302,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
         </section>
       ) : null}
 
-      <section className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
+      <section className="space-y-4 rounded-2xl border border-black/[0.04] bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
             <ShieldAlert className="h-5 w-5" strokeWidth={1.75} />

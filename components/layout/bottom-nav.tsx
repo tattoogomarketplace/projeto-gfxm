@@ -135,7 +135,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     <nav
       className={cn(
         'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto max-w-md md:hidden',
-        'glass-chrome rounded-2xl border border-black/[0.06] dark:border-white/5',
+        'glass-chrome rounded-2xl border border-black/[0.04] dark:border-white/[0.05]',
         'shadow-2xl',
         'flex transform-gpu items-center px-1 py-1.5',
         conceal && 'pointer-events-none invisible'

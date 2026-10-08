@@ -17,7 +17,7 @@ export function AiChatHeader() {
   };
 
   return (
-    <header className="glass-chrome z-40 shrink-0 border-b border-black/[0.06] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/5">
+    <header className="glass-chrome z-40 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.05]">
       <div className="flex min-h-11 items-center gap-2 px-4 pb-3">
         <button
           type="button"

@@ -200,7 +200,7 @@ export function ChatThread({
 
   if (!destinatarioId) {
     return (
-      <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white px-6 text-center shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
+      <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center rounded-2xl border border-black/[0.04] bg-white px-6 text-center shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
         <p className="mt-1 max-w-xs text-xs text-neutral-500 dark:text-zinc-500">
           {t('chat.selectArtistHint')}
@@ -215,8 +215,8 @@ export function ChatThread({
   };
 
   return (
-    <div className="flex h-[28rem] min-h-[28rem] flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-[0_0_32px_rgba(0,0,0,0.35)] lg:h-auto">
-      <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
+    <div className="flex h-[28rem] min-h-[28rem] flex-1 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-[0_0_32px_rgba(0,0,0,0.35)] lg:h-auto">
+      <div className="flex items-center gap-3 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
         <button
           type="button"
           onClick={openProfile}
@@ -224,7 +224,7 @@ export function ChatThread({
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
           aria-label={t('chat.openVitrine', { name: peerName || t('chat.artistFallback') })}
         >
-          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400">
+          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400">
             {(peerName || 'A').charAt(0).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
@@ -251,7 +251,7 @@ export function ChatThread({
       </div>
 
       {artwork ? (
-        <div className="flex gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3 dark:border-neutral-800 dark:bg-[#161616]">
+        <div className="flex gap-3 border-b border-black/[0.04] bg-neutral-50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.04]">
           <div className="relative h-14 w-14 min-h-14 min-w-14 overflow-hidden rounded-xl border border-orange-500/30">
             <OptimizedImage src={artwork.imageUrl} alt={styleLabel(artwork.style)} className="h-full w-full" />
           </div>
@@ -295,7 +295,7 @@ export function ChatThread({
                 'max-w-[82%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                 message.sender === 'user'
                   ? 'rounded-br-md bg-orange-500 text-white shadow-[0_0_18px_rgba(249,115,22,0.28)]'
-                  : 'rounded-bl-md border border-neutral-200 bg-neutral-50 text-neutral-800 dark:border-neutral-800 dark:bg-[#1a1a1a] dark:text-zinc-200'
+                  : 'rounded-bl-md border border-black/[0.04] bg-neutral-50 text-neutral-800 dark:border-white/[0.05] dark:bg-white/[0.05] dark:text-zinc-200'
               )}
             >
               {message.text}
@@ -303,14 +303,14 @@ export function ChatThread({
           </div>
         ))}
         {!loading && messages.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center dark:border-neutral-800">
+          <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center dark:border-white/[0.05]">
             <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('chat.emptyMessages')}</p>
             <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('chat.emptyMessagesHint')}</p>
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-neutral-200 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-[#0a0a0a]">
+      <div className="border-t border-black/[0.04] bg-white px-3 py-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}
@@ -331,7 +331,7 @@ export function ChatThread({
               }
             }}
             rows={1}
-            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#161616] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
+            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-black/[0.04] bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
             placeholder={
               bookingIntent
                 ? bookingDraft(t, artwork)

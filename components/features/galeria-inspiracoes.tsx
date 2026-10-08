@@ -31,7 +31,7 @@ const HEALING_OPTIONS: { value: Exclude<GaleriaHealingFilter, 'all'>; labelKey: 
 type FilterCategory = 'style' | 'body' | 'healing' | null;
 
 const ENTRY_CARD_CLASS =
-  'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left shadow-sm transition-all hover:border-orange-500/40 hover:bg-orange-500/5 active:scale-[0.99]';
+  'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-black/[0.04] bg-white px-4 py-3 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all hover:border-orange-500/40 hover:bg-orange-500/[0.04] active:scale-[0.99] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none';
 
 function FilterTrigger({
   label,
@@ -56,7 +56,7 @@ function FilterTrigger({
         'flex min-h-11 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-xl border px-3 py-2 text-left transition-all active:scale-[0.98]',
         active
           ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
-          : 'border-white/10 bg-[#1a1a1a] text-zinc-300 hover:border-orange-500/40 hover:text-zinc-100'
+          : 'border-black/[0.04] bg-white text-neutral-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:border-orange-500/40 hover:text-neutral-900 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-300 dark:shadow-none dark:hover:text-zinc-100'
       )}
     >
       <span className="min-w-0">
@@ -97,7 +97,7 @@ function FilterOption({
         'flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold tracking-tight transition-colors active:scale-[0.99]',
         selected
           ? 'bg-orange-500/15 text-orange-300'
-          : 'text-zinc-300 hover:bg-white/[0.04] hover:text-white'
+          : 'text-neutral-700 hover:bg-black/[0.04] hover:text-neutral-900 dark:text-zinc-300 dark:hover:bg-white/[0.04] dark:hover:text-white'
       )}
     >
       {children}
@@ -113,7 +113,7 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
         <Images className="h-5 w-5" strokeWidth={1.75} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold tracking-tight text-white">
+        <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
           {t('gallery.title')}
         </span>
         <span className="mt-0.5 block text-xs text-zinc-500">
@@ -201,7 +201,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           <Images className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold tracking-tight text-white">
+          <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
             {t('gallery.title')}
           </span>
           <span className="mt-0.5 block text-xs text-zinc-500">
@@ -243,7 +243,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
               />
               <div
                 role="listbox"
-                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-[#161616] shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.12)] dark:border-white/[0.05] dark:bg-white/[0.04] dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
               >
               <div className="max-h-72 overflow-y-auto p-2">
                 {openCategory === 'style' ? (
@@ -306,7 +306,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-white/10 bg-[#1a1a1a] px-3.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
+            className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-black/[0.04] bg-white px-3.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-orange-300"
           >
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
             {t('gallery.clearFilters')}
