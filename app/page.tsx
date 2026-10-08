@@ -35,6 +35,23 @@ export default function Home() {
         onAccept={handleAcceptTerms}
       />
 
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 block dark:hidden"
+        style={{
+          background:
+            "radial-gradient(120% 85% at 50% 8%, rgba(249,115,22,0.14) 0%, rgba(251,146,60,0.06) 34%, rgba(250,250,250,0) 72%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 hidden dark:block"
+        style={{
+          background:
+            "radial-gradient(120% 85% at 50% 6%, rgba(249,115,22,0.30) 0%, rgba(234,88,12,0.15) 32%, rgba(10,10,10,0) 74%), radial-gradient(95% 70% at 50% 112%, rgba(180,83,9,0.16) 0%, rgba(10,10,10,0) 70%)",
+        }}
+      />
+
       <div className="z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 text-center [-webkit-overflow-scrolling:touch]">
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
           TattooGo <span className="text-orange-500">MK</span>
