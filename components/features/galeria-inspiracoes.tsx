@@ -16,15 +16,16 @@ import {
   styleLabel,
 } from '@/lib/portfolio-metadata';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
+import type { MessageKey } from '@/lib/i18n/types';
 import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
 };
 
-const HEALING_OPTIONS: { value: Exclude<GaleriaHealingFilter, 'all'>; label: string }[] = [
-  { value: 'fresh', label: 'Recém-feita' },
-  { value: 'healed', label: 'Cicatrizada' },
+const HEALING_OPTIONS: { value: Exclude<GaleriaHealingFilter, 'all'>; labelKey: MessageKey }[] = [
+  { value: 'fresh', labelKey: 'gallery.fresh' },
+  { value: 'healed', labelKey: 'gallery.healed' },
 ];
 
 type FilterCategory = 'style' | 'body' | 'healing' | null;
@@ -43,6 +44,7 @@ function FilterTrigger({
   open: boolean;
   onClick: () => void;
 }) {
+  const { t } = useI18n();
   const active = Boolean(value) || open;
   return (
     <button
@@ -62,7 +64,7 @@ function FilterTrigger({
           {label}
         </span>
         <span className="mt-0.5 block truncate text-xs font-semibold tracking-tight">
-          {value ?? 'Todos'}
+          {value ?? t('gallery.all')}
         </span>
       </span>
       <ChevronDown
@@ -190,7 +192,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const styleValue = style ? styleLabel(style) : null;
   const bodyValue = bodyPart ? bodyPartLabel(bodyPart) : null;
   const healingValue =
-    healed === 'fresh' ? 'Recém-feita' : healed === 'healed' ? 'Cicatrizada' : null;
+    healed === 'fresh' ? t('gallery.fresh') : healed === 'healed' ? t('gallery.healed') : null;
 
   return (
     <div className="space-y-4">
@@ -212,19 +214,19 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         <div className="relative">
           <div className="relative z-30 grid grid-cols-3 gap-2">
             <FilterTrigger
-              label="Estilo"
+              label={t('gallery.style')}
               value={styleValue}
               open={openCategory === 'style'}
               onClick={() => toggleCategory('style')}
             />
             <FilterTrigger
-              label="Parte do Corpo"
+              label={t('gallery.bodyPart')}
               value={bodyValue}
               open={openCategory === 'body'}
               onClick={() => toggleCategory('body')}
             />
             <FilterTrigger
-              label="Cicatrização"
+              label={t('gallery.healing')}
               value={healingValue}
               open={openCategory === 'healing'}
               onClick={() => toggleCategory('healing')}
@@ -235,7 +237,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
             <>
               <button
                 type="button"
-                aria-label="Fechar filtro"
+                aria-label={t('gallery.closeFilter')}
                 className="fixed inset-0 z-20 cursor-default"
                 onClick={() => setOpenCategory(null)}
               />
@@ -247,7 +249,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
                 {openCategory === 'style' ? (
                   <>
                     <FilterOption selected={!style} onClick={() => applyStyle('')}>
-                      Todos os estilos
+                      {t('gallery.allStyles')}
                     </FilterOption>
                     {PORTFOLIO_STYLES.map((item) => (
                       <FilterOption
@@ -264,7 +266,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
                 {openCategory === 'body' ? (
                   <>
                     <FilterOption selected={!bodyPart} onClick={() => applyBodyPart('')}>
-                      Todas as partes
+                      {t('gallery.allParts')}
                     </FilterOption>
                     {PORTFOLIO_BODY_PARTS.map((item) => (
                       <FilterOption
@@ -281,7 +283,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
                 {openCategory === 'healing' ? (
                   <>
                     <FilterOption selected={healed === 'all'} onClick={() => applyHealing('all')}>
-                      Todas
+                      {t('gallery.allHealing')}
                     </FilterOption>
                     {HEALING_OPTIONS.map((option) => (
                       <FilterOption
@@ -289,7 +291,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
                         selected={healed === option.value}
                         onClick={() => applyHealing(option.value)}
                       >
-                        {option.label}
+                        {t(option.labelKey)}
                       </FilterOption>
                     ))}
                   </>
@@ -307,7 +309,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
             className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-white/10 bg-[#1a1a1a] px-3.5 text-xs font-semibold text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-300"
           >
             <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Limpar filtros
+            {t('gallery.clearFilters')}
           </button>
         ) : null}
       </div>
@@ -321,19 +323,17 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </div>
       ) : isError ? (
         <GlassContainer className="border-dashed p-6 text-center">
-          <p className="text-sm text-neutral-500 dark:text-zinc-400">Não foi possível carregar a galeria agora.</p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">Tente novamente em instantes.</p>
+          <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('gallery.loadError')}</p>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('gallery.loadErrorHint')}</p>
         </GlassContainer>
       ) : items.length === 0 ? (
         <GlassContainer className="border-dashed p-6 text-center">
           <Sparkles className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
           <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
-            {hasFilters ? 'Nenhuma arte encontrada com esses filtros.' : 'Nenhuma arte disponível ainda.'}
+            {hasFilters ? t('gallery.emptyFiltered') : t('gallery.empty')}
           </p>
           <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-            {hasFilters
-              ? 'Ajuste estilo, parte do corpo ou cicatrização para ampliar a busca.'
-              : 'Quando tatuadores verificados publicarem, as artes aparecem aqui.'}
+            {hasFilters ? t('gallery.emptyFilteredHint') : t('gallery.emptyHint')}
           </p>
         </GlassContainer>
       ) : (

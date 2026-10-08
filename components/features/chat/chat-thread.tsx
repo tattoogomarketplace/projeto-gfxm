@@ -8,7 +8,9 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
+import { useI18n } from '@/hooks/use-i18n';
 import type { ChatArtworkRef, ChatMessageDto } from '@/lib/types/chat';
+import type { MessageKey, TranslateVars } from '@/lib/i18n/types';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
 import { bodyPartLabel, healingLabel, styleLabel } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
@@ -32,13 +34,16 @@ type ChatThreadProps = {
   onOpenBooking?: (artistId: string, artworkId?: string) => void;
 };
 
-function bookingDraft(artwork?: ChatArtworkRef | null): string {
+type Translate = (key: MessageKey, vars?: TranslateVars) => string;
+
+function bookingDraft(t: Translate, artwork?: ChatArtworkRef | null): string {
   if (artwork) {
-    return `Gostaria de agendar uma sessão de ${styleLabel(artwork.style)}${
-      artwork.bodyPart ? ` em ${bodyPartLabel(artwork.bodyPart)}` : ''
-    }. Podemos confirmar um horário disponível?`;
+    const body = artwork.bodyPart
+      ? t('chat.bookingDraftBody', { part: bodyPartLabel(artwork.bodyPart) })
+      : '';
+    return t('chat.bookingDraftStyled', { style: styleLabel(artwork.style), body });
   }
-  return 'Gostaria de agendar uma sessão. Podemos confirmar um horário disponível?';
+  return t('chat.bookingDraft');
 }
 
 async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
@@ -61,8 +66,9 @@ export function ChatThread({
   onOpenProfile,
   onOpenBooking,
 }: ChatThreadProps) {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
-  const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(artwork) : ''));
+  const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(t, artwork) : ''));
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -195,9 +201,9 @@ export function ChatThread({
   if (!destinatarioId) {
     return (
       <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white px-6 text-center shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
-        <p className="text-sm font-medium text-neutral-900 dark:text-white">Selecione um artista</p>
+        <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
         <p className="mt-1 max-w-xs text-xs text-neutral-500 dark:text-zinc-500">
-          Escolha uma conversa ou inicie um orçamento a partir da galeria de inspirações.
+          {t('chat.selectArtistHint')}
         </p>
       </div>
     );
@@ -216,15 +222,15 @@ export function ChatThread({
           onClick={openProfile}
           disabled={!destinatarioId || !onOpenProfile}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
-          aria-label={`Abrir vitrine de ${peerName || 'artista'}`}
+          aria-label={t('chat.openVitrine', { name: peerName || t('chat.artistFallback') })}
         >
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400">
             {(peerName || 'A').charAt(0).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || 'Artista'}</span>
+            <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || t('chat.artistFallback')}</span>
             <span className="block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
-              {bookingIntent ? 'Solicitar agendamento da sessão' : 'Orçamento e dúvidas da sessão'}
+              {bookingIntent ? t('chat.requestBooking') : t('chat.sessionQuestions')}
             </span>
           </span>
           {onOpenProfile ? (
@@ -236,10 +242,10 @@ export function ChatThread({
             type="button"
             onClick={() => onOpenBooking(destinatarioId, artworkId)}
             className="flex h-11 min-h-11 shrink-0 items-center gap-1 rounded-xl border border-orange-500/40 px-3 text-xs font-semibold text-orange-600 dark:text-orange-300"
-            aria-label={`Agendar com ${peerName || 'artista'}`}
+            aria-label={t('chat.bookWith', { name: peerName || t('chat.artistFallback') })}
           >
             <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            Agendar
+            {t('chat.book')}
           </button>
         ) : null}
       </div>
@@ -251,7 +257,7 @@ export function ChatThread({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-500 dark:text-orange-400">
-              Referência de projeto
+              {t('chat.projectReference')}
             </p>
             <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">{styleLabel(artwork.style)}</p>
             <p className="truncate text-[11px] text-neutral-500 dark:text-zinc-500">
@@ -265,7 +271,7 @@ export function ChatThread({
               onClick={() => onOpenBooking(destinatarioId, artwork.id)}
               className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-orange-500/40 px-3 text-xs font-semibold text-orange-600 dark:text-orange-300"
             >
-              Agendar
+              {t('chat.book')}
             </button>
           ) : null}
         </div>
@@ -298,8 +304,8 @@ export function ChatThread({
         ))}
         {!loading && messages.length === 0 ? (
           <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center dark:border-neutral-800">
-            <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma mensagem ainda.</p>
-            <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">Descreva o projeto para solicitar um orçamento.</p>
+            <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('chat.emptyMessages')}</p>
+            <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('chat.emptyMessagesHint')}</p>
           </div>
         ) : null}
       </div>
@@ -307,7 +313,7 @@ export function ChatThread({
       <div className="border-t border-neutral-200 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-[#121212]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
-          Pagamentos e links externos são bloqueados
+          {t('chat.paymentsBlocked')}
         </p>
         <div className="flex items-end gap-2">
           <textarea
@@ -315,7 +321,7 @@ export function ChatThread({
             onChange={(event) => setInput(event.target.value)}
             onFocus={() => {
               if (bookingIntent && !input.trim()) {
-                setInput(bookingDraft(artwork));
+                setInput(bookingDraft(t, artwork));
               }
             }}
             onKeyDown={(event) => {
@@ -328,10 +334,10 @@ export function ChatThread({
             className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-neutral-800 dark:bg-[#161616] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
             placeholder={
               bookingIntent
-                ? bookingDraft(artwork)
+                ? bookingDraft(t, artwork)
                 : artwork
-                  ? 'Peça um orçamento sobre esta arte...'
-                  : 'Digite sua mensagem...'
+                  ? t('chat.placeholderQuote')
+                  : t('chat.placeholderMessage')
             }
           />
           <button
@@ -339,7 +345,7 @@ export function ChatThread({
             onClick={() => void sendMessage()}
             disabled={sending || !input.trim()}
             className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/15 text-orange-600 transition-all hover:bg-orange-500/25 active:scale-95 disabled:opacity-40 dark:text-orange-400"
-            aria-label="Enviar mensagem"
+            aria-label={t('chat.sendAria')}
           >
             <Send size={18} />
           </button>

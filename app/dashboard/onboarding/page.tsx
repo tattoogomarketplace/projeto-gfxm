@@ -8,6 +8,8 @@ import { RoleSelector, type RegisterRole } from '@/components/features/role-sele
 import { getOnboardingLoadingMessage, getRoleExperience } from '@/lib/content/role-experience';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import {
   assignAppPath,
@@ -32,6 +34,7 @@ function messageFromOnboardingError(status: number, data: { erro?: unknown }): s
 export default function DashboardOnboardingPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const setUser = useAuthStore((s) => s.setUser);
   const setStoreRole = useAuthStore((s) => s.setRole);
   const [selectedRole, setSelectedRole] = useState<RegisterRole | null>(null);
@@ -155,10 +158,10 @@ export default function DashboardOnboardingPage() {
             <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
           </div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
-            {content.badge}
+            {t(content.badge, { brand: BRAND_NAME })}
           </p>
           <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-            {content.journey.past}
+            {t(content.journey.past)}
           </p>
         </header>
 
@@ -166,9 +169,9 @@ export default function DashboardOnboardingPage() {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
             {firstName ? `Olá, ${firstName}!` : 'Olá!'}
           </h1>
-          <p className="text-base font-semibold text-zinc-200">{content.journey.present}</p>
+          <p className="text-base font-semibold text-zinc-200">{t(content.journey.present)}</p>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
-            {content.journey.future}
+            {t(content.journey.future)}
           </p>
         </div>
 
@@ -202,7 +205,7 @@ export default function DashboardOnboardingPage() {
           disabled={saving}
           className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
-          {saving ? <TattooMachineLoader compact label={content.activating} /> : content.cta}
+          {saving ? <TattooMachineLoader compact label={t(content.activating)} /> : t(content.cta)}
         </button>
       </div>
     </div>

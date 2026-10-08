@@ -3,31 +3,33 @@
 import { User, PenTool, Building2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
+import type { MessageKey } from '@/lib/i18n/types';
 
 export type RegisterRole = 'cliente' | 'tatuador' | 'estudio';
 
 const ROLES: Array<{
   value: RegisterRole;
-  label: string;
-  description: string;
+  labelKey: MessageKey;
+  descriptionKey: MessageKey;
   icon: typeof User;
 }> = [
   {
     value: 'cliente',
-    label: 'Cliente',
-    description: 'Encontre artistas e agende sessões',
+    labelKey: 'role.cliente.label',
+    descriptionKey: 'role.cliente.description',
     icon: User,
   },
   {
     value: 'tatuador',
-    label: 'Tatuador',
-    description: 'Mostre sua arte e gerencie a agenda',
+    labelKey: 'role.tatuador.label',
+    descriptionKey: 'role.tatuador.description',
     icon: PenTool,
   },
   {
     value: 'estudio',
-    label: 'Estúdio',
-    description: 'Homologue artistas e o ateliê',
+    labelKey: 'role.estudio.label',
+    descriptionKey: 'role.estudio.description',
     icon: Building2,
   },
 ];
@@ -40,12 +42,13 @@ type RoleSelectorProps = {
 
 export function RoleSelector({ value, onChange, lockedRole = null }: RoleSelectorProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const isLocked = Boolean(lockedRole);
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Eu sou</p>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Seleção de perfil">
+      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{t('role.iAm')}</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t('role.selectAria')}>
         {ROLES.map((role) => {
           const selected = value === role.value;
           const disabled = isLocked && role.value !== lockedRole;
@@ -87,10 +90,10 @@ export function RoleSelector({ value, onChange, lockedRole = null }: RoleSelecto
                   selected ? 'text-white' : 'text-zinc-400'
                 )}
               >
-                {role.label}
+                {t(role.labelKey)}
               </span>
               <span className="text-xs leading-tight text-zinc-500">
-                {role.description}
+                {t(role.descriptionKey)}
               </span>
             </button>
           );
@@ -99,7 +102,7 @@ export function RoleSelector({ value, onChange, lockedRole = null }: RoleSelecto
       {isLocked ? (
         <p className="flex items-center gap-1.5 text-[11px] leading-relaxed text-zinc-500">
           <Lock className="h-3 w-3" strokeWidth={2} />
-          Perfil definido no cadastro. Por segurança, esta escolha não pode ser alterada.
+          {t('role.lockedHint')}
         </p>
       ) : null}
     </div>

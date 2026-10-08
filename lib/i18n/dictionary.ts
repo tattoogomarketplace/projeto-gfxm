@@ -5,6 +5,7 @@ import {
   EXTRA_ES,
   EXTRA_PT_BR,
 } from '@/lib/i18n/coverage';
+import { VIEW_MESSAGES } from '@/lib/i18n/views';
 import {
   AR,
   DE,
@@ -87,6 +88,7 @@ export const PT_BR: MessageDictionary = {
   'chat.newQuote': 'Nova conversa de orçamento',
   'chat.book': 'Agendar',
   ...EXTRA_PT_BR,
+  ...VIEW_MESSAGES['pt-BR'],
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Configurações e atividade',
@@ -162,6 +164,7 @@ export const EN: MessageDictionary = {
   'chat.newQuote': 'New quote conversation',
   'chat.book': 'Book',
   ...EXTRA_EN,
+  ...VIEW_MESSAGES.en,
 
   'profile.title': 'Profile',
   'profile.settingsAndActivity': 'Settings and activity',
@@ -237,6 +240,7 @@ export const ES: MessageDictionary = {
   'chat.newQuote': 'Nueva conversación de presupuesto',
   'chat.book': 'Reservar',
   ...EXTRA_ES,
+  ...VIEW_MESSAGES.es,
 
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Ajustes y actividad',

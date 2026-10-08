@@ -69,13 +69,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       { value: 'perfil', label: t('nav.profile') },
     ],
     tatuador: [
-      { value: 'portfolio', label: ROLE_EXPERIENCE.tatuador.dashboard.primaryTab },
+      { value: 'portfolio', label: t(ROLE_EXPERIENCE.tatuador.dashboard.primaryTab) },
       { value: 'agendar', label: t('nav.schedule') },
       { value: 'chat', label: t('nav.chat') },
       { value: 'perfil', label: t('nav.profile') },
     ],
     estudio: [
-      { value: 'portfolio', label: ROLE_EXPERIENCE.estudio.dashboard.primaryTab },
+      { value: 'portfolio', label: t(ROLE_EXPERIENCE.estudio.dashboard.primaryTab) },
       { value: 'agendar', label: t('nav.book') },
       { value: 'chat', label: t('nav.chat') },
       { value: 'perfil', label: t('nav.profile') },
@@ -168,7 +168,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           : selectedTab === 'chat'
             ? t('chat.title')
             : role && role !== 'cliente'
-              ? ROLE_EXPERIENCE[role].dashboard.title
+              ? t(ROLE_EXPERIENCE[role].dashboard.title)
               : title;
 
   const handleTabChange = (tab: AppTab) => {

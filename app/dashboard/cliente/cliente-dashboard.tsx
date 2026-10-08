@@ -60,7 +60,7 @@ export default function ClienteDashboard() {
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
               title={t('home.appointments')}
-              subtitle="Acompanhe o status das suas sessões."
+              subtitle={t('dashboard.appointmentsStatus')}
             />
             {isLoading ? (
               <div className="space-y-4">
@@ -90,9 +90,9 @@ export default function ClienteDashboard() {
                 ))}
                 {(!agendamentos || agendamentos.length === 0) && (
                   <GlassContainer className="border-dashed p-6 text-center">
-                    <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhum agendamento encontrado.</p>
+                    <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('dashboard.emptyAppointments')}</p>
                     <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-                      Sua próxima obra-prima começa com um agendamento.
+                      {t('dashboard.emptyAppointmentsHint')}
                     </p>
                   </GlassContainer>
                 )}
@@ -130,7 +130,7 @@ export default function ClienteDashboard() {
                   </h1>
                 </div>
               </div>
-              <p className="relative mt-3 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
+              <p className="relative mt-3 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">{t(EXPERIENCE.subtitle)}</p>
             </header>
             <GaleriaEntryCard href="/dashboard/galeria" />
           </section>

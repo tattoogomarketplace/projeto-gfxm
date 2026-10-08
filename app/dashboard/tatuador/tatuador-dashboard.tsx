@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { PortfolioUpload } from '@/components/features/portfolio-upload';
 import { getRoleExperience } from '@/lib/content/role-experience';
+import { useI18n } from '@/hooks/use-i18n';
 import type { Agendamento } from '@/lib/types/database';
 
 const EXPERIENCE = getRoleExperience('tatuador').dashboard;
@@ -16,6 +17,7 @@ const EXPERIENCE = getRoleExperience('tatuador').dashboard;
 export default function TatuadorDashboard() {
   const { user } = useUser();
   const { data: agendamentos, isLoading } = useAgendamentos();
+  const { t } = useI18n();
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
@@ -27,8 +29,8 @@ export default function TatuadorDashboard() {
               <Images className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div>
-              <h1 className="text-2xl font-bold">Portfólio</h1>
-              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">Publique artes e mantenha sua bancada visível.</p>
+              <h1 className="text-2xl font-bold">{t('dashboard.portfolio')}</h1>
+              <p className="mt-1 text-sm text-neutral-600 dark:text-zinc-400">{t('dashboard.portfolioSubtitle')}</p>
             </div>
           </div>
           {user?.id ? (
@@ -49,8 +51,8 @@ export default function TatuadorDashboard() {
               <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
             </span>
             <div>
-              <h1 className="text-2xl font-bold mb-1">{EXPERIENCE.heading}</h1>
-              <p className="text-sm text-neutral-600 dark:text-zinc-400">{EXPERIENCE.subtitle}</p>
+              <h1 className="text-2xl font-bold mb-1">{t(EXPERIENCE.heading)}</h1>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">{t(EXPERIENCE.subtitle)}</p>
             </div>
           </div>
 
@@ -64,16 +66,16 @@ export default function TatuadorDashboard() {
               {agendamentos?.map((ag: Agendamento, index: number) => (
                 <GlassContainer key={ag?.id ?? `agendamento-${index}`} className="p-4 border-l-4 border-neon-orange">
                   <div className="flex justify-between items-center">
-                    <h2 className="font-bold">Cliente ID: {(ag?.cliente_id ?? '').slice(0, 8) || '—'}...</h2>
+                    <h2 className="font-bold">{t('dashboard.clientId', { id: (ag?.cliente_id ?? '').slice(0, 8) || '—' })}...</h2>
                     <span className="text-neon-orange uppercase text-xs font-bold">{ag?.status ?? 'pendente'}</span>
                   </div>
                   <p className="text-sm mt-2">
-                    Data: {ag?.data_hora ? new Date(ag.data_hora).toLocaleString() : '—'}
+                    {t('dashboard.date', { date: ag?.data_hora ? new Date(ag.data_hora).toLocaleString() : '—' })}
                   </p>
                 </GlassContainer>
               ))}
               {(!agendamentos || agendamentos.length === 0) && (
-                <p className="text-neutral-500 dark:text-zinc-400">Nenhum agendamento pendente.</p>
+                <p className="text-neutral-500 dark:text-zinc-400">{t('dashboard.emptyPendingAppointments')}</p>
               )}
             </div>
           )}

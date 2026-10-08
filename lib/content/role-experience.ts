@@ -1,40 +1,44 @@
 import { normalizeAppRole, type AppRole } from '@/lib/utils/auth-redirect';
-import { BRAND_NAME } from '@/lib/i18n/brands';
+import { t } from '@/lib/i18n/store';
+import type { MessageKey } from '@/lib/i18n/types';
 
 /**
  * Narrativa de onboarding guiada pela regra Past-Present-Future:
  * - `past`    reconhece o ponto de partida do usuário;
  * - `present` descreve o estado atual já preparado pela plataforma;
  * - `future`  projeta o próximo passo dentro do papel escolhido.
+ *
+ * Cada campo expõe uma chave de i18n (`MessageKey`); a tradução é resolvida
+ * pelos consumidores via `t()` para acompanhar o locale ativo.
  */
 export type RoleJourney = {
-  past: string;
-  present: string;
-  future: string;
+  past: MessageKey;
+  present: MessageKey;
+  future: MessageKey;
 };
 
 export type RoleOnboardingExperience = {
-  badge: string;
+  badge: MessageKey;
   journey: RoleJourney;
-  cta: string;
+  cta: MessageKey;
   /**
-   * Texto exibido durante a ativação da conta / carregamento do perfil. É
-   * dirigido ao papel persistido para manter a narrativa coerente do primeiro
+   * Chave exibida durante a ativação da conta / carregamento do perfil. É
+   * dirigida ao papel persistido para manter a narrativa coerente do primeiro
    * contato até a entrada no painel.
    */
-  activating: string;
+  activating: MessageKey;
 };
 
 export type RoleDashboardExperience = {
-  title: string;
-  primaryTab: string;
-  heading: string;
-  subtitle: string;
+  title: MessageKey;
+  primaryTab: MessageKey;
+  heading: MessageKey;
+  subtitle: MessageKey;
 };
 
 export type RoleExperience = {
   role: AppRole;
-  label: string;
+  label: MessageKey;
   onboarding: RoleOnboardingExperience;
   dashboard: RoleDashboardExperience;
 };
@@ -47,62 +51,62 @@ export type RoleExperience = {
 export const ROLE_EXPERIENCE: Record<AppRole, RoleExperience> = {
   cliente: {
     role: 'cliente',
-    label: 'Cliente',
+    label: 'role.cliente.label',
     onboarding: {
-      badge: `Bem-vindo ao ${BRAND_NAME}`,
+      badge: 'role.welcomeBadge',
       journey: {
-        past: 'Toda pele guarda uma história.',
-        present: 'Sua primeira ou próxima arte te espera.',
-        future: 'Conectamos você aos melhores artistas para encontrar o traço perfeito.',
+        past: 'role.cliente.past',
+        present: 'role.cliente.present',
+        future: 'role.cliente.future',
       },
-      cta: 'Minha Jornada na Pele',
-      activating: 'Minha Jornada na Pele...',
+      cta: 'role.cliente.cta',
+      activating: 'role.cliente.activating',
     },
     dashboard: {
-      title: 'Minha Jornada',
-      primaryTab: 'Galeria',
-      heading: 'Seus Agendamentos',
-      subtitle: 'Acompanhe suas sessões, converse com artistas e descubra novas artes.',
+      title: 'role.cliente.title',
+      primaryTab: 'nav.gallery',
+      heading: 'home.appointments',
+      subtitle: 'role.cliente.subtitle',
     },
   },
   tatuador: {
     role: 'tatuador',
-    label: 'Tatuador',
+    label: 'role.tatuador.label',
     onboarding: {
-      badge: `Bem-vindo ao ${BRAND_NAME}`,
+      badge: 'role.welcomeBadge',
       journey: {
-        past: 'Sua arte já fala por você.',
-        present: 'Bancada montada e máquina regulada.',
-        future: 'Eternize sua arte, organize o dia e gerencie seus recebimentos.',
+        past: 'role.tatuador.past',
+        present: 'role.tatuador.present',
+        future: 'role.tatuador.future',
       },
-      cta: 'Montar Ateliê Digital',
-      activating: 'Montando seu ateliê digital...',
+      cta: 'role.tatuador.cta',
+      activating: 'role.tatuador.activating',
     },
     dashboard: {
-      title: 'Atelier Digital',
-      primaryTab: 'Portfólio',
-      heading: 'Gestão de Agendamentos',
-      subtitle: 'Gerencie sua agenda, portfólio e repasses em um só lugar.',
+      title: 'role.tatuador.title',
+      primaryTab: 'role.tatuador.primaryTab',
+      heading: 'role.tatuador.heading',
+      subtitle: 'role.tatuador.subtitle',
     },
   },
   estudio: {
     role: 'estudio',
-    label: 'Estúdio',
+    label: 'role.estudio.label',
     onboarding: {
-      badge: `Bem-vindo ao ${BRAND_NAME}`,
+      badge: 'role.welcomeBadge',
       journey: {
-        past: 'Seu ateliê já tem nome e história.',
-        present: 'Gestão master conectada.',
-        future: 'Homologue artistas e acompanhe o split do seu império.',
+        past: 'role.estudio.past',
+        present: 'role.estudio.present',
+        future: 'role.estudio.future',
       },
-      cta: 'Montar Ateliê Digital',
-      activating: 'Configurando a gestão do estúdio...',
+      cta: 'role.estudio.cta',
+      activating: 'role.estudio.activating',
     },
     dashboard: {
-      title: 'Métricas do Estúdio',
-      primaryTab: 'Portfólio',
-      heading: 'Métricas do Estúdio',
-      subtitle: 'Acompanhe artistas parceiros e o desempenho do ateliê.',
+      title: 'role.estudio.title',
+      primaryTab: 'role.estudio.primaryTab',
+      heading: 'role.estudio.heading',
+      subtitle: 'role.estudio.subtitle',
     },
   },
 };
@@ -112,5 +116,5 @@ export function getRoleExperience(role: AppRole): RoleExperience {
 }
 
 export function getOnboardingLoadingMessage(role?: string | null): string {
-  return getRoleExperience(normalizeAppRole(role)).onboarding.activating;
+  return t(getRoleExperience(normalizeAppRole(role)).onboarding.activating);
 }

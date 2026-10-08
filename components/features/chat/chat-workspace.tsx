@@ -364,7 +364,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                       router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
                     }}
                     className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-[#1a1a1a] dark:text-orange-400"
-                    aria-label={`Abrir vitrine de ${item.peer.name}`}
+                    aria-label={t('chat.openVitrine', { name: item.peer.name })}
                   >
                     {item.peer.initial}
                   </button>

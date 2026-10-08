@@ -5,6 +5,7 @@ import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 import { getRoleExperience } from '@/lib/content/role-experience';
+import { t } from '@/lib/i18n';
 import { resolveDisplayName } from '@/lib/utils/display-name';
 
 interface DashboardPageProps {
@@ -34,8 +35,8 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">{experience.dashboard.title}</h1>
-        <p className="text-sm text-zinc-400">{experience.dashboard.subtitle}</p>
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">{t(experience.dashboard.title)}</h1>
+        <p className="text-sm text-zinc-400">{t(experience.dashboard.subtitle)}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="h-40 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
