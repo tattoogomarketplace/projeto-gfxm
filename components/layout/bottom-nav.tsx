@@ -1,8 +1,8 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, startTransition, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -72,6 +72,7 @@ const NavIcon = memo(function NavIcon({
 
 function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const role = useAuthStore((s) => s.role);
   const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
@@ -82,9 +83,33 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const homePath = dashboardPathForRole(role);
   const activeTab = resolveActiveTab(pathname, storeTab);
 
+  // Prefetch em background das abas globais. No mobile não existe "hover", então
+  // o Next só pré-carrega o RSC das rotas (`/dashboard/chat`, `/dashboard/perfil`)
+  // quando o link entra no viewport — aquecer aqui garante que o payload já
+  // esteja em cache antes do toque e a troca de aba seja instantânea (sem tela
+  // vazia / layout shift).
+  useEffect(() => {
+    const warm = [
+      '/dashboard/chat',
+      '/dashboard/perfil',
+      '/dashboard/galeria',
+      `${homePath}?tab=portfolio`,
+      `${homePath}?tab=agendar`,
+    ];
+    warm.forEach((href) => router.prefetch(href));
+  }, [router, homePath]);
+
   const handleSelect = useCallback(
-    (tab: AppTab) => {
+    (tab: AppTab, href: string) => {
       triggerHaptic('light');
+      // Aquece a rota de destino no mesmo tick do toque. Para as abas que
+      // alternam estado na MESMA rota (Início/Agenda via `?tab=`), envolvemos a
+      // atualização do store em `startTransition`: o React mantém o frame atual
+      // pintado até que o próximo esteja pronto, eliminando o flash de estado
+      // vazio durante a recomposição.
+      if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
+        router.prefetch(href);
+      }
       // "Hard clean-up" ao sair de uma sub-rota sem casco: purga foco, zoom e
       // transforms residuais imediatamente e agenda uma segunda passada após o
       // iOS restaurar a escala de forma assíncrona, evitando que o sub-route
@@ -97,9 +122,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           forceViewportRecalibration();
         });
       }
-      if (tab !== 'perfil') setActiveTab(tab);
+      if (tab !== 'perfil') {
+        startTransition(() => {
+          setActiveTab(tab);
+        });
+      }
     },
-    [pathname, setActiveTab, triggerHaptic]
+    [pathname, router, setActiveTab, triggerHaptic]
   );
 
   return (
@@ -129,17 +158,19 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 href={href}
                 prefetch
                 scroll={false}
-                onClick={() => handleSelect(item.tab)}
+                onClick={() => handleSelect(item.tab, href)}
                 className={cn(
-                  'flex min-h-11 w-full min-w-11 transform-gpu flex-col items-center justify-center gap-0.5',
+                  'group flex min-h-11 w-full min-w-11 transform-gpu flex-col items-center justify-center gap-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
-                  'rounded-xl transition-[transform,color] duration-100 ease-out active:scale-[0.97]',
+                  'rounded-xl transition-[transform,color] duration-150 ease-out active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
                   active ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
-                <NavIcon icon={item.icon} />
+                <span className="flex transform-gpu items-center justify-center transition-transform duration-150 ease-out group-active:scale-95">
+                  <NavIcon icon={item.icon} />
+                </span>
                 <span>{t(item.labelKey)}</span>
               </Link>
             </li>

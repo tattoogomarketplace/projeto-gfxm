@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ChatLoading() {
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-3 transform-gpu transition-opacity duration-200">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden bg-background pt-3 transform-gpu transition-opacity duration-200">
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
           <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">

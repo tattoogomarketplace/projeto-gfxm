@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
@@ -191,20 +191,25 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       // 'perfil' vive em uma rota própria: não gravamos no store (os painéis de
       // papel leem `activeTab` para decidir o conteúdo e 'perfil' os deixaria
       // em branco). A aba ativa é derivada do pathname.
-      if (tab === 'perfil') {
-        router.push('/dashboard/perfil');
-        return;
-      }
-      if (tab === 'chat') {
-        setActiveTab('chat');
-        router.push('/dashboard/chat');
-        return;
-      }
-      setActiveTab(tab);
-      const params = new URLSearchParams(window.location.search);
-      params.set('tab', tab);
-      const targetPath = dashboardPathForRole(tabRole);
-      router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
+      //
+      // `startTransition` mantém o frame atual pintado até que o próximo esteja
+      // pronto — troca de aba instantânea, sem flash de estado vazio.
+      startTransition(() => {
+        if (tab === 'perfil') {
+          router.push('/dashboard/perfil');
+          return;
+        }
+        if (tab === 'chat') {
+          setActiveTab('chat');
+          router.push('/dashboard/chat');
+          return;
+        }
+        setActiveTab(tab);
+        const params = new URLSearchParams(window.location.search);
+        params.set('tab', tab);
+        const targetPath = dashboardPathForRole(tabRole);
+        router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
+      });
     },
     [isChromeLess, router, setActiveTab, tabRole]
   );
