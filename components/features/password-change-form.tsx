@@ -67,7 +67,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      toast.fromError(err, 'password');
+      const first = (err as { errors?: Array<{ code?: string; longMessage?: string; message?: string }> })?.errors?.[0];
+      if (first?.code === 'form_password_incorrect') {
+        toast.error('Senha atual incorreta.');
+      } else {
+        toast.error(first?.longMessage || first?.message || 'Falha ao alterar a senha.');
+      }
     } finally {
       setIsUpdating(false);
     }
