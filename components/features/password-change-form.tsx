@@ -1,33 +1,17 @@
 'use client';
 
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useReverification, useUser } from '@clerk/nextjs';
-import { isReverificationCancelledError } from '@clerk/nextjs/errors';
-import type { SessionVerificationLevel } from '@clerk/nextjs/types';
-import { ShieldCheck } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
-import { ClerkSessionReverification } from '@/components/features/clerk-session-reverification';
-import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatAppError } from '@/lib/error-handler';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
 
 type PasswordChangeFormProps = {
   embedded?: boolean;
-};
-
-type PasswordUpdateParams = {
-  currentPassword: string;
-  newPassword: string;
-};
-
-type PendingReverification = {
-  complete: () => void;
-  cancel: () => void;
-  level: SessionVerificationLevel | undefined;
 };
 
 export const PasswordChangeForm = memo(function PasswordChangeForm({
@@ -36,63 +20,9 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [reverification, setReverification] = useState<PendingReverification | null>(null);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
-  const pendingReverificationRef = useRef<PendingReverification | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
-
-  const handleNeedsReverification = useCallback(
-    ({ complete, cancel, level }: PendingReverification) => {
-      const pending = { complete, cancel, level };
-      pendingReverificationRef.current = pending;
-      setVerificationError(null);
-      setReverification(pending);
-    },
-    []
-  );
-
-  const updatePasswordWithVerification = useReverification(
-    useCallback(
-      ({ currentPassword: current, newPassword: next }: PasswordUpdateParams) => {
-        if (!user) {
-          throw new Error('missing-user');
-        }
-        return user.updatePassword({
-          currentPassword: current,
-          newPassword: next,
-          signOutOfOtherSessions: true,
-        });
-      },
-      [user]
-    ),
-    { onNeedsReverification: handleNeedsReverification }
-  );
-
-  const handleReverificationComplete = useCallback(() => {
-    const pending = pendingReverificationRef.current;
-    pendingReverificationRef.current = null;
-    setReverification(null);
-    pending?.complete();
-  }, []);
-
-  const handleReverificationCancel = useCallback(() => {
-    const pending = pendingReverificationRef.current;
-    pendingReverificationRef.current = null;
-    setReverification(null);
-    pending?.cancel();
-  }, []);
-
-  const handleReverificationError = useCallback((error: unknown) => {
-    const pending = pendingReverificationRef.current;
-    pendingReverificationRef.current = null;
-    setReverification(null);
-    const message = formatAppError(error, 'password');
-    setVerificationError(message);
-    toast.error(message);
-    pending?.cancel();
-  }, []);
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
@@ -120,23 +50,23 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       return;
     }
 
-    setVerificationError(null);
-    setLoading(true);
+    setIsUpdating(true);
     try {
-      await updatePasswordWithVerification({ currentPassword, newPassword });
+      await user.updatePassword({
+        currentPassword,
+        newPassword,
+        signOutOfOtherSessions: true,
+      });
       toast.success('Senha atualizada com sucesso.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      if (isReverificationCancelledError(err)) {
-        return;
-      }
       toast.fromError(err, 'password');
     } finally {
-      setLoading(false);
+      setIsUpdating(false);
     }
-  }, [user, currentPassword, newPassword, confirmPassword, updatePasswordWithVerification, t]);
+  }, [user, currentPassword, newPassword, confirmPassword, t]);
 
   if (!isLoaded) return null;
 
@@ -173,12 +103,8 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             label="Senha atual"
             autoComplete="current-password"
             value={currentPassword}
-            onChange={(e) => {
-              setCurrentPassword(e.target.value);
-              if (verificationError) setVerificationError(null);
-            }}
-            disabled={loading}
-            error={verificationError ?? undefined}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            disabled={isUpdating}
           />
           <div className="space-y-2">
             <Input
@@ -187,7 +113,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
+              disabled={isUpdating}
             />
             <PasswordStrengthBar password={newPassword} />
           </div>
@@ -197,17 +123,24 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={loading}
+            disabled={isUpdating}
             error={
               confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
             }
           />
           <button
             type="submit"
-            disabled={loading || !strength.isComplete || !passwordsMatch || !currentPassword}
-            className="min-h-11 w-full rounded-xl bg-orange-500 px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
+            disabled={isUpdating || !strength.isComplete || !passwordsMatch || !currentPassword}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? <TattooMachineLoader compact label="Atualizando" /> : 'Atualizar Senha'}
+            {isUpdating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                Atualizar Senha
+              </>
+            ) : (
+              'Atualizar Senha'
+            )}
           </button>
         </form>
       ) : (
@@ -216,16 +149,6 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           Clerk.
         </p>
       )}
-
-      {reverification ? (
-        <ClerkSessionReverification
-          level={reverification.level}
-          password={currentPassword}
-          onComplete={handleReverificationComplete}
-          onCancel={handleReverificationCancel}
-          onError={handleReverificationError}
-        />
-      ) : null}
     </div>
   );
 });
