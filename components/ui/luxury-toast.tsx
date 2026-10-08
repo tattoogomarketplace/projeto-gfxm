@@ -14,7 +14,7 @@ export function LuxuryToaster() {
         unstyled: true,
         classNames: {
           toast:
-            'flex w-[min(92vw,22rem)] items-start gap-3 rounded-2xl border border-[#F97316]/35 bg-white/90 px-4 py-3 text-sm font-medium text-neutral-900 shadow-[0_12px_40px_rgba(249,115,22,0.18)] backdrop-blur-xl dark:border-[#F97316]/40 dark:bg-[#121212]/88 dark:text-white',
+            'flex w-[min(92vw,22rem)] items-start gap-3 rounded-2xl border border-[#F97316]/35 bg-white/90 px-4 py-3 text-sm font-medium text-neutral-900 shadow-[0_12px_40px_rgba(249,115,22,0.18)] backdrop-blur-xl dark:border-[#F97316]/40 dark:bg-[#0a0a0a]/88 dark:text-white',
           title: 'text-sm font-semibold leading-snug text-neutral-900 dark:text-white',
           description: 'mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400',
           actionButton:

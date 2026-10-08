@@ -161,7 +161,7 @@ export function ProfileSettingsDrawer() {
             initial={false}
             animate={{ opacity: open ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-[#121212]/96 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0a0a0a]/96 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
             aria-label={t('common.close')}
             onClick={closeSettingsDrawer}
             tabIndex={open ? 0 : -1}
@@ -170,9 +170,9 @@ export function ProfileSettingsDrawer() {
             initial={false}
             animate={{ x: open ? 0 : '100%' }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#121212] contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
+            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#0a0a0a] contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
           >
-            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#121212] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
+            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   {BRAND_NAME}

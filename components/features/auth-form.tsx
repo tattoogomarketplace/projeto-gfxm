@@ -18,7 +18,7 @@ export function AuthForm() {
   };
 
   if (message) return (
-    <div className="rounded-2xl border border-amber-500/30 bg-white p-8 text-center shadow-2xl dark:border-neutral-800 dark:bg-[#121212]">
+    <div className="rounded-2xl border border-amber-500/30 bg-white p-8 text-center shadow-2xl dark:border-neutral-800 dark:bg-[#0a0a0a]">
       <h2 className="mb-4 text-2xl font-bold text-amber-500">Quase lá...</h2>
       <p className="text-neutral-600 dark:text-zinc-300">{message}</p>
       <button 
@@ -31,7 +31,7 @@ export function AuthForm() {
   );
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121212]">
+    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#0a0a0a]">
       <h2 className="mb-6 text-xl font-bold text-neutral-900 dark:text-white">Criar Conta</h2>
       <input 
         type="email" 

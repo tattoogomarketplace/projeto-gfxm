@@ -64,14 +64,14 @@ export function PortfolioCard({
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="group relative w-full shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/40 hover:shadow-[0_0_30px_rgba(249,115,22,0.18)] dark:border-neutral-800 dark:bg-[#121212] dark:shadow-lg sm:w-[calc(50%-1rem)]"
+      className="group relative w-full shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/40 hover:shadow-[0_0_30px_rgba(249,115,22,0.18)] dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-lg sm:w-[calc(50%-1rem)]"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative h-64 w-full overflow-hidden">
         <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
       </div>
       
-      <div className="flex items-center justify-between bg-neutral-50 p-4 dark:bg-[#121212]">
+      <div className="flex items-center justify-between bg-neutral-50 p-4 dark:bg-[#0a0a0a]">
         <div className="min-w-0 flex-1 pr-3">
           <span className="block truncate font-medium text-neutral-800 dark:text-zinc-300">{artistName}</span>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">

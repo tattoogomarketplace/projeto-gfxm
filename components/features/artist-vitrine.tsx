@@ -70,7 +70,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         Voltar
       </button>
 
-      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-[0_0_40px_rgba(249,115,22,0.08)]">
+      <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-[0_0_40px_rgba(249,115,22,0.08)]">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl"
@@ -151,7 +151,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
           Portfólio
         </h2>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-800 dark:bg-[#121212]">
+          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-800 dark:bg-[#0a0a0a]">
             <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma peça publicada ainda.</p>
           </div>
         ) : (
@@ -159,7 +159,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none"
+                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none"
               >
                 <div className="relative h-48 w-full overflow-hidden">
                   <OptimizedImage

@@ -200,7 +200,7 @@ export function ChatThread({
 
   if (!destinatarioId) {
     return (
-      <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white px-6 text-center shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+      <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center rounded-2xl border border-neutral-200 bg-white px-6 text-center shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
         <p className="text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
         <p className="mt-1 max-w-xs text-xs text-neutral-500 dark:text-zinc-500">
           {t('chat.selectArtistHint')}
@@ -215,7 +215,7 @@ export function ChatThread({
   };
 
   return (
-    <div className="flex h-[28rem] min-h-[28rem] flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-[0_0_32px_rgba(0,0,0,0.35)] lg:h-auto">
+    <div className="flex h-[28rem] min-h-[28rem] flex-1 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-[0_0_32px_rgba(0,0,0,0.35)] lg:h-auto">
       <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
         <button
           type="button"
@@ -310,7 +310,7 @@ export function ChatThread({
         ) : null}
       </div>
 
-      <div className="border-t border-neutral-200 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-[#121212]">
+      <div className="border-t border-neutral-200 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-[#0a0a0a]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}

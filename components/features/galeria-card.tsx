@@ -70,7 +70,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
     <motion.article
       whileHover={{ y: -6 }}
       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="group relative break-inside-avoid overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/50 hover:shadow-[0_0_32px_rgba(249,115,22,0.22)] dark:border-neutral-800 dark:bg-[#121212] dark:shadow-lg"
+      className="group relative break-inside-avoid overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm backdrop-blur-md transition-all hover:border-orange-500/50 hover:shadow-[0_0_32px_rgba(249,115,22,0.22)] dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-lg"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-orange-500/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
@@ -121,7 +121,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
         </div>
       </div>
 
-      <div className="space-y-3 bg-neutral-50 p-4 dark:bg-[#121212]">
+      <div className="space-y-3 bg-neutral-50 p-4 dark:bg-[#0a0a0a]">
         <div className="flex items-start justify-between gap-3">
           <button
             type="button"

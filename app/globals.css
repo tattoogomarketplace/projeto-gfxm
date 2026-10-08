@@ -4,6 +4,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: #F97316;
+  --color-primary-strong: #EA580C;
+  --color-success: #10B981;
+  --color-success-strong: #059669;
+  --color-success-neon: #34D399;
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
@@ -17,13 +21,19 @@
 @layer base {
   :root {
     color-scheme: dark;
-    --background: #121212;
+    /* Deep obsidian canvas — TattooGo MK dark equilibrium. */
+    --background: #0a0a0a;
     --foreground: #F5F5F5;
-    --muted: #888888;
+    --muted: #8a8a8a;
     --muted-foreground: #a1a1aa;
-    --border: #2a2a2a;
-    --card: #1a1a1a;
-    --input: #161616;
+    --border: rgba(255, 255, 255, 0.06);
+    --card: rgba(255, 255, 255, 0.02);
+    --input: rgba(255, 255, 255, 0.04);
+    --primary: #F97316;
+    --primary-strong: #EA580C;
+    --success: #10B981;
+    --success-strong: #059669;
+    --success-neon: #34D399;
     --amber-gold: #FFBF00;
     --neon-orange: #F97316;
     --font-inter: Inter, system-ui, -apple-system, sans-serif;
@@ -39,39 +49,44 @@
 
   :root.light {
     color-scheme: light;
-    --background: #F6F3EE;
-    --foreground: #171717;
+    /* Crisp titanium-white canvas — same vibrant accents. */
+    --background: #FAFAFA;
+    --foreground: #0A0A0A;
     --muted: #737373;
     --muted-foreground: #525252;
-    --border: #E8E2D9;
-    --card: #FFFDF9;
+    --border: #EAEAEA;
+    --card: #FFFFFF;
     --input: #FFFFFF;
   }
 
   .dark {
     color-scheme: dark;
-    --background: #121212;
+    --background: #0a0a0a;
     --foreground: #F5F5F5;
-    --muted: #888888;
+    --muted: #8a8a8a;
     --muted-foreground: #a1a1aa;
-    --border: #2a2a2a;
-    --card: #1a1a1a;
-    --input: #161616;
+    --border: rgba(255, 255, 255, 0.06);
+    --card: rgba(255, 255, 255, 0.02);
+    --input: rgba(255, 255, 255, 0.04);
+    --color-background: #0a0a0a;
+    --color-foreground: #F5F5F5;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-card: rgba(255, 255, 255, 0.02);
   }
 
   .light {
     color-scheme: light;
-    --background: #F6F3EE;
-    --foreground: #171717;
+    --background: #FAFAFA;
+    --foreground: #0A0A0A;
     --muted: #737373;
     --muted-foreground: #525252;
-    --border: #E8E2D9;
-    --card: #FFFDF9;
+    --border: #EAEAEA;
+    --card: #FFFFFF;
     --input: #FFFFFF;
-    --color-background: #F6F3EE;
-    --color-foreground: #171717;
-    --color-border: #E8E2D9;
-    --color-card: #FFFDF9;
+    --color-background: #FAFAFA;
+    --color-foreground: #0A0A0A;
+    --color-border: #EAEAEA;
+    --color-card: #FFFFFF;
   }
 
   html {
@@ -90,7 +105,7 @@
   }
 
   html.light {
-    background-color: #F6F3EE;
+    background-color: #FAFAFA;
   }
 
   body {
@@ -114,7 +129,7 @@
   }
 
   html.light body {
-    background-color: #F6F3EE;
+    background-color: #FAFAFA;
   }
 
   button,
@@ -153,9 +168,23 @@
     cursor: pointer;
   }
 
+  /*
+   * APPLE-TIER TOUCH PHYSICS (global baseline)
+   *
+   * Todos os alvos interativos respondem ao toque com um scale sutil de 0.97
+   * em 100ms ease-out — a mesma sensação do "press" nativo do iOS. A transição
+   * é limitada a `transform` para nunca disparar layout/reflow (60fps+).
+   */
   button:active:not(:disabled),
-  [role="button"]:active {
-    transform: scale(0.98);
+  [role="button"]:active:not([aria-disabled="true"]) {
+    transform: scale(0.97);
+  }
+
+  a:active,
+  [role="tab"]:active,
+  [role="menuitem"]:active,
+  summary:active {
+    transform: scale(0.97);
   }
 
   input,
@@ -237,21 +266,46 @@
   }
 
   .glass-panel {
-    background: rgba(26, 26, 26, 0.72);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 10, 10, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .light .glass-panel {
-    background: rgba(255, 255, 255, 0.86);
-    border: 1px solid rgba(23, 23, 23, 0.08);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(10, 10, 10, 0.06);
+  }
+
+  /*
+   * True glassmorphism for global chrome (headers + bottom nav).
+   * Uses the theme background at 70% opacity plus a saturating blur, with the
+   * explicit `-webkit-backdrop-filter` fallback for iOS WebView/Safari.
+   */
+  .glass-chrome {
+    background-color: color-mix(in srgb, var(--background) 70%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* Apple native touch physics for any interactive element. */
+  .apple-press {
+    transition: transform 100ms ease-out;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+  }
+
+  .apple-press:active {
+    transform: translateZ(0) scale(0.97);
   }
 
   .surface-card {
     background-color: var(--card);
     border-color: var(--border);
     color: var(--foreground);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
   }
 
   .screen-page {
@@ -322,26 +376,26 @@
   }
 
   .luxury-canvas {
-    background-color: #f6f3ee;
+    background-color: #FAFAFA;
     background-image:
       radial-gradient(120% 70% at 50% -8%, rgba(249, 115, 22, 0.10), transparent 58%),
-      radial-gradient(80% 50% at 100% 108%, rgba(249, 115, 22, 0.06), transparent 52%),
-      linear-gradient(to bottom, #f6f3ee, #fafaf7, #fffdf9);
+      radial-gradient(80% 50% at 100% 108%, rgba(16, 185, 129, 0.05), transparent 52%),
+      linear-gradient(to bottom, #FAFAFA, #FFFFFF, #FDFDFD);
   }
 
   .dark .luxury-canvas {
-    background-color: #121212;
+    background-color: #0a0a0a;
     background-image:
       radial-gradient(120% 70% at 50% -8%, rgba(249, 115, 22, 0.14), transparent 58%),
-      radial-gradient(90% 55% at 100% 110%, rgba(249, 115, 22, 0.08), transparent 52%),
-      linear-gradient(to bottom, #161616, #121212, #121212);
+      radial-gradient(90% 55% at 100% 110%, rgba(16, 185, 129, 0.06), transparent 52%),
+      linear-gradient(to bottom, #111111, #0a0a0a, #0a0a0a);
   }
 
   .tattoo-wallpaper {
-    background-color: #09090b;
+    background-color: #0a0a0a;
     background-image:
       radial-gradient(120% 90% at 50% 0%, rgba(249, 115, 22, 0.06), transparent 60%),
-      radial-gradient(90% 70% at 100% 100%, rgba(249, 115, 22, 0.05), transparent 55%),
+      radial-gradient(90% 70% at 100% 100%, rgba(16, 185, 129, 0.05), transparent 55%),
       url("/tattoo-wallpaper.svg");
     background-repeat: no-repeat, no-repeat, repeat;
     background-position: center, center, 0 0;
@@ -349,7 +403,7 @@
   }
 
   .light .tattoo-wallpaper {
-    background-color: #fafafa;
+    background-color: #FAFAFA;
   }
 
   .tattoo-machine-buzz {

@@ -13,17 +13,36 @@ const config: Config = {
     extend: {
       colors: {
         graphite: {
-          DEFAULT: '#121212',
+          DEFAULT: '#0a0a0a',
           50: '#1a1a1a',
           200: '#1e1e1e',
         },
+        // Brand palette "TattooGo MK".
+        // Orange = rich tattoo-machine ink (gradient orange-500 -> orange-600).
+        // Green  = high-contrast emerald/neon reserved for success + verified.
+        brand: {
+          orange: '#F97316',
+          'orange-strong': '#EA580C',
+          'orange-soft': '#FB923C',
+          green: '#10B981',
+          'green-strong': '#059669',
+          'green-neon': '#34D399',
+        },
         neon: {
           orange: '#F97316',
+          green: '#10B981',
         },
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
           DEFAULT: "#F97316",
+          strong: "#EA580C",
+        },
+        success: {
+          DEFAULT: "#10B981",
+          strong: "#059669",
+          neon: "#34D399",
+          foreground: "#022c1a",
         },
         muted: {
           DEFAULT: "var(--muted)",
@@ -40,6 +59,13 @@ const config: Config = {
           "-apple-system",
           "sans-serif",
         ],
+      },
+      boxShadow: {
+        'apple-xs': '0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)',
+        'apple-sm': '0 2px 8px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04)',
+        'apple-md': '0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04)',
+        'orange-glow': '0 0 20px rgba(249,115,22,0.35), 0 8px 24px rgba(0,0,0,0.35)',
+        'success-glow': '0 0 18px rgba(16,185,129,0.35)',
       },
       screens: {
         xs: "375px",

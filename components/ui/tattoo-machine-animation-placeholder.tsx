@@ -35,7 +35,7 @@ export function TattooMachineAnimationPlaceholder({
       */}
       <div
         className={cn(
-          'relative flex h-24 w-24 items-center justify-center rounded-2xl border-2 bg-[#121212]',
+          'relative flex h-24 w-24 items-center justify-center rounded-2xl border-2 bg-[#0a0a0a]',
           isError
             ? 'border-red-600 shadow-[0_0_22px_rgba(220,38,38,0.45)] tattoo-machine-shake'
             : isSuccess

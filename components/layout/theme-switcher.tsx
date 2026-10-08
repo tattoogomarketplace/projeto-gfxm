@@ -22,7 +22,7 @@ const THEMES: Array<{
     subtitle: 'Dark Luxury',
     description: 'Grafite profundo e neon laranja para sessões noturnas.',
     icon: Moon,
-    preview: 'from-[#121212] via-[#1a1a1a] to-[#2a1810]',
+    preview: 'from-[#0a0a0a] via-[#1a1a1a] to-[#2a1810]',
   },
   {
     id: 'light',
@@ -30,7 +30,7 @@ const THEMES: Array<{
     subtitle: 'Studio Clean',
     description: 'Superfície clara de estúdio, leitura confortável à luz do dia.',
     icon: Sun,
-    preview: 'from-[#F6F3EE] via-[#FFFDF9] to-[#F3E6DA]',
+    preview: 'from-[#FAFAFA] via-[#FFFFFF] to-[#F3E6DA]',
   },
   {
     id: 'system',
@@ -38,7 +38,7 @@ const THEMES: Array<{
     subtitle: 'Automático',
     description: 'Acompanha o tema do seu dispositivo automaticamente.',
     icon: Monitor,
-    preview: 'from-[#121212] via-[#F6F3EE] to-[#F97316]/30',
+    preview: 'from-[#0a0a0a] via-[#FAFAFA] to-[#F97316]/30',
   },
 ];
 
@@ -72,11 +72,11 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
             aria-checked={selected}
             onClick={() => handleSelect(option.id)}
             className={cn(
-              'group flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left',
-              'transition-all duration-200 active:scale-[0.98]',
+              'group flex min-h-11 w-full transform-gpu items-center gap-3 rounded-2xl border px-3 py-3 text-left',
+              'transition-[transform,background-color,border-color,box-shadow] duration-100 ease-out active:scale-[0.97]',
               selected
                 ? 'border-[#F97316]/30 bg-[#F97316]/5 shadow-[0_0_16px_rgba(249,115,22,0.16)]'
-                : 'border-neutral-200 bg-neutral-50 hover:border-[#F97316]/40 dark:border-neutral-800 dark:bg-white/5'
+                : 'border-[#EAEAEA] bg-black/[0.02] hover:border-[#F97316]/40 dark:border-white/5 dark:bg-white/[0.02]'
             )}
           >
             <span
@@ -101,7 +101,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
               className={cn(
                 'flex h-6 w-6 min-h-6 min-w-6 items-center justify-center rounded-full transition-all duration-200',
                 selected
-                  ? 'scale-100 bg-[#F97316] text-white opacity-100'
+                  ? 'scale-100 bg-emerald-500 text-white opacity-100 shadow-[0_0_14px_rgba(16,185,129,0.5)]'
                   : 'scale-75 bg-transparent text-transparent opacity-0'
               )}
               aria-hidden

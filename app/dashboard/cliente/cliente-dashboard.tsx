@@ -112,7 +112,7 @@ export default function ClienteDashboard() {
 
         {activeTab === 'portfolio' && (
           <section key="portfolio" className="space-y-4">
-            <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+            <header className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-colors hover:border-orange-500/30 dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-12 -top-16 hidden h-44 w-44 rounded-full bg-orange-500/20 blur-2xl md:block"

@@ -118,7 +118,7 @@ export function StudioCnpjPanel({
       </div>
 
       {compliance?.cnpjMasked ? (
-         <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-800 dark:bg-[#121212]">
+         <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-800 dark:bg-[#0a0a0a]">
            <p className="font-semibold text-neutral-900 dark:text-white">{compliance?.razaoSocial || 'Estúdio registrado'}</p>
           <p className="mt-1 text-zinc-400">{compliance?.cnpjMasked}</p>
           <p className="mt-1 text-xs uppercase tracking-wider text-emerald-300">

@@ -187,7 +187,7 @@ export function StudioAffiliationArtist() {
           {(studios ?? []).map((studio) => (
             <li
               key={studio?.id ?? studio?.nome}
-                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-[#121212]"
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-[#0a0a0a]"
             >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 truncate font-semibold text-neutral-900 dark:text-white">

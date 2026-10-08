@@ -11,7 +11,7 @@ function ThemeSync() {
   useEffect(() => {
     if (typeof document === 'undefined' || !resolvedTheme) return;
 
-    const color = resolvedTheme === 'light' ? '#F6F3EE' : '#121212';
+    const color = resolvedTheme === 'light' ? '#FAFAFA' : '#0a0a0a';
     document.querySelectorAll('meta[name="theme-color"]').forEach((node) => {
       node.setAttribute('content', color);
     });

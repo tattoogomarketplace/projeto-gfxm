@@ -17,18 +17,18 @@ export function AiChatHeader() {
   };
 
   return (
-    <header className="z-40 shrink-0 border-b border-white/5 bg-[color-mix(in_srgb,var(--background)_80%,transparent)] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
+    <header className="glass-chrome z-40 shrink-0 border-b border-black/[0.06] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/5">
       <div className="flex min-h-11 items-center gap-2 px-4 pb-3">
         <button
           type="button"
           onClick={handleBack}
-          className="-ml-2 inline-flex min-h-11 min-w-11 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold tracking-tight text-zinc-400 transition-colors hover:text-[#F97316]"
+          className="-ml-2 inline-flex min-h-11 min-w-11 transform-gpu items-center gap-1 rounded-lg px-2 text-[13px] font-semibold tracking-tight text-zinc-500 transition-[transform,color] duration-100 ease-out hover:text-[#F97316] active:scale-[0.97] dark:text-zinc-400"
           aria-label="Voltar"
         >
           <span aria-hidden="true">&lt;</span>
           Voltar
         </button>
-        <h1 className="flex-1 text-center text-[17px] font-semibold tracking-tight text-[#F5F5F5]">
+        <h1 className="flex-1 text-center text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-[#F5F5F5]">
           Assistente IA
         </h1>
         <span className="inline-flex min-w-11" aria-hidden="true" />

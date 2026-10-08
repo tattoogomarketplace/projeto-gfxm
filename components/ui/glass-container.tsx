@@ -8,9 +8,13 @@ interface GlassContainerProps {
 
 export const GlassContainer = ({ children, className = '' }: GlassContainerProps) => (
   <div
+    style={{
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+    }}
     className={cn(
-       'rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-sm backdrop-blur-md',
-       'dark:border-neutral-800 dark:bg-[#121212] dark:text-white dark:shadow-none',
+       'rounded-2xl border border-[#EAEAEA] bg-white/80 text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.05)]',
+       'dark:border-white/5 dark:bg-white/[0.02] dark:text-white dark:shadow-none',
       className
     )}
   >

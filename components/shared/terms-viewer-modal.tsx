@@ -63,7 +63,7 @@ export function TermsViewerModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="gpu-layer flex min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] p-0 shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-h-[80vh] sm:max-w-md"
+            className="gpu-layer flex min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-0 shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-h-[80vh] sm:max-w-md"
           >
             <div className="relative flex shrink-0 items-center gap-3 border-b border-border/50 p-4 pr-14">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">

@@ -111,7 +111,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 8 }}
               transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-              className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#121212] shadow-[0_0_40px_rgba(249,115,22,0.18)]"
+              className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#0a0a0a] shadow-[0_0_40px_rgba(249,115,22,0.18)]"
             >
               <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
                 <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-red-400">
@@ -302,7 +302,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
         </section>
       ) : null}
 
-      <section className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none">
+      <section className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
             <ShieldAlert className="h-5 w-5" strokeWidth={1.75} />

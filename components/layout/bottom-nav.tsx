@@ -106,9 +106,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     <nav
       className={cn(
         'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto max-w-md md:hidden',
-        'rounded-2xl bg-[#1a1a1a]/90 backdrop-blur-xl',
-        'border border-white/10 shadow-2xl',
-        'flex items-center px-1 py-1.5',
+        'glass-chrome rounded-2xl border border-black/[0.06] dark:border-white/5',
+        'shadow-2xl',
+        'flex transform-gpu items-center px-1 py-1.5',
         conceal && 'pointer-events-none invisible'
       )}
       aria-label={t('nav.home')}
@@ -131,11 +131,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 scroll={false}
                 onClick={() => handleSelect(item.tab)}
                 className={cn(
-                  'flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5',
+                  'flex min-h-11 w-full min-w-11 transform-gpu flex-col items-center justify-center gap-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
-                  'rounded-xl transition-colors duration-200 active:scale-[0.98]',
+                  'rounded-xl transition-[transform,color] duration-100 ease-out active:scale-[0.97]',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
-                  active ? 'text-primary' : 'text-zinc-400'
+                  active ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400'
                 )}
                 aria-current={active ? 'page' : undefined}
               >

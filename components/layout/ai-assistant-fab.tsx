@@ -46,7 +46,7 @@ function AiAssistantFabBase() {
           'border border-[#F97316]/50',
           'shadow-[0_0_18px_rgba(249,115,22,0.35),0_8px_24px_rgba(0,0,0,0.45)]',
           'hover:border-[#F97316] hover:shadow-[0_0_28px_rgba(249,115,22,0.55)]',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212]',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]',
           'ai-fab-pulse cursor-grab active:cursor-grabbing'
         )}
       >

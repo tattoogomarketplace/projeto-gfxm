@@ -32,15 +32,15 @@ function SegmentedControlBase<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'relative grid w-full rounded-2xl bg-neutral-100 p-1 backdrop-blur-xl dark:bg-white/10',
-        'border border-neutral-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/10',
+        'relative grid w-full rounded-2xl border border-[#EAEAEA] bg-black/[0.03] p-1 backdrop-blur-xl',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/5 dark:bg-white/[0.04]',
         className
       )}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-500/30 to-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        className="pointer-events-none absolute top-1 bottom-1 transform-gpu rounded-xl border border-orange-400/40 bg-gradient-to-b from-orange-500 to-orange-600 shadow-[0_0_18px_rgba(249,115,22,0.42)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         style={{
           width: `calc((100% - 0.5rem) / ${options.length})`,
           transform: `translateX(calc(${activeIndex} * 100%))`,
@@ -61,11 +61,11 @@ function SegmentedControlBase<T extends string>({
               onChange(option.value);
             }}
             className={cn(
-              'relative z-10 flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3',
-              'text-[13px] font-semibold tracking-tight transition-colors duration-200',
-              'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
+              'relative z-10 flex min-h-11 min-w-11 transform-gpu items-center justify-center rounded-xl px-3',
+              'text-[13px] font-semibold tracking-tight transition-[transform,color] duration-100 ease-out',
+              'active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
               selected
-                ? 'text-orange-700 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)] dark:text-orange-200'
+                ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]'
                 : 'text-neutral-500 hover:text-neutral-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             )}
           >

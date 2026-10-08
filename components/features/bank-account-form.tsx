@@ -42,7 +42,7 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   if (!isLoaded) return null;
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121212]">
+    <div className="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#0a0a0a]">
       <h3 className="mb-4 font-bold text-neutral-900 dark:text-white">Dados Bancários (Seguros)</h3>
       <input 
         type="text" 

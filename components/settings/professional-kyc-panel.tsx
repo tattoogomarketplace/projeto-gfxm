@@ -249,7 +249,7 @@ function DocumentSlotCard({
             >
               <span className="relative flex h-12 w-12 min-h-12 min-w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-400">
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-500/40 bg-[#121212] text-emerald-400">
+                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-500/40 bg-[#0a0a0a] text-emerald-400">
                   <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </span>
               </span>

@@ -85,8 +85,8 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-title": "TattooGo MK",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "msapplication-navbutton-color": "#121212",
-    "msapplication-TileColor": "#121212",
+    "msapplication-navbutton-color": "#0a0a0a",
+    "msapplication-TileColor": "#0a0a0a",
     "msapplication-TileImage": APPLE_TOUCH_ICON,
   },
 };
@@ -98,8 +98,8 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F6F3EE" },
-    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+    { media: "(prefers-color-scheme: light)", color: "#FAFAFA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
   colorScheme: "dark light",
 };
@@ -127,7 +127,7 @@ export default function RootLayout({
             }}
           />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-          <meta name="theme-color" content="#121212" />
+          <meta name="theme-color" content="#0a0a0a" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-title" content="TattooGo MK" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

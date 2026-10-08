@@ -302,7 +302,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside
           className={cn(
-            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121212] dark:shadow-none',
+            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#0a0a0a] dark:shadow-none',
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >

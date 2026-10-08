@@ -14,7 +14,7 @@ function AuthScreenBase({ children, className }: AuthScreenProps) {
   return (
     <div
       className={cn(
-        'form-page screen-fade-in relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-white select-none',
+        'form-page screen-fade-in relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-foreground select-none',
         className
       )}
     >
@@ -39,7 +39,7 @@ function AuthBridgeOverlayBase({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[80] flex items-center justify-center bg-[#121212] transition-opacity duration-300 ease-in-out',
+        'fixed inset-0 z-[80] flex items-center justify-center bg-background transition-opacity duration-300 ease-in-out',
         visible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
       )}
       aria-hidden={!visible}
