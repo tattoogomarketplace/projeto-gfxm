@@ -2,25 +2,16 @@
 
 import { memo, useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useReverification, useUser } from '@clerk/nextjs';
-import { isReverificationCancelledError } from '@clerk/nextjs/errors';
-import type { SessionVerificationLevel, UpdateUserPasswordParams } from '@clerk/nextjs/types';
+import { useUser } from '@clerk/nextjs';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
-import { ClerkSessionReverification } from '@/components/features/clerk-session-reverification';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { cn } from '@/lib/utils';
 
 type PasswordChangeFormProps = {
   embedded?: boolean;
-};
-
-type ReverificationRequest = {
-  level: SessionVerificationLevel | undefined;
-  complete: () => void;
-  cancel: () => void;
 };
 
 export const PasswordChangeForm = memo(function PasswordChangeForm({
@@ -30,35 +21,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [reverification, setReverification] = useState<ReverificationRequest | null>(null);
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
   const passwordEnabled = Boolean(user?.passwordEnabled);
-
-  /**
-   * Bridges our custom UI with Clerk's native session reverification.
-   *
-   * When Clerk requires a security confirmation for the password update, it
-   * throws a `session_reverification_required` error. Wrapping the fetcher with
-   * `useReverification` intercepts that error and hands control to our native
-   * `ClerkSessionReverification` UI instead of surfacing an unhandled error.
-   */
-  const updatePasswordWithReverification = useReverification(
-    (params: UpdateUserPasswordParams) => {
-      if (!user) {
-        return Promise.reject(new Error('not-authenticated'));
-      }
-      return user.updatePassword(params);
-    },
-    {
-      onNeedsReverification: ({ cancel, complete, level }) => {
-        setReverification({ cancel, complete, level });
-      },
-    }
-  );
 
   const handleUpdate = useCallback(async () => {
     if (!user) {
@@ -84,7 +52,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
 
     setIsUpdating(true);
     try {
-      await updatePasswordWithReverification({
+      await user.updatePassword({
         currentPassword,
         newPassword,
         signOutOfOtherSessions: true,
@@ -94,23 +62,11 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      if (isReverificationCancelledError(err)) {
-        toast.info('Confirmação de segurança cancelada. A senha não foi alterada.');
-      } else {
-        toast.fromError(err, 'password');
-      }
+      toast.fromError(err, 'password');
     } finally {
       setIsUpdating(false);
-      setReverification(null);
     }
-  }, [
-    user,
-    currentPassword,
-    newPassword,
-    confirmPassword,
-    t,
-    updatePasswordWithReverification,
-  ]);
+  }, [user, currentPassword, newPassword, confirmPassword, t]);
 
   if (!isLoaded) return null;
 
@@ -135,71 +91,58 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       </div>
 
       {passwordEnabled ? (
-        reverification ? (
-          <ClerkSessionReverification
-            level={reverification.level}
-            password={currentPassword}
-            onComplete={reverification.complete}
-            onCancel={reverification.cancel}
-            onError={(error) => {
-              toast.fromError(error, 'password');
-              reverification.cancel();
-            }}
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleUpdate();
+          }}
+        >
+          <Input
+            type="password"
+            label="Senha atual"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            disabled={isUpdating}
           />
-        ) : (
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleUpdate();
-            }}
-          >
+          <div className="space-y-2">
             <Input
               type="password"
-              label="Senha atual"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              disabled={isUpdating}
-            />
-            <div className="space-y-2">
-              <Input
-                type="password"
-                label="Nova senha"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isUpdating}
-              />
-              <PasswordStrengthBar password={newPassword} />
-            </div>
-            <Input
-              type="password"
-              label="Confirmar nova senha"
+              label="Nova senha"
               autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               disabled={isUpdating}
-              error={
-                confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
-              }
             />
-            <button
-              type="submit"
-              disabled={isUpdating || !strength.isComplete || !passwordsMatch || !currentPassword}
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                  Atualizar Senha
-                </>
-              ) : (
-                'Atualizar Senha'
-              )}
-            </button>
-          </form>
-        )
+            <PasswordStrengthBar password={newPassword} />
+          </div>
+          <Input
+            type="password"
+            label="Confirmar nova senha"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isUpdating}
+            error={
+              confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
+            }
+          />
+          <button
+            type="submit"
+            disabled={isUpdating || !strength.isComplete || !passwordsMatch || !currentPassword}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+                Atualizar Senha
+              </>
+            ) : (
+              'Atualizar Senha'
+            )}
+          </button>
+        </form>
       ) : (
         <p className="text-sm text-zinc-400">
           Esta conta não possui senha local. Defina ou gerencie credenciais no painel seguro do
