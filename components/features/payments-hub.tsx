@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import type { Agendamento } from '@/lib/types/database';
 
 const ENTRY_CARD_CLASS =
-  'group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-black/[0.04] bg-white px-4 py-3 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all hover:border-orange-500/40 hover:bg-orange-500/[0.04] active:scale-[0.99] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none';
+  'group flex min-h-11 min-w-0 w-full items-center gap-3 rounded-2xl border border-black/[0.04] bg-white px-4 py-3 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all hover:border-orange-500/40 hover:bg-orange-500/[0.04] active:scale-[0.99] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none';
 
 export function PaymentsEntryCard({ href = '/dashboard/pagamentos' }: { href?: string }) {
   const { t } = useI18n();
@@ -70,7 +70,7 @@ function PaymentsSkeleton() {
 function JourneyStepper() {
   const { t } = useI18n();
   return (
-    <div className="w-full space-y-3">
+    <div className="min-w-0 w-full space-y-3">
       <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-zinc-500">
         {t('payments.journey')}
       </p>
@@ -287,10 +287,10 @@ export function PaymentsHub() {
   }, []);
 
   return (
-    <div className="w-full flex-1 space-y-6 pt-5">
+    <div className="min-w-0 w-full flex-1 space-y-6 pt-5">
       <SegmentedControl
         options={[
-          { value: 'agenda', label: t('nav.schedule') },
+          { value: 'agenda', label: t('agenda.tab') },
           { value: 'pagamentos', label: t('payments.title') },
         ]}
         value="pagamentos"
@@ -299,10 +299,10 @@ export function PaymentsHub() {
             router.push(`${dashboardPathForRole(role)}?tab=agendar`);
           }
         }}
-        ariaLabel={t('nav.schedule')}
+        ariaLabel={t('agenda.tab')}
       />
 
-      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+      <header className="relative min-w-0 w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
           {BRAND_NAME}
         </p>

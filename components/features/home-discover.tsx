@@ -28,7 +28,7 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  * momentum preserved on iOS. Declared once to keep the JSX readable.
  */
 const CAROUSEL_CLASS =
-  'flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+  '-mx-4 flex min-w-0 w-full snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden';
 
 const TAP_SCALE = 'apple-press';
 
@@ -172,8 +172,8 @@ export function HomeDiscover() {
   };
 
   return (
-    <div className="w-full flex-1 space-y-7">
-      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+    <div className="min-w-0 w-full flex-1 space-y-7">
+      <header className="relative min-w-0 w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <div className="relative">
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
             {BRAND_NAME}
@@ -187,7 +187,7 @@ export function HomeDiscover() {
         </div>
       </header>
 
-      <section className="space-y-3" aria-labelledby="discover-artists">
+      <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-artists">
         <SectionHeader
           icon={<Sparkles className="h-4 w-4" strokeWidth={1.9} />}
           title={t('home.featuredArtists')}
@@ -258,7 +258,7 @@ export function HomeDiscover() {
         )}
       </section>
 
-      <section className="space-y-3" aria-labelledby="discover-styles">
+      <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-styles">
         <SectionHeader
           icon={<Flame className="h-4 w-4" strokeWidth={1.9} />}
           title={t('home.trendingStyles')}

@@ -539,6 +539,7 @@ export type DiscoveryMessages = Pick<
   | 'home.viewAll'
   | 'home.noFeaturedArtists'
   | 'home.noTrendingStyles'
+  | 'agenda.tab'
   | 'agenda.timeline'
   | 'agenda.timelineSubtitle'
   | 'agenda.stagesPreview'
@@ -577,6 +578,7 @@ export const DISCOVERY_PT_BR: DiscoveryMessages = {
   'home.viewAll': 'Ver tudo',
   'home.noFeaturedArtists': 'Novos artistas chegam em breve.',
   'home.noTrendingStyles': 'Explore os estilos direto na galeria.',
+  'agenda.tab': 'Agendamentos',
   'agenda.timeline': 'Linha do Tempo',
   'agenda.timelineSubtitle': 'Acompanhe cada etapa da sua sessão.',
   'agenda.stagesPreview': 'Etapas da sua jornada',
@@ -615,6 +617,7 @@ export const DISCOVERY_EN: DiscoveryMessages = {
   'home.viewAll': 'View all',
   'home.noFeaturedArtists': 'New artists are coming soon.',
   'home.noTrendingStyles': 'Explore styles right in the gallery.',
+  'agenda.tab': 'Appointments',
   'agenda.timeline': 'Timeline',
   'agenda.timelineSubtitle': 'Track every step of your session.',
   'agenda.stagesPreview': 'Your journey stages',
@@ -653,6 +656,7 @@ export const DISCOVERY_ES: DiscoveryMessages = {
   'home.viewAll': 'Ver todo',
   'home.noFeaturedArtists': 'Pronto llegarán nuevos artistas.',
   'home.noTrendingStyles': 'Explora los estilos en la galería.',
+  'agenda.tab': 'Citas',
   'agenda.timeline': 'Cronología',
   'agenda.timelineSubtitle': 'Sigue cada etapa de tu sesión.',
   'agenda.stagesPreview': 'Las etapas de tu viaje',

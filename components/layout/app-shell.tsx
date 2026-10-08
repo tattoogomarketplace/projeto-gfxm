@@ -222,7 +222,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   return (
     <div
       className={cn(
-        'luxury-canvas relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
+        'luxury-canvas relative flex h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
         // Rotas "sem casco" gerenciam o próprio safe-area (eram montadas fora
         // do AppShell antes); não adicionamos clearance de dock a elas.
         isChromeLess ? '' : 'nav-safe-pad'
@@ -265,10 +265,10 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
 
       <div
         className={cn(
-          'relative flex min-h-0 w-full flex-1 flex-col',
+          'relative flex min-h-0 min-w-0 w-full flex-1 flex-col',
           isChromeLess || isSettingsHub || isGaleria
             ? 'overflow-hidden'
-            : 'min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
+            : 'min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}
       >
         {children}

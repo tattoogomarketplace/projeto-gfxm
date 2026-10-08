@@ -42,7 +42,7 @@ function StatusPreviewCard({ status }: { status: AgendaStatus }) {
   return (
     <div
       className={cn(
-        'relative w-full overflow-hidden rounded-2xl border border-dashed border-neutral-300 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]'
+        'relative min-w-0 w-full overflow-hidden rounded-2xl border border-dashed border-neutral-300 bg-white p-4 dark:border-white/[0.05] dark:bg-white/[0.03]'
       )}
     >
       <span
@@ -76,7 +76,7 @@ function StatusPreviewCard({ status }: { status: AgendaStatus }) {
 function AgendaEmptyState() {
   const { t } = useI18n();
   return (
-    <div className="w-full flex-1 space-y-5">
+    <div className="min-w-0 w-full flex-1 space-y-5">
       <GlassContainer className="border-dashed p-6 text-center">
         <span className="mx-auto flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
           <CalendarClock className="h-6 w-6" strokeWidth={1.75} />
@@ -180,7 +180,7 @@ export function AgendaTimeline({
   if (items.length === 0) return <AgendaEmptyState />;
 
   return (
-    <ol className="relative w-full flex-1 space-y-4">
+    <ol className="relative min-w-0 w-full flex-1 space-y-4">
       <span
         aria-hidden
         className="absolute bottom-3 left-[9px] top-3 w-px bg-gradient-to-b from-orange-500/50 via-neutral-300 to-transparent dark:via-white/10"

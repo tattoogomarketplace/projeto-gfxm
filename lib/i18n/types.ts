@@ -260,6 +260,7 @@ export type MessageKey =
   | 'home.viewAll'
   | 'home.noFeaturedArtists'
   | 'home.noTrendingStyles'
+  | 'agenda.tab'
   | 'agenda.timeline'
   | 'agenda.timelineSubtitle'
   | 'agenda.stagesPreview'

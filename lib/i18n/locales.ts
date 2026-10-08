@@ -818,6 +818,7 @@ export const PT_PT: Partial<MessageDictionary> = {
   ...ERROR_MESSAGES['pt-PT'],
   'nav.home': 'Início',
   'nav.schedule': 'Agenda',
+  'agenda.tab': 'Agendamentos',
   'nav.book': 'Reservar',
   'nav.chat': 'Chat',
   'nav.profile': 'Perfil',

@@ -6,7 +6,7 @@ export default function DashboardTemplate({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-col">
       <ViewportScaleGuard />
       {children}
     </div>

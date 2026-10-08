@@ -44,13 +44,13 @@ export default function ClienteDashboard() {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
-    <div className="relative flex w-full flex-1 flex-col overflow-x-hidden bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      <div className="relative w-full flex-1 space-y-6">
+    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
+      <div className="relative min-w-0 w-full flex-1 space-y-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="w-full flex-1 space-y-5">
+          <section key="agendar" className="min-w-0 w-full flex-1 space-y-5">
             <SegmentedControl
               options={[
-                { value: 'agenda', label: t('nav.schedule') },
+                { value: 'agenda', label: t('agenda.tab') },
                 { value: 'pagamentos', label: t('payments.title') },
               ]}
               value="agenda"
@@ -59,7 +59,7 @@ export default function ClienteDashboard() {
                   router.push('/dashboard/pagamentos');
                 }
               }}
-              ariaLabel={t('nav.schedule')}
+              ariaLabel={t('agenda.tab')}
             />
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
@@ -81,7 +81,7 @@ export default function ClienteDashboard() {
         )}
 
         {activeTab === 'portfolio' && (
-          <section key="portfolio" className="w-full flex-1">
+          <section key="portfolio" className="min-w-0 w-full flex-1">
             <HomeDiscover />
           </section>
         )}
