@@ -40,7 +40,7 @@ export default function Home() {
         className="pointer-events-none absolute inset-0 z-0 block dark:hidden"
         style={{
           background:
-            "radial-gradient(120% 85% at 50% 8%, rgba(249,115,22,0.14) 0%, rgba(251,146,60,0.06) 34%, rgba(250,250,250,0) 72%)",
+            "radial-gradient(ellipse 120% 90% at 50% 50%, rgba(249,115,22,0.14) 0%, rgba(251,146,60,0.06) 34%, rgba(250,250,250,0) 72%)",
         }}
       />
       <div
@@ -48,7 +48,7 @@ export default function Home() {
         className="pointer-events-none absolute inset-0 z-0 hidden dark:block"
         style={{
           background:
-            "radial-gradient(120% 85% at 50% 6%, rgba(249,115,22,0.30) 0%, rgba(234,88,12,0.15) 32%, rgba(10,10,10,0) 74%), radial-gradient(95% 70% at 50% 112%, rgba(180,83,9,0.16) 0%, rgba(10,10,10,0) 70%)",
+            "radial-gradient(ellipse 120% 90% at 50% 50%, rgba(249,115,22,0.30) 0%, rgba(234,88,12,0.15) 32%, rgba(10,10,10,0) 74%)",
         }}
       />
 
