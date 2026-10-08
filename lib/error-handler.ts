@@ -50,6 +50,8 @@ const CLERK_CODE_KEYS: Record<string, MessageKey> = {
   form_param_format_invalid: 'errors.generic',
   session_exists: 'errors.generic',
   requires_verification: 'errors.clerk.requiresVerification',
+  session_reverification_required: 'errors.clerk.requiresVerification',
+  reverification_cancelled: 'errors.clerk.requiresVerification',
   verification_failed: 'errors.clerk.codeInvalid',
   verification_expired: 'errors.clerk.codeExpired',
   verification_already_verified: 'errors.clerk.codeInvalid',
@@ -126,9 +128,11 @@ function matchByText(haystack: string): MessageKey | null {
     haystack.includes('additional verification') ||
     haystack.includes('requires_verification') ||
     haystack.includes('verification required') ||
+    haystack.includes('reverification') ||
     haystack.includes('reauthentication') ||
     haystack.includes('re-authentication') ||
     haystack.includes('step-up') ||
+    haystack.includes('step_up') ||
     haystack.includes('second factor')
   ) {
     return 'errors.clerk.requiresVerification';
