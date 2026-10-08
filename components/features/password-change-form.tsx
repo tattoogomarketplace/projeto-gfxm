@@ -50,11 +50,16 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       return;
     }
 
+    const data = {
+      currentPassword: currentPassword.trim(),
+      newPassword,
+    };
+
     setIsUpdating(true);
     try {
       await user.updatePassword({
-        currentPassword,
-        newPassword,
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
         signOutOfOtherSessions: true,
       });
       toast.success('Senha atualizada com sucesso.');
