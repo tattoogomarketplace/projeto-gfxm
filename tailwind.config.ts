@@ -24,6 +24,10 @@ const config: Config = {
           orange: '#F97316',
           'orange-strong': '#EA580C',
           'orange-soft': '#FB923C',
+          // Copper sampled from the app icon artwork (roses + 3D machine).
+          copper: '#D9460E',
+          'copper-strong': '#B8430F',
+          'copper-soft': '#F05000',
           green: '#10B981',
           'green-strong': '#059669',
           'green-neon': '#34D399',

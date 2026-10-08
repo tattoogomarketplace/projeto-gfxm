@@ -5,6 +5,10 @@
   --color-foreground: var(--foreground);
   --color-primary: #F97316;
   --color-primary-strong: #EA580C;
+  /* Copper extracted from the app icon artwork (roses + 3D machine). */
+  --color-brand-copper: #D9460E;
+  --color-brand-copper-strong: #B8430F;
+  --color-brand-copper-soft: #F05000;
   --color-success: #10B981;
   --color-success-strong: #059669;
   --color-success-neon: #34D399;
