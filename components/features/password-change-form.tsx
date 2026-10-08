@@ -2,8 +2,9 @@
 
 import { memo, useCallback, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useSession, useUser } from '@clerk/nextjs';
-import type { SessionVerificationLevel } from '@clerk/nextjs/types';
+import { useReverification, useUser } from '@clerk/nextjs';
+import { isReverificationCancelledError } from '@clerk/nextjs/errors';
+import type { SessionVerificationLevel, UpdateUserPasswordParams } from '@clerk/nextjs/types';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
@@ -11,11 +12,7 @@ import { ClerkSessionReverification } from '@/components/features/clerk-session-
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
-import {
-  extractReverificationLevel,
-  isReverificationError,
-  passwordErrorMessage,
-} from '@/lib/error-handler';
+import { passwordErrorMessage } from '@/lib/error-handler';
 import { cn } from '@/lib/utils';
 
 type PasswordChangeFormProps = {
@@ -29,16 +26,26 @@ type ClerkErrorShape = {
   errors?: Array<{ code?: string; longMessage?: string; message?: string }>;
 };
 
+type PendingReverification = {
+  level: SessionVerificationLevel | undefined;
+  complete: () => void;
+  cancel: () => void;
+};
+
 function firstError(err: unknown) {
   const errors = (err as ClerkErrorShape | null | undefined)?.errors;
   return Array.isArray(errors) ? errors[0] : undefined;
 }
 
 /**
- * Alteração de senha 100% customizada. Antes de mutar a senha, conduz a
- * reverificação nativa do Clerk pelo SDK (startVerification) reutilizando o
- * componente `ClerkSessionReverification`; nenhuma janela nativa do Clerk é
- * exibida. Erros são convertidos em feedback amigável e imediato.
+ * Alteração de senha 100% customizada.
+ *
+ * `user.updatePassword` é embrulhado por `useReverification`: o Clerk tenta a
+ * mutação primeiro e, quando a sessão exige step-up, dispara
+ * `onNeedsReverification` (desligando a modal nativa). Conduzimos então a
+ * reverificação pelo `ClerkSessionReverification` reutilizando a "Senha Atual"
+ * já digitada; ao concluir, o SDK reexecuta a atualização automaticamente.
+ * Nenhuma UI do Clerk é renderizada.
  */
 export const PasswordChangeForm = memo(function PasswordChangeForm({
   embedded = false,
@@ -47,13 +54,11 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifyLevel, setVerifyLevel] = useState<SessionVerificationLevel | undefined>(undefined);
-  const [verifyNonce, setVerifyNonce] = useState(0);
+  const [pendingReverification, setPendingReverification] =
+    useState<PendingReverification | null>(null);
+  const pendingRef = useRef<PendingReverification | null>(null);
   const { isLoaded, user } = useUser();
-  const { session } = useSession();
   const { t } = useI18n();
-  const escalatedRef = useRef(false);
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
@@ -65,44 +70,32 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     setConfirmPassword('');
   }, []);
 
-  const submitUpdate = useCallback(async () => {
-    if (!user) {
-      toast.error(t('errors.sessionExpired'));
-      setIsVerifying(false);
-      return;
-    }
-    setIsUpdating(true);
-    try {
-      await user.updatePassword({
-        currentPassword: currentPassword.trim(),
-        newPassword,
-        signOutOfOtherSessions: true,
-      });
-      toast.success('Senha atualizada com sucesso.');
-      resetFields();
-      setIsVerifying(false);
-    } catch (err) {
-      if (isReverificationError(err) && !escalatedRef.current) {
-        // A verificação proativa não bastou (ex.: nível maior exigido).
-        // Escala uma única vez com o nível devolvido pelo Clerk.
-        escalatedRef.current = true;
-        setVerifyLevel(extractReverificationLevel(err) as SessionVerificationLevel | undefined);
-        setVerifyNonce((nonce) => nonce + 1);
-        setIsVerifying(true);
-        return;
-      }
-      if (firstError(err)?.code === 'form_password_incorrect') {
-        toast.error(t('errors.clerk.passwordIncorrect'));
-      } else {
-        toast.error(passwordErrorMessage(err));
-      }
-      setIsVerifying(false);
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [user, currentPassword, newPassword, t, resetFields]);
+  const clearPendingReverification = useCallback(() => {
+    pendingRef.current = null;
+    setPendingReverification(null);
+  }, []);
 
-  const handleUpdate = useCallback(() => {
+  const updatePassword = useReverification(
+    useCallback(
+      async (params: UpdateUserPasswordParams) => {
+        if (!user) throw new Error('session-expired');
+        return user.updatePassword(params);
+      },
+      [user]
+    ),
+    {
+      onNeedsReverification: useCallback(
+        ({ level, complete, cancel }: PendingReverification) => {
+          const pending: PendingReverification = { level, complete, cancel };
+          pendingRef.current = pending;
+          setPendingReverification(pending);
+        },
+        []
+      ),
+    }
+  );
+
+  const handleSubmit = useCallback(async () => {
     if (!user) {
       toast.error(t('errors.sessionExpired'));
       return;
@@ -123,23 +116,59 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       toast.error(t('errors.password.sameAsCurrent'));
       return;
     }
-    if (!session) {
-      toast.error(t('errors.sessionExpired'));
-      return;
+
+    setIsUpdating(true);
+    clearPendingReverification();
+    try {
+      const result = await updatePassword({
+        currentPassword: currentPassword.trim(),
+        newPassword,
+        signOutOfOtherSessions: true,
+      });
+
+      // Defesa: se o retry ainda devolver um hint de reverificação, não
+      // reportamos sucesso — sinalizamos o erro para o usuário tentar de novo.
+      if (result && typeof result === 'object' && 'clerk_error' in result) {
+        throw new Error('reverification-incomplete');
+      }
+
+      toast.success('Senha atualizada com sucesso.');
+      resetFields();
+    } catch (err) {
+      if (isReverificationCancelledError(err)) {
+        // Fluxo abortado (cancelamento do usuário ou erro já notificado na UI).
+      } else if (firstError(err)?.code === 'form_password_incorrect') {
+        toast.error(t('errors.clerk.passwordIncorrect'));
+      } else {
+        toast.error(passwordErrorMessage(err));
+      }
+    } finally {
+      setIsUpdating(false);
+      clearPendingReverification();
     }
-    escalatedRef.current = false;
-    setVerifyLevel(undefined);
-    setVerifyNonce((nonce) => nonce + 1);
-    setIsVerifying(true);
-  }, [user, currentPassword, newPassword, passwordsMatch, strength.isComplete, session, t]);
+  }, [
+    user,
+    currentPassword,
+    newPassword,
+    passwordsMatch,
+    strength.isComplete,
+    t,
+    resetFields,
+    updatePassword,
+    clearPendingReverification,
+  ]);
 
-  const handleVerified = useCallback(() => {
-    void submitUpdate();
-  }, [submitUpdate]);
+  const handleReverificationComplete = useCallback(() => {
+    const pending = pendingRef.current;
+    clearPendingReverification();
+    pending?.complete();
+  }, [clearPendingReverification]);
 
-  const handleCancelReverification = useCallback(() => {
-    setIsVerifying(false);
-  }, []);
+  const handleReverificationCancel = useCallback(() => {
+    const pending = pendingRef.current;
+    clearPendingReverification();
+    pending?.cancel();
+  }, [clearPendingReverification]);
 
   const handleReverificationError = useCallback(
     (err: unknown) => {
@@ -148,9 +177,9 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       } else {
         toast.error(passwordErrorMessage(err));
       }
-      setIsVerifying(false);
+      handleReverificationCancel();
     },
-    [t]
+    [t, handleReverificationCancel]
   );
 
   if (!isLoaded) return null;
@@ -176,13 +205,12 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       </div>
 
       {passwordEnabled ? (
-        isVerifying ? (
+        pendingReverification ? (
           <ClerkSessionReverification
-            key={verifyNonce}
-            level={verifyLevel}
+            level={pendingReverification.level}
             password={currentPassword.trim()}
-            onComplete={handleVerified}
-            onCancel={handleCancelReverification}
+            onComplete={handleReverificationComplete}
+            onCancel={handleReverificationCancel}
             onError={handleReverificationError}
           />
         ) : (
@@ -190,7 +218,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             className="space-y-4"
             onSubmit={(event) => {
               event.preventDefault();
-              handleUpdate();
+              void handleSubmit();
             }}
           >
             <Input
