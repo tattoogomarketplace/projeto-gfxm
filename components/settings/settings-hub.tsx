@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   BellRing,
   ChevronLeft,
@@ -89,10 +90,9 @@ export const SettingsHub = memo(function SettingsHub() {
 
   const closeTerms = useCallback(() => setShowTerms(false), []);
 
-  const openAccount = useCallback(() => {
+  const toggleAccount = useCallback(() => {
     triggerHaptic('light');
-    setOpenSection('privacy');
-    setShowAccount(true);
+    setShowAccount((prev) => !prev);
   }, [triggerHaptic]);
 
   const handleBecomeTatuador = useCallback(() => {
@@ -227,10 +227,23 @@ export const SettingsHub = memo(function SettingsHub() {
             icon={<UserRoundCog className="h-5 w-5" strokeWidth={1.75} />}
             title={t('settings.manageAccount')}
             subtitle={t('settings.manageAccountSubtitle')}
-            onClick={openAccount}
+            onClick={toggleAccount}
             chevron
           />
-          {showAccount ? <AccountManagement fallbackRole={role} /> : null}
+          <AnimatePresence initial={false}>
+            {showAccount ? (
+              <motion.div
+                key="account-management"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="overflow-hidden contain-paint transform-gpu backface-hidden will-change-[height,opacity]"
+              >
+                <AccountManagement fallbackRole={role} />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </SettingsAccordion>
         </div>
