@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 
 /**
@@ -7,6 +8,10 @@ import { BRAND_NAME } from '@/lib/i18n/brands';
  *
  * Regra de marca (nao traduzir/alterar): "TattooGo" em branco + "MK" no cobre
  * extraido do icone do app (#D9460E).
+ *
+ * `isVisible` controla a camada de saida (fade GPU). A animacao de entrada vive
+ * num wrapper interno porque `splash-enter` usa `animation-fill-mode: both` e
+ * forca `opacity: 1`, o que anularia a transicao de fade do container raiz.
  */
 
 const MACHINE_LOGO_SRC = '/assets/maquina-logo.png';
@@ -27,43 +32,53 @@ function Wordmark({ className }: { className?: string }) {
   );
 }
 
-export function SplashScreen() {
+type SplashScreenProps = {
+  isVisible?: boolean;
+};
+
+export function SplashScreen({ isVisible = true }: SplashScreenProps) {
   return (
     <div
       role="status"
       aria-live="polite"
       aria-label={BRAND_NAME}
+      aria-hidden={!isVisible}
       style={{ backgroundColor: '#000000' }}
-      className="splash-gpu splash-enter fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className={cn(
+        'splash-gpu fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden overscroll-none touch-none bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-opacity duration-500 ease-in-out transform-gpu will-change-opacity',
+        isVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      )}
     >
-      <div aria-hidden className="w-full flex-1" />
+      <div className="splash-gpu splash-enter flex h-full min-h-0 w-full flex-1 flex-col items-center justify-between">
+        <div aria-hidden className="w-full flex-1" />
 
-      <div className="flex w-full shrink-0 flex-col items-center gap-5 px-6">
-        <div className="relative flex items-center justify-center">
-          <div
-            aria-hidden
-            className="splash-gpu splash-glow pointer-events-none absolute aspect-square w-[38vw] min-w-[150px] max-w-[220px] rounded-full bg-brand-copper/30 blur-[54px]"
-          />
-          <Image
-            src={MACHINE_LOGO_SRC}
-            alt={BRAND_NAME}
-            width={MACHINE_LOGO_SIZE}
-            height={MACHINE_LOGO_SIZE}
-            priority
-            sizes="(max-width: 640px) 35vw, 200px"
-            className="splash-gpu splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] object-contain drop-shadow-[0_0_44px_rgba(217,70,14,0.35)]"
-          />
+        <div className="flex w-full shrink-0 flex-col items-center gap-5 px-6">
+          <div className="relative flex items-center justify-center">
+            <div
+              aria-hidden
+              className="splash-gpu splash-glow pointer-events-none absolute aspect-square w-[38vw] min-w-[150px] max-w-[220px] rounded-full bg-brand-copper/30 blur-[54px]"
+            />
+            <Image
+              src={MACHINE_LOGO_SRC}
+              alt={BRAND_NAME}
+              width={MACHINE_LOGO_SIZE}
+              height={MACHINE_LOGO_SIZE}
+              priority
+              sizes="(max-width: 640px) 35vw, 200px"
+              className="splash-gpu splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] object-contain drop-shadow-[0_0_44px_rgba(217,70,14,0.35)]"
+            />
+          </div>
+
+          <Wordmark className="splash-gpu text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight" />
         </div>
 
-        <Wordmark className="splash-gpu text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight" />
+        <div aria-hidden className="w-full flex-1" />
+
+        <footer className="flex w-full shrink-0 flex-col items-center pb-6">
+          <span className="text-xs uppercase tracking-widest text-zinc-500">from</span>
+          <Wordmark className="mt-1 text-sm font-semibold tracking-wide" />
+        </footer>
       </div>
-
-      <div aria-hidden className="w-full flex-1" />
-
-      <footer className="flex w-full shrink-0 flex-col items-center pb-6">
-        <span className="text-xs uppercase tracking-widest text-zinc-500">from</span>
-        <Wordmark className="mt-1 text-sm font-semibold tracking-wide" />
-      </footer>
     </div>
   );
 }

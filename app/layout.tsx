@@ -11,6 +11,7 @@ import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { SplashGate } from "@/components/ui/splash-gate";
 import { CLERK_TASK_URLS } from "@/lib/utils/session-tasks";
 
 const BRAND_ASSET_VERSION = "20261005";
@@ -144,6 +145,7 @@ export default function RootLayout({
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
         <body className="luxury-canvas app-frame fixed inset-0 mb-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pb-0 font-sans antialiased text-neutral-900 select-none dark:text-white">
+          <SplashGate />
           <Providers>
             <ThemeProvider>
               <I18nProvider>
