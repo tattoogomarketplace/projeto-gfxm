@@ -54,6 +54,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isDedicatedChat = pathname.startsWith('/dashboard/chat');
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
   const isGaleria = pathname.startsWith('/dashboard/galeria');
+  const isPagamentos = pathname.startsWith('/dashboard/pagamentos');
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
@@ -160,22 +161,26 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     ? 'perfil'
     : isDedicatedChat
       ? 'chat'
-      : activeTab === 'perfil'
-        ? 'portfolio'
-        : activeTab;
+      : isPagamentos
+        ? 'agendar'
+        : activeTab === 'perfil'
+          ? 'portfolio'
+          : activeTab;
   const headerTitle = isSettingsHub
     ? t('settings.title')
     : isGaleria
       ? t('nav.gallery')
-      : selectedTab === 'perfil'
-        ? t('profile.title')
-        : selectedTab === 'agendar'
-          ? t('nav.schedule')
-          : selectedTab === 'chat'
-            ? t('chat.title')
-            : role && role !== 'cliente'
-              ? t(ROLE_EXPERIENCE[role].dashboard.title)
-              : title;
+      : isPagamentos
+        ? t('payments.title')
+        : selectedTab === 'perfil'
+          ? t('profile.title')
+          : selectedTab === 'agendar'
+            ? t('nav.schedule')
+            : selectedTab === 'chat'
+              ? t('chat.title')
+              : role && role !== 'cliente'
+                ? t(ROLE_EXPERIENCE[role].dashboard.title)
+                : title;
 
   const handleTabChange = useCallback(
     (tab: AppTab) => {

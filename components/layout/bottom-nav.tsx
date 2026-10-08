@@ -31,6 +31,7 @@ type BottomNavProps = {
 function resolveActiveTab(pathname: string, storeTab: AppTab): AppTab {
   if (pathname.startsWith('/dashboard/perfil')) return 'perfil';
   if (pathname.startsWith('/dashboard/chat')) return 'chat';
+  if (pathname.startsWith('/dashboard/pagamentos')) return 'agendar';
   if (storeTab === 'agendar' || storeTab === 'chat' || storeTab === 'portfolio') {
     return storeTab;
   }
@@ -93,6 +94,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       '/dashboard/chat',
       '/dashboard/perfil',
       '/dashboard/galeria',
+      '/dashboard/pagamentos',
       `${homePath}?tab=portfolio`,
       `${homePath}?tab=agendar`,
     ];

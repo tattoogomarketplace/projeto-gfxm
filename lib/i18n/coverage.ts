@@ -553,6 +553,16 @@ export type DiscoveryMessages = Pick<
   | 'agenda.session'
   | 'agenda.signDocument'
   | 'agenda.payDeposit'
+  | 'payments.title'
+  | 'payments.subtitle'
+  | 'payments.entryHint'
+  | 'payments.journey'
+  | 'payments.googlePay'
+  | 'payments.creditCard'
+  | 'payments.secureNote'
+  | 'payments.depositLabel'
+  | 'payments.signed'
+  | 'payments.paid'
   | 'profile.sessions'
   | 'profile.favorites'
   | 'profile.completed'
@@ -581,6 +591,16 @@ export const DISCOVERY_PT_BR: DiscoveryMessages = {
   'agenda.session': 'Sessão de tatuagem',
   'agenda.signDocument': 'Assinar Documento',
   'agenda.payDeposit': 'Pagar sinal',
+  'payments.title': 'Pagamentos',
+  'payments.subtitle': 'Assinaturas, sinal e confirmações em um só lugar.',
+  'payments.entryHint': 'Acompanhe assinatura, sinal e confirmação.',
+  'payments.journey': 'Jornada do pagamento',
+  'payments.googlePay': 'Pagar com Google Pay',
+  'payments.creditCard': 'Cartão de crédito',
+  'payments.secureNote': 'Ambiente seguro TattooGo MK. Sem janelas externas.',
+  'payments.depositLabel': 'Sinal de 25%',
+  'payments.signed': 'Documento assinado com sucesso.',
+  'payments.paid': 'Sinal registrado com sucesso.',
   'profile.sessions': 'Sessões',
   'profile.favorites': 'Favoritos',
   'profile.completed': 'Concluídas',
@@ -609,6 +629,16 @@ export const DISCOVERY_EN: DiscoveryMessages = {
   'agenda.session': 'Tattoo session',
   'agenda.signDocument': 'Sign Document',
   'agenda.payDeposit': 'Pay deposit',
+  'payments.title': 'Payments',
+  'payments.subtitle': 'Signatures, deposits and confirmations in one place.',
+  'payments.entryHint': 'Track signature, deposit and confirmation.',
+  'payments.journey': 'Payment journey',
+  'payments.googlePay': 'Pay with Google Pay',
+  'payments.creditCard': 'Credit card',
+  'payments.secureNote': 'Secure TattooGo MK environment. No external windows.',
+  'payments.depositLabel': '25% deposit',
+  'payments.signed': 'Document signed successfully.',
+  'payments.paid': 'Deposit recorded successfully.',
   'profile.sessions': 'Sessions',
   'profile.favorites': 'Favorites',
   'profile.completed': 'Completed',
@@ -637,6 +667,16 @@ export const DISCOVERY_ES: DiscoveryMessages = {
   'agenda.session': 'Sesión de tatuaje',
   'agenda.signDocument': 'Firmar Documento',
   'agenda.payDeposit': 'Pagar señal',
+  'payments.title': 'Pagos',
+  'payments.subtitle': 'Firmas, señal y confirmaciones en un solo lugar.',
+  'payments.entryHint': 'Sigue la firma, la señal y la confirmación.',
+  'payments.journey': 'Recorrido del pago',
+  'payments.googlePay': 'Pagar con Google Pay',
+  'payments.creditCard': 'Tarjeta de crédito',
+  'payments.secureNote': 'Entorno seguro TattooGo MK. Sin ventanas externas.',
+  'payments.depositLabel': 'Señal del 25%',
+  'payments.signed': 'Documento firmado con éxito.',
+  'payments.paid': 'Señal registrada con éxito.',
   'profile.sessions': 'Sesiones',
   'profile.favorites': 'Favoritos',
   'profile.completed': 'Completadas',

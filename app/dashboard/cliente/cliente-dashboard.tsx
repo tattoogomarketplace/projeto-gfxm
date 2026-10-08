@@ -1,11 +1,14 @@
 'use client';
 
 import { type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { HomeDiscover } from '@/components/features/home-discover';
 import { AgendaTimeline } from '@/components/features/agenda-timeline';
+import { PaymentsEntryCard } from '@/components/features/payments-hub';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -36,6 +39,7 @@ function SectionHeading({
 export default function ClienteDashboard() {
   const { data: agendamentos, isLoading } = useAgendamentos();
   const { t } = useI18n();
+  const router = useRouter();
 
   const activeTab = useUiStore((s) => s.activeTab);
 
@@ -44,12 +48,26 @@ export default function ClienteDashboard() {
       <div className="relative w-full flex-1 space-y-6">
         {activeTab === 'agendar' && (
           <section key="agendar" className="w-full flex-1 space-y-5">
+            <SegmentedControl
+              options={[
+                { value: 'agenda', label: t('nav.schedule') },
+                { value: 'pagamentos', label: t('payments.title') },
+              ]}
+              value="agenda"
+              onChange={(value) => {
+                if (value === 'pagamentos') {
+                  router.push('/dashboard/pagamentos');
+                }
+              }}
+              ariaLabel={t('nav.schedule')}
+            />
             <SectionHeading
               icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
               title={t('agenda.timeline')}
               subtitle={t('agenda.timelineSubtitle')}
             />
             <AgendaTimeline agendamentos={agendamentos} isLoading={isLoading} />
+            <PaymentsEntryCard />
           </section>
         )}
 
