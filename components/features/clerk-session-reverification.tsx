@@ -190,9 +190,9 @@ export function ClerkSessionReverification({
   const isOtpFactor = secondFactor?.strategy === 'totp' || secondFactor?.strategy === 'phone_code';
 
   return (
-    <div className="space-y-4 rounded-xl border border-orange-500/30 bg-orange-500/[0.04] p-4">
+    <div className="space-y-4 rounded-xl border border-brand-copper/30 bg-brand-copper/[0.04] p-4">
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-brand-copper/30 bg-brand-copper/10 text-brand-copper dark:text-brand-copper-soft">
           <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
@@ -245,7 +245,7 @@ export function ClerkSessionReverification({
           <button
             type="submit"
             disabled={submitting || !backupCode.trim()}
-            className="min-h-11 w-full rounded-xl bg-orange-500 px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-[0.98] disabled:opacity-50"
+            className="min-h-11 w-full rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
           >
             {submitting ? <TattooMachineLoader compact label="Confirmando" /> : 'Confirmar código'}
           </button>
@@ -255,7 +255,7 @@ export function ClerkSessionReverification({
       <button
         type="button"
         onClick={onCancel}
-        className="flex min-h-11 w-full items-center justify-center text-center text-xs font-semibold text-zinc-500 transition-colors hover:text-orange-500 active:scale-[0.98]"
+        className="flex min-h-11 w-full items-center justify-center text-center text-xs font-semibold text-zinc-500 transition-colors hover:text-brand-copper active:scale-[0.98]"
       >
         Cancelar
       </button>

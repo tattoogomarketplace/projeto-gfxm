@@ -293,3 +293,35 @@ export function apiErrorMessage(err: unknown, locale?: Locale): string {
 export function isClerkError(err: unknown): err is ClerkLikeError {
   return Boolean(firstClerkError(err) || (isRecord(err) && err.clerkError === true));
 }
+
+const REVERIFICATION_CODES = new Set([
+  'session_reverification_required',
+  'requires_verification',
+  'verification_required',
+  'reverification_required',
+]);
+
+const VERIFICATION_LEVELS = new Set(['first_factor', 'second_factor', 'multi_factor']);
+
+/**
+ * True when Clerk demands a step-up (reauthentication) before a sensitive
+ * operation such as `user.updatePassword`. Reuses the shared matcher so the
+ * detection never drifts from `formatAppError`.
+ */
+export function isReverificationError(err: unknown): boolean {
+  const clerkCode = asString(firstClerkError(err)?.code).toLowerCase();
+  if (clerkCode && REVERIFICATION_CODES.has(clerkCode)) return true;
+  return resolveKey(err, 'password') === 'errors.clerk.requiresVerification';
+}
+
+/**
+ * Reads the verification level Clerk expects from the error metadata, if any.
+ * Returns `undefined` when absent or unrecognized so callers can fall back to
+ * the default first-factor flow.
+ */
+export function extractReverificationLevel(err: unknown): string | undefined {
+  const meta = firstClerkError(err)?.meta;
+  if (!isRecord(meta)) return undefined;
+  const level = meta.level;
+  return typeof level === 'string' && VERIFICATION_LEVELS.has(level) ? level : undefined;
+}
