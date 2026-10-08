@@ -18,35 +18,37 @@ import {
   type NotificationPrefKey,
 } from '@/lib/notification-preferences';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import type { MessageKey } from '@/lib/i18n/types';
 
 const OPTIONS: Array<{
   key: NotificationPrefKey;
-  title: string;
-  description: string;
+  titleKey: MessageKey;
+  descriptionKey: MessageKey;
   icon: typeof CalendarClock;
 }> = [
   {
     key: 'reminders',
-    title: 'Lembretes de Agendamento',
-    description: 'E-mail e app avisam antes da sessão para você não perder o horário.',
+    titleKey: 'notif.remindersTitle',
+    descriptionKey: 'notif.remindersDesc',
     icon: CalendarClock,
   },
   {
     key: 'chat',
-    title: 'Alertas de Novas Mensagens no Chat',
-    description: 'Receba um aviso assim que o artista, cliente ou estúdio responder.',
+    titleKey: 'notif.chatTitle',
+    descriptionKey: 'notif.chatDesc',
     icon: MessageCircle,
   },
   {
     key: 'proposals',
-    title: 'Atualizações de Propostas e Orçamentos',
-    description: 'Acompanhe mudanças de valor, aceite e status do orçamento.',
+    titleKey: 'notif.proposalsTitle',
+    descriptionKey: 'notif.proposalsDesc',
     icon: ScrollText,
   },
   {
     key: 'marketing',
-    title: 'Avisos de Marketing e Novidades da Plataforma',
-    description: 'Lançamentos, campanhas e novidades do TattooGo MK. Opcional.',
+    titleKey: 'notif.marketingTitle',
+    descriptionKey: 'notif.marketingDesc',
     icon: Megaphone,
   },
 ];
@@ -98,6 +100,7 @@ type NotificationPreferencesProps = {
 export const NotificationPreferences = memo(function NotificationPreferences({
   embedded = false,
 }: NotificationPreferencesProps) {
+  const { t } = useI18n();
   const prefs = useSyncExternalStore(
     subscribeNotificationPrefs,
     getNotificationPrefsSnapshot,
@@ -110,9 +113,9 @@ export const NotificationPreferences = memo(function NotificationPreferences({
       const nextValue = !prefs[key];
       setNotificationPref(key, nextValue);
       triggerHaptic(nextValue ? 'success' : 'light');
-      toast.success(nextValue ? `${title} ativado.` : `${title} desativado.`);
+      toast.success(nextValue ? t('toast.notifOn', { title }) : t('toast.notifOff', { title }));
     },
-    [prefs, triggerHaptic]
+    [prefs, triggerHaptic, t]
   );
 
   const list = (
@@ -146,16 +149,16 @@ export const NotificationPreferences = memo(function NotificationPreferences({
                   id={labelId}
                   className="block text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  {option.title}
+                  {t(option.titleKey)}
                 </span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-                  {option.description}
+                  {t(option.descriptionKey)}
                 </span>
               </span>
               <PreferenceToggle
                 checked={checked}
                 labelledBy={labelId}
-                onChange={() => handleToggle(option.key, option.title)}
+                onChange={() => handleToggle(option.key, t(option.titleKey))}
               />
             </div>
           );
@@ -172,9 +175,9 @@ export const NotificationPreferences = memo(function NotificationPreferences({
           <BellRing className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-[#F97316]">Central de Notificações</h2>
+          <h2 className="text-lg font-bold text-[#F97316]">{t('notif.hubTitle')}</h2>
           <p className="mt-0.5 text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
-            Escolha o que chega no e-mail e no app. A alteração é salva neste dispositivo na hora.
+            {t('notif.hubSubtitle')}
           </p>
         </div>
       </div>

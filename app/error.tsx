@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import { useI18n } from '@/hooks/use-i18n';
 
 /**
  * Error boundary de nível raiz do App Router.
@@ -19,6 +20,8 @@ export default function GlobalRootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     console.error("FATAL CRASH:", error);
   }, [error]);
@@ -32,18 +35,17 @@ export default function GlobalRootError({
       <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
         {BRAND_NAME}
       </p>
-      <h1 className="mt-2 text-xl font-bold tracking-tight">Algo saiu do traço</h1>
+      <h1 className="mt-2 text-xl font-bold tracking-tight">{t('error.offStroke')}</h1>
       <p className="mt-2 max-w-xs text-sm leading-relaxed text-zinc-400">
-        Não conseguimos carregar a aplicação agora. Tente novamente em instantes.
+        {t('error.appLoad')}
       </p>
-      <p className="mt-3 max-w-md break-words text-red-500">{error.message}</p>
       <button
         type="button"
         onClick={reset}
         className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
       >
         <RotateCcw className="h-4 w-4" strokeWidth={2} />
-        Tentar novamente
+        {t('common.retry')}
       </button>
       </div>
     </div>

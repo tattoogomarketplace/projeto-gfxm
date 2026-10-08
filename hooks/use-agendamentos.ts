@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { agendamentoService, AgendamentoClientError } from '@/lib/services/agendamento-service';
+import { t } from '@/lib/i18n/store';
+import { apiErrorMessage } from '@/lib/error-handler';
 
 export const useAgendamentos = () => {
   return useQuery({
@@ -18,22 +20,17 @@ export const useCriarAgendamento = () => {
     mutationFn: agendamentoService.criarAgendamento,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
-      toast.success('Horário reservado.', {
-        description: 'O sinal de 25% trava este slot enquanto o pagamento é confirmado.',
+      toast.success(t('toast.scheduleBooked'), {
+        description: t('toast.scheduleBookedHint'),
       });
     },
     onError: (error) => {
       const status = error instanceof AgendamentoClientError ? error.status : 0;
-      const message = error instanceof Error ? error.message : 'Falha ao criar agendamento.';
       if (status === 409) {
-        toast.error('Horário indisponível.', {
-          description: message,
-        });
+        toast.error(t('toast.scheduleUnavailable'));
         return;
       }
-      toast.error('Não foi possível concluir o agendamento.', {
-        description: message,
-      });
+      toast.error(apiErrorMessage(error));
     },
   });
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,7 +15,7 @@ import { WelcomeGate } from '@/components/features/welcome-gate';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
-import { passwordSchema } from '@/lib/utils/password-strength';
+import { createPasswordSchema } from '@/lib/utils/password-strength';
 import {
   calculateExactAge,
   MINIMUM_REGISTRATION_AGE,
@@ -32,6 +32,8 @@ import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { formatAppError } from '@/lib/error-handler';
+import { useI18n } from '@/hooks/use-i18n';
+import type { TranslateFn } from '@/lib/utils/password-strength';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -42,72 +44,74 @@ function calculateAge(dataNascimento?: string): number | null {
   return isValid ? age : null;
 }
 
-const registerSchema = z
-  .object({
-    nome: z.string().min(2, 'Informe seu nome real'),
-    email: z.string().email('E-mail inválido'),
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'Confirme sua senha'),
-    role: z.enum(['cliente', 'tatuador', 'estudio']),
-    cpf: z.string().optional(),
-    cnpj: z.string().optional(),
-    dataNascimento: z.string().optional(),
-    responsavelNome: z.string().optional(),
-    responsavelCpf: z.string().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'As senhas não coincidem',
-    path: ['confirmPassword'],
-  })
-  .superRefine((data, ctx) => {
-    if (data.role === 'estudio') {
-      if (!isValidCnpj(data.cnpj)) {
+function createRegisterSchema(t: TranslateFn) {
+  return z
+    .object({
+      nome: z.string().min(2, t('auth.nameRequired')),
+      email: z.string().email(t('auth.invalidEmail')),
+      password: createPasswordSchema(t),
+      confirmPassword: z.string().min(1, t('auth.confirmRequired')),
+      role: z.enum(['cliente', 'tatuador', 'estudio']),
+      cpf: z.string().optional(),
+      cnpj: z.string().optional(),
+      dataNascimento: z.string().optional(),
+      responsavelNome: z.string().optional(),
+      responsavelCpf: z.string().optional(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('errors.password.mismatch'),
+      path: ['confirmPassword'],
+    })
+    .superRefine((data, ctx) => {
+      if (data.role === 'estudio') {
+        if (!isValidCnpj(data.cnpj)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['cnpj'],
+            message: t('auth.invalidCnpj'),
+          });
+        }
+      } else if (!isValidCpf(data.cpf || '')) {
         ctx.addIssue({
           code: 'custom',
-          path: ['cnpj'],
-          message: 'CNPJ inválido',
+          path: ['cpf'],
+          message: t('auth.invalidCpf'),
         });
       }
-    } else if (!isValidCpf(data.cpf || '')) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['cpf'],
-        message: 'CPF inválido',
-      });
-    }
-    if (data.role !== 'estudio' && !data.dataNascimento) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['dataNascimento'],
-        message: 'Data obrigatória',
-      });
-    }
-    if (data.role !== 'estudio' && data.dataNascimento) {
-      const age = calculateAge(data.dataNascimento);
-      if (age === null) {
+      if (data.role !== 'estudio' && !data.dataNascimento) {
         ctx.addIssue({
           code: 'custom',
           path: ['dataNascimento'],
-          message: 'Data de nascimento inválida',
-        });
-      } else if (age < MIN_AGE) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['dataNascimento'],
-          message: 'É necessário ter ao menos 14 anos',
+          message: t('auth.dateRequired'),
         });
       }
-    }
-    if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['responsavelCpf'],
-        message: 'CPF do responsável inválido',
-      });
-    }
-  });
+      if (data.role !== 'estudio' && data.dataNascimento) {
+        const age = calculateAge(data.dataNascimento);
+        if (age === null) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['dataNascimento'],
+            message: t('auth.invalidBirth'),
+          });
+        } else if (age < MIN_AGE) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['dataNascimento'],
+            message: t('auth.minAge'),
+          });
+        }
+      }
+      if (data.responsavelCpf && !isValidCpf(data.responsavelCpf)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['responsavelCpf'],
+          message: t('auth.invalidGuardianCpf'),
+        });
+      }
+    });
+}
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<ReturnType<typeof createRegisterSchema>>;
 
 type FaixaEtaria = 'normal' | 'menor_14' | 'menor_18';
 
@@ -144,6 +148,7 @@ export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
   const router = useRouter();
+  const { t, locale } = useI18n();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [loading, setLoading] = useState(false);
@@ -164,7 +169,9 @@ export default function RegisterPage() {
     !isVerifying && !showWelcome && !isActivating && !loading
   );
 
-  const { register, handleSubmit, control, setValue, reset, formState: { errors, isValid } } = useForm<RegisterFormValues>({
+  const registerSchema = useMemo(() => createRegisterSchema(t), [t]);
+
+  const { register, handleSubmit, control, setValue, reset, trigger, formState: { errors, isValid } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     mode: 'onChange',
     defaultValues: {
@@ -178,6 +185,10 @@ export default function RegisterPage() {
       dataNascimento: '',
     },
   });
+
+  useEffect(() => {
+    if (Object.keys(errors).length) void trigger();
+  }, [locale, trigger, errors]);
 
   const dataNascimento = useWatch({ control, name: 'dataNascimento' });
   const passwordValue = useWatch({ control, name: 'password' }) || '';
@@ -194,32 +205,32 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
-      toast.error('Você precisa aceitar os termos de uso.');
+      toast.error(t('auth.acceptTerms'));
       return;
     }
     const isStudio = data.role === 'estudio';
     if (!isStudio) {
       const ageResult = calculateExactAge(data.dataNascimento);
       if (!ageResult.isValid) {
-        toast.error('Data de nascimento inválida.');
+        toast.error(t('auth.invalidBirth'));
         return;
       }
       if (ageResult.age < MIN_AGE) {
-        toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+        toast.error(t('auth.minAge'));
         return;
       }
     }
     if (isStudio) {
       if (!isValidCnpj(data.cnpj)) {
-        toast.error('CNPJ inválido.');
+        toast.error(t('auth.invalidCnpj'));
         return;
       }
     } else if (!isValidCpf(data.cpf || '')) {
-      toast.error('CPF inválido.');
+      toast.error(t('auth.invalidCpf'));
       return;
     }
     if (!signUp) {
-      toast.error('Clerk ainda não está pronto.');
+      toast.error(t('errors.clerk.notReady'));
       return;
     }
     setLoading(true);
@@ -230,7 +241,7 @@ export default function RegisterPage() {
     const officialName = isStudio ? razaoSocial.trim() : '';
     setStudioMeta(isStudio && officialName ? { cnpj: cnpjDigits, razaoSocial: officialName } : null);
     try {
-      setLoadingText('Verificando seus dados...');
+      setLoadingText(t('auth.checkingData'));
 
       try {
         await api.post(`${API_URL}/api/auth/check-duplicidade`, {
@@ -245,7 +256,7 @@ export default function RegisterPage() {
          }
        }
 
-      setLoadingText('Preparando perfil...');
+      setLoadingText(t('auth.preparingProfile'));
       await signUp.create({
         emailAddress: emailNorm,
         password: data.password,
@@ -263,15 +274,15 @@ export default function RegisterPage() {
         },
       });
 
-      setLoadingText('Gerando segurança...');
+      setLoadingText(t('auth.generatingSecurity'));
       await signUp.prepareVerification({
         strategy: 'email_code',
       });
 
-      setLoadingText('Enviando código...');
+      setLoadingText(t('auth.sendingCode'));
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
-      toast.success('Código de 6 dígitos enviado para o seu e-mail.');
+      toast.success(t('auth.codeSent'));
      } catch (err) {
        console.error(err);
         const clerkMsg = formatAppError(err, 'signup');
@@ -396,7 +407,7 @@ export default function RegisterPage() {
         };
         if (cancelled) return;
         if (!res.ok || !payload.sucesso) {
-          toast.error(payload.erro || 'CNPJ não encontrado.');
+          toast.error(formatAppError({ message: payload.erro, response: { status: res.status, data: payload } }, 'signup'));
           return;
         }
         const officialName = String(payload.nome || '').trim();
@@ -408,7 +419,7 @@ export default function RegisterPage() {
       } catch (err) {
         if (cancelled) return;
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        toast.error('Falha ao consultar o CNPJ.');
+        toast.error(t('auth.cnpjLookupFailed'));
       }
     })();
 
@@ -420,7 +431,7 @@ export default function RegisterPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={sessionBridge || isActivating} label="Entrando" />
+      <AuthBridgeOverlay visible={sessionBridge || isActivating} label={t('auth.entering')} />
       <div
         id="clerk-captcha"
         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
@@ -430,13 +441,13 @@ export default function RegisterPage() {
           <TattooMachineLoader label={getOnboardingLoadingMessage(userRole)} />
         </div>
       ) : !isLoaded && !forceShow ? (
-        <TattooMachineLoader compact label="Carregando" />
+        <TattooMachineLoader compact label={t('common.loading')} />
       ) : showWelcome ? (
         <WelcomeGate role={userRole} />
       ) : isVerifying ? (
         <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl backdrop-blur-md sm:p-8">
-          <h2 className="text-2xl font-bold mb-2 text-center">Verificação <span className="text-orange-500">OTP</span></h2>
-          <p className="text-zinc-400 text-center mb-8">Digite o código de 6 dígitos enviado para {emailForVerification}</p>
+          <h2 className="text-2xl font-bold mb-2 text-center">{t('auth.otpTitle')}</h2>
+          <p className="text-zinc-400 text-center mb-8">{t('auth.otpSentTo', { email: emailForVerification })}</p>
           <TattooOTPVerification
             onVerify={handleVerifyOtp}
             onResend={handleResendOtp}
@@ -454,7 +465,7 @@ export default function RegisterPage() {
             }}
             className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-lg border border-zinc-800 text-sm font-semibold text-zinc-400 transition-colors hover:border-orange-500 hover:text-orange-500"
           >
-            Voltar
+            {t('common.back')}
           </button>
         </div>
       ) : (
@@ -464,19 +475,19 @@ export default function RegisterPage() {
           className="-ml-2 mb-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-orange-500"
         >
           <span aria-hidden="true">&lt;</span>
-          Voltar
+          {t('common.back')}
         </Link>
-        <h1 className="text-2xl font-bold mb-6 text-center">Cadastro <span className="text-orange-500">TattooGo MK</span></h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">{t('auth.registerTitle')} <span className="text-orange-500">TattooGo MK</span></h1>
 
         {status === 'menor_14' && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-lg mb-6 text-sm text-center">
-            O TattooGo MK é restrito para maiores de 14 anos.
+            {t('auth.minAgeBanner')}
           </div>
         )}
 
         <form
           onSubmit={handleSubmit(onSubmit, () => {
-            toast.error('Revise os campos do cadastro para continuar.');
+            toast.error(t('auth.reviewFields'));
           })}
           className="relative space-y-4"
         >
@@ -505,7 +516,7 @@ export default function RegisterPage() {
           <input type="hidden" {...register('role')} />
           {isEstudio ? (
             <Input
-              label="CNPJ"
+              label={t('auth.cnpj')}
               inputMode="numeric"
               autoComplete="off"
               placeholder="00.000.000/0000-00"
@@ -527,39 +538,39 @@ export default function RegisterPage() {
           ) : null}
           {isEstudio ? (
             <Input
-              label="Razão Social"
+              label={t('auth.legalName')}
               type="text"
               value={razaoSocial}
               readOnly={true}
               disabled={true}
-              placeholder="Preenchido automaticamente pelo CNPJ"
+              placeholder={t('auth.legalNameAuto')}
               className="cursor-not-allowed bg-neutral-100 text-neutral-700 opacity-80 dark:bg-neutral-800 dark:text-neutral-200"
             />
           ) : null}
           <Input
-            label={isEstudio ? 'Nome de Exibição (Como os clientes verão)' : 'Nome completo'}
+            label={isEstudio ? t('auth.displayName') : t('auth.fullName')}
             type="text"
             autoComplete="name"
-            placeholder={isEstudio ? 'Nome público do estúdio' : 'Seu nome completo'}
+            placeholder={isEstudio ? t('auth.studioPublicName') : t('auth.fullNamePlaceholder')}
             {...register('nome')}
             disabled={studioFieldsLocked}
             className="focus:ring-orange-500"
             error={errors.nome?.message}
           />
           <Input
-            label="E-mail"
+            label={t('auth.email')}
             type="email"
-            placeholder="seu@email.com"
+            placeholder={t('auth.emailPlaceholder')}
             {...register('email')}
             disabled={studioFieldsLocked}
             className="focus:ring-orange-500"
             error={errors.email?.message}
           />
           <Input
-            label="Senha"
+            label={t('auth.password')}
             type="password"
             autoComplete="new-password"
-            placeholder="Mínimo 8 caracteres"
+            placeholder={t('password.minCharsPlaceholder')}
             {...register('password')}
             disabled={studioFieldsLocked}
             className="focus:ring-orange-500"
@@ -567,21 +578,21 @@ export default function RegisterPage() {
           />
           <PasswordStrengthBar password={passwordValue} />
           <Input
-            label="Confirmar senha"
+            label={t('auth.confirmPassword')}
             type="password"
             autoComplete="new-password"
-            placeholder="Repita a senha"
+            placeholder={t('password.placeholderRepeat')}
             {...register('confirmPassword')}
             disabled={studioFieldsLocked}
             className="focus:ring-orange-500"
             error={
               errors.confirmPassword?.message ||
-              (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
+              (confirmPasswordValue && !passwordsMatch ? t('errors.password.mismatch') : undefined)
             }
           />
           {!isEstudio ? (
             <Input
-              label="CPF"
+              label={t('auth.cpf')}
               inputMode="numeric"
               autoComplete="off"
               placeholder="000.000.000-00"
@@ -599,7 +610,7 @@ export default function RegisterPage() {
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
             <div className="relative isolate z-0 pointer-events-none">
               <Input
-                label="Data de Nascimento"
+                label={t('auth.birthDate')}
                 type="date"
                 {...register('dataNascimento', {
                   onChange: (e) => {
@@ -623,9 +634,9 @@ export default function RegisterPage() {
                     if (raw && !(!previous && isIsoCalendarToday(raw))) {
                       const result = calculateExactAge(raw);
                       if (!result.isValid) {
-                        toast.error('Data de nascimento inválida.');
+                        toast.error(t('auth.invalidBirth'));
                       } else if (result.age < MIN_AGE) {
-                        toast.error('Você precisa ter pelo menos 14 anos para se cadastrar na plataforma.');
+                        toast.error(t('auth.minAge'));
                       }
                     }
                     releaseIosDateInputTouch(e.target);
@@ -640,13 +651,13 @@ export default function RegisterPage() {
           {status === 'menor_18' && (
             <div className="space-y-4 rounded-lg border border-black/[0.04] bg-neutral-50 p-4 dark:border-white/[0.05] dark:bg-white/[0.03]">
               <Input
-                label="Nome Completo do Responsável Legal"
+                label={t('auth.guardianName')}
                 {...register('responsavelNome')}
                 className="focus:ring-orange-500"
                 error={errors.responsavelNome?.message}
               />
               <Input
-                label="CPF do Responsável Legal"
+                label={t('auth.guardianCpf')}
                 inputMode="numeric"
                 autoComplete="off"
                 {...register('responsavelCpf', {
@@ -660,7 +671,7 @@ export default function RegisterPage() {
                 error={errors.responsavelCpf?.message}
               />
               <p className="text-[10px] text-zinc-400 leading-relaxed">
-                Declaro, sob as penas da lei, ser o responsável legal pelo menor cadastrado, autorizando o uso da plataforma para fins de orçamento e agendamento. O procedimento físico de tatuagem estará sujeito à validação presencial de documentação conforme legislação estadual vigente.
+                {t('auth.guardianDisclaimer')}
               </p>
             </div>
           )}
@@ -676,7 +687,7 @@ export default function RegisterPage() {
             />
             <p className="pointer-events-auto min-w-0 flex-1 text-xs leading-relaxed text-zinc-400">
               <label htmlFor="register-terms" className="pointer-events-auto relative z-20 cursor-pointer select-none">
-                Li e concordo com os{' '}
+                {t('auth.termsPrefix')}{' '}
               </label>
               <button
                 type="button"
@@ -687,7 +698,7 @@ export default function RegisterPage() {
                 }}
                 className="pointer-events-auto relative z-20 font-semibold text-orange-500 underline underline-offset-2 transition-colors hover:text-orange-400"
               >
-                Termos de Uso e Privacidade
+                {t('auth.termsLink')}
               </button>
             </p>
           </div>
@@ -698,22 +709,22 @@ export default function RegisterPage() {
             className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? (
-              <TattooMachineLoader compact label={loadingText || 'Processando'} />
+              <TattooMachineLoader compact label={loadingText || t('auth.processing')} />
             ) : (
-              'Cadastrar'
+              t('auth.submitRegister')
             )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          Já é da elite? <Link href="/login" className="text-orange-500 hover:underline">Faça login</Link>
+          {t('auth.alreadyElite')} <Link href="/login" className="text-orange-500 hover:underline">{t('auth.doLogin')}</Link>
         </p>
       </div>
       )}
       <TermsViewerModal
         isOpen={isTermsModalOpen}
         onClose={() => setIsTermsModalOpen(false)}
-        closeLabel="Fechar"
+        closeLabel={t('common.close')}
       />
     </AuthScreen>
   );

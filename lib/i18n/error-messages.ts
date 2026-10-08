@@ -47,6 +47,8 @@ const PT_PT: ErrorDictionary = {
   'errors.clerk.requiresVerification': 'Confirmação de segurança necessária para avançar.',
   'errors.clerk.emailExists': 'Este e-mail já está registado.',
   'errors.clerk.cpfExists': 'Já existe uma conta registada com este CPF.',
+  'errors.forbidden': 'Não tem permissão para esta ação.',
+  'errors.clerk.resetFailed': 'Não foi possível redefinir a palavra-passe.',
   'errors.clerk.signupFailed': 'Não foi possível concluir o registo.',
   'errors.clerk.passwordChangeFailed': 'Falha ao alterar a palavra-passe.',
   'errors.clerk.passwordIncorrect': 'Palavra-passe atual incorreta.',

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { OtpInput, type OtpUserRole } from '@/components/ui/otp-input';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -17,6 +19,7 @@ export function TattooOTPVerification({
   onSuccess?: () => void;
   userRole?: OtpUserRole;
 }) {
+  const { t } = useI18n();
   const [resendSeconds, setResendSeconds] = useState(RESEND_COOLDOWN_SEC);
   const [resending, setResending] = useState(false);
 
@@ -34,9 +37,9 @@ export function TattooOTPVerification({
     try {
       await onResend();
       setResendSeconds(RESEND_COOLDOWN_SEC);
-      toast.success('Novo código enviado.');
+      toast.success(t('auth.codeResent'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao reenviar o código.');
+      toast.error(formatAppError(err, 'auth'));
     } finally {
       setResending(false);
     }
@@ -58,10 +61,10 @@ export function TattooOTPVerification({
           className="mt-2 min-h-11 px-4 text-sm font-semibold text-[#F97316] disabled:cursor-not-allowed disabled:text-zinc-500 hover:underline"
         >
           {resending
-            ? 'Reenviando...'
+            ? t('auth.resending')
             : resendSeconds > 0
-              ? `Reenviar código em ${resendSeconds}s`
-              : 'Reenviar código'}
+              ? t('auth.resendIn', { seconds: resendSeconds })
+              : t('auth.resend')}
         </button>
       ) : null}
     </div>

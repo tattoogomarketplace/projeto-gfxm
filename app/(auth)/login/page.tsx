@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,21 +15,21 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { assignAppPath, dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
+import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 import { formatAppError } from '@/lib/error-handler';
 
-const loginSchema = z.object({
-  email: z.string().email('E-mail inválido'),
-  password: z.string().min(1, 'Informe sua senha'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const clerk = useClerk();
   const router = useRouter();
+  const { t, locale } = useI18n();
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
   const [emailForVerification, setEmailForVerification] = useState('');
@@ -50,16 +50,31 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('reset') !== 'success') return;
     resetToastShown.current = true;
-    toast.success('Senha redefinida. Entre com a nova senha.');
-  }, []);
+    toast.success(t('auth.resetSuccessLogin'));
+  }, [t]);
+
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t('auth.invalidEmail')),
+        password: z.string().min(1, t('auth.passwordRequired')),
+      }),
+    [t]
+  );
 
   const {
     register,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    if (!errors.email && !errors.password) return;
+    void trigger();
+  }, [locale, trigger, errors.email, errors.password]);
 
   const sendEmailOtp = async (email: string) => {
     if (!signIn) {
@@ -124,7 +139,7 @@ export default function LoginPage() {
       setEmailForVerification(data.email.trim().toLowerCase());
       setIsVerifying(true);
       setResendSeconds(60);
-      toast.success('Código de 6 dígitos enviado para o seu e-mail.');
+      toast.success(t('auth.codeSent'));
     } catch (err) {
       console.error('CLERK ERROR:', err);
       toast.error(formatAppError(err, 'auth'));
@@ -172,7 +187,7 @@ export default function LoginPage() {
     try {
       await sendEmailOtp(emailForVerification);
       setResendSeconds(60);
-      toast.success('Novo código enviado.');
+      toast.success(t('auth.codeResent'));
     } catch (err) {
       toast.error(formatAppError(err, 'auth'));
     } finally {
@@ -222,7 +237,7 @@ export default function LoginPage() {
       });
       setRole(role);
 
-      toast.success('Bem-vindo de volta à elite!');
+      toast.success(t('auth.welcomeBack'));
       nextPathRef.current =
         role === 'tatuador' && kycStatus !== 'aprovado'
           ? postSignupPathForRole(role)
@@ -238,7 +253,7 @@ export default function LoginPage() {
   if (!isLoaded && !forceShow) {
     return (
       <AuthScreen>
-        <TattooMachineLoader compact label="Carregando" />
+        <TattooMachineLoader compact label={t('common.loading')} />
       </AuthScreen>
     );
   }
@@ -246,14 +261,12 @@ export default function LoginPage() {
   if (isVerifying) {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={bridging || sessionBridge} label="Entrando" />
+        <AuthBridgeOverlay visible={bridging || sessionBridge} label={t('auth.entering')} />
         <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
-            <h1 className="text-2xl font-extrabold text-white">
-              Verificação <span className="text-orange-500">OTP</span>
-            </h1>
+            <h1 className="text-2xl font-extrabold text-white">{t('auth.otpTitle')}</h1>
             <p className="mt-2 text-sm text-zinc-400">
-              Digite o código de 6 dígitos enviado para {emailForVerification}
+              {t('auth.otpSentTo', { email: emailForVerification })}
             </p>
           </div>
           <OtpInput
@@ -271,10 +284,10 @@ export default function LoginPage() {
             className="flex min-h-[44px] w-full items-center justify-center text-center text-sm font-semibold text-orange-500 disabled:text-zinc-500 disabled:cursor-not-allowed hover:underline"
           >
             {resending
-              ? 'Reenviando...'
+              ? t('auth.resending')
               : resendSeconds > 0
-                ? `Reenviar código em ${resendSeconds}s`
-                : 'Reenviar código'}
+                ? t('auth.resendIn', { seconds: resendSeconds })
+                : t('auth.resend')}
           </button>
           <button
             type="button"
@@ -284,7 +297,7 @@ export default function LoginPage() {
             }}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-zinc-800 text-sm font-semibold text-zinc-400 transition-colors hover:border-orange-500 hover:text-orange-500"
           >
-            Voltar
+            {t('common.back')}
           </button>
         </div>
       </AuthScreen>
@@ -293,30 +306,30 @@ export default function LoginPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={bridging || sessionBridge} label="Entrando" />
+      <AuthBridgeOverlay visible={bridging || sessionBridge} label={t('auth.entering')} />
       <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
             TattooGo <span className="text-orange-500">MK</span>
           </h1>
-          <p className="mt-2 text-sm text-zinc-500">Acesse sua conta de elite</p>
+          <p className="mt-2 text-sm text-zinc-500">{t('auth.loginSubtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
           <div className="space-y-4">
             <Input
-              label="E-mail"
+              label={t('auth.email')}
               type="email"
-              placeholder="seu@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               className="focus:ring-orange-500"
               {...register('email')}
               error={errors.email?.message}
             />
             <Input
-              label="Senha"
+              label={t('auth.password')}
               type="password"
               autoComplete="current-password"
-              placeholder="Sua senha"
+              placeholder={t('auth.passwordPlaceholder')}
               className="focus:ring-orange-500"
               {...register('password')}
               error={errors.password?.message}
@@ -326,7 +339,7 @@ export default function LoginPage() {
                 href="/forgot-password"
                 className="text-sm text-gray-400 transition-colors hover:text-orange-500"
               >
-                Esqueci minha senha
+                {t('auth.forgotPassword')}
               </Link>
             </div>
           </div>
@@ -337,17 +350,17 @@ export default function LoginPage() {
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
-              <TattooMachineLoader compact label="Entrando" />
+              <TattooMachineLoader compact label={t('auth.entering')} />
             ) : (
-              'Entrar'
+              t('auth.signIn')
             )}
           </button>
         </form>
 
         <p className="text-center text-sm text-zinc-500">
-          Ainda não faz parte da elite?{' '}
+          {t('auth.noAccount')}{' '}
           <Link href="/register" className="text-orange-500 hover:underline">
-            Cadastre-se
+            {t('auth.signUpLink')}
           </Link>
         </p>
       </div>

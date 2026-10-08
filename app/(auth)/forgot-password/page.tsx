@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,38 +13,28 @@ import { Input } from '@/components/input';
 import { OtpInput } from '@/components/ui/otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
-import { passwordSchema } from '@/lib/utils/password-strength';
+import { createPasswordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
+import { useI18n } from '@/hooks/use-i18n';
 import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 import { formatAppError } from '@/lib/error-handler';
 
-const credentialsSchema = z.object({
-  email: z.string().email('E-mail inválido'),
-  cpf: z
-    .string()
-    .min(11, 'CPF inválido')
-    .refine((value) => isValidCpf(value), 'CPF inválido'),
-});
-
-const passwordSchemaForm = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'Confirme sua senha'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'As senhas não coincidem',
-    path: ['confirmPassword'],
-  });
-
-type CredentialsValues = z.infer<typeof credentialsSchema>;
-type PasswordValues = z.infer<typeof passwordSchemaForm>;
+type CredentialsValues = {
+  email: string;
+  cpf: string;
+};
+type PasswordValues = {
+  password: string;
+  confirmPassword: string;
+};
 type ResetStep = 'credentials' | 'otp' | 'password';
 
 export default function ForgotPasswordPage() {
   const { isLoaded, signIn } = useSignIn();
   const clerk = useClerk();
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [step, setStep] = useState<ResetStep>('credentials');
   const [emailForReset, setEmailForReset] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +55,32 @@ export default function ForgotPasswordPage() {
     return () => window.clearTimeout(timer);
   }, [resetComplete, router]);
 
+  const credentialsSchema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t('auth.invalidEmail')),
+        cpf: z
+          .string()
+          .min(11, t('auth.invalidCpf'))
+          .refine((value) => isValidCpf(value), t('auth.invalidCpf')),
+      }),
+    [t]
+  );
+
+  const passwordSchemaForm = useMemo(
+    () =>
+      z
+        .object({
+          password: createPasswordSchema(t),
+          confirmPassword: z.string().min(1, t('auth.confirmRequired')),
+        })
+        .refine((data) => data.password === data.confirmPassword, {
+          message: t('errors.password.mismatch'),
+          path: ['confirmPassword'],
+        }),
+    [t]
+  );
+
   const credentialsForm = useForm<CredentialsValues>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: { email: '', cpf: '' },
@@ -75,6 +91,15 @@ export default function ForgotPasswordPage() {
     mode: 'onChange',
     defaultValues: { password: '', confirmPassword: '' },
   });
+
+  useEffect(() => {
+    if (Object.keys(credentialsForm.formState.errors).length) {
+      void credentialsForm.trigger();
+    }
+    if (Object.keys(passwordForm.formState.errors).length) {
+      void passwordForm.trigger();
+    }
+  }, [locale, credentialsForm, passwordForm]);
 
   const passwordValue = useWatch({ control: passwordForm.control, name: 'password' }) || '';
   const confirmPasswordValue =
@@ -120,7 +145,7 @@ export default function ForgotPasswordPage() {
       };
 
       if (!response.ok || payload.ok !== true) {
-        toast.error(payload.error || 'E-mail ou CPF não conferem.');
+        toast.error(formatAppError({ message: payload.error, response: { status: response.status, data: payload } }, 'reset'));
         return;
       }
 
@@ -128,7 +153,7 @@ export default function ForgotPasswordPage() {
       setEmailForReset(email);
       setStep('otp');
       setResendSeconds(60);
-      toast.success('Código de 6 dígitos enviado para o seu e-mail.');
+      toast.success(t('auth.codeSent'));
     } catch (err) {
       toast.error(formatAppError(err, 'reset'));
     } finally {
@@ -162,7 +187,7 @@ export default function ForgotPasswordPage() {
     try {
       await startClerkReset(emailForReset);
       setResendSeconds(60);
-      toast.success('Novo código enviado.');
+      toast.success(t('auth.codeResent'));
     } catch (err) {
       toast.error(formatAppError(err, 'reset'));
     } finally {
@@ -185,7 +210,7 @@ export default function ForgotPasswordPage() {
       } catch {
         // Sessão residual não pode bloquear o redirect rígido para o login.
       }
-      toast.success('Senha redefinida com sucesso.');
+      toast.success(t('auth.resetSuccess'));
       setResetComplete(true);
     } catch (err) {
       toast.error(formatAppError(err, 'reset'));
@@ -196,7 +221,7 @@ export default function ForgotPasswordPage() {
   if (!isLoaded && !forceShow) {
     return (
       <AuthScreen>
-        <TattooMachineLoader compact label="Carregando" />
+        <TattooMachineLoader compact label={t('common.loading')} />
       </AuthScreen>
     );
   }
@@ -204,14 +229,12 @@ export default function ForgotPasswordPage() {
   if (step === 'otp') {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+        <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
         <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
-            <h1 className="text-2xl font-extrabold text-white">
-              Verificação <span className="text-orange-500">OTP</span>
-            </h1>
+            <h1 className="text-2xl font-extrabold text-white">{t('auth.otpTitle')}</h1>
             <p className="mt-2 text-sm text-zinc-400">
-              Digite o código de 6 dígitos enviado para {emailForReset}
+              {t('auth.otpSentTo', { email: emailForReset })}
             </p>
           </div>
           <OtpInput onComplete={handleVerifyOtp} length={6} />
@@ -222,10 +245,10 @@ export default function ForgotPasswordPage() {
             className="flex min-h-[44px] w-full items-center justify-center text-center text-sm font-semibold text-orange-500 disabled:cursor-not-allowed disabled:text-zinc-500 hover:underline"
           >
             {resending
-              ? 'Reenviando...'
+              ? t('auth.resending')
               : resendSeconds > 0
-                ? `Reenviar código em ${resendSeconds}s`
-                : 'Reenviar código'}
+                ? t('auth.resendIn', { seconds: resendSeconds })
+                : t('auth.resend')}
           </button>
           <button
             type="button"
@@ -235,7 +258,7 @@ export default function ForgotPasswordPage() {
             }}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-zinc-800 text-sm font-semibold text-zinc-400 transition-colors hover:border-orange-500 hover:text-orange-500"
           >
-            Voltar
+            {t('common.back')}
           </button>
         </div>
       </AuthScreen>
@@ -245,13 +268,11 @@ export default function ForgotPasswordPage() {
   if (step === 'password') {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+        <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
         <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
           <div className="text-center">
-            <h1 className="text-2xl font-extrabold text-white">
-              Nova <span className="text-orange-500">senha</span>
-            </h1>
-            <p className="mt-2 text-sm text-zinc-500">Defina uma senha forte para sua conta</p>
+            <h1 className="text-2xl font-extrabold text-white">{t('auth.newPasswordTitle')}</h1>
+            <p className="mt-2 text-sm text-zinc-500">{t('auth.newPasswordSubtitle')}</p>
           </div>
           <form
             onSubmit={passwordForm.handleSubmit(onSubmitPassword)}
@@ -260,25 +281,25 @@ export default function ForgotPasswordPage() {
           >
             <div className="space-y-4">
               <Input
-                label="Nova senha"
+                label={t('password.new')}
                 type="password"
                 autoComplete="new-password"
-                placeholder="Nova senha"
+                placeholder={t('password.placeholderNew')}
                 className="focus:ring-orange-500"
                 {...passwordForm.register('password')}
                 error={passwordForm.formState.errors.password?.message}
               />
               <PasswordStrengthBar password={passwordValue} />
               <Input
-                label="Confirmar senha"
+                label={t('auth.confirmPassword')}
                 type="password"
                 autoComplete="new-password"
-                placeholder="Repita a senha"
+                placeholder={t('password.placeholderRepeat')}
                 className="focus:ring-orange-500"
                 {...passwordForm.register('confirmPassword')}
                 error={
                   passwordForm.formState.errors.confirmPassword?.message ||
-                  (confirmPasswordValue && !passwordsMatch ? 'As senhas não coincidem' : undefined)
+                  (confirmPasswordValue && !passwordsMatch ? t('errors.password.mismatch') : undefined)
                 }
               />
             </div>
@@ -287,7 +308,7 @@ export default function ForgotPasswordPage() {
               disabled={isLoading || !passwordsMatch}
               className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
             >
-            {isLoading ? <TattooMachineLoader compact label="Salvando" /> : 'Salvar senha'}
+            {isLoading ? <TattooMachineLoader compact label={t('common.save')} /> : t('auth.savePassword')}
           </button>
         </form>
         </div>
@@ -297,15 +318,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={sessionBridge} label="Carregando" />
+      <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
       <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-white">
-            Recuperar <span className="text-orange-500">senha</span>
-          </h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            Informe o e-mail e o CPF cadastrados para receber o código
-          </p>
+          <h1 className="text-3xl font-extrabold text-white">{t('auth.recoverTitle')}</h1>
+          <p className="mt-2 text-sm text-zinc-500">{t('auth.recoverSubtitle')}</p>
         </div>
 
         <form
@@ -315,15 +332,15 @@ export default function ForgotPasswordPage() {
         >
           <div className="space-y-4">
             <Input
-              label="E-mail"
+              label={t('auth.email')}
               type="email"
-              placeholder="seu@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               className="focus:ring-orange-500"
               {...credentialsForm.register('email')}
               error={credentialsForm.formState.errors.email?.message}
             />
             <Input
-              label="CPF"
+              label={t('auth.cpf')}
               inputMode="numeric"
               autoComplete="off"
               placeholder="000.000.000-00"
@@ -347,14 +364,14 @@ export default function ForgotPasswordPage() {
             disabled={isLoading}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
-            {isLoading ? <TattooMachineLoader compact label="Validando" /> : 'Enviar código'}
+            {isLoading ? <TattooMachineLoader compact label={t('auth.validating')} /> : t('auth.sendCode')}
           </button>
         </form>
 
         <p className="text-center text-sm text-zinc-500">
-          Lembrou a senha?{' '}
+          {t('auth.remembered')}{' '}
           <Link href="/login" className="text-orange-500 hover:underline">
-            Voltar ao login
+            {t('auth.backToLogin')}
           </Link>
         </p>
       </div>

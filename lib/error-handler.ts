@@ -208,7 +208,15 @@ function matchByText(haystack: string): MessageKey | null {
   if (haystack.includes('timeout') || haystack.includes('timed out') || haystack.includes('etimedout')) {
     return 'errors.timeout';
   }
-  if (haystack.includes('unauthorized') || haystack.includes('unauthenticated') || haystack.includes('session expired')) {
+  if (
+    haystack.includes('unauthorized') ||
+    haystack.includes('unauthenticated') ||
+    haystack.includes('session expired') ||
+    haystack.includes('sessão expirada') ||
+    haystack.includes('sessao expirada') ||
+    haystack.includes('sessão inválida') ||
+    haystack.includes('sessao invalida')
+  ) {
     return 'errors.unauthorized';
   }
   if (haystack.includes('forbidden') || haystack.includes('not allowed')) {

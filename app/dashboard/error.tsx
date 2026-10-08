@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import { useI18n } from '@/hooks/use-i18n';
 
 /**
  * Error boundary do segmento `/dashboard`.
@@ -19,6 +20,8 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     console.error("FATAL CRASH:", error);
   }, [error]);
@@ -34,12 +37,10 @@ export default function DashboardError({
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
             {BRAND_NAME}
           </p>
-          <h1 className="text-xl font-bold tracking-tight">Algo saiu do traço</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t('error.offStroke')}</h1>
           <p className="text-sm leading-relaxed text-zinc-400">
-            Não conseguimos carregar esta área agora. Tente novamente — seus dados
-            permanecem seguros.
+            {t('error.areaLoad')}
           </p>
-          <p className="mt-2 break-words text-red-500">{error.message}</p>
         </div>
         <button
           type="button"
@@ -47,7 +48,7 @@ export default function DashboardError({
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
         >
           <RotateCcw className="h-4 w-4" strokeWidth={2} />
-          Tentar novamente
+          {t('common.retry')}
         </button>
       </div>
       </div>

@@ -56,8 +56,6 @@ export function createPasswordSchema(t: TranslateFn = translate) {
     .regex(/[^A-Za-z0-9]/, t('password.zod.special'));
 }
 
-export const passwordSchema = createPasswordSchema();
-
 export type PasswordCheck = {
   id: PasswordRuleId;
   label: string;
