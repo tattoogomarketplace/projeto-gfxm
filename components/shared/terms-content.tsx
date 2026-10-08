@@ -1,4 +1,4 @@
-import { TERMS_SECTIONS, TERMS_TITLE, TERMS_UPDATED_AT, TERMS_VERSION } from '@/lib/terms';
+import { TERMS_SECTIONS, TERMS_TITLE, TERMS_UPDATED_AT } from '@/lib/terms';
 import { cn } from '@/lib/utils';
 
 interface TermsContentProps {
@@ -21,7 +21,7 @@ export function TermsContent({ className }: TermsContentProps) {
           {TERMS_TITLE}
         </h3>
         <p className="text-xs text-zinc-500">
-          Versão {TERMS_VERSION} · Atualizado em {TERMS_UPDATED_AT}
+          Atualizado em {TERMS_UPDATED_AT}
         </p>
       </header>
 

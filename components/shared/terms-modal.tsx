@@ -40,7 +40,7 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
           >
             <h2 className="mb-4 shrink-0 text-xl font-bold text-amber-500 sm:text-2xl">Termos de Uso Obrigatórios</h2>
             <div
-            className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain border-b border-zinc-800 pb-4 text-sm text-zinc-400 [-webkit-overflow-scrolling:touch]"
+            className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain border-b border-zinc-800 pb-[calc(env(safe-area-inset-bottom)+5rem)] text-sm text-zinc-400 [-webkit-overflow-scrolling:touch]"
             onScroll={(e) => {
               const target = e.target as HTMLDivElement;
               if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {

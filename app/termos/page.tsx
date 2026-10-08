@@ -49,7 +49,7 @@ export default function TermsPage() {
       <div className="mx-auto my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#121212] p-5 sm:p-8">
         <h2 className="mb-4 shrink-0 text-xl font-bold text-white sm:text-2xl">Termos de Uso Obrigatórios</h2>
         <div
-          className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-white/10 p-4 text-sm leading-relaxed text-zinc-400 [-webkit-overflow-scrolling:touch]"
+          className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-white/10 p-4 pb-[calc(env(safe-area-inset-bottom)+5rem)] text-sm leading-relaxed text-zinc-400 [-webkit-overflow-scrolling:touch]"
           onScroll={(e) => {
             const target = e.target as HTMLDivElement;
             if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {

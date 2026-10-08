@@ -1,8 +1,7 @@
-import { BRAND_NAME } from '@/lib/i18n/brands';
+import { BRAND_MARKETPLACE, BRAND_NAME } from '@/lib/i18n/brands';
 
 export const TERMS_TITLE = 'Termos de Uso e Política de Privacidade';
-export const TERMS_BRAND = BRAND_NAME;
-export const TERMS_VERSION = '3.0';
+export const TERMS_BRAND = `${BRAND_NAME} (${BRAND_MARKETPLACE})`;
 export const TERMS_UPDATED_AT = '2026-01-01';
 
 export interface TermsClause {
@@ -74,7 +73,7 @@ export const TERMS_SECTIONS: TermsClause[] = [
     title: '5. Cancelamento, Reagendamento e Reembolso',
     paragraphs: [
       'O cancelamento pelo cliente exige autenticação reforçada (e-mail, senha e verificação OTP de 6 dígitos).',
-      'O cancelamento deve ser solicitado com antecedência mínima de 3 (três) dias da data agendada. Solicitações fora do prazo podem acarretar retenção total ou parcial da calção, a critério das regras do profissional e da análise da Plataforma.',
+      'O cancelamento deve ser solicitado preferencialmente com antecedência mínima de 3 (três) dias da data agendada. Solicitações realizadas em prazo inferior a 3 (três) dias deverão ser tratadas diretamente com o suporte ao cliente, e o cancelamento e o reembolso regular serão processados corretamente. Advertimos, contudo, que 3 (três) ou mais ocorrências de cancelamentos com curto prazo de antecedência sujeitam a conta à suspensão, e 5 (cinco) ou mais ocorrências recorrentes sujeitam a conta ao banimento permanente.',
       'Reagendamentos seguem a disponibilidade do profissional e permanecem sujeitos à política de prazo acima.',
       'Reembolsos, quando devidos, serão processados pelo mesmo meio de pagamento utilizado, nos prazos do gateway e da instituição financeira.',
     ],
@@ -137,7 +136,7 @@ export const TERMS_SECTIONS: TermsClause[] = [
       'Estes Termos podem ser atualizados a qualquer momento. A versão vigente será sempre exibida nesta Plataforma e o uso continuado implica concordância com a nova redação.',
       'Eventual tolerância quanto ao descumprimento não constitui renúncia ou novação.',
       'Fica eleito o foro do domicílio do consumidor para dirimir controvérsias, quando aplicável a legislação consumerista.',
-      `Ao marcar "Aceito os Termos", o usuário confirma que leu integralmente e concorda com todas as cláusulas acima (versão ${TERMS_VERSION}).`,
+      'Ao marcar "Aceito os Termos", o usuário confirma que leu integralmente e concorda com todas as cláusulas acima.',
     ],
   },
 ];
@@ -147,7 +146,7 @@ export const TERMS_SECTIONS: TermsClause[] = [
  * consumidores que renderizam uma string (ex.: exports, logs ou fallback).
  */
 export const TERMS_TEXT = [
-  `${TERMS_TITLE.toUpperCase()} ${TERMS_BRAND} (versão ${TERMS_VERSION})`,
+  `${TERMS_TITLE.toUpperCase()} ${TERMS_BRAND}`,
   '',
   ...TERMS_SECTIONS.flatMap((section) => [
     section.title.toUpperCase(),
