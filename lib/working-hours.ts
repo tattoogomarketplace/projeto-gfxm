@@ -34,8 +34,18 @@ export type WorkingHoursSchedule = {
   updatedAt: string;
 };
 
+export type WorkingHoursIssueCode =
+  | 'hours.invalidOpenClose'
+  | 'hours.closeAfterOpen'
+  | 'hours.breakInvalid'
+  | 'hours.breakEndAfterStart'
+  | 'hours.breakInside'
+  | 'hours.breaksOverlap';
+
 export type WorkingHoursIssue = {
   day: WeekdayId;
+  code: WorkingHoursIssueCode;
+  index?: number;
   message: string;
 };
 
@@ -48,6 +58,10 @@ export const WEEKDAY_LABELS: Record<WeekdayId, string> = {
   saturday: 'Sábado',
   sunday: 'Domingo',
 };
+
+export function weekdayKey(day: WeekdayId): `weekday.${WeekdayId}` {
+  return `weekday.${day}`;
+}
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MAX_BREAKS_PER_DAY = 3;
@@ -191,31 +205,54 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
     if (!day.active) continue;
 
     if (!isValidTime(day.start) || !isValidTime(day.end)) {
-      issues.push({ day: day.day, message: 'Informe horários de abertura e fechamento válidos.' });
+      issues.push({
+        day: day.day,
+        code: 'hours.invalidOpenClose',
+        message: 'Informe horários de abertura e fechamento válidos.',
+      });
       continue;
     }
 
     const open = timeToMinutes(day.start);
     const close = timeToMinutes(day.end);
     if (close <= open) {
-      issues.push({ day: day.day, message: 'O horário de fechamento deve ser depois da abertura.' });
+      issues.push({
+        day: day.day,
+        code: 'hours.closeAfterOpen',
+        message: 'O horário de fechamento deve ser depois da abertura.',
+      });
       continue;
     }
 
     const normalizedBreaks = day.breaks.map((interval, index) => ({ interval, index }));
     for (const { interval, index } of normalizedBreaks) {
       if (!isValidTime(interval.start) || !isValidTime(interval.end)) {
-        issues.push({ day: day.day, message: `Intervalo ${index + 1} possui horário inválido.` });
+        issues.push({
+          day: day.day,
+          code: 'hours.breakInvalid',
+          index: index + 1,
+          message: `Intervalo ${index + 1} possui horário inválido.`,
+        });
         continue;
       }
       const breakStart = timeToMinutes(interval.start);
       const breakEnd = timeToMinutes(interval.end);
       if (breakEnd <= breakStart) {
-        issues.push({ day: day.day, message: `Intervalo ${index + 1}: o término deve ser depois do início.` });
+        issues.push({
+          day: day.day,
+          code: 'hours.breakEndAfterStart',
+          index: index + 1,
+          message: `Intervalo ${index + 1}: o término deve ser depois do início.`,
+        });
         continue;
       }
       if (breakStart < open || breakEnd > close) {
-        issues.push({ day: day.day, message: `Intervalo ${index + 1} precisa estar dentro do expediente.` });
+        issues.push({
+          day: day.day,
+          code: 'hours.breakInside',
+          index: index + 1,
+          message: `Intervalo ${index + 1} precisa estar dentro do expediente.`,
+        });
       }
     }
 
@@ -228,7 +265,11 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
         const other = day.breaks[j];
         if (!isValidTime(other.start) || !isValidTime(other.end)) continue;
         if (rangesOverlap(aStart, aEnd, timeToMinutes(other.start), timeToMinutes(other.end))) {
-          issues.push({ day: day.day, message: 'Os intervalos não podem se sobrepor.' });
+          issues.push({
+            day: day.day,
+            code: 'hours.breaksOverlap',
+            message: 'Os intervalos não podem se sobrepor.',
+          });
         }
       }
     }

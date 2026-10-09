@@ -1,6 +1,6 @@
-import type { UiDictionary } from '@/lib/i18n/types';
+import type { CoreUiDictionary } from '@/lib/i18n/types';
 
-export const UI_FR: UiDictionary = {
+export const UI_FR: CoreUiDictionary = {
   'auth.signIn': 'Se connecter',
   'auth.signOut': 'Se déconnecter',
   'auth.register': 'Créer un compte',
@@ -229,7 +229,7 @@ export const UI_FR: UiDictionary = {
     'Choisissez ce qui arrive par e-mail et dans l’app. Le changement est enregistré immédiatement.',
 };
 
-export const UI_DE: UiDictionary = {
+export const UI_DE: CoreUiDictionary = {
   'auth.signIn': 'Anmelden',
   'auth.signOut': 'Abmelden',
   'auth.register': 'Konto erstellen',
@@ -457,7 +457,7 @@ export const UI_DE: UiDictionary = {
     'Wähle, was per E-Mail und in der App ankommt. Änderungen werden sofort gespeichert.',
 };
 
-export const UI_IT: UiDictionary = {
+export const UI_IT: CoreUiDictionary = {
   'auth.signIn': 'Accedi',
   'auth.signOut': 'Esci dall’account',
   'auth.register': 'Crea account',

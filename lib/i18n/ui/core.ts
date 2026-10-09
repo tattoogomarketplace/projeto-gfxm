@@ -1,6 +1,6 @@
-import type { UiDictionary } from '@/lib/i18n/types';
+import type { CoreUiDictionary } from '@/lib/i18n/types';
 
-export const UI_PT_BR: UiDictionary = {
+export const UI_PT_BR: CoreUiDictionary = {
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Sair da Conta',
   'auth.register': 'Criar conta',
@@ -227,7 +227,7 @@ export const UI_PT_BR: UiDictionary = {
     'Escolha o que chega no e-mail e no app. A alteração é salva neste dispositivo na hora.',
 };
 
-export const UI_PT_PT: UiDictionary = {
+export const UI_PT_PT: CoreUiDictionary = {
   ...UI_PT_BR,
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Terminar sessão',
@@ -456,7 +456,7 @@ export const UI_PT_PT: UiDictionary = {
     'Escolha o que chega ao e-mail e à aplicação. A alteração é guardada neste dispositivo de imediato.',
 };
 
-export const UI_EN: UiDictionary = {
+export const UI_EN: CoreUiDictionary = {
   'auth.signIn': 'Sign in',
   'auth.signOut': 'Sign Out',
   'auth.register': 'Create account',
@@ -683,7 +683,7 @@ export const UI_EN: UiDictionary = {
     'Choose what reaches email and the app. Changes are saved on this device instantly.',
 };
 
-export const UI_ES: UiDictionary = {
+export const UI_ES: CoreUiDictionary = {
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Cerrar sesión',
   'auth.register': 'Crear cuenta',

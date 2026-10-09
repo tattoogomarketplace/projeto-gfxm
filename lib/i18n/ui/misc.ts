@@ -1,6 +1,6 @@
-import type { UiDictionary } from '@/lib/i18n/types';
+import type { CoreUiDictionary } from '@/lib/i18n/types';
 
-export const UI_AR: UiDictionary = {
+export const UI_AR: CoreUiDictionary = {
   'auth.signIn': 'تسجيل الدخول',
   'auth.signOut': 'تسجيل الخروج',
   'auth.register': 'إنشاء حساب',
@@ -223,7 +223,7 @@ export const UI_AR: UiDictionary = {
   'notif.hubSubtitle': 'اختر ما يصل إلى البريد والتطبيق. يُحفظ التغيير على هذا الجهاز فورًا.',
 };
 
-export const UI_RU: UiDictionary = {
+export const UI_RU: CoreUiDictionary = {
   'auth.signIn': 'Войти',
   'auth.signOut': 'Выйти из аккаунта',
   'auth.register': 'Создать аккаунт',
@@ -449,7 +449,7 @@ export const UI_RU: UiDictionary = {
     'Выберите, что приходит на почту и в приложение. Изменение сохраняется на этом устройстве сразу.',
 };
 
-export const UI_HI: UiDictionary = {
+export const UI_HI: CoreUiDictionary = {
   'auth.signIn': 'साइन इन',
   'auth.signOut': 'साइन आउट',
   'auth.register': 'खाता बनाएं',
@@ -674,7 +674,7 @@ export const UI_HI: UiDictionary = {
     'चुनें कि ईमेल और ऐप पर क्या पहुंचे। बदलाव इस डिवाइस पर तुरंत सहेजा जाता है।',
 };
 
-export const UI_NL: UiDictionary = {
+export const UI_NL: CoreUiDictionary = {
   'auth.signIn': 'Inloggen',
   'auth.signOut': 'Uitloggen',
   'auth.register': 'Account aanmaken',
@@ -901,7 +901,7 @@ export const UI_NL: UiDictionary = {
     'Kies wat er in e-mail en app aankomt. Wijzigingen worden direct op dit apparaat opgeslagen.',
 };
 
-export const UI_TR: UiDictionary = {
+export const UI_TR: CoreUiDictionary = {
   'auth.signIn': 'Giriş yap',
   'auth.signOut': 'Çıkış yap',
   'auth.register': 'Hesap oluştur',
@@ -1127,7 +1127,7 @@ export const UI_TR: UiDictionary = {
     'E-posta ve uygulamaya ne geleceğini seçin. Değişiklik bu cihazda anında kaydedilir.',
 };
 
-export const UI_PL: UiDictionary = {
+export const UI_PL: CoreUiDictionary = {
   'auth.signIn': 'Zaloguj się',
   'auth.signOut': 'Wyloguj się',
   'auth.register': 'Utwórz konto',

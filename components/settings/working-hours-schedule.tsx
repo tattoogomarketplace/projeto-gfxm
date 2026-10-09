@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
 import {
-  WEEKDAY_LABELS,
   canAddBreak,
   cloneWorkingHours,
   createBreakInterval,
@@ -23,10 +22,12 @@ import {
   subscribeWorkingHours,
   updateDaySchedule,
   validateWorkingHours,
+  weekdayKey,
   workingHoursEqual,
   type BreakInterval,
   type DaySchedule,
   type WeekdayId,
+  type WorkingHoursIssue,
   type WorkingHoursSchedule as WorkingHoursDraft,
 } from '@/lib/working-hours';
 
@@ -120,25 +121,26 @@ const BreakRow = memo(function BreakRow({
   onChange: (id: string, patch: Partial<Pick<BreakInterval, 'start' | 'end'>>) => void;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-end gap-2">
       <TimeField
         id={`${dayId}-break-${interval.id}-start`}
-        label="Início do intervalo"
+        label={t('hours.breakStart')}
         value={interval.start}
         disabled={disabled}
         onChange={(value) => onChange(interval.id, { start: value })}
       />
       <TimeField
         id={`${dayId}-break-${interval.id}-end`}
-        label="Fim do intervalo"
+        label={t('hours.breakEnd')}
         value={interval.end}
         disabled={disabled}
         onChange={(value) => onChange(interval.id, { end: value })}
       />
       <button
         type="button"
-        aria-label="Remover intervalo"
+        aria-label={t('hours.removeBreak')}
         disabled={disabled}
         onClick={() => onRemove(interval.id)}
         className="inline-flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-black/[0.04] text-neutral-500 transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/10 hover:text-red-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.05] dark:text-zinc-500"
@@ -159,13 +161,14 @@ const DayRow = memo(function DayRow({
   onRemoveBreak,
 }: {
   day: DaySchedule;
-  issues: string[];
+  issues: WorkingHoursIssue[];
   onToggle: (dayId: WeekdayId) => void;
   onTimeChange: (dayId: WeekdayId, field: 'start' | 'end', value: string) => void;
   onBreakChange: (dayId: WeekdayId, breakId: string, patch: Partial<Pick<BreakInterval, 'start' | 'end'>>) => void;
   onAddBreak: (dayId: WeekdayId) => void;
   onRemoveBreak: (dayId: WeekdayId, breakId: string) => void;
 }) {
+  const { t } = useI18n();
   const labelId = `schedule-${day.day}`;
   const disabled = !day.active;
   const allowBreak = canAddBreak(day);
@@ -192,10 +195,10 @@ const DayRow = memo(function DayRow({
         </span>
         <div className="min-w-0 flex-1">
           <p id={labelId} className="text-sm font-medium text-neutral-900 dark:text-white">
-            {WEEKDAY_LABELS[day.day]}
+            {t(weekdayKey(day.day))}
           </p>
           <p className="mt-0.5 text-xs text-neutral-500 dark:text-zinc-500">
-            {day.active ? `${day.start} – ${day.end}` : 'Folga'}
+            {day.active ? `${day.start} – ${day.end}` : t('hours.off')}
           </p>
         </div>
         <DayToggle checked={day.active} labelledBy={labelId} onChange={() => onToggle(day.day)} />
@@ -212,14 +215,14 @@ const DayRow = memo(function DayRow({
             <div className="flex gap-2">
               <TimeField
                 id={`${day.day}-start`}
-                label="Abertura"
+                label={t('hours.open')}
                 value={day.start}
                 disabled={disabled}
                 onChange={(value) => onTimeChange(day.day, 'start', value)}
               />
               <TimeField
                 id={`${day.day}-end`}
-                label="Fechamento"
+                label={t('hours.close')}
                 value={day.end}
                 disabled={disabled}
                 onChange={(value) => onTimeChange(day.day, 'end', value)}
@@ -230,7 +233,7 @@ const DayRow = memo(function DayRow({
               <div className="flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-500 dark:text-zinc-500">
                   <Coffee className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  Intervalos
+                  {t('hours.breaks')}
                 </p>
                 <button
                   type="button"
@@ -239,11 +242,11 @@ const DayRow = memo(function DayRow({
                   className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-xs font-semibold text-[#F97316] transition-all duration-200 hover:bg-[#F97316]/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Plus className="h-4 w-4" strokeWidth={1.75} />
-                  Adicionar
+                  {t('hours.addBreak')}
                 </button>
               </div>
               {day.breaks.length === 0 ? (
-                <p className="text-xs text-neutral-500 dark:text-zinc-500">Nenhum intervalo neste dia.</p>
+                <p className="text-xs text-neutral-500 dark:text-zinc-500">{t('hours.noBreaks')}</p>
               ) : (
                 day.breaks.map((interval) => (
                   <BreakRow
@@ -260,9 +263,9 @@ const DayRow = memo(function DayRow({
 
             {issues.length > 0 ? (
               <ul className="space-y-1">
-                {issues.map((message) => (
-                  <li key={message} className="text-xs font-medium text-red-500">
-                    {message}
+                {issues.map((issue, i) => (
+                  <li key={`${issue.code}-${i}`} className="text-xs font-medium text-red-500">
+                    {t(issue.code, issue.index ? { index: issue.index } : undefined)}
                   </li>
                 ))}
               </ul>
@@ -328,10 +331,11 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
 
   const issues = useMemo(() => validateWorkingHours(syncedDraft), [syncedDraft]);
   const issuesByDay = useMemo(() => {
-    const map = new Map<WeekdayId, string[]>();
+    const map = new Map<WeekdayId, WorkingHoursIssue[]>();
     for (const issue of issues) {
       const current = map.get(issue.day) ?? [];
-      if (!current.includes(issue.message)) current.push(issue.message);
+      const key = `${issue.code}-${issue.index ?? ''}`;
+      if (!current.some((item) => `${item.code}-${item.index ?? ''}` === key)) current.push(issue);
       map.set(issue.day, current);
     }
     return map;
@@ -468,7 +472,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-neutral-600 dark:text-zinc-400">
-        Defina abertura, fechamento e intervalos de segunda a domingo. O expediente é persistido no Neon e aplicado nos agendamentos.
+        {t('hours.hint')}
       </p>
 
       <div className="grid grid-cols-1 gap-2">
@@ -501,10 +505,11 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
         )}
       >
         <Save className="h-4 w-4" strokeWidth={1.75} />
-        {saving ? 'Salvando...' : 'Salvar Expediente'}
+        {saving ? t('hours.saving') : t('hours.save')}
       </button>
       <p className="text-center text-[11px] text-neutral-500 dark:text-zinc-500">
-        {dirty ? 'Alterações pendentes.' : 'Expediente atualizado.'} {activeDays} dia{activeDays === 1 ? '' : 's'} ativo{activeDays === 1 ? '' : 's'}.
+        {dirty ? t('hours.pending') : t('hours.updated')}{' '}
+        {t(activeDays === 1 ? 'hours.activeDay' : 'hours.activeDays', { count: activeDays })}
       </p>
     </div>
   );

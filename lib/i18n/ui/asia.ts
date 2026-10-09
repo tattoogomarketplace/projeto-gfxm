@@ -1,6 +1,6 @@
-import type { UiDictionary } from '@/lib/i18n/types';
+import type { CoreUiDictionary } from '@/lib/i18n/types';
 
-export const UI_JA: UiDictionary = {
+export const UI_JA: CoreUiDictionary = {
   'auth.signIn': 'サインイン',
   'auth.signOut': 'サインアウト',
   'auth.register': 'アカウント作成',
@@ -226,7 +226,7 @@ export const UI_JA: UiDictionary = {
     'メールとアプリに届く内容を選択できます。変更はこの端末にすぐ保存されます。',
 };
 
-export const UI_ZH: UiDictionary = {
+export const UI_ZH: CoreUiDictionary = {
   'auth.signIn': '登录',
   'auth.signOut': '退出登录',
   'auth.register': '创建账户',
@@ -448,7 +448,7 @@ export const UI_ZH: UiDictionary = {
   'notif.hubSubtitle': '选择邮件和应用接收的内容。更改会立即保存在此设备上。',
 };
 
-export const UI_KO: UiDictionary = {
+export const UI_KO: CoreUiDictionary = {
   'auth.signIn': '로그인',
   'auth.signOut': '로그아웃',
   'auth.register': '계정 만들기',
