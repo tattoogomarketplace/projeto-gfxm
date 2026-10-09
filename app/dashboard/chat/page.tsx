@@ -1,7 +1,7 @@
-import { SessionHydrating } from '@/components/features/session-hydrating';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import ChatClient from './chat-client';
+import ChatLoading from './loading';
 
 export default async function DashboardChatPage() {
   let perfil = null;
@@ -10,8 +10,8 @@ export default async function DashboardChatPage() {
   } catch (error) {
     rethrowNextControlFlow(error);
     console.error('[dashboard/chat] sessão indisponível', error);
-    return <SessionHydrating />;
+    return <ChatLoading />;
   }
-  if (!perfil) return <SessionHydrating />;
+  if (!perfil) return <ChatLoading />;
   return <ChatClient />;
 }

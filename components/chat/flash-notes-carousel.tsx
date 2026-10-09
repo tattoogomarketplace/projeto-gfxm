@@ -196,7 +196,7 @@ export function FlashNotesCarousel() {
           <button
             type="button"
             onClick={openComposer}
-            className="flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
+            className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
             aria-label={ownNote ? t('flash.updateAria') : t('flash.publishAria')}
           >
             <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#F97316,#FFBF00,#F97316)] p-[2px]">
@@ -212,7 +212,7 @@ export function FlashNotesCarousel() {
 
         {loading
           ? Array.from({ length: 4 }).map((_, index) => (
-              <div key={`flash-skel-${index}`} className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5">
+              <div key={`flash-skel-${index}`} className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 flex-col items-center gap-1.5">
                 <Skeleton className="h-14 w-14 rounded-full" />
                 <Skeleton className="h-2.5 w-12 rounded-full" />
               </div>
@@ -234,7 +234,7 @@ export function FlashNotesCarousel() {
                     }
                     setSelected(note);
                   }}
-                  className="flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
+                  className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
                   aria-label={t('flash.aria', { name })}
                 >
                   <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_210deg_at_50%_50%,#F97316,#FFBF00,#ea580c,#F97316)] p-[2px]">

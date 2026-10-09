@@ -278,7 +278,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
   return (
-    <div className="relative flex h-full w-full min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
+    <div className="relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <Suspense fallback={null}>
         <ChatQuerySync onChange={handleQueryChange} />
       </Suspense>
@@ -296,7 +296,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         </div>
       </div>
 
-      <div className="relative grid min-h-[32rem] flex-1 gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <div className="relative grid min-h-0 flex-1 grid-rows-1 gap-4 lg:min-h-[32rem] lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <aside
           className={cn(
             'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none',
@@ -327,17 +327,17 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
             </div>
             <div
               className={cn(
-                'transform-gpu transition-opacity duration-200',
+                'flex min-h-full flex-col transform-gpu transition-opacity duration-200',
                 loadingList && orderedConversations.length === 0 ? 'opacity-0' : 'opacity-100'
               )}
             >
             {!loadingList && orderedConversations.length === 0 ? (
-              <div className="px-3 py-8 text-center">
-                <Sparkles className="mx-auto h-5 w-5 text-orange-500 dark:text-orange-400" />
-                <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
+              <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
+                <Sparkles className="h-5 w-5 text-orange-500 dark:text-orange-400" />
+                <p className="mt-3 max-w-full text-balance text-sm text-neutral-500 dark:text-zinc-400">
                   {activeCategory === 'BUDGET' ? t('chat.emptyQuotes') : t('chat.empty')}
                 </p>
-                <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
+                <p className="mt-1 max-w-full text-pretty text-xs text-neutral-500 dark:text-zinc-500">
                   {activeCategory === 'BUDGET' ? t('chat.emptyQuotesHint') : t('chat.emptyHint')}
                 </p>
               </div>
