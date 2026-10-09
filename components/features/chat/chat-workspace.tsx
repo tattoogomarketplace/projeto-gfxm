@@ -278,7 +278,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
+    <div className="relative flex h-full w-full min-h-0 flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <Suspense fallback={null}>
         <ChatQuerySync onChange={handleQueryChange} />
       </Suspense>

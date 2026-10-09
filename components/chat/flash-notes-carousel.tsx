@@ -183,7 +183,7 @@ export function FlashNotesCarousel() {
 
       <div
         className={cn(
-          'flex gap-3 overflow-x-auto overscroll-x-contain pb-1 pt-0.5',
+          'flex min-h-[5.25rem] gap-3 overflow-x-auto overscroll-x-contain pb-1 pt-0.5',
           'snap-x snap-mandatory scroll-smooth',
           '[-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none]',
           '[&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-0',
@@ -253,11 +253,14 @@ export function FlashNotesCarousel() {
             })}
       </div>
 
-      {!loading && notes.length === 0 && !canBroadcast ? (
-        <p className="px-1 pt-2 text-[11px] text-neutral-500 dark:text-zinc-500">
-          {t('flash.empty')}
-        </p>
-      ) : null}
+      {canBroadcast ? null : (
+        <div
+          className="min-h-6 px-1 pt-2 text-[11px] text-neutral-500 dark:text-zinc-500"
+          aria-hidden={loading || notes.length > 0}
+        >
+          {!loading && notes.length === 0 ? t('flash.empty') : null}
+        </div>
+      )}
 
       {composer.open ? (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
