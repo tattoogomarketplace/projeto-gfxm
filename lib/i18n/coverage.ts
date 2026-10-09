@@ -23,6 +23,10 @@ export type ExtraMessages = Pick<
   | 'account.deactivateSubtitle'
   | 'account.delete'
   | 'account.deleteSubtitle'
+  | 'account.deactivateTitle'
+  | 'account.deactivateHint'
+  | 'account.deleteHintGrace'
+  | 'account.deleteHintPermanent'
   | 'gallery.title'
   | 'gallery.subtitle'
   | 'gallery.explore'
@@ -59,6 +63,10 @@ export const EXTRA_PT_BR: ExtraMessages = {
   'gallery.explore': 'Explore artes de tatuadores verificados',
   'home.journey': 'Minha Jornada',
   'home.appointments': 'Seus Agendamentos',
+  'account.deactivateTitle': 'Desativar conta',
+  'account.deactivateHint': 'Sua conta será pausada agora. Você sairá da sessão e poderá reativar depois pelo mesmo e-mail.',
+  'account.deleteHintGrace': 'A exclusão entra em um período de carência de 90 dias. Durante esse prazo a conta fica indisponível, mas ainda pode ser reativada.',
+  'account.deleteHintPermanent': 'Após 90 dias os dados são apagados de forma permanente e o mesmo e-mail pode ser reutilizado em um novo cadastro.',
 };
 
 export const EXTRA_EN: ExtraMessages = {
@@ -90,6 +98,10 @@ export const EXTRA_EN: ExtraMessages = {
   'gallery.explore': 'Explore art from verified tattoo artists',
   'home.journey': 'My Journey',
   'home.appointments': 'Your Appointments',
+  'account.deactivateTitle': 'Deactivate account',
+  'account.deactivateHint': 'Your account will be paused now. You will be signed out and can reactivate later with the same email.',
+  'account.deleteHintGrace': 'Deletion enters a 90-day grace period. During this time the account is unavailable but can still be reactivated.',
+  'account.deleteHintPermanent': 'After 90 days the data is permanently erased and the same email can be reused for a new registration.',
 };
 
 export const EXTRA_ES: ExtraMessages = {
@@ -121,6 +133,10 @@ export const EXTRA_ES: ExtraMessages = {
   'gallery.explore': 'Explora artes de tatuadores verificados',
   'home.journey': 'Mi Trayecto',
   'home.appointments': 'Tus Citas',
+  'account.deactivateTitle': 'Desactivar cuenta',
+  'account.deactivateHint': 'Tu cuenta se pausará ahora. Se cerrará la sesión y podrás reactivarla después con el mismo correo.',
+  'account.deleteHintGrace': 'La eliminación entra en un periodo de gracia de 90 días. Durante ese plazo la cuenta queda indisponible, pero aún puede reactivarse.',
+  'account.deleteHintPermanent': 'Tras 90 días los datos se borran de forma permanente y el mismo correo puede reutilizarse en un nuevo registro.',
 };
 
 export const EXTRA_PT_PT: ExtraMessages = {
@@ -152,6 +168,10 @@ export const EXTRA_PT_PT: ExtraMessages = {
   'gallery.explore': 'Explore artes de tatuadores verificados',
   'home.journey': 'A Minha Jornada',
   'home.appointments': 'Os Seus Agendamentos',
+  'account.deactivateTitle': 'Desativar conta',
+  'account.deactivateHint': 'A sua conta será pausada agora. Sairá da sessão e poderá reativar depois com o mesmo e-mail.',
+  'account.deleteHintGrace': 'A eliminação entra num período de carência de 90 dias. Durante esse prazo a conta fica indisponível, mas ainda pode ser reativada.',
+  'account.deleteHintPermanent': 'Após 90 dias os dados são apagados de forma permanente e o mesmo e-mail pode ser reutilizado num novo registo.',
 };
 
 export const EXTRA_FR: ExtraMessages = {
@@ -184,6 +204,10 @@ export const EXTRA_FR: ExtraMessages = {
   'gallery.explore': 'Explorez les œuvres de tatoueurs vérifiés',
   'home.journey': 'Mon parcours',
   'home.appointments': 'Vos rendez-vous',
+  'account.deactivateTitle': 'Désactiver le compte',
+  'account.deactivateHint': 'Votre compte sera mis en pause maintenant. Vous serez déconnecté et pourrez le réactiver plus tard avec le même e-mail.',
+  'account.deleteHintGrace': 'La suppression entre dans une période de grâce de 90 jours. Pendant ce délai, le compte est indisponible mais peut encore être réactivé.',
+  'account.deleteHintPermanent': 'Après 90 jours, les données sont définitivement effacées et le même e-mail peut être réutilisé pour une nouvelle inscription.',
 };
 
 export const EXTRA_DE: ExtraMessages = {
@@ -216,6 +240,10 @@ export const EXTRA_DE: ExtraMessages = {
   'gallery.explore': 'Entdecken Sie Werke verifizierter Tätowierer',
   'home.journey': 'Meine Reise',
   'home.appointments': 'Ihre Termine',
+  'account.deactivateTitle': 'Konto deaktivieren',
+  'account.deactivateHint': 'Ihr Konto wird jetzt pausiert. Sie werden abgemeldet und können es später mit derselben E-Mail reaktivieren.',
+  'account.deleteHintGrace': 'Die Löschung beginnt eine 90-tägige Kulanzfrist. Während dieser Zeit ist das Konto nicht verfügbar, kann aber noch reaktiviert werden.',
+  'account.deleteHintPermanent': 'Nach 90 Tagen werden die Daten dauerhaft gelöscht und dieselbe E-Mail kann für eine neue Registrierung wiederverwendet werden.',
 };
 
 export const EXTRA_IT: ExtraMessages = {
@@ -247,6 +275,10 @@ export const EXTRA_IT: ExtraMessages = {
   'gallery.explore': 'Esplora le opere di tatuatori verificati',
   'home.journey': 'Il mio percorso',
   'home.appointments': 'I tuoi appuntamenti',
+  'account.deactivateTitle': 'Disattiva account',
+  'account.deactivateHint': 'Il tuo account verrà messo in pausa ora. Verrai disconnesso e potrai riattivarlo in seguito con la stessa email.',
+  'account.deleteHintGrace': 'L’eliminazione entra in un periodo di tolleranza di 90 giorni. In questo periodo l’account è indisponibile ma può ancora essere riattivato.',
+  'account.deleteHintPermanent': 'Dopo 90 giorni i dati vengono cancellati in modo permanente e la stessa email può essere riutilizzata per una nuova registrazione.',
 };
 
 export const EXTRA_JA: ExtraMessages = {
@@ -278,6 +310,10 @@ export const EXTRA_JA: ExtraMessages = {
   'gallery.explore': '認証済みアーティストの作品を探す',
   'home.journey': 'マイジャーニー',
   'home.appointments': '予約一覧',
+  'account.deactivateTitle': 'アカウントを無効化',
+  'account.deactivateHint': 'アカウントは今すぐ一時停止されます。ログアウトされ、同じメールで後から再開できます。',
+  'account.deleteHintGrace': '削除は90日間の猶予期間に入ります。この間アカウントは利用できませんが、まだ再開できます。',
+  'account.deleteHintPermanent': '90日後、データは完全に削除され、同じメールを新しい登録に再利用できます。',
 };
 
 export const EXTRA_ZH: ExtraMessages = {
@@ -307,6 +343,10 @@ export const EXTRA_ZH: ExtraMessages = {
   'gallery.explore': '探索已认证纹身师的作品',
   'home.journey': '我的旅程',
   'home.appointments': '您的预约',
+  'account.deactivateTitle': '停用账户',
+  'account.deactivateHint': '你的账户将立即暂停。你将被登出，之后可用同一邮箱重新激活。',
+  'account.deleteHintGrace': '删除进入 90 天宽限期。在此期间账户不可用，但仍可重新激活。',
+  'account.deleteHintPermanent': '90 天后数据将被永久删除，同一邮箱可用于新的注册。',
 };
 
 export const EXTRA_KO: ExtraMessages = {
@@ -336,6 +376,10 @@ export const EXTRA_KO: ExtraMessages = {
   'gallery.explore': '인증된 타투 아티스트의 작품을 둘러보세요',
   'home.journey': '나의 여정',
   'home.appointments': '내 예약',
+  'account.deactivateTitle': '계정 비활성화',
+  'account.deactivateHint': '계정이 지금 일시 중지됩니다. 로그아웃되며 나중에 동일한 이메일로 다시 활성화할 수 있습니다.',
+  'account.deleteHintGrace': '삭제는 90일 유예 기간에 들어갑니다. 이 기간 동안 계정은 사용할 수 없지만 다시 활성화할 수 있습니다.',
+  'account.deleteHintPermanent': '90일 후 데이터는 영구적으로 삭제되며 동일한 이메일을 새 가입에 다시 사용할 수 있습니다.',
 };
 
 export const EXTRA_AR: ExtraMessages = {
@@ -367,6 +411,10 @@ export const EXTRA_AR: ExtraMessages = {
   'gallery.explore': 'استكشف أعمال الوشّامين المعتمدين',
   'home.journey': 'رحلتي',
   'home.appointments': 'مواعيدك',
+  'account.deactivateTitle': 'إلغاء تنشيط الحساب',
+  'account.deactivateHint': 'سيتم إيقاف حسابك الآن مؤقتًا. ستُسجَّل الخروج ويمكنك إعادة تنشيطه لاحقًا بالبريد نفسه.',
+  'account.deleteHintGrace': 'يدخل الحذف في فترة سماح مدتها 90 يومًا. خلال هذه المدة يكون الحساب غير متاح لكن يمكن إعادة تنشيطه.',
+  'account.deleteHintPermanent': 'بعد 90 يومًا تُحذف البيانات نهائيًا ويمكن إعادة استخدام البريد نفسه في تسجيل جديد.',
 };
 
 export const EXTRA_RU: ExtraMessages = {
@@ -398,6 +446,10 @@ export const EXTRA_RU: ExtraMessages = {
   'gallery.explore': 'Смотрите работы проверенных мастеров',
   'home.journey': 'Мой путь',
   'home.appointments': 'Ваши записи',
+  'account.deactivateTitle': 'Деактивировать аккаунт',
+  'account.deactivateHint': 'Ваш аккаунт будет приостановлен. Вы выйдете из сеанса и сможете позже восстановить его с той же почтой.',
+  'account.deleteHintGrace': 'Удаление вступает в 90-дневный льготный период. В это время аккаунт недоступен, но его ещё можно восстановить.',
+  'account.deleteHintPermanent': 'Через 90 дней данные удаляются безвозвратно, и ту же почту можно использовать для новой регистрации.',
 };
 
 export const EXTRA_HI: ExtraMessages = {
@@ -429,6 +481,10 @@ export const EXTRA_HI: ExtraMessages = {
   'gallery.explore': 'सत्यापित टैटू कलाकारों की कला देखें',
   'home.journey': 'मेरी यात्रा',
   'home.appointments': 'आपकी अपॉइंटमेंट',
+  'account.deactivateTitle': 'खाता निष्क्रिय करें',
+  'account.deactivateHint': 'आपका खाता अभी रोक दिया जाएगा। आप साइन आउट हो जाएंगे और बाद में उसी ईमेल से पुनः सक्रिय कर सकेंगे।',
+  'account.deleteHintGrace': 'हटाना 90 दिन की छूट अवधि में प्रवेश करता है। इस दौरान खाता अनुपलब्ध रहता है, पर फिर भी पुनः सक्रिय किया जा सकता है।',
+  'account.deleteHintPermanent': '90 दिनों के बाद डेटा स्थायी रूप से मिट जाता है और वही ईमेल नए पंजीकरण में दोबारा उपयोग हो सकता है।',
 };
 
 export const EXTRA_NL: ExtraMessages = {
@@ -460,6 +516,10 @@ export const EXTRA_NL: ExtraMessages = {
   'gallery.explore': 'Ontdek werken van geverifieerde tatoeëerders',
   'home.journey': 'Mijn reis',
   'home.appointments': 'Je afspraken',
+  'account.deactivateTitle': 'Account deactiveren',
+  'account.deactivateHint': 'Je account wordt nu gepauzeerd. Je wordt uitgelogd en kunt later opnieuw activeren met hetzelfde e-mailadres.',
+  'account.deleteHintGrace': 'Verwijdering gaat in een graceperiode van 90 dagen. In die periode is het account niet beschikbaar, maar kan het nog worden gereactiveerd.',
+  'account.deleteHintPermanent': 'Na 90 dagen worden de gegevens permanent gewist en kan hetzelfde e-mailadres opnieuw worden gebruikt voor een nieuwe registratie.',
 };
 
 export const EXTRA_TR: ExtraMessages = {
@@ -491,6 +551,10 @@ export const EXTRA_TR: ExtraMessages = {
   'gallery.explore': 'Doğrulanmış dövme sanatçılarının işlerini keşfedin',
   'home.journey': 'Yolculuğum',
   'home.appointments': 'Randevularınız',
+  'account.deactivateTitle': 'Hesabı devre dışı bırak',
+  'account.deactivateHint': 'Hesabınız şimdi duraklatılacak. Oturumunuz kapanacak ve aynı e-posta ile daha sonra yeniden etkinleştirebilirsiniz.',
+  'account.deleteHintGrace': 'Silme 90 günlük bir bekleme süresine girer. Bu süre boyunca hesap kullanılamaz ama yine de yeniden etkinleştirilebilir.',
+  'account.deleteHintPermanent': '90 gün sonra veriler kalıcı olarak silinir ve aynı e-posta yeni bir kayıt için yeniden kullanılabilir.',
 };
 
 export const EXTRA_PL: ExtraMessages = {
@@ -522,6 +586,10 @@ export const EXTRA_PL: ExtraMessages = {
   'gallery.explore': 'Odkrywaj prace zweryfikowanych tatuażystów',
   'home.journey': 'Moja podróż',
   'home.appointments': 'Twoje wizyty',
+  'account.deactivateTitle': 'Dezaktywuj konto',
+  'account.deactivateHint': 'Twoje konto zostanie teraz wstrzymane. Zostaniesz wylogowany i możesz je później ponownie aktywować tym samym e-mailem.',
+  'account.deleteHintGrace': 'Usunięcie wchodzi w 90-dniowy okres karencji. W tym czasie konto jest niedostępne, ale wciąż można je reaktywować.',
+  'account.deleteHintPermanent': 'Po 90 dniach dane są trwale usuwane, a ten sam e-mail można ponownie wykorzystać do nowej rejestracji.',
 };
 
 /**

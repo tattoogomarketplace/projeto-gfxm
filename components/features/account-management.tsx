@@ -119,7 +119,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
                   <AlertTriangle className="h-5 w-5" strokeWidth={1.75} />
                 </span>
                 <h2 id="account-lifecycle-title" className="min-w-0 flex-1 text-base font-bold text-white">
-                  {confirmKind === 'deactivate' ? 'Desativar conta' : 'Excluir definitivamente'}
+                  {confirmKind === 'deactivate' ? t('account.deactivateTitle') : t('account.delete')}
                 </h2>
                 <button
                   type="button"
@@ -135,18 +135,15 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
               <div className="space-y-4 px-5 py-5">
                 {confirmKind === 'deactivate' ? (
                   <p className="text-sm leading-relaxed text-zinc-300">
-                    Sua conta será pausada agora. Você sairá da sessão e poderá reativar depois pelo
-                    mesmo e-mail.
+                    {t('account.deactivateHint')}
                   </p>
                 ) : (
                   <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
                     <p>
-                      A exclusão entra em um período de carência de 90 dias. Durante esse prazo a conta
-                      fica indisponível, mas ainda pode ser reativada.
+                      {t('account.deleteHintGrace')}
                     </p>
                     <p className="rounded-xl border border-red-500/30 bg-red-950/30 p-3 text-red-300">
-                      Após 90 dias os dados são apagados de forma permanente e o mesmo e-mail pode ser
-                      reutilizado em um novo cadastro.
+                      {t('account.deleteHintPermanent')}
                     </p>
                   </div>
                 )}

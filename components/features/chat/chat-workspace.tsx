@@ -411,6 +411,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               actorId={actorId}
               destinatarioId={selectedPeer?.id}
               peerName={selectedPeer?.name}
+              peerRole={selectedPeer?.role}
               artworkId={artworkId}
               artwork={artwork}
               bookingIntent={bookingIntent}

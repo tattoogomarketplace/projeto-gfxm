@@ -59,8 +59,7 @@ export default function Home() {
           TattooGo <span className="text-orange-500">MK</span>
         </h1>
         <p className="text-neutral-600 text-lg md:text-xl mb-10 max-w-lg dark:text-zinc-400">
-          O ecossistema definitivo para Estúdios, Artistas e Clientes. 
-          Performance extrema e design linear.
+          {t('landing.tagline')}
         </p>
         
         <button

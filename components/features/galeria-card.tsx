@@ -85,7 +85,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           type="button"
           onClick={openArtistProfile}
           className="absolute inset-0 z-[1]"
-          aria-label={`Abrir vitrine de ${artistName}`}
+          aria-label={t('chat.openVitrine', { name: artistName })}
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
 
@@ -128,7 +128,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
             type="button"
             onClick={openArtistProfile}
             className="min-w-0 flex-1 text-left"
-            aria-label={`Abrir vitrine de ${artistName}`}
+            aria-label={t('chat.openVitrine', { name: artistName })}
           >
             <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{artistName}</p>
             <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-zinc-400">
@@ -145,7 +145,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
             type="button"
             onClick={handleLike}
             className="relative flex min-h-11 min-w-11 items-center gap-1.5 p-2 active:scale-95"
-            aria-label={isLiked ? 'Remover curtida' : 'Curtir arte'}
+            aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
           >
             <AnimatePresence>
               <motion.div
@@ -189,7 +189,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-4 text-sm font-semibold text-orange-600 shadow-[0_0_16px_rgba(249,115,22,0.18)] transition-all hover:border-orange-500 hover:bg-orange-500/20 hover:shadow-[0_0_24px_rgba(249,115,22,0.32)] active:scale-[0.98] dark:text-orange-300"
         >
           <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
-          Iniciar Conversa / Orçamento
+          {t('galeria.startConversation')}
         </button>
       </div>
     </motion.article>

@@ -23,8 +23,9 @@ type FlashNoteRow = {
 };
 
 function authorName(nome: string | null, role: string): string {
+  void role;
   const trimmed = (nome ?? '').trim();
-  return trimmed || (role === 'tatuador' ? 'Artista' : 'Cliente');
+  return trimmed;
 }
 
 function authorInitial(name: string): string {

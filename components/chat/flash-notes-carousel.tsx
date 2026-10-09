@@ -218,7 +218,7 @@ export function FlashNotesCarousel() {
               </div>
             ))
           : notes.map((note) => {
-              const name = note.author?.name ?? t('flash.artist');
+              const name = note.author?.name || t('flash.artist');
               const initial = note.author?.initial ?? 'A';
               const isOwn = actorId != null && note.userId === actorId;
               return (
@@ -324,7 +324,7 @@ export function FlashNotesCarousel() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">
-                    {selected.author?.name ?? t('flash.artist')}
+                    {selected.author?.name || t('flash.artist')}
                   </p>
                   <p className="text-[11px] text-orange-500 dark:text-orange-400">
                     {t('flash.active')} · {remainingLabel(selected.expiresAt, t('flash.expiring'))}

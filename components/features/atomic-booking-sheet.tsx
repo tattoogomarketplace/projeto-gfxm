@@ -21,10 +21,10 @@ type AtomicBookingSheetProps = {
   onBooked?: () => void;
 };
 
-function formatSlot(iso: string): { day: string; time: string } {
+function formatSlot(iso: string, fallbackDay: string): { day: string; time: string } {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
-    return { day: 'Horário', time: '--:--' };
+    return { day: fallbackDay, time: '--:--' };
   }
   return {
     day: date.toLocaleDateString('pt-BR', {
@@ -80,14 +80,15 @@ export function AtomicBookingSheet({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-              Booking atômico
+              {t('booking.atomicTitle')}
             </p>
             <h3 className="mt-1 text-lg font-semibold tracking-tight text-neutral-900 dark:text-white">
-              Agendar com {artistName}
+              {t('chat.bookWith', { name: artistName })}
             </h3>
             <p className="mt-1 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-              O sinal de 25% ({sinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) trava o
-              horário. O restante é alinhado na sessão.
+              {t('booking.depositHint', {
+                amount: sinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+              })}
             </p>
           </div>
           <button
@@ -102,18 +103,18 @@ export function AtomicBookingSheet({
 
         {artworkLabel ? (
           <p className="mb-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-neutral-600 dark:text-zinc-400">
-            Referência: {artworkLabel}
+            {t('booking.reference', { label: artworkLabel })}
           </p>
         ) : null}
 
         {slots.length === 0 ? (
           <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/[0.05] dark:text-zinc-400">
-            Nenhum horário livre nos próximos 14 dias.
+            {t('booking.noSlots')}
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-2">
             {slots.map((slot) => {
-              const { day, time } = formatSlot(slot);
+              const { day, time } = formatSlot(slot, t('booking.timeFallback'));
                const selected = activeSlot === slot;
               return (
                 <li key={slot}>
@@ -148,7 +149,7 @@ export function AtomicBookingSheet({
         >
           <span className="inline-flex items-center justify-center gap-2">
             <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            {isPending ? 'Reservando...' : 'Confirmar horário'}
+            {isPending ? t('booking.reserving') : t('booking.confirm')}
           </span>
         </NeonButton>
       </div>

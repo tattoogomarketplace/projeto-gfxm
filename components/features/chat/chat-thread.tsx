@@ -28,6 +28,7 @@ type ChatThreadProps = {
   actorId: string | null;
   destinatarioId?: string;
   peerName?: string;
+  peerRole?: string;
   artworkId?: string;
   artwork?: ChatArtworkRef | null;
   bookingIntent?: boolean;
@@ -62,6 +63,7 @@ export function ChatThread({
   actorId,
   destinatarioId,
   peerName,
+  peerRole,
   artworkId,
   artwork,
   bookingIntent = false,
@@ -69,6 +71,7 @@ export function ChatThread({
   onOpenBooking,
 }: ChatThreadProps) {
   const { t } = useI18n();
+  const peerFallback = peerRole === 'cliente' ? t('chat.clientFallback') : t('chat.artistFallback');
   const { styleLabel, bodyPartLabel, healingLabel } = portfolioLabelResolver(t);
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(t, artwork) : ''));
@@ -225,13 +228,13 @@ export function ChatThread({
           onClick={openProfile}
           disabled={!destinatarioId || !onOpenProfile}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
-          aria-label={t('chat.openVitrine', { name: peerName || t('chat.artistFallback') })}
+          aria-label={t('chat.openVitrine', { name: peerName || peerFallback })}
         >
           <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400">
             {(peerName || 'A').charAt(0).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || t('chat.artistFallback')}</span>
+            <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || peerFallback}</span>
             <span className="block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
               {bookingIntent ? t('chat.requestBooking') : t('chat.sessionQuestions')}
             </span>
@@ -245,7 +248,7 @@ export function ChatThread({
             type="button"
             onClick={() => onOpenBooking(destinatarioId, artworkId)}
             className="flex h-11 min-h-11 shrink-0 items-center gap-1 rounded-xl border border-orange-500/40 px-3 text-xs font-semibold text-orange-600 dark:text-orange-300"
-            aria-label={t('chat.bookWith', { name: peerName || t('chat.artistFallback') })}
+            aria-label={t('chat.bookWith', { name: peerName || peerFallback })}
           >
             <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
             {t('chat.book')}

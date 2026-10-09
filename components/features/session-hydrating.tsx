@@ -2,9 +2,12 @@
 
 import { memo } from 'react';
 import { DashboardRouteSkeleton } from '@/components/ui/dashboard-route-skeleton';
+import { useI18n } from '@/hooks/use-i18n';
 
-function SessionHydratingBase({ label = 'Carregando sessão...' }: { label?: string }) {
-  void label;
+function SessionHydratingBase({ label }: { label?: string }) {
+  const { t } = useI18n();
+  const resolvedLabel = label ?? t('session.loading');
+  void resolvedLabel;
   return <DashboardRouteSkeleton />;
 }
 

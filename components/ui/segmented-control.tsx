@@ -14,7 +14,7 @@ interface SegmentedControlProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   className?: string;
-  ariaLabel?: string;
+  ariaLabel: string;
 }
 
 function SegmentedControlBase<T extends string>({
@@ -22,7 +22,7 @@ function SegmentedControlBase<T extends string>({
   value,
   onChange,
   className,
-  ariaLabel = 'Navegação',
+  ariaLabel,
 }: SegmentedControlProps<T>) {
   const { triggerHaptic } = useHapticFeedback();
   const activeIndex = Math.max(0, options.findIndex((option) => option.value === value));

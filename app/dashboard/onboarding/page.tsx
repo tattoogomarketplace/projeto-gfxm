@@ -165,7 +165,7 @@ export default function DashboardOnboardingPage() {
 
         <div className="w-full space-y-3 py-6 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
-            {firstName ? `Olá, ${firstName}!` : 'Olá!'}
+            {firstName ? t('onboarding.helloNamed', { name: firstName }) : t('onboarding.hello')}
           </h1>
           <p className="text-base font-semibold text-zinc-200">{t(content.journey.present)}</p>
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">

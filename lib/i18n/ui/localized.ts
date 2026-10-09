@@ -106,6 +106,8 @@ const PT_BR: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Múltiplas sessões',
   'portfolio.healing.healed': 'Cicatrizada',
   'portfolio.healing.fresh': 'Recém-feita',
+  'aria.like': 'Curtir arte',
+  'aria.unlike': 'Remover curtida',
 };
 
 const PT_PT: LocalizedDictionary = {
@@ -214,6 +216,8 @@ const PT_PT: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Múltiplas sessões',
   'portfolio.healing.healed': 'Cicatrizada',
   'portfolio.healing.fresh': 'Recém-feita',
+  'aria.like': 'Gostar de arte',
+  'aria.unlike': 'Remover gosto',
 };
 
 const EN: LocalizedDictionary = {
@@ -321,6 +325,8 @@ const EN: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Multiple sessions',
   'portfolio.healing.healed': 'Healed',
   'portfolio.healing.fresh': 'Fresh',
+  'aria.like': 'Like art',
+  'aria.unlike': 'Unlike',
 };
 
 const ES: LocalizedDictionary = {
@@ -429,6 +435,8 @@ const ES: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Múltiples sesiones',
   'portfolio.healing.healed': 'Cicatrizada',
   'portfolio.healing.fresh': 'Recién hecha',
+  'aria.like': 'Me gusta el arte',
+  'aria.unlike': 'Quitar me gusta',
 };
 
 const FR: LocalizedDictionary = {
@@ -538,6 +546,8 @@ const FR: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Sessions multiples',
   'portfolio.healing.healed': 'Cicatrisée',
   'portfolio.healing.fresh': 'Récente',
+  'aria.like': 'Aimer l’œuvre',
+  'aria.unlike': 'Retirer le j’aime',
 };
 
 const DE: LocalizedDictionary = {
@@ -647,6 +657,8 @@ const DE: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Mehrere Sitzungen',
   'portfolio.healing.healed': 'Verheilt',
   'portfolio.healing.fresh': 'Frisch',
+  'aria.like': 'Kunst gefällt mir',
+  'aria.unlike': 'Gefällt mir entfernen',
 };
 
 const IT: LocalizedDictionary = {
@@ -755,6 +767,8 @@ const IT: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Sessioni multiple',
   'portfolio.healing.healed': 'Guarita',
   'portfolio.healing.fresh': 'Fresca',
+  'aria.like': 'Mi piace l’arte',
+  'aria.unlike': 'Rimuovi mi piace',
 };
 
 const JA: LocalizedDictionary = {
@@ -862,6 +876,8 @@ const JA: LocalizedDictionary = {
   'portfolio.duration.multiSession': '複数回',
   'portfolio.healing.healed': '完治済み',
   'portfolio.healing.fresh': '施術直後',
+  'aria.like': 'アートにいいね',
+  'aria.unlike': 'いいねを取り消す',
 };
 
 const ZH: LocalizedDictionary = {
@@ -964,6 +980,8 @@ const ZH: LocalizedDictionary = {
   'portfolio.duration.multiSession': '多次',
   'portfolio.healing.healed': '已愈合',
   'portfolio.healing.fresh': '新作',
+  'aria.like': '点赞作品',
+  'aria.unlike': '取消点赞',
 };
 
 const KO: LocalizedDictionary = {
@@ -1068,6 +1086,8 @@ const KO: LocalizedDictionary = {
   'portfolio.duration.multiSession': '여러 세션',
   'portfolio.healing.healed': '완치됨',
   'portfolio.healing.fresh': '갓 시술됨',
+  'aria.like': '작품 좋아요',
+  'aria.unlike': '좋아요 취소',
 };
 
 const AR: LocalizedDictionary = {
@@ -1172,6 +1192,8 @@ const AR: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'جلسات متعددة',
   'portfolio.healing.healed': 'ملتئمة',
   'portfolio.healing.fresh': 'حديثة',
+  'aria.like': 'أحب الفن',
+  'aria.unlike': 'إزالة الإعجاب',
 };
 
 const RU: LocalizedDictionary = {
@@ -1278,6 +1300,8 @@ const RU: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Несколько сеансов',
   'portfolio.healing.healed': 'Зажившая',
   'portfolio.healing.fresh': 'Свежая',
+  'aria.like': 'Нравится работа',
+  'aria.unlike': 'Убрать отметку «Нравится»',
 };
 
 const HI: LocalizedDictionary = {
@@ -1386,6 +1410,8 @@ const HI: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'कई सत्र',
   'portfolio.healing.healed': 'ठीक हो चुकी',
   'portfolio.healing.fresh': 'नई',
+  'aria.like': 'कला पसंद करें',
+  'aria.unlike': 'पसंद हटाएं',
 };
 
 const NL: LocalizedDictionary = {
@@ -1495,6 +1521,8 @@ const NL: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Meerdere sessies',
   'portfolio.healing.healed': 'Genezen',
   'portfolio.healing.fresh': 'Vers',
+  'aria.like': 'Kunst leuk vinden',
+  'aria.unlike': 'Vind-ik-leuk verwijderen',
 };
 
 const TR: LocalizedDictionary = {
@@ -1603,6 +1631,8 @@ const TR: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Çoklu seans',
   'portfolio.healing.healed': 'İyileşmiş',
   'portfolio.healing.fresh': 'Yeni',
+  'aria.like': 'Sanatı beğen',
+  'aria.unlike': 'Beğeniyi kaldır',
 };
 
 const PL: LocalizedDictionary = {
@@ -1713,6 +1743,8 @@ const PL: LocalizedDictionary = {
   'portfolio.duration.multiSession': 'Wiele sesji',
   'portfolio.healing.healed': 'Zagojona',
   'portfolio.healing.fresh': 'Świeża',
+  'aria.like': 'Polub dzieło',
+  'aria.unlike': 'Usuń polubienie',
 };
 
 export const LOCALIZED_MESSAGES: Record<Locale, LocalizedDictionary> = {

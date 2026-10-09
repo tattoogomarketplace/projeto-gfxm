@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 
 function resolveRole(
@@ -28,6 +29,7 @@ export function OnboardingLoadingScreen({
   children?: React.ReactNode;
 }) {
   const { user } = useUser();
+  const { t } = useI18n();
   const storedRole = useAuthStore((s) => s.role);
   const message = getOnboardingLoadingMessage(resolveRole(user, storedRole));
 
@@ -46,7 +48,7 @@ export function OnboardingLoadingScreen({
             </p>
             <h1 className="text-xl font-bold tracking-tight text-white">{message}</h1>
             <p className="mx-auto max-w-xs text-sm leading-relaxed text-zinc-400">
-              Estamos finalizando a criação do seu perfil. Isso leva só um instante.
+              {t('onboarding.finalizing')}
             </p>
           </div>
           {children}

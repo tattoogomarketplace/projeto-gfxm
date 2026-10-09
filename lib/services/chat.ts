@@ -72,7 +72,7 @@ function toPeer(row: {
   cidade: string | null;
   estado: string | null;
 }): ChatPeer {
-  const name = peerName(row.nome, row.role === 'tatuador' ? 'Artista' : 'Cliente');
+  const name = peerName(row.nome, '');
   return {
     id: row.id,
     name,
