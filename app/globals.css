@@ -17,6 +17,7 @@
   --color-border: var(--border);
   --color-card: var(--card);
   --spacing-safe: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  --animate-float: float 3.5s ease-in-out infinite;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -675,10 +676,25 @@
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+html.splash-seen .splash-root {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .splash-enter,
   .splash-icon-enter,
-  .splash-glow {
+  .splash-glow,
+  .animate-float {
     animation: none;
   }
 }

@@ -45,7 +45,7 @@ export function SplashScreen({ isVisible = true }: SplashScreenProps) {
       aria-hidden={!isVisible}
       style={{ backgroundColor: '#000000' }}
       className={cn(
-        'splash-gpu fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden overscroll-none touch-none bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-opacity duration-500 ease-in-out transform-gpu will-change-opacity',
+        'splash-root splash-gpu fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden overscroll-none touch-none bg-[radial-gradient(circle_at_50%_42%,_rgba(217,70,14,0.14)_0%,_rgba(26,10,4,0.55)_16%,_#000000_46%)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-opacity duration-500 ease-in-out transform-gpu will-change-opacity',
         isVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
       )}
     >
@@ -58,15 +58,17 @@ export function SplashScreen({ isVisible = true }: SplashScreenProps) {
               aria-hidden
               className="splash-gpu splash-glow pointer-events-none absolute aspect-square w-[38vw] min-w-[150px] max-w-[220px] rounded-full bg-brand-copper/30 blur-[54px]"
             />
-            <Image
-              src={MACHINE_LOGO_SRC}
-              alt={BRAND_NAME}
-              width={MACHINE_LOGO_SIZE}
-              height={MACHINE_LOGO_SIZE}
-              priority
-              sizes="(max-width: 640px) 35vw, 200px"
-              className="splash-gpu splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] object-contain drop-shadow-[0_0_44px_rgba(217,70,14,0.35)]"
-            />
+            <div className="animate-float will-change-transform">
+              <Image
+                src={MACHINE_LOGO_SRC}
+                alt={BRAND_NAME}
+                width={MACHINE_LOGO_SIZE}
+                height={MACHINE_LOGO_SIZE}
+                priority
+                sizes="(max-width: 640px) 35vw, 200px"
+                className="splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] rounded-full overflow-hidden object-cover ring-1 ring-brand-copper/25 shadow-[0_0_30px_rgba(217,70,14,0.28),0_0_60px_rgba(249,115,22,0.14)]"
+              />
+            </div>
           </div>
 
           <Wordmark className="splash-gpu text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight" />
