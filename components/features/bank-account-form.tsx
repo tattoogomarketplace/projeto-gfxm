@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useUser } from '@clerk/nextjs';
+import { useI18n } from '@/hooks/use-i18n';
 
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
   const [bank, setBank] = useState('');
   const [loading, setLoading] = useState(false);
   const { isLoaded, user } = useUser();
+  const { t } = useI18n();
 
   const handleSave = async () => {
     setLoading(true);
@@ -21,7 +23,7 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
     };
 
     if (!user) {
-      toast.error('Sessao expirada. Faca login novamente.');
+      toast.error(t('errors.sessionExpired'));
       setLoading(false);
       return;
     }
@@ -32,9 +34,9 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
           bank_account: payload,
         },
       });
-      toast.success('Conta bancária registrada com segurança.');
+      toast.success(t('toast.bankSaved'));
     } catch {
-      toast.error('Erro ao salvar conta.');
+      toast.error(t('toast.bankSaveFailed'));
     }
     setLoading(false);
   };
@@ -43,14 +45,14 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
 
   return (
     <div className="rounded-xl border border-black/[0.04] bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <h3 className="mb-4 font-bold text-neutral-900 dark:text-white">Dados Bancários (Seguros)</h3>
+      <h3 className="mb-4 font-bold text-neutral-900 dark:text-white">{t('bank.title')}</h3>
       <input 
         type="text" 
-        placeholder="Número da Conta (mascarado ao salvar)"
+        placeholder={t('bank.placeholder')}
         className="mb-4 w-full rounded-lg border border-black/[0.04] bg-white p-3 text-neutral-900 caret-neutral-900 placeholder:text-neutral-400 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
         onChange={(e) => setBank(e.target.value)}
       />
-      <button onClick={handleSave} disabled={loading} className="bg-orange-500 px-4 py-2 rounded-lg font-bold disabled:opacity-50">Salvar Dados</button>
+      <button onClick={handleSave} disabled={loading} className="bg-orange-500 px-4 py-2 rounded-lg font-bold disabled:opacity-50">{t('bank.save')}</button>
     </div>
   );
 }

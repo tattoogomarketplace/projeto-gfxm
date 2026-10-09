@@ -9,6 +9,8 @@ import { GlassContainer } from '@/components/ui/glass-container';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 export type KycStatusValue =
   | 'pendente'
@@ -105,6 +107,7 @@ function normalizeStatus(status: string): KycStatusValue {
 
 export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKycPanelProps) {
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const inputRef = useRef<HTMLInputElement>(null);
   const [currentStatus, setCurrentStatus] = useState<KycStatusValue>(normalizeStatus(status));
@@ -136,13 +139,13 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
       const contentType = resolveUploadContentType(file);
       if (!contentType || !ALLOWED_TYPES.has(contentType)) {
-        const message = `Formato inválido. Envie ${FORMAT_HINT}.`;
+        const message = t('toast.invalidFormat', { formats: FORMAT_HINT });
         setError(message);
         toast.error(message);
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        const message = 'Arquivo acima de 10 MB.';
+        const message = t('toast.fileTooLarge');
         setError(message);
         toast.error(message);
         return;
@@ -151,7 +154,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       setPendingFile(file);
       triggerHaptic('light');
     },
-    [triggerHaptic]
+    [triggerHaptic, t]
   );
 
   const handleRemove = useCallback(() => {
@@ -192,7 +195,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
             status: presignRes.status,
             erro: presign.erro,
           });
-          throw new Error(presign.erro || 'Não foi possível preparar o upload.');
+          throw new Error(presign.erro || t('toast.uploadPrepareFailed'));
         }
 
         setPhase('uploading');
@@ -212,7 +215,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
             status: putRes.status,
             statusText: putRes.statusText,
           });
-          throw new Error('Falha ao enviar o arquivo para o storage.');
+          throw new Error(t('toast.uploadPutFailed'));
         }
 
         setPhase('validating');
@@ -238,7 +241,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           erro?: string;
         };
         if (!validateRes.ok || !result.sucesso) {
-          throw new Error(result.erro || 'Não foi possível validar o documento.');
+          throw new Error(result.erro || t('toast.docValidateFailed'));
         }
 
         const next = normalizeStatus(result.status || 'em_analise');
@@ -251,15 +254,15 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         triggerHaptic('success');
 
         if (next === 'aprovado') {
-          toast.success('Documento aprovado. Sua bancada será liberada.');
+          toast.success(t('toast.kycApproved'));
         } else if (next === 'rejeitado') {
-          toast.error('Documento rejeitado. Envie um documento nítido e oficial.');
+          toast.error(t('toast.kycRejected'));
         } else {
-          toast.message('Documento recebido e em análise.');
+          toast.message(t('toast.kycReceived'));
         }
       } catch (err) {
         console.error('[kyc-upload] rejeição de rede', err);
-        const message = describeUploadFailure(err);
+        const message = formatAppError(err, 'api');
         setError(message);
         toast.error(message);
       } finally {
@@ -267,7 +270,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         if (inputRef.current) inputRef.current.value = '';
       }
     },
-    [applyStatus, getToken, triggerHaptic]
+    [applyStatus, getToken, triggerHaptic, t]
   );
 
   const handleSubmit = useCallback(() => {

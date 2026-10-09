@@ -5,10 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { TattooOTPInput } from '@/components/ui/tattoo-otp-input';
 import { toast } from '@/lib/toast';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 export default function CancelarAgendamentoPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const [step, setStep] = useState<'validate' | 'verify'>('validate');
 
   const authHeaders = () => {
@@ -29,8 +32,8 @@ export default function CancelarAgendamentoPage() {
     if (res.ok) {
       setStep('verify');
     } else {
-      const data = await res.json();
-      toast.error(data.erro);
+      const data = await res.json().catch(() => ({}));
+      toast.error(formatAppError({ message: data.erro, response: { status: res.status, data } }, 'api'));
     }
   };
 
@@ -43,7 +46,7 @@ export default function CancelarAgendamentoPage() {
       });
 
       if (!response.ok) return false;
-      toast.success('Agendamento cancelado com sucesso.');
+      toast.success(t('toast.cancelled'));
       return true;
     } catch {
       return false;
@@ -56,18 +59,18 @@ export default function CancelarAgendamentoPage() {
       <GlassContainer className="p-8 w-full max-w-md">
         {step === 'validate' ? (
           <>
-            <h1 className="text-2xl font-bold mb-4">Cancelar Agendamento</h1>
-            <p className="text-zinc-400 mb-8">Esta ação exige confirmação de segurança via OTP.</p>
+            <h1 className="text-2xl font-bold mb-4">{t('cancel.title')}</h1>
+            <p className="text-zinc-400 mb-8">{t('cancel.hint')}</p>
             <button 
               onClick={iniciarCancelamento}
               className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 text-black font-bold py-3 rounded-lg"
             >
-              Iniciar Cancelamento
+              {t('cancel.start')}
             </button>
           </>
         ) : (
           <>
-            <h2 className="text-xl font-bold mb-4 text-center">Confirme o Cancelamento</h2>
+            <h2 className="text-xl font-bold mb-4 text-center">{t('cancel.confirmTitle')}</h2>
             <TattooOTPInput
               onComplete={handleVerify}
               onSuccess={() => {

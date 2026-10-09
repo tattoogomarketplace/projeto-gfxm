@@ -8,6 +8,8 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 import {
   WEEKDAY_LABELS,
   canAddBreak,
@@ -279,6 +281,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     getWorkingHoursServerSnapshot
   );
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const [draft, setDraft] = useState<WorkingHoursDraft>(() => cloneWorkingHours(persisted));
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -298,7 +301,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
           erro?: string;
         };
         if (!res.ok || !payload.schedule) {
-          throw new Error(payload.erro || 'Falha ao carregar expediente.');
+          throw new Error(payload.erro || t('toast.hoursLoadFailed'));
         }
         if (cancelled) return;
         const synced = hydrateWorkingHours(payload.schedule);
@@ -306,7 +309,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
         setHydrated(true);
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : 'Falha ao carregar expediente.');
+          toast.error(formatAppError(error, 'api'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -316,7 +319,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     return () => {
       cancelled = true;
     };
-  }, [tokenFn]);
+  }, [tokenFn, t]);
 
   const syncedDraft = useMemo(() => {
     if (!hydrated) return cloneWorkingHours(persisted);
@@ -408,7 +411,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     const nextIssues = validateWorkingHours(syncedDraft);
     if (nextIssues.length > 0) {
       triggerHaptic('heavy');
-      toast.error('Revise os horários destacados antes de salvar.');
+      toast.error(t('toast.hoursReview'));
       return;
     }
 
@@ -431,22 +434,24 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
         erro?: string;
       };
       if (!res.ok || !body.schedule) {
-        throw new Error(body.erro || 'Falha ao salvar expediente.');
+        throw new Error(body.erro || t('toast.hoursSaveFailed'));
       }
       const saved = saveWorkingHours(body.schedule);
       setDraft(cloneWorkingHours(saved));
       setHydrated(true);
       triggerHaptic('success');
-      toast.success('Expediente salvo.', {
-        description: `${saved.days.filter((day) => day.active).length} dias ativos sincronizados com a agenda.`,
+      toast.success(t('toast.hoursSaved'), {
+        description: t('toast.hoursSavedHint', {
+          count: saved.days.filter((day) => day.active).length,
+        }),
       });
     } catch (error) {
       triggerHaptic('heavy');
-      toast.error(error instanceof Error ? error.message : 'Falha ao salvar expediente.');
+      toast.error(formatAppError(error, 'api'));
     } finally {
       setSaving(false);
     }
-  }, [syncedDraft, tokenFn, triggerHaptic]);
+  }, [syncedDraft, tokenFn, triggerHaptic, t]);
 
   if (loading) {
     return (

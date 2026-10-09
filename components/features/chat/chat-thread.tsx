@@ -14,6 +14,7 @@ import type { MessageKey, TranslateVars } from '@/lib/i18n/types';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
 import { bodyPartLabel, healingLabel, styleLabel } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
+import { formatAppError } from '@/lib/error-handler';
 
 type ThreadMessage = {
   id: string;
@@ -139,9 +140,9 @@ export function ChatThread({
     const text = input.trim();
     if (!text || !destinatarioId || sending) return;
 
-    const { isValid, error } = validateChatMessage(text);
+    const { isValid } = validateChatMessage(text);
     if (!isValid) {
-      toast.error(error || 'Mensagem bloqueada pelas diretrizes.');
+      toast.error(t('toast.chatBlocked'));
       return;
     }
 
@@ -181,7 +182,7 @@ export function ChatThread({
       };
       if (!res.ok || !json.sucesso) {
         setMessages((prev) => prev.filter((item) => item.id !== optimistic.id));
-        toast.error(json.erro || 'Não foi possível enviar a mensagem.');
+        toast.error(json.erro ? formatAppError({ message: json.erro }, 'api') : t('toast.chatSendFailed'));
         return;
       }
       if (json.mensagem) {

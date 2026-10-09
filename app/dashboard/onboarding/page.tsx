@@ -16,19 +16,17 @@ import {
   destinationAfterProfileSync,
   parseAppRole,
 } from '@/lib/utils/auth-redirect';
+import { formatAppError } from '@/lib/error-handler';
+import type { MessageKey } from '@/lib/i18n/types';
 
-function messageFromOnboardingError(status: number, data: { erro?: unknown }): string {
-  const fromApi = typeof data.erro === 'string' ? data.erro.trim() : '';
-  if (status === 409) {
-    return fromApi || 'Este CPF já está cadastrado ou em uso por outra conta';
-  }
-  if (status === 401) {
-    return 'Sua sessão expirou. Recarregue a página e tente novamente.';
-  }
-  if (status === 403) {
-    return fromApi || 'O perfil é definido no cadastro e não pode ser alterado.';
-  }
-  return fromApi || 'Erro ao salvar perfil';
+function messageFromOnboardingError(
+  status: number,
+  t: (key: MessageKey) => string
+): string {
+  if (status === 409) return t('toast.onboardingCpfConflict');
+  if (status === 401) return t('toast.onboardingSession');
+  if (status === 403) return t('toast.onboardingLocked');
+  return t('toast.profileSaveFailed');
 }
 
 export default function DashboardOnboardingPage() {
@@ -58,7 +56,7 @@ export default function DashboardOnboardingPage() {
   const handleAdvance = async () => {
     if (submitting.current) return;
     if (!isLoaded || !isSignedIn || !user) {
-      toast.error('Sessão ainda sincronizando. Aguarde um instante.');
+      toast.error(t('toast.sessionSyncing'));
       return;
     }
 
@@ -91,7 +89,7 @@ export default function DashboardOnboardingPage() {
         };
       };
       if (!response.ok) {
-        const errorMessage = messageFromOnboardingError(response.status, payload);
+        const errorMessage = messageFromOnboardingError(response.status, t);
         setSubmitError(errorMessage);
         toast.error(errorMessage);
         return;
@@ -127,7 +125,7 @@ export default function DashboardOnboardingPage() {
 
       assignAppPath(destinationAfterProfileSync(payload.perfil, payload.needsOnboarding));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao salvar perfil';
+      const message = formatAppError(err, 'api');
       setSubmitError(message);
       toast.error(message);
     } finally {

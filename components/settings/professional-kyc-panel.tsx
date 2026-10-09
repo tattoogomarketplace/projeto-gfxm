@@ -19,6 +19,8 @@ import { toast } from '@/lib/toast';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 export type ProfessionalDocumentStatus = 'pendente' | 'enviado' | 'em_analise' | 'aprovado' | 'rejeitado';
 
@@ -150,7 +152,9 @@ async function uploadDocument(
     erro?: string;
   };
   if (!presignRes.ok || !presign.presignedUrl || !presign.fileKey) {
-    throw new Error(presign.erro || 'Não foi possível preparar o upload.');
+    throw Object.assign(new Error(presign.erro || 'upload-prepare-failed'), {
+      code: 'upload_prepare_failed',
+    });
   }
 
   // O Content-Type DEVE ser idêntico ao assinado; headers extras quebram a
@@ -163,7 +167,9 @@ async function uploadDocument(
     headers: { 'Content-Type': contentType },
     body: file,
   });
-  if (!putRes.ok) throw new Error('Falha ao enviar o arquivo. Tente novamente.');
+  if (!putRes.ok) {
+    throw Object.assign(new Error('upload-put-failed'), { code: 'upload_put_failed' });
+  }
 
   return { fileKey: presign.fileKey, publicUrl: presign.publicUrl ?? '' };
 }
@@ -346,6 +352,7 @@ type AnalysisPhase = 'idle' | 'uploading' | 'analyzing' | 'approved' | 'rejected
  */
 export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: ProfessionalKycPanelProps) {
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const [slots, setSlots] = useState<Record<ProfessionalDocumentKey, DocumentSlot>>(() => ({
     pessoal: { file: null, status: 'pendente', error: null },
@@ -360,13 +367,13 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
     (key: ProfessionalDocumentKey, file: File) => {
       const contentType = resolveUploadContentType(file);
       if (!contentType || !ALLOWED_TYPES.has(contentType)) {
-        const message = `Formato inválido. Envie ${FORMAT_HINT}.`;
+        const message = t('toast.invalidFormat', { formats: FORMAT_HINT });
         setSlots((prev) => ({ ...prev, [key]: { ...prev[key], error: message } }));
         toast.error(message);
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        const message = 'Arquivo acima de 10 MB.';
+        const message = t('toast.fileTooLarge');
         setSlots((prev) => ({ ...prev, [key]: { ...prev[key], error: message } }));
         toast.error(message);
         return;
@@ -376,7 +383,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
       setSlots((prev) => ({ ...prev, [key]: { file, status: 'enviado', error: null } }));
       triggerHaptic('light');
     },
-    [triggerHaptic]
+    [triggerHaptic, t]
   );
 
   const handleRemove = useCallback(
@@ -447,7 +454,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
 
       if (!verifyRes.ok || !result.sucesso || result.status !== 'aprovado') {
         const reason =
-          result.erro || 'Os documentos não passaram na verificação automática. Envie arquivos oficiais e nítidos.';
+          result.erro || t('toast.docsRejected');
         setPhase('rejected');
         setRejectionReason(reason);
         setSlots((prev) => ({
@@ -467,7 +474,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
         habilidade: { ...prev.habilidade, status: 'aprovado', error: null },
       }));
       triggerHaptic('success');
-      toast.success('Documentos aprovados. Sua bancada de tatuador está liberada.');
+      toast.success(t('toast.kycApproved'));
       await onApproved?.({
         status: 'aprovado',
         role: result.role || 'tatuador',
@@ -475,7 +482,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
         confidenceScore: result.confidenceScore,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Falha ao enviar os documentos.';
+      const message = formatAppError(err, 'api');
       setPhase('rejected');
       setRejectionReason(message);
       setSlots((prev) => ({
@@ -487,7 +494,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
     } finally {
       setBusy(false);
     }
-  }, [allAnalyzing, approved, bothReady, busy, getToken, onApproved, onRejected, onSubmit, slots, triggerHaptic]);
+  }, [allAnalyzing, approved, bothReady, busy, getToken, onApproved, onRejected, onSubmit, slots, triggerHaptic, t]);
 
   const controlsLocked = busy || allAnalyzing || approved;
 

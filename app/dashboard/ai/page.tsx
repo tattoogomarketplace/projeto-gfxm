@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 import { AiChatHeader } from '@/components/layout/ai-chat-header';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type ChatRole = 'user' | 'assistant';
 
@@ -14,6 +16,7 @@ type ChatMessage = {
 };
 
 export default function DashboardAiPage() {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +60,7 @@ export default function DashboardAiPage() {
       };
 
       if (!response.ok || !payload.content) {
-        throw new Error(payload.erro || 'Não foi possível falar com o assistente agora.');
+        throw new Error(payload.erro || 'ai-unavailable');
       }
 
       setMessages((current) => [
@@ -69,9 +72,7 @@ export default function DashboardAiPage() {
         },
       ]);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Não foi possível falar com o assistente agora.'
-      );
+      setErrorMessage(formatAppError(error, 'api'));
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +129,7 @@ export default function DashboardAiPage() {
         {isLoading ? (
           <div className="flex justify-start">
             <div className="rounded-2xl rounded-tl-md border border-[#F97316]/25 bg-white px-4 py-3 text-[13px] text-[#F97316] dark:bg-white/[0.05]">
-              Traçando resposta...
+              {t('common.loading')}
             </div>
           </div>
         ) : null}
@@ -146,15 +147,15 @@ export default function DashboardAiPage() {
           <input
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
-            placeholder="Pergunte sobre estilos, cuidados ou agenda..."
+            placeholder={t('common.search')}
             className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             autoComplete="off"
-            aria-label="Mensagem para o assistente"
+            aria-label={t('common.send')}
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            aria-label="Enviar mensagem"
+            aria-label={t('common.send')}
             className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316]/40 bg-white text-[#F97316] transition-colors hover:border-[#F97316] disabled:opacity-40 dark:bg-white/[0.05]"
           >
             <Send className="h-4 w-4" strokeWidth={1.75} />

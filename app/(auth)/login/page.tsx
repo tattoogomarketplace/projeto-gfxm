@@ -78,7 +78,7 @@ export default function LoginPage() {
 
   const sendEmailOtp = async (email: string) => {
     if (!signIn) {
-      throw new Error('Clerk ainda não está pronto.');
+      throw new Error('clerk not ready');
     }
 
     const created = await signIn.create({ identifier: email });
@@ -87,7 +87,7 @@ export default function LoginPage() {
     );
 
     if (!emailFactor || emailFactor.strategy !== 'email_code') {
-      throw new Error('Login por código de e-mail não está disponível para esta conta.');
+      throw new Error('email code unavailable');
     }
 
     await signIn.prepareFirstFactor({
@@ -100,7 +100,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (!signIn || !setActive) {
-        throw new Error('Clerk ainda não está pronto.');
+        throw new Error('clerk not ready');
       }
 
       const result = await signIn.create({
@@ -128,7 +128,7 @@ export default function LoginPage() {
       );
 
       if (!emailFactor || emailFactor.strategy !== 'email_code') {
-        throw new Error('Login por código de e-mail não está disponível para esta conta.');
+        throw new Error('email code unavailable');
       }
 
       await signIn.prepareFirstFactor({
@@ -198,7 +198,7 @@ export default function LoginPage() {
   const handleVerifyOtp = async (otp: string): Promise<boolean> => {
     try {
       if (!signIn || !setActive) {
-        throw new Error('Clerk ainda não está pronto.');
+        throw new Error('clerk not ready');
       }
 
       const result = await signIn.attemptFirstFactor({
@@ -214,7 +214,7 @@ export default function LoginPage() {
           console.error('Single-session enforcement error:', err);
         }
       } else {
-        throw new Error('Sessão inválida após verificação.');
+        throw new Error('session expired');
       }
 
       const clerkUser = clerk.user;

@@ -143,6 +143,14 @@ function matchByText(haystack: string): MessageKey | null {
   if (haystack.includes('clerk not ready') || haystack.includes('clerk is not') || haystack.includes('clerk não') || haystack.includes('clerk nao') || haystack.includes('not_ready') || haystack.includes('not ready')) {
     return 'errors.clerk.notReady';
   }
+  if (
+    haystack.includes('email code unavailable') ||
+    haystack.includes('email_code_unavailable') ||
+    haystack.includes('login por código de e-mail') ||
+    haystack.includes('login por codigo de e-mail')
+  ) {
+    return 'auth.emailCodeUnavailable';
+  }
   if (haystack.includes('cnpj') && (haystack.includes('não encontrado') || haystack.includes('nao encontrado') || haystack.includes('not found'))) {
     return 'auth.cnpjNotFound';
   }
@@ -209,14 +217,16 @@ function matchByText(haystack: string): MessageKey | null {
     return 'errors.timeout';
   }
   if (
-    haystack.includes('unauthorized') ||
-    haystack.includes('unauthenticated') ||
     haystack.includes('session expired') ||
+    haystack.includes('session_expired') ||
     haystack.includes('sessão expirada') ||
     haystack.includes('sessao expirada') ||
     haystack.includes('sessão inválida') ||
     haystack.includes('sessao invalida')
   ) {
+    return 'errors.sessionExpired';
+  }
+  if (haystack.includes('unauthorized') || haystack.includes('unauthenticated')) {
     return 'errors.unauthorized';
   }
   if (haystack.includes('forbidden') || haystack.includes('not allowed')) {
@@ -232,6 +242,35 @@ function matchByText(haystack: string): MessageKey | null {
   }
   if (haystack.includes('p2025')) {
     return 'errors.notFound';
+  }
+  if (
+    haystack.includes('upload_prepare_failed') ||
+    haystack.includes('upload-prepare-failed') ||
+    haystack.includes('não foi possível preparar o upload') ||
+    haystack.includes('nao foi possivel preparar o upload')
+  ) {
+    return 'toast.uploadPrepareFailed';
+  }
+  if (
+    haystack.includes('upload_put_failed') ||
+    haystack.includes('upload-put-failed') ||
+    haystack.includes('falha ao enviar o arquivo') ||
+    haystack.includes('falha ao enviar a imagem')
+  ) {
+    return 'toast.uploadPutFailed';
+  }
+  if (
+    haystack.includes('não foi possível validar o documento') ||
+    haystack.includes('nao foi possivel validar o documento')
+  ) {
+    return 'toast.docValidateFailed';
+  }
+  if (
+    haystack.includes('ai-unavailable') ||
+    haystack.includes('falar com o assistente') ||
+    haystack.includes('falha ao carregar a galeria')
+  ) {
+    return haystack.includes('galeria') ? 'gallery.loadError' : 'errors.generic';
   }
 
   return null;

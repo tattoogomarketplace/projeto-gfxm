@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import type { StudioCard } from '@/lib/types/studio-affiliation';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type Pedido = {
   id: string;
@@ -27,6 +29,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function StudioAffiliationArtist() {
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [studios, setStudios] = useState<StudioCard[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -79,11 +82,11 @@ export function StudioAffiliationArtist() {
         erro?: string;
       };
       if (!res.ok) {
-        throw new Error(payload.erro || 'Falha na busca de estúdios.');
+        throw new Error(payload.erro || t('toast.searchFailed'));
       }
       setStudios(payload.studios ?? []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha na busca.');
+      toast.error(formatAppError(err, 'api'));
     } finally {
       setSearching(false);
     }
@@ -102,11 +105,11 @@ export function StudioAffiliationArtist() {
         tokenFn
       );
       const payload = (await res.json().catch(() => ({}))) as { erro?: string; reused?: boolean };
-      if (!res.ok) throw new Error(payload.erro || 'Não foi possível enviar o pedido.');
-      toast.success(payload.reused ? 'Pedido já estava pendente.' : 'Pedido enviado ao estúdio.');
+      if (!res.ok) throw new Error(payload.erro || t('toast.affiliateFailed'));
+      toast.success(payload.reused ? t('toast.requestPending') : t('toast.requestSent'));
       await loadMine();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao solicitar afiliação.');
+      toast.error(formatAppError(err, 'api'));
     } finally {
       setRequestingId(null);
     }
@@ -124,11 +127,11 @@ export function StudioAffiliationArtist() {
         tokenFn
       );
       const payload = (await res.json().catch(() => ({}))) as { erro?: string };
-      if (!res.ok) throw new Error(payload.erro || 'Não foi possível cancelar.');
-      toast.message('Pedido cancelado.');
+      if (!res.ok) throw new Error(payload.erro || t('toast.cancelFailed'));
+      toast.message(t('toast.requestCancelled'));
       await loadMine();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao cancelar.');
+      toast.error(formatAppError(err, 'api'));
     }
   };
 
@@ -235,7 +238,7 @@ export function StudioAffiliationArtist() {
                   className="min-h-11 text-xs text-zinc-400 underline-offset-4 hover:text-amber-400 hover:underline"
                   onClick={() => pedido?.id && void cancelPedido(pedido.id)}
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
               ) : null}
             </div>

@@ -10,6 +10,8 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 const FLASH_NOTE_MAX_LENGTH = 80;
 
@@ -47,6 +49,7 @@ const CLOSED_COMPOSER: ComposerState = { open: false, content: '', submitting: f
 export function FlashNotesCarousel() {
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
+  const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const role = useAuthStore((s) => s.role);
   const canBroadcast = role === 'tatuador';
@@ -107,7 +110,7 @@ export function FlashNotesCarousel() {
     const content = composer.content.trim();
     if (!content || composer.submitting) return;
     if (content.length > FLASH_NOTE_MAX_LENGTH) {
-      toast.error(`Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
+      toast.error(t('toast.flashMax', { count: FLASH_NOTE_MAX_LENGTH }));
       return;
     }
 
@@ -148,7 +151,7 @@ export function FlashNotesCarousel() {
       };
       if (!res.ok || !json.note) {
         if (snapshotRef.current) setNotes(snapshotRef.current);
-        toast.error(json.erro || 'Não foi possível publicar a Flash Note.');
+        toast.error(json.erro ? formatAppError({ message: json.erro }, 'api') : t('toast.flashPublishFailed'));
         setComposer((state) => ({ ...state, submitting: false }));
         return;
       }
@@ -158,11 +161,11 @@ export function FlashNotesCarousel() {
         ...current.filter((note) => note.id !== optimistic.id && note.userId !== json.note?.userId),
       ]);
       triggerHaptic('success');
-      toast.success('Flash Note no ar.');
+      toast.success(t('toast.flashLive'));
       setComposer(CLOSED_COMPOSER);
     } catch {
       if (snapshotRef.current) setNotes(snapshotRef.current);
-      toast.error('Falha ao publicar a Flash Note.');
+      toast.error(t('toast.flashPublishFailed'));
       setComposer((state) => ({ ...state, submitting: false }));
     }
   };

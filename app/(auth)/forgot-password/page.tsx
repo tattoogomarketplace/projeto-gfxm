@@ -121,7 +121,7 @@ export default function ForgotPasswordPage() {
 
   const startClerkReset = async (email: string) => {
     if (!signIn) {
-      throw new Error('Clerk ainda não está pronto.');
+      throw new Error('clerk not ready');
     }
     await signIn.create({
       strategy: 'reset_password_email_code',
@@ -164,7 +164,7 @@ export default function ForgotPasswordPage() {
   const handleVerifyOtp = async (otp: string): Promise<boolean> => {
     try {
       if (!signIn) {
-        throw new Error('Clerk ainda não está pronto.');
+        throw new Error('clerk not ready');
       }
       const result = await signIn.attemptFirstFactor({
         strategy: 'reset_password_email_code',
@@ -199,7 +199,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     try {
       if (!signIn) {
-        throw new Error('Clerk ainda não está pronto.');
+        throw new Error('clerk not ready');
       }
       await signIn.resetPassword({
         password: data.password,

@@ -26,6 +26,8 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { cn } from '@/lib/utils';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type Stage = 'locked' | 'unlocked';
 
@@ -92,6 +94,7 @@ export default function SejaTatuadorPage() {
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   useArtistViewportGuard();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,11 +148,11 @@ export default function SejaTatuadorPage() {
     const cpfDigits = onlyCpfDigits(cpf);
 
     if (!normalizedEmail || !normalizedEmail.includes('@') || !normalizedEmail.includes('.')) {
-      fail('Informe um e-mail válido para confirmar sua identidade.');
+      fail(t('toast.identityEmail'));
       return;
     }
     if (!isValidCpf(cpfDigits)) {
-      fail('Informe um CPF válido para confirmar sua identidade.');
+      fail(t('toast.identityCpf'));
       return;
     }
 
@@ -168,15 +171,15 @@ export default function SejaTatuadorPage() {
         error?: string;
       };
       if (!verifyRes.ok || !verification.ok) {
-        fail(verification.error || 'E-mail ou CPF não conferem. Verifique e tente novamente.');
+        fail(verification.error ? formatAppError({ message: verification.error }, 'api') : t('toast.identityMismatch'));
         return;
       }
 
       triggerHaptic('success');
       setForcedStage('unlocked');
-      toast.success('Identidade confirmada. Envie seus Documentos Pessoais.');
+      toast.success(t('toast.identityConfirmed'));
     } catch {
-      fail('Falha de rede ao confirmar sua identidade. Tente novamente.');
+      fail(t('toast.identityNetwork'));
     } finally {
       setBusy(false);
     }
@@ -386,7 +389,7 @@ export default function SejaTatuadorPage() {
                   } catch {
                     // Clerk metadata pode atrasar; o banco já está promovido.
                   }
-                  toast.success('Painel do artista desbloqueado.');
+                  toast.success(t('toast.artistUnlocked'));
                   router.push('/dashboard/tatuador');
                 }}
               />

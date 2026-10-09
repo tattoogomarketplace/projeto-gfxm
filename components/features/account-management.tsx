@@ -13,6 +13,7 @@ import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { clearClientSession } from '@/lib/utils/session';
 import { useBecomeTatuador } from '@/hooks/use-become-tatuador';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type ConfirmKind = 'deactivate' | 'delete' | null;
 
@@ -68,12 +69,12 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
     try {
       const result = await deactivateAccount(userId);
       if (!result.ok) {
-        throw new Error(result.error || 'Falha ao desativar a conta.');
+        throw new Error(result.error || t('toast.accountDeactivateFailed'));
       }
-      toast.success('Conta desativada temporariamente.');
+      toast.success(t('toast.accountDeactivated'));
       await leaveToLogin();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao desativar a conta.');
+      toast.error(formatAppError(err, 'api'));
       setBusy(false);
     }
   };
@@ -84,12 +85,12 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
     try {
       const result = await scheduleAccountDeletion(userId);
       if (!result.ok) {
-        throw new Error(result.error || 'Falha ao agendar a exclusão.');
+        throw new Error(result.error || t('toast.deletionScheduleFailed'));
       }
-      toast.success('Exclusão agendada. Você tem 90 dias para reativar.');
+      toast.success(t('toast.deletionScheduled'));
       await leaveToLogin();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao agendar a exclusão.');
+      toast.error(formatAppError(err, 'api'));
       setBusy(false);
     }
   };
@@ -157,7 +158,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
                     disabled={busy}
                     className="min-h-11 rounded-xl border border-zinc-700 font-bold text-zinc-300 transition-all hover:border-zinc-500 active:scale-95 disabled:opacity-50"
                   >
-                    Cancelar
+                    {t('common.cancel')}
                   </button>
                   {confirmKind === 'deactivate' ? (
                     <button

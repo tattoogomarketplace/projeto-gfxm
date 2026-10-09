@@ -24,6 +24,8 @@ import {
 } from '@/lib/portfolio-metadata';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
@@ -75,6 +77,7 @@ function ChipSelect<T extends string>({
 export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
   void tatuadorId;
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
 
@@ -101,10 +104,10 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
       erro?: string;
     };
     if (!res.ok) {
-      throw new Error(payload.erro || 'Falha ao carregar o portfólio.');
+      throw new Error(payload.erro || t('toast.portfolioLoadFailed'));
     }
     setItems(payload.items ?? []);
-  }, [tokenFn]);
+  }, [tokenFn, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +116,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         await loadItems();
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : 'Falha ao carregar o portfólio.');
+          toast.error(formatAppError(error, 'api'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -149,12 +152,12 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
     if (!file) return;
 
     if (!ALLOWED_TYPES.has(file.type)) {
-      toast.error('Envie uma imagem JPG, PNG, WEBP ou AVIF.');
+      toast.error(t('toast.portfolioInvalidType'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      toast.error('Arquivo acima de 10 MB.');
+      toast.error(t('toast.fileTooLarge'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -165,9 +168,9 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
       setPendingFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setModalOpen(true);
-      toast.success('Imagem recebida. Classifique a peça para publicar.');
+      toast.success(t('toast.imageReceived'));
     } catch {
-      toast.error('Não foi possível preparar a imagem.');
+      toast.error(t('toast.imagePrepareFailed'));
     } finally {
       setChecking(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -176,7 +179,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
   const publish = async () => {
     if (!pendingFile || !style || !bodyPart || !sessionDuration) {
-      toast.error('Preencha estilo, parte do corpo, duração e status de cicatrização.');
+      toast.error(t('toast.portfolioFillMeta'));
       return;
     }
 
@@ -198,7 +201,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         erro?: string;
       };
       if (!presignRes.ok || !presign.presignedUrl || !presign.publicUrl) {
-        throw new Error(presign.erro || 'Não foi possível preparar o upload.');
+        throw new Error(presign.erro || t('toast.uploadPrepareFailed'));
       }
 
       const putRes = await fetch(presign.presignedUrl, {
@@ -210,7 +213,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         body: pendingFile,
       });
       if (!putRes.ok) {
-        throw new Error('Falha ao enviar a imagem para o storage.');
+        throw new Error(t('toast.uploadPutFailed'));
       }
 
       const publishRes = await authedFetch(
@@ -235,14 +238,14 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         erro?: string;
       };
       if (!publishRes.ok || !payload.item) {
-        throw new Error(payload.erro || 'Publicação recusada. Complete todos os metadados.');
+        throw new Error(payload.erro || t('toast.portfolioPublishFailed'));
       }
 
       setItems((current) => [payload.item as PortfolioItemDto, ...current]);
-      toast.success('Peça publicada na Galeria de Inspirações.');
+      toast.success(t('toast.portfolioPublished'));
       resetDraft();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Falha ao publicar o portfólio.');
+      toast.error(formatAppError(error, 'api'));
     } finally {
       setPublishing(false);
     }

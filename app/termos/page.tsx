@@ -9,6 +9,7 @@ import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { TermsContent } from '@/components/shared/terms-content';
 import api from '@/lib/api';
+import { formatAppError } from '@/lib/error-handler';
 
 export default function TermsPage() {
   const [loading, setLoading] = useState(false);
@@ -36,9 +37,8 @@ export default function TermsPage() {
         router.push('/login');
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao aceitar termos.';
       console.error('Falha ao aceitar termos:', error);
-      toast.error(message);
+      toast.error(formatAppError(error, 'api'));
     } finally {
       setLoading(false);
     }

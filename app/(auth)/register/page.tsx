@@ -295,13 +295,13 @@ export default function RegisterPage() {
 
   const handleVerifyOtp = async (token: string) => {
     if (!signUp || !setActive) {
-      throw new Error('Clerk ainda não está pronto.');
+      throw new Error('clerk not ready');
     }
     try {
       const completeSignUp = await signUp.attemptVerification({ strategy: 'email_code', code: token });
 
       if (completeSignUp.status !== 'complete' || !completeSignUp.createdSessionId) {
-        throw new Error('Sessão inválida após verificação.');
+        throw new Error('session expired');
       }
 
       await setActive({
@@ -349,7 +349,7 @@ export default function RegisterPage() {
 
   const handleResendOtp = async () => {
     if (!signUp) {
-      throw new Error('Clerk ainda não está pronto.');
+      throw new Error('clerk not ready');
     }
     await signUp.prepareVerification({ strategy: 'email_code' });
   };

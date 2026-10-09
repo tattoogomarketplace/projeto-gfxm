@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { formatCnpj, isValidCnpj, maskCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import type { StudioComplianceView } from '@/lib/types/studio-affiliation';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type Compliance = StudioComplianceView;
 
@@ -20,6 +22,7 @@ export function StudioCnpjPanel({
   onRegistered?: (next: NonNullable<Compliance>) => void;
 }) {
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const [cnpj, setCnpj] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +33,7 @@ export function StudioCnpjPanel({
   const validate = async () => {
     const digits = onlyCnpjDigits(cnpj);
     if (!isValidCnpj(digits)) {
-      toast.error('Informe um CNPJ válido com 14 dígitos.');
+      toast.error(t('toast.cnpjInvalid14'));
       return;
     }
     setLoading(true);
@@ -51,12 +54,12 @@ export function StudioCnpjPanel({
         situacao?: string;
       };
       if (!res.ok || !payload.sucesso) {
-        throw new Error(payload.erro || 'Falha na validação do CNPJ.');
+        throw new Error(payload.erro || t('toast.cnpjValidateFailed'));
       }
       setPreview(`${payload.razaoSocial ?? 'Empresa'} · ${payload.situacao ?? ''}`);
-      toast.success('CNPJ validado na Receita.');
+      toast.success(t('toast.cnpjValidated'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao validar CNPJ.');
+      toast.error(formatAppError(err, 'api'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +68,7 @@ export function StudioCnpjPanel({
   const register = async () => {
     const digits = onlyCnpjDigits(cnpj);
     if (!isValidCnpj(digits)) {
-      toast.error('Informe um CNPJ válido com 14 dígitos.');
+      toast.error(t('toast.cnpjInvalid14'));
       return;
     }
     setLoading(true);
@@ -85,7 +88,7 @@ export function StudioCnpjPanel({
         studio?: { razaoSocial?: string; endereco?: string; situacao?: string };
       };
       if (!res.ok || !payload.sucesso) {
-        throw new Error(payload.erro || 'Falha ao registrar o CNPJ.');
+        throw new Error(payload.erro || t('toast.cnpjRegisterFailed'));
       }
       const next = {
         cnpjMasked: maskCnpj(digits),
@@ -95,9 +98,9 @@ export function StudioCnpjPanel({
       };
       setCompliance(next);
       onRegistered?.(next);
-      toast.success('CNPJ registrado no estúdio.');
+      toast.success(t('toast.cnpjRegistered'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao registrar CNPJ.');
+      toast.error(formatAppError(err, 'api'));
     } finally {
       setLoading(false);
     }

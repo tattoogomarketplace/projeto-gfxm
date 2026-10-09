@@ -60,7 +60,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
 
-  const strength = getPasswordStrength(newPassword);
+  const strength = getPasswordStrength(newPassword, t);
   const passwordsMatch = Boolean(newPassword) && newPassword === confirmPassword;
   const passwordEnabled = Boolean(user?.passwordEnabled);
 

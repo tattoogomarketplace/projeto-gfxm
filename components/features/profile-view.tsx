@@ -16,6 +16,7 @@ import { clearClientSession } from '@/lib/utils/session';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import type { MessageKey } from '@/lib/i18n/types';
+import { formatAppError } from '@/lib/error-handler';
 
 export function ProfileView() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -109,7 +110,7 @@ export function ProfileView() {
       clearClientSession({ intentional: true });
       await clerk.signOut({ redirectUrl: '/login' });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao sair da conta.');
+      toast.error(formatAppError(err, 'api'));
       setLoggingOut(false);
     }
   };

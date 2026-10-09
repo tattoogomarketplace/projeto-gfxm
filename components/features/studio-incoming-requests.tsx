@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { StudioCnpjPanel } from '@/components/features/studio-cnpj-panel';
 import type { StudioArtistRow, StudioComplianceView } from '@/lib/types/studio-affiliation';
+import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 
 type ArtistRow = StudioArtistRow;
 
@@ -23,6 +25,7 @@ type Compliance = StudioComplianceView;
 
 export function StudioIncomingRequests() {
   const { getToken } = useAuth();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [pendentes, setPendentes] = useState<Pedido[]>([]);
   const [artistas, setArtistas] = useState<ArtistRow[]>([]);
@@ -40,12 +43,12 @@ export function StudioIncomingRequests() {
       erro?: string;
     };
     if (!res.ok) {
-      throw new Error(payload.erro || 'Falha ao carregar pedidos.');
+      throw new Error(payload.erro || t('toast.studioLoadFailed'));
     }
     setPendentes(payload.pendentes ?? []);
     setArtistas(payload.artistas ?? []);
     setCompliance(payload.compliance ?? null);
-  }, [tokenFn]);
+  }, [tokenFn, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +57,7 @@ export function StudioIncomingRequests() {
         await load();
       } catch (err) {
         if (!cancelled) {
-          toast.error(err instanceof Error ? err.message : 'Falha ao carregar o estúdio.');
+          toast.error(formatAppError(err, 'api'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -79,11 +82,11 @@ export function StudioIncomingRequests() {
         tokenFn
       );
       const payload = (await res.json().catch(() => ({}))) as { erro?: string };
-      if (!res.ok) throw new Error(payload.erro || 'Falha ao atualizar o pedido.');
-      toast.success(action === 'accept' ? 'Artista vinculado.' : 'Pedido recusado.');
+      if (!res.ok) throw new Error(payload.erro || t('toast.decideFailed'));
+      toast.success(action === 'accept' ? t('toast.artistLinked') : t('toast.requestRejected'));
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao decidir o pedido.');
+      toast.error(formatAppError(err, 'api'));
     } finally {
       setActingId(null);
     }
