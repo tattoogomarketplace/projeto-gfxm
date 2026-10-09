@@ -7,7 +7,6 @@ import { Heart, MapPin, MessageCircle } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
-import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { GaleriaItem } from '@/lib/types/galeria';
@@ -115,7 +114,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{artistName}</p>
                 <p className="truncate text-[11px] text-zinc-400">
-                  {studioName ? studioName : 'Artista independente'}
+                  {studioName || t('vitrine.independent')}
                 </p>
               </div>
             </div>
@@ -133,7 +132,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
           >
             <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{artistName}</p>
             <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-zinc-400">
-              {studioName || 'Artista independente'}
+              {studioName || t('vitrine.independent')}
             </p>
             {location ? (
               <p className="mt-1 flex items-center gap-1 text-[11px] text-neutral-500 dark:text-zinc-500">

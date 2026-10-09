@@ -157,7 +157,7 @@ export function StudioAffiliationArtist() {
       {vinculo ? (
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
           <p className="text-xs uppercase tracking-wider text-emerald-300">{t('studio.linked')}</p>
-          <p className="mt-1 font-semibold text-neutral-900 dark:text-white">{vinculo?.nome ?? t('studio.fallback')}</p>
+          <p className="mt-1 font-semibold text-neutral-900 dark:text-white">{vinculo?.nome || t('studio.fallback')}</p>
           <p className="text-xs text-zinc-400">
             {[vinculo?.cidade, vinculo?.estado].filter(Boolean).join(' / ') || t('studio.locationUnknown')}
           </p>
@@ -195,7 +195,7 @@ export function StudioAffiliationArtist() {
               <div className="min-w-0">
                 <p className="flex items-center gap-2 truncate font-semibold text-neutral-900 dark:text-white">
                   <Building2 className="h-4 w-4 text-amber-500" />
-                  {studio?.nome ?? t('studio.fallback')}
+                  {studio?.nome || t('studio.fallback')}
                 </p>
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-400">
                   <MapPin className="h-3 w-3" />
@@ -227,7 +227,7 @@ export function StudioAffiliationArtist() {
               className="flex items-center justify-between gap-3 rounded-lg border border-black/[0.04] px-3 py-2 text-sm dark:border-white/[0.05]"
             >
               <div>
-                <p className="font-medium text-neutral-900 dark:text-white">{pedido?.estudio?.nome ?? t('studio.fallback')}</p>
+                <p className="font-medium text-neutral-900 dark:text-white">{pedido?.estudio?.nome || t('studio.fallback')}</p>
                 <p className="text-xs text-zinc-500">
                   {STATUS_KEY[pedido?.status ?? ''] ? t(STATUS_KEY[pedido?.status ?? '']) : pedido?.status ?? t('studio.statusPending')}
                 </p>

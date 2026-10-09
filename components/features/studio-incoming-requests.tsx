@@ -177,7 +177,7 @@ export function StudioIncomingRequests() {
           <ul className="divide-y divide-white/10">
             {(artistas ?? []).map((artista) => (
               <li key={artista?.id ?? artista?.nome} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-neutral-900 dark:text-white">{artista?.nome ?? t('studio.artistFallback')}</span>
+                <span className="text-neutral-900 dark:text-white">{artista?.nome || t('studio.artistFallback')}</span>
                 <span className="text-xs uppercase tracking-wider text-zinc-500">
                   {kycStatusLabel(artista?.kyc_status, t)}
                 </span>

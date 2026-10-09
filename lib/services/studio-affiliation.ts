@@ -45,7 +45,7 @@ function toStudioCard(row: EstudioRow): StudioCard {
   const razaoSocial = row.estudioCompliance?.razao_social ?? null;
   return {
     id: row.id,
-    nome: row.nome || razaoSocial || 'Estúdio',
+    nome: row.nome || razaoSocial || '',
     cidade: row.cidade,
     estado: row.estado,
     razaoSocial,
@@ -272,7 +272,7 @@ export async function listForEstudio(estudioId: string) {
     artistas: artistas.map(
       (item): StudioArtistRow => ({
         id: item.tatuador.id,
-        nome: item.tatuador.nome || 'Artista',
+        nome: item.tatuador.nome || '',
         cidade: item.tatuador.cidade,
         estado: item.tatuador.estado,
         kyc_status: item.tatuador.kyc_status,
