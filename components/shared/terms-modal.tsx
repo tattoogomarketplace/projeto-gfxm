@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TermsContent } from '@/components/shared/terms-content';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface TermsModalProps {
 }
 
 export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
+  const { t } = useI18n();
   const [canAccept, setCanAccept] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
 
@@ -38,7 +40,7 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:max-h-[80dvh] sm:p-8"
           >
-            <h2 className="mb-4 shrink-0 text-xl font-bold text-amber-500 sm:text-2xl">Termos de Uso Obrigatórios</h2>
+            <h2 className="mb-4 shrink-0 text-xl font-bold text-amber-500 sm:text-2xl">{t('terms.requiredTitle')}</h2>
             <div
             className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain border-b border-zinc-800 pb-[calc(env(safe-area-inset-bottom)+5rem)] text-sm text-zinc-400 [-webkit-overflow-scrolling:touch]"
             onScroll={(e) => {
@@ -61,7 +63,7 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 }`}
               >
-                {isAccepting ? 'Processando...' : canAccept ? 'Aceito os Termos' : 'Leia até o final para aceitar'}
+                {isAccepting ? t('common.loading') : canAccept ? t('terms.accept') : t('terms.readToEnd')}
               </button>
             </div>
           </motion.div>

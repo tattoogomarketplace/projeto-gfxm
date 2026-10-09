@@ -95,13 +95,13 @@ export default function DashboardAiPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#F97316]">
-                  Assistente IA
+                  {t('ai.badge')}
                 </p>
                 <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-[#F5F5F5]">
-                  TattooGo Studio
+                  {t('ai.title')}
                 </h2>
                 <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
-                  Ideias de estilo, cuidados e agendamento — pergunte à elite.
+                  {t('ai.subtitle')}
                 </p>
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function DashboardAiPage() {
           <input
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
-            placeholder={t('common.search')}
+            placeholder={t('ai.placeholder')}
             className="h-11 min-h-11 min-w-0 flex-1 bg-transparent px-2 text-[14px] text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
             autoComplete="off"
             aria-label={t('common.send')}

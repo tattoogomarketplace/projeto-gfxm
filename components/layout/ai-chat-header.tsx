@@ -2,10 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useI18n } from '@/hooks/use-i18n';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 
 export function AiChatHeader() {
   const router = useRouter();
+  const { t } = useI18n();
   const role = useAuthStore((s) => s.role);
 
   const handleBack = () => {
@@ -23,13 +25,13 @@ export function AiChatHeader() {
           type="button"
           onClick={handleBack}
           className="-ml-2 inline-flex min-h-11 min-w-11 transform-gpu items-center gap-1 rounded-lg px-2 text-[13px] font-semibold tracking-tight text-zinc-500 transition-[transform,color] duration-100 ease-out hover:text-[#F97316] active:scale-[0.97] dark:text-zinc-400"
-          aria-label="Voltar"
+          aria-label={t('common.back')}
         >
           <span aria-hidden="true">&lt;</span>
-          Voltar
+          {t('common.back')}
         </button>
         <h1 className="flex-1 text-center text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-[#F5F5F5]">
-          Assistente IA
+          {t('ai.badge')}
         </h1>
         <span className="inline-flex min-w-11" aria-hidden="true" />
       </div>

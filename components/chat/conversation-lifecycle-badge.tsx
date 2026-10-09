@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import { CalendarClock, HeartPulse } from 'lucide-react';
 import type { ChatLifecycleStatus } from '@/lib/types/chat';
+import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 
 type ConversationLifecycleBadgeProps = {
@@ -14,10 +15,14 @@ export const ConversationLifecycleBadge = memo(function ConversationLifecycleBad
   status,
   className,
 }: ConversationLifecycleBadgeProps) {
+  const { t } = useI18n();
   if (!status) return null;
 
   const scheduled = status.kind === 'scheduled';
   const Icon = scheduled ? CalendarClock : HeartPulse;
+  const label = scheduled
+    ? t('lifecycle.scheduled')
+    : t('lifecycle.healing', { day: status.healingDay ?? 1 });
 
   return (
     <span
@@ -28,10 +33,10 @@ export const ConversationLifecycleBadge = memo(function ConversationLifecycleBad
           : 'border-slate-400/30 bg-slate-500/10 text-slate-600 dark:border-zinc-400/20 dark:bg-zinc-400/10 dark:text-zinc-300',
         className
       )}
-      aria-label={status.label}
+      aria-label={label}
     >
       <Icon className="h-3 w-3 shrink-0" strokeWidth={1.75} aria-hidden />
-      <span className="truncate">{status.label}</span>
+      <span className="truncate">{label}</span>
     </span>
   );
 });

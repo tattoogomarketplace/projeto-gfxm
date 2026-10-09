@@ -46,17 +46,6 @@ export type WorkingHoursIssue = {
   day: WeekdayId;
   code: WorkingHoursIssueCode;
   index?: number;
-  message: string;
-};
-
-export const WEEKDAY_LABELS: Record<WeekdayId, string> = {
-  monday: 'Segunda-feira',
-  tuesday: 'Terça-feira',
-  wednesday: 'Quarta-feira',
-  thursday: 'Quinta-feira',
-  friday: 'Sexta-feira',
-  saturday: 'Sábado',
-  sunday: 'Domingo',
 };
 
 export function weekdayKey(day: WeekdayId): `weekday.${WeekdayId}` {
@@ -208,7 +197,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
       issues.push({
         day: day.day,
         code: 'hours.invalidOpenClose',
-        message: 'Informe horários de abertura e fechamento válidos.',
       });
       continue;
     }
@@ -219,7 +207,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
       issues.push({
         day: day.day,
         code: 'hours.closeAfterOpen',
-        message: 'O horário de fechamento deve ser depois da abertura.',
       });
       continue;
     }
@@ -231,7 +218,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
           day: day.day,
           code: 'hours.breakInvalid',
           index: index + 1,
-          message: `Intervalo ${index + 1} possui horário inválido.`,
         });
         continue;
       }
@@ -242,7 +228,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
           day: day.day,
           code: 'hours.breakEndAfterStart',
           index: index + 1,
-          message: `Intervalo ${index + 1}: o término deve ser depois do início.`,
         });
         continue;
       }
@@ -251,7 +236,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
           day: day.day,
           code: 'hours.breakInside',
           index: index + 1,
-          message: `Intervalo ${index + 1} precisa estar dentro do expediente.`,
         });
       }
     }
@@ -268,7 +252,6 @@ export function validateWorkingHours(schedule: WorkingHoursSchedule): WorkingHou
           issues.push({
             day: day.day,
             code: 'hours.breaksOverlap',
-            message: 'Os intervalos não podem se sobrepor.',
           });
         }
       }

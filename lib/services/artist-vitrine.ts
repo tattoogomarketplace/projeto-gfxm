@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getArtistSchedule } from '@/lib/services/artist-schedule';
 import type { PortfolioItemDto } from '@/lib/portfolio-metadata';
-import { WEEKDAY_LABELS, listUpcomingSlots, type WorkingHoursSchedule } from '@/lib/working-hours';
+import { listUpcomingSlots, type WeekdayId, type WorkingHoursSchedule } from '@/lib/working-hours';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -32,10 +32,16 @@ export type PublicArtistProfile = {
   bookingEnabled: boolean;
 };
 
+export type PublicArtistScheduleSummary = {
+  day: WeekdayId;
+  start: string;
+  end: string;
+};
+
 export type PublicArtistVitrine = {
   artist: PublicArtistProfile;
   items: PortfolioItemDto[];
-  scheduleSummary: string[];
+  scheduleSummary: PublicArtistScheduleSummary[];
   availableSlots: string[];
 };
 
@@ -53,10 +59,10 @@ function artistInitial(nome: string): string {
   return letter ? letter.toUpperCase() : 'A';
 }
 
-function summarizeSchedule(schedule: WorkingHoursSchedule): string[] {
+function summarizeSchedule(schedule: WorkingHoursSchedule): PublicArtistScheduleSummary[] {
   return schedule.days
     .filter((day) => day.active)
-    .map((day) => `${WEEKDAY_LABELS[day.day]} · ${day.start}–${day.end}`);
+    .map((day) => ({ day: day.day, start: day.start, end: day.end }));
 }
 
 export async function getPublicArtistVitrine(artistIdRaw: string): Promise<PublicArtistVitrine> {
@@ -111,7 +117,7 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
   const studioName = (artist.studio?.nome ?? '').trim();
   const kycApproved = artist.kyc_status === 'aprovado';
   const bookingEnabled = kycApproved && !artist.agenda_bloqueada;
-  let scheduleSummary: string[] = [];
+  let scheduleSummary: PublicArtistScheduleSummary[] = [];
   let availableSlots: string[] = [];
   try {
     const schedule = await getArtistSchedule(artistId);

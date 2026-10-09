@@ -46,7 +46,7 @@ export function sanitizeScheduleInput(raw: unknown): WorkingHoursSchedule {
   const schedule = normalizeWorkingHours(raw);
   const issues = validateWorkingHours(schedule);
   if (issues.length > 0) {
-    throw new ArtistScheduleError(400, issues[0]?.message || 'Expediente inválido.');
+    throw new ArtistScheduleError(400, issues[0]?.code ?? 'hours.invalidOpenClose');
   }
   return schedule;
 }

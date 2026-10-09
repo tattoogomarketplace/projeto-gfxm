@@ -35,7 +35,6 @@ export function resolveChatLifecycle(
   if (upcoming.length > 0) {
     return {
       kind: 'scheduled',
-      label: 'Sessão agendada',
       healingDay: null,
     };
   }
@@ -50,7 +49,6 @@ export function resolveChatLifecycle(
     if (healingDay >= 1 && healingDay <= HEALING_WINDOW_DAYS) {
       return {
         kind: 'healing',
-        label: `Cicatrização - Dia ${healingDay}`,
         healingDay,
       };
     }

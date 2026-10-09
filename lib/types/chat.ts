@@ -24,7 +24,6 @@ export type ChatMessageDto = {
 
 export type ChatLifecycleStatus = {
   kind: 'scheduled' | 'healing';
-  label: string;
   healingDay: number | null;
 };
 
