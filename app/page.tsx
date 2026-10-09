@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TermsModal } from '@/components/shared/terms-modal';
+import { useI18n } from '@/hooks/use-i18n';
 export default function Home() {
+  const { t } = useI18n();
   const [showTerms, setShowTerms] = useState(false);
   const router = useRouter();
 
@@ -65,7 +67,7 @@ export default function Home() {
           onClick={handleAccess}
           className="bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 px-10 min-h-11 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)]"
         >
-          Acessar Plataforma
+          {t('auth.accessPlatform')}
         </button>
       </div>
     </main>
