@@ -164,6 +164,7 @@ export default function RegisterPage() {
   const [razaoSocial, setRazaoSocial] = useState('');
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const nextPathRef = useRef<string | null>(null);
+  const prevLocaleRef = useRef(locale);
 
   const { bridging: sessionBridge } = useRedirectIfAuthenticated(
     !isVerifying && !showWelcome && !isActivating && !loading
@@ -186,9 +187,13 @@ export default function RegisterPage() {
     },
   });
 
+  const hasFieldErrors = Object.keys(errors).length > 0;
+
   useEffect(() => {
-    if (Object.keys(errors).length) void trigger();
-  }, [locale, trigger, errors]);
+    if (prevLocaleRef.current === locale) return;
+    prevLocaleRef.current = locale;
+    if (hasFieldErrors) void trigger();
+  }, [locale, trigger, hasFieldErrors]);
 
   const dataNascimento = useWatch({ control, name: 'dataNascimento' });
   const passwordValue = useWatch({ control, name: 'password' }) || '';
@@ -427,7 +432,7 @@ export default function RegisterPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [isEstudio, cnpjValue, razaoSocial, setValue]);
+  }, [isEstudio, cnpjValue, razaoSocial, setValue, t]);
 
   return (
     <AuthScreen>

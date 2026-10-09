@@ -41,6 +41,7 @@ export default function LoginPage() {
   const [bridging, setBridging] = useState(false);
   const nextPathRef = useRef<string | null>(null);
   const resetToastShown = useRef(false);
+  const prevLocaleRef = useRef(locale);
 
   const { bridging: sessionBridge } = useRedirectIfAuthenticated(!isVerifying && !isLoading && !bridging);
 
@@ -71,10 +72,13 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const hasFieldErrors = Boolean(errors.email || errors.password);
+
   useEffect(() => {
-    if (!errors.email && !errors.password) return;
-    void trigger();
-  }, [locale, trigger, errors.email, errors.password]);
+    if (prevLocaleRef.current === locale) return;
+    prevLocaleRef.current = locale;
+    if (hasFieldErrors) void trigger();
+  }, [locale, trigger, hasFieldErrors]);
 
   const sendEmailOtp = async (email: string) => {
     if (!signIn) {
