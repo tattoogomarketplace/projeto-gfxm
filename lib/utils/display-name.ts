@@ -6,7 +6,7 @@ type UserMetadata = {
 
 export function resolveDisplayName(
   metadata?: UserMetadata,
-  fallback = 'Artista',
+  fallback = '',
   perfilNome?: string | null
 ): string {
   const raw = perfilNome || metadata?.full_name || metadata?.nome || metadata?.name || '';

@@ -89,7 +89,7 @@ function deriveFeaturedArtists(items: GaleriaItem[]): FeaturedArtist[] {
     }
     map.set(id, {
       id,
-      name: item.artist?.name || BRAND_NAME,
+      name: item.artist?.name || '',
       avatarUrl: item.artist?.avatarUrl ?? null,
       initial: item.artist?.initial || (item.artist?.name || 'A').charAt(0).toUpperCase(),
       location:
@@ -222,7 +222,7 @@ export function HomeDiscover() {
                 <div className="relative h-44 w-full overflow-hidden">
                   <OptimizedImage
                     src={artist.cover}
-                    alt={artist.name}
+                    alt={artist.name || t('welcome.artistFallback')}
                     className="h-44 w-full"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
@@ -235,7 +235,7 @@ export function HomeDiscover() {
                       {artist.avatarUrl ? (
                         <OptimizedImage
                           src={artist.avatarUrl}
-                          alt={artist.name}
+                          alt={artist.name || t('welcome.artistFallback')}
                           className="h-9 w-9 overflow-hidden rounded-full"
                         />
                       ) : (
@@ -243,7 +243,9 @@ export function HomeDiscover() {
                       )}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-white">{artist.name}</p>
+                      <p className="truncate text-sm font-semibold text-white">
+                        {artist.name || t('welcome.artistFallback')}
+                      </p>
                       {artist.location ? (
                         <p className="flex items-center gap-1 truncate text-[11px] text-white/70">
                           <MapPin className="h-3 w-3" strokeWidth={1.75} />

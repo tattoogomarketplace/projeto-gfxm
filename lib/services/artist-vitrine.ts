@@ -51,7 +51,7 @@ export function isArtistId(value: string): boolean {
 
 function artistName(nome: string | null): string {
   const trimmed = (nome ?? '').trim();
-  return trimmed || 'Artista';
+  return trimmed || '';
 }
 
 function artistInitial(nome: string): string {
@@ -141,7 +141,7 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       initial: artistInitial(name),
       cidade: artist.cidade,
       estado: artist.estado,
-      studio: artist.studio ? { id: artist.studio.id, name: studioName || 'Estúdio' } : null,
+      studio: artist.studio ? { id: artist.studio.id, name: studioName || '' } : null,
       kycApproved,
       bookingEnabled,
     },

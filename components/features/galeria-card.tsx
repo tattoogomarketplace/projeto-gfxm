@@ -33,8 +33,10 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
     router.push(`/dashboard/artista/${encodeURIComponent(item.tatuadorId)}`);
   };
 
-  const artistName = item.artist?.name || 'Artista';
-  const studioName = item.artist?.studio?.name;
+  const artistName = item.artist?.name || t('welcome.artistFallback');
+  const studioName = item.artist?.studio
+    ? item.artist.studio.name || t('studio.fallback')
+    : null;
   const location =
     item.artist?.cidade && item.artist?.estado
       ? `${item.artist.cidade}/${item.artist.estado}`

@@ -83,7 +83,7 @@ function parseLimit(raw: string): number {
 
 function artistName(nome: string | null): string {
   const trimmed = (nome ?? '').trim();
-  return trimmed || 'Artista';
+  return trimmed || '';
 }
 
 function artistInitial(nome: string): string {
@@ -187,7 +187,7 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
         cidade: row.tatuador.cidade,
         estado: row.tatuador.estado,
         studio: row.tatuador.studio
-          ? { id: row.tatuador.studio.id, name: studioName || 'Estúdio' }
+          ? { id: row.tatuador.studio.id, name: studioName || '' }
           : null,
       },
     };

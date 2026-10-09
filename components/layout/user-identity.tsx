@@ -33,7 +33,8 @@ export function UserIdentity() {
   }, [user?.fullName, isLoaded, isSignedIn, clerkUser, setUser, setRole]);
 
   const displayName = resolveDisplayName(
-    user?.fullName ? { full_name: user.fullName } : undefined
+    user?.fullName ? { full_name: user.fullName } : undefined,
+    t('welcome.artistFallback')
   );
 
   return (

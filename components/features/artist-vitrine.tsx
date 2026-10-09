@@ -74,7 +74,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
               {t('vitrine.badge')}
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-              {artist.name}
+              {artist.name || t('welcome.artistFallback')}
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {artist.kycApproved ? (
@@ -89,7 +89,9 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
               )}
             </div>
             <p className="mt-1 truncate text-sm text-neutral-600 dark:text-zinc-400">
-              {artist.studio?.name || t('vitrine.independent')}
+              {artist.studio
+                ? artist.studio.name || t('studio.fallback')
+                : t('vitrine.independent')}
             </p>
             {location ? (
               <p className="mt-2 flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-500">
@@ -196,7 +198,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
       <AtomicBookingSheet
         artistId={artist.id}
-        artistName={artist.name}
+        artistName={artist.name || t('welcome.artistFallback')}
         slots={availableSlots}
         artworkId={bookingArtwork?.id}
         artworkLabel={
