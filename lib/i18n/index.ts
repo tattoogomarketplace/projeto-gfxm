@@ -1,4 +1,12 @@
-export { BRAND_MARKETPLACE, BRAND_NAME, PROTECTED_BRANDS, isProtectedBrand, protectBrand } from '@/lib/i18n/brands';
+export {
+  BRAND_MARKETPLACE,
+  BRAND_NAME,
+  BRAND_STUDIO,
+  BRAND_WORDMARK,
+  PROTECTED_BRANDS,
+  isProtectedBrand,
+  protectBrand,
+} from '@/lib/i18n/brands';
 export type { ProtectedBrand } from '@/lib/i18n/brands';
 export type { Locale, MessageDictionary, MessageKey, TranslateVars, UiDictionary, UiMessageKey } from '@/lib/i18n/types';
 export {

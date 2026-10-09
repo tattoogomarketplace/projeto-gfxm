@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { normalizeLocale } from '@/lib/i18n/store';
 import { LOCALES, type Locale } from '@/lib/i18n/types';
 import { describeRequestAuth, resolvePerfilSession } from '@/lib/services/perfil-session';
 
@@ -67,6 +68,35 @@ async function syncLanguage(request: Request) {
     console.error('[user/language] falha ao persistir idioma', {
       userId,
       language,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { sucesso: false, erro: 'Falha ao sincronizar o idioma.' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  const { userId } = await resolvePerfilSession(request);
+  if (!userId) {
+    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+  }
+
+  try {
+    const perfil = await prisma.perfil.findFirst({
+      where: { clerk_id: userId, deleted_at: null },
+      select: { language: true },
+    });
+
+    if (!perfil) {
+      return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ sucesso: true, language: normalizeLocale(perfil.language) });
+  } catch (error) {
+    console.error('[user/language] falha ao ler idioma', {
+      userId,
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(

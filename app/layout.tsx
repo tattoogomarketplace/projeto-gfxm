@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
-import { ptBR } from "@clerk/localizations";
 import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
+import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
@@ -12,7 +11,7 @@ import { SingleSessionEnforcer } from "@/components/layout/single-session-enforc
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SplashGate } from "@/components/ui/splash-gate";
-import { CLERK_TASK_URLS } from "@/lib/utils/session-tasks";
+import { BRAND_NAME } from "@/lib/i18n/brands";
 
 const BRAND_ASSET_VERSION = "20261005";
 const brandAsset = (path: string) => `${path}?v=${BRAND_ASSET_VERSION}`;
@@ -22,35 +21,35 @@ const APPLE_TOUCH_ICON = brandAsset("/apple-touch-icon.png");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "TattooGo MK | O Marketplace da Tatuagem",
+  title: `${BRAND_NAME} | O Marketplace da Tatuagem`,
   description:
     "Encontre os melhores artistas e estúdios da sua região. Agende a sua sessão com segurança, gerencie a sua agenda e impulsione a sua arte.",
-  applicationName: "TattooGo MK",
+  applicationName: BRAND_NAME,
   manifest: brandAsset("/manifest.json"),
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "TattooGo MK",
+    title: BRAND_NAME,
   },
   twitter: {
     card: "summary_large_image",
-    title: "TattooGo MK | O Marketplace da Tatuagem",
+    title: `${BRAND_NAME} | O Marketplace da Tatuagem`,
     description:
       "Encontre os melhores artistas e estúdios da sua região. Agende a sua sessão com segurança, gerencie a sua agenda e impulsione a sua arte.",
     images: [BRAND_OG_IMAGE],
   },
   openGraph: {
-    title: "TattooGo MK | O Marketplace da Tatuagem",
+    title: `${BRAND_NAME} | O Marketplace da Tatuagem`,
     description:
       "Encontre os melhores artistas e estúdios da sua região. Agende a sua sessão com segurança, gerencie a sua agenda e impulsione a sua arte.",
     url: SITE_URL,
-    siteName: "TattooGo MK",
+    siteName: BRAND_NAME,
     images: [
       {
         url: BRAND_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "TattooGo MK — Dark Luxury",
+        alt: `${BRAND_NAME} — Dark Luxury`,
         type: "image/png",
       },
     ],
@@ -84,7 +83,7 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-title": "TattooGo MK",
+    "apple-mobile-web-app-title": BRAND_NAME,
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "msapplication-navbutton-color": "#0a0a0a",
     "msapplication-TileColor": "#0a0a0a",
@@ -111,15 +110,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider
-      localization={ptBR}
-      signInUrl="/login"
-      signUpUrl="/register"
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
-      afterSignOutUrl="/"
-      taskUrls={CLERK_TASK_URLS}
-    >
       <html lang="pt-BR" className="fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background select-none" suppressHydrationWarning>
         <head>
           <script
@@ -130,7 +120,7 @@ export default function RootLayout({
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
           <meta name="theme-color" content="#0a0a0a" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-title" content="TattooGo MK" />
+          <meta name="apple-mobile-web-app-title" content={BRAND_NAME} />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <link rel="manifest" href="/manifest.json?v=20261005" />
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261005" />
@@ -145,6 +135,7 @@ export default function RootLayout({
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
         <body className="luxury-canvas app-frame fixed inset-0 mb-0 flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pb-0 font-sans antialiased text-neutral-900 select-none dark:text-white">
+          <LocalizedClerkProvider>
           <SplashGate />
           <Providers>
             <ThemeProvider>
@@ -163,8 +154,8 @@ export default function RootLayout({
               </I18nProvider>
             </ThemeProvider>
           </Providers>
+          </LocalizedClerkProvider>
         </body>
       </html>
-    </ClerkProvider>
   );
 }

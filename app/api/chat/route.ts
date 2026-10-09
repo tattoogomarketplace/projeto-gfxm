@@ -1,12 +1,42 @@
 import { NextResponse } from 'next/server';
+import { BRAND_NAME } from '@/lib/i18n/brands';
+import { normalizeLocale } from '@/lib/i18n/store';
+import type { Locale } from '@/lib/i18n/types';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const SYSTEM_PROMPT =
-  'Você é o assistente virtual de elite do TattooGo MK, um marketplace premium de tatuagens. Seu tom é profissional, sofisticado, prestativo e direto. Você ajuda clientes com ideias de estilos (fineline, realismo, old school, etc.), dúvidas sobre cuidados pós-tatuagem e como agendar com os melhores artistas da plataforma. Responda sempre em português do Brasil e seja conciso.';
+const LOCALE_LANGUAGE_NAME: Record<Locale, string> = {
+  'pt-BR': 'Brazilian Portuguese (português do Brasil)',
+  'pt-PT': 'European Portuguese (português de Portugal)',
+  en: 'English',
+  es: 'Spanish (español)',
+  fr: 'French (français)',
+  de: 'German (Deutsch)',
+  it: 'Italian (italiano)',
+  ja: 'Japanese (日本語)',
+  zh: 'Simplified Chinese (简体中文)',
+  ko: 'Korean (한국어)',
+  ar: 'Arabic (العربية)',
+  ru: 'Russian (русский)',
+  hi: 'Hindi (हिन्दी)',
+  nl: 'Dutch (Nederlands)',
+  tr: 'Turkish (Türkçe)',
+  pl: 'Polish (polski)',
+};
+
+function buildSystemPrompt(locale: Locale): string {
+  const language = LOCALE_LANGUAGE_NAME[locale];
+  return [
+    `You are the elite virtual assistant of ${BRAND_NAME}, a premium tattoo marketplace.`,
+    'Your tone is professional, sophisticated, helpful and direct.',
+    'You help clients with style ideas (fineline, realism, old school, etc.), aftercare questions and booking the best artists on the platform.',
+    `You must always respond in ${language}.`,
+    'Be concise. Never translate or alter the brand name.',
+  ].join(' ');
+}
 
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
@@ -70,13 +100,14 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { message?: unknown; messages?: IncomingMessage[] } = {};
+  let body: { message?: unknown; messages?: IncomingMessage[]; locale?: unknown } = {};
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ erro: 'Payload inválido.' }, { status: 400 });
   }
 
+  const locale = normalizeLocale(body.locale);
   const history = Array.isArray(body.messages) ? body.messages : [];
   const latest =
     typeof body.message === 'string' && body.message.trim()
@@ -94,7 +125,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(locale) }] },
         contents,
         generationConfig: {
           temperature: 0.7,

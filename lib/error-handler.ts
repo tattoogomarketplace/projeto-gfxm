@@ -240,8 +240,34 @@ function matchByText(haystack: string): MessageKey | null {
   ) {
     return 'errors.sessionExpired';
   }
-  if (haystack.includes('unauthorized') || haystack.includes('unauthenticated')) {
+  if (
+    haystack.includes('unauthorized') ||
+    haystack.includes('unauthenticated') ||
+    haystack.includes('não autenticado') ||
+    haystack.includes('nao autenticado')
+  ) {
     return 'errors.unauthorized';
+  }
+  if (
+    haystack.includes('perfil não encontrado') ||
+    haystack.includes('perfil nao encontrado')
+  ) {
+    return 'errors.notFound';
+  }
+  if (
+    haystack.includes('payload inválido') ||
+    haystack.includes('payload invalido') ||
+    haystack.includes('idioma inválido') ||
+    haystack.includes('idioma invalido') ||
+    haystack.includes('mensagem vazia')
+  ) {
+    return 'errors.generic';
+  }
+  if (
+    haystack.includes('falha ao sincronizar o idioma') ||
+    haystack.includes('falha ao sincronizar o idioma.')
+  ) {
+    return 'errors.server';
   }
   if (haystack.includes('forbidden') || haystack.includes('not allowed')) {
     return 'errors.forbidden';

@@ -314,7 +314,7 @@ export function PaymentsHub() {
         </p>
         <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 dark:text-zinc-500">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" strokeWidth={2} />
-          {t('payments.secureNote')}
+          {t('payments.secureNote', { brand: BRAND_NAME })}
         </p>
       </header>
 

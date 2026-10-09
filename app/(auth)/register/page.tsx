@@ -33,6 +33,7 @@ import { markOnboardingGrace } from '@/lib/utils/session';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
 import { formatAppError } from '@/lib/error-handler';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import type { TranslateFn } from '@/lib/utils/password-strength';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -482,11 +483,11 @@ export default function RegisterPage() {
           <span aria-hidden="true">&lt;</span>
           {t('common.back')}
         </Link>
-        <h1 className="text-2xl font-bold mb-6 text-center">{t('auth.registerTitle')} <span className="text-orange-500">TattooGo MK</span></h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">{t('auth.registerTitle')} <span className="text-orange-500">{BRAND_NAME}</span></h1>
 
         {status === 'menor_14' && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-lg mb-6 text-sm text-center">
-            {t('auth.minAgeBanner')}
+            {t('auth.minAgeBanner', { brand: BRAND_NAME })}
           </div>
         )}
 

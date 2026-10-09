@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TermsModal } from '@/components/shared/terms-modal';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 export default function Home() {
   const { t } = useI18n();
   const [showTerms, setShowTerms] = useState(false);
@@ -56,7 +57,7 @@ export default function Home() {
 
       <div className="z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 text-center [-webkit-overflow-scrolling:touch]">
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
-          TattooGo <span className="text-orange-500">MK</span>
+          {BRAND_WORDMARK.main} <span className="text-orange-500">{BRAND_WORDMARK.mark}</span>
         </h1>
         <p className="text-neutral-600 text-lg md:text-xl mb-10 max-w-lg dark:text-zinc-400">
           {t('landing.tagline')}

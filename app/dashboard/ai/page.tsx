@@ -16,7 +16,7 @@ type ChatMessage = {
 };
 
 export default function DashboardAiPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +52,7 @@ export default function DashboardAiPage() {
         body: JSON.stringify({
           message: text,
           messages: nextMessages.map(({ role, content }) => ({ role, content })),
+          locale,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as {

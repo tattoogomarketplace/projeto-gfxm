@@ -19,6 +19,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
 import { formatAppError } from '@/lib/error-handler';
+import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
 type LoginFormValues = {
   email: string;
@@ -314,7 +315,7 @@ export default function LoginPage() {
       <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
-            TattooGo <span className="text-orange-500">MK</span>
+            {BRAND_WORDMARK.main} <span className="text-orange-500">{BRAND_WORDMARK.mark}</span>
           </h1>
           <p className="mt-2 text-sm text-zinc-500">{t('auth.loginSubtitle')}</p>
         </div>

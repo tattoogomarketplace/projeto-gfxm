@@ -19,6 +19,7 @@ import {
 } from '@/lib/notification-preferences';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import type { MessageKey } from '@/lib/i18n/types';
 
 const OPTIONS: Array<{
@@ -152,7 +153,7 @@ export const NotificationPreferences = memo(function NotificationPreferences({
                   {t(option.titleKey)}
                 </span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-                  {t(option.descriptionKey)}
+                  {t(option.descriptionKey, { brand: BRAND_NAME })}
                 </span>
               </span>
               <PreferenceToggle

@@ -12,6 +12,7 @@ import { Input } from '@/components/input';
 import { OtpInput } from '@/components/ui/otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useI18n } from '@/hooks/use-i18n';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 
 type ReverificationStatus = 'preparing' | 'second_factor';
 
@@ -200,7 +201,7 @@ export function ClerkSessionReverification({
             {t('security.title')}
           </h3>
           <p className="mt-0.5 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-            {t('security.nativeHint')}
+            {t('security.nativeHint', { brand: BRAND_NAME })}
           </p>
         </div>
       </div>
