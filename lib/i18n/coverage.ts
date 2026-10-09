@@ -622,6 +622,16 @@ export type DiscoveryMessages = Pick<
   | 'agenda.session'
   | 'agenda.signDocument'
   | 'agenda.payDeposit'
+  | 'agenda.trackerProgress'
+  | 'agenda.stepActionHint'
+  | 'agenda.stepPaymentHint'
+  | 'agenda.stepConfirmHint'
+  | 'agenda.stepStateActive'
+  | 'agenda.stepStateDone'
+  | 'agenda.stepStatePending'
+  | 'agenda.trackerExpand'
+  | 'agenda.trackerCollapse'
+  | 'agenda.depositDue'
   | 'payments.title'
   | 'payments.tabClient'
   | 'payments.tabStudio'
@@ -687,6 +697,16 @@ export const DISCOVERY_PT_BR: DiscoveryMessages = {
   'profile.favorites': 'Favoritos',
   'profile.completed': 'Concluídas',
   'profile.verified': 'Perfil verificado',
+  'agenda.trackerProgress': 'Progresso da sessão',
+  'agenda.stepActionHint': 'Assine o documento para liberar a sessão.',
+  'agenda.stepPaymentHint': 'Pague o sinal de 25% para confirmar o horário.',
+  'agenda.stepConfirmHint': 'Sessão confirmada. Seu horário está reservado.',
+  'agenda.stepStateActive': 'Etapa atual',
+  'agenda.stepStateDone': 'Concluída',
+  'agenda.stepStatePending': 'Pendente',
+  'agenda.trackerExpand': 'Ver detalhes',
+  'agenda.trackerCollapse': 'Ocultar detalhes',
+  'agenda.depositDue': 'Sinal de {percent}%',
 };
 
 export const DISCOVERY_EN: DiscoveryMessages = {
@@ -733,6 +753,16 @@ export const DISCOVERY_EN: DiscoveryMessages = {
   'profile.favorites': 'Favorites',
   'profile.completed': 'Completed',
   'profile.verified': 'Verified profile',
+  'agenda.trackerProgress': 'Session progress',
+  'agenda.stepActionHint': 'Sign the document to unlock the session.',
+  'agenda.stepPaymentHint': 'Pay the 25% deposit to confirm your slot.',
+  'agenda.stepConfirmHint': 'Session confirmed. Your slot is reserved.',
+  'agenda.stepStateActive': 'Current step',
+  'agenda.stepStateDone': 'Completed',
+  'agenda.stepStatePending': 'Pending',
+  'agenda.trackerExpand': 'View details',
+  'agenda.trackerCollapse': 'Hide details',
+  'agenda.depositDue': '{percent}% deposit',
 };
 
 export const DISCOVERY_ES: DiscoveryMessages = {
@@ -779,6 +809,16 @@ export const DISCOVERY_ES: DiscoveryMessages = {
   'profile.favorites': 'Favoritos',
   'profile.completed': 'Completadas',
   'profile.verified': 'Perfil verificado',
+  'agenda.trackerProgress': 'Progreso de la sesión',
+  'agenda.stepActionHint': 'Firma el documento para liberar la sesión.',
+  'agenda.stepPaymentHint': 'Paga la señal del 25% para confirmar tu horario.',
+  'agenda.stepConfirmHint': 'Sesión confirmada. Tu horario está reservado.',
+  'agenda.stepStateActive': 'Etapa actual',
+  'agenda.stepStateDone': 'Completada',
+  'agenda.stepStatePending': 'Pendiente',
+  'agenda.trackerExpand': 'Ver detalles',
+  'agenda.trackerCollapse': 'Ocultar detalles',
+  'agenda.depositDue': 'Señal del {percent}%',
 };
 
 export const DISCOVERY_PT_PT: DiscoveryMessages = {
@@ -825,6 +865,16 @@ export const DISCOVERY_PT_PT: DiscoveryMessages = {
   'profile.favorites': 'Favoritos',
   'profile.completed': 'Concluídas',
   'profile.verified': 'Perfil verificado',
+  'agenda.trackerProgress': 'Progresso da sessão',
+  'agenda.stepActionHint': 'Assine o documento para libertar a sessão.',
+  'agenda.stepPaymentHint': 'Pague o sinal de 25% para confirmar o horário.',
+  'agenda.stepConfirmHint': 'Sessão confirmada. O seu horário está reservado.',
+  'agenda.stepStateActive': 'Etapa atual',
+  'agenda.stepStateDone': 'Concluída',
+  'agenda.stepStatePending': 'Pendente',
+  'agenda.trackerExpand': 'Ver detalhes',
+  'agenda.trackerCollapse': 'Ocultar detalhes',
+  'agenda.depositDue': 'Sinal de {percent}%',
 };
 
 export const DISCOVERY_FR: DiscoveryMessages = {
@@ -871,6 +921,16 @@ export const DISCOVERY_FR: DiscoveryMessages = {
   'profile.favorites': 'Favoris',
   'profile.completed': 'Terminées',
   'profile.verified': 'Profil vérifié',
+  'agenda.trackerProgress': 'Progression de la séance',
+  'agenda.stepActionHint': 'Signez le document pour libérer la séance.',
+  'agenda.stepPaymentHint': 'Payez l’acompte de 25 % pour confirmer votre créneau.',
+  'agenda.stepConfirmHint': 'Séance confirmée. Votre créneau est réservé.',
+  'agenda.stepStateActive': 'Étape actuelle',
+  'agenda.stepStateDone': 'Terminée',
+  'agenda.stepStatePending': 'En attente',
+  'agenda.trackerExpand': 'Voir les détails',
+  'agenda.trackerCollapse': 'Masquer les détails',
+  'agenda.depositDue': 'Acompte de {percent} %',
 };
 
 export const DISCOVERY_DE: DiscoveryMessages = {
@@ -917,6 +977,16 @@ export const DISCOVERY_DE: DiscoveryMessages = {
   'profile.favorites': 'Favoriten',
   'profile.completed': 'Abgeschlossen',
   'profile.verified': 'Verifiziertes Profil',
+  'agenda.trackerProgress': 'Sitzungsfortschritt',
+  'agenda.stepActionHint': 'Unterschreibe das Dokument, um die Sitzung freizugeben.',
+  'agenda.stepPaymentHint': 'Zahle die Anzahlung von 25 %, um deinen Termin zu bestätigen.',
+  'agenda.stepConfirmHint': 'Sitzung bestätigt. Dein Termin ist reserviert.',
+  'agenda.stepStateActive': 'Aktueller Schritt',
+  'agenda.stepStateDone': 'Abgeschlossen',
+  'agenda.stepStatePending': 'Ausstehend',
+  'agenda.trackerExpand': 'Details anzeigen',
+  'agenda.trackerCollapse': 'Details ausblenden',
+  'agenda.depositDue': 'Anzahlung von {percent} %',
 };
 
 export const DISCOVERY_IT: DiscoveryMessages = {
@@ -963,6 +1033,16 @@ export const DISCOVERY_IT: DiscoveryMessages = {
   'profile.favorites': 'Preferiti',
   'profile.completed': 'Completate',
   'profile.verified': 'Profilo verificato',
+  'agenda.trackerProgress': 'Avanzamento della sessione',
+  'agenda.stepActionHint': 'Firma il documento per sbloccare la sessione.',
+  'agenda.stepPaymentHint': 'Paga l’acconto del 25% per confermare lo slot.',
+  'agenda.stepConfirmHint': 'Sessione confermata. Il tuo slot è riservato.',
+  'agenda.stepStateActive': 'Fase attuale',
+  'agenda.stepStateDone': 'Completata',
+  'agenda.stepStatePending': 'In attesa',
+  'agenda.trackerExpand': 'Vedi dettagli',
+  'agenda.trackerCollapse': 'Nascondi dettagli',
+  'agenda.depositDue': 'Acconto del {percent}%',
 };
 
 export const DISCOVERY_JA: DiscoveryMessages = {
@@ -1009,6 +1089,16 @@ export const DISCOVERY_JA: DiscoveryMessages = {
   'profile.favorites': 'お気に入り',
   'profile.completed': '完了',
   'profile.verified': '認証済みプロフィール',
+  'agenda.trackerProgress': 'セッションの進捗',
+  'agenda.stepActionHint': 'セッションを解除するには書類に署名してください。',
+  'agenda.stepPaymentHint': '枠を確定するには25%のデポジットをお支払いください。',
+  'agenda.stepConfirmHint': 'セッションが確定しました。枠は確保されています。',
+  'agenda.stepStateActive': '現在のステップ',
+  'agenda.stepStateDone': '完了',
+  'agenda.stepStatePending': '保留中',
+  'agenda.trackerExpand': '詳細を表示',
+  'agenda.trackerCollapse': '詳細を隠す',
+  'agenda.depositDue': '{percent}% のデポジット',
 };
 
 export const DISCOVERY_ZH: DiscoveryMessages = {
@@ -1055,6 +1145,16 @@ export const DISCOVERY_ZH: DiscoveryMessages = {
   'profile.favorites': '收藏',
   'profile.completed': '已完成',
   'profile.verified': '已验证资料',
+  'agenda.trackerProgress': '疗程进度',
+  'agenda.stepActionHint': '签署文件以解锁疗程。',
+  'agenda.stepPaymentHint': '支付 25% 定金以确认时段。',
+  'agenda.stepConfirmHint': '疗程已确认。你的时段已保留。',
+  'agenda.stepStateActive': '当前步骤',
+  'agenda.stepStateDone': '已完成',
+  'agenda.stepStatePending': '待处理',
+  'agenda.trackerExpand': '查看详情',
+  'agenda.trackerCollapse': '隐藏详情',
+  'agenda.depositDue': '{percent}% 定金',
 };
 
 export const DISCOVERY_KO: DiscoveryMessages = {
@@ -1101,6 +1201,16 @@ export const DISCOVERY_KO: DiscoveryMessages = {
   'profile.favorites': '즐겨찾기',
   'profile.completed': '완료됨',
   'profile.verified': '인증된 프로필',
+  'agenda.trackerProgress': '세션 진행 상황',
+  'agenda.stepActionHint': '세션을 해제하려면 문서에 서명하세요.',
+  'agenda.stepPaymentHint': '시간을 확정하려면 25% 계약금을 결제하세요.',
+  'agenda.stepConfirmHint': '세션이 확정되었습니다. 시간이 예약되었습니다.',
+  'agenda.stepStateActive': '현재 단계',
+  'agenda.stepStateDone': '완료됨',
+  'agenda.stepStatePending': '대기 중',
+  'agenda.trackerExpand': '세부정보 보기',
+  'agenda.trackerCollapse': '세부정보 숨기기',
+  'agenda.depositDue': '{percent}% 계약금',
 };
 
 export const DISCOVERY_AR: DiscoveryMessages = {
@@ -1147,6 +1257,16 @@ export const DISCOVERY_AR: DiscoveryMessages = {
   'profile.favorites': 'المفضلة',
   'profile.completed': 'مكتملة',
   'profile.verified': 'ملف موثّق',
+  'agenda.trackerProgress': 'تقدم الجلسة',
+  'agenda.stepActionHint': 'وقّع المستند لفتح الجلسة.',
+  'agenda.stepPaymentHint': 'ادفع العربون بنسبة 25% لتأكيد موعدك.',
+  'agenda.stepConfirmHint': 'تم تأكيد الجلسة. موعدك محجوز.',
+  'agenda.stepStateActive': 'الخطوة الحالية',
+  'agenda.stepStateDone': 'مكتمل',
+  'agenda.stepStatePending': 'قيد الانتظار',
+  'agenda.trackerExpand': 'عرض التفاصيل',
+  'agenda.trackerCollapse': 'إخفاء التفاصيل',
+  'agenda.depositDue': 'عربون {percent}%',
 };
 
 export const DISCOVERY_RU: DiscoveryMessages = {
@@ -1193,6 +1313,16 @@ export const DISCOVERY_RU: DiscoveryMessages = {
   'profile.favorites': 'Избранное',
   'profile.completed': 'Завершено',
   'profile.verified': 'Проверенный профиль',
+  'agenda.trackerProgress': 'Прогресс сеанса',
+  'agenda.stepActionHint': 'Подпишите документ, чтобы открыть сеанс.',
+  'agenda.stepPaymentHint': 'Внесите предоплату 25%, чтобы подтвердить время.',
+  'agenda.stepConfirmHint': 'Сеанс подтверждён. Ваше время зарезервировано.',
+  'agenda.stepStateActive': 'Текущий этап',
+  'agenda.stepStateDone': 'Завершено',
+  'agenda.stepStatePending': 'Ожидает',
+  'agenda.trackerExpand': 'Показать детали',
+  'agenda.trackerCollapse': 'Скрыть детали',
+  'agenda.depositDue': 'Предоплата {percent}%',
 };
 
 export const DISCOVERY_HI: DiscoveryMessages = {
@@ -1239,6 +1369,16 @@ export const DISCOVERY_HI: DiscoveryMessages = {
   'profile.favorites': 'पसंदीदा',
   'profile.completed': 'पूर्ण',
   'profile.verified': 'सत्यापित प्रोफ़ाइल',
+  'agenda.trackerProgress': 'सेशन प्रगति',
+  'agenda.stepActionHint': 'सेशन अनलॉक करने के लिए दस्तावेज़ पर हस्ताक्षर करें।',
+  'agenda.stepPaymentHint': 'समय की पुष्टि के लिए 25% जमा का भुगतान करें।',
+  'agenda.stepConfirmHint': 'सेशन की पुष्टि हो गई। आपका समय आरक्षित है।',
+  'agenda.stepStateActive': 'वर्तमान चरण',
+  'agenda.stepStateDone': 'पूर्ण',
+  'agenda.stepStatePending': 'लंबित',
+  'agenda.trackerExpand': 'विवरण देखें',
+  'agenda.trackerCollapse': 'विवरण छिपाएं',
+  'agenda.depositDue': '{percent}% जमा',
 };
 
 export const DISCOVERY_NL: DiscoveryMessages = {
@@ -1285,6 +1425,16 @@ export const DISCOVERY_NL: DiscoveryMessages = {
   'profile.favorites': 'Favorieten',
   'profile.completed': 'Voltooid',
   'profile.verified': 'Geverifieerd profiel',
+  'agenda.trackerProgress': 'Voortgang van de sessie',
+  'agenda.stepActionHint': 'Onderteken het document om de sessie vrij te geven.',
+  'agenda.stepPaymentHint': 'Betaal de aanbetaling van 25% om je tijdslot te bevestigen.',
+  'agenda.stepConfirmHint': 'Sessie bevestigd. Je tijdslot is gereserveerd.',
+  'agenda.stepStateActive': 'Huidige stap',
+  'agenda.stepStateDone': 'Voltooid',
+  'agenda.stepStatePending': 'In behandeling',
+  'agenda.trackerExpand': 'Details bekijken',
+  'agenda.trackerCollapse': 'Details verbergen',
+  'agenda.depositDue': 'Aanbetaling van {percent}%',
 };
 
 export const DISCOVERY_TR: DiscoveryMessages = {
@@ -1331,6 +1481,16 @@ export const DISCOVERY_TR: DiscoveryMessages = {
   'profile.favorites': 'Favoriler',
   'profile.completed': 'Tamamlanan',
   'profile.verified': 'Doğrulanmış profil',
+  'agenda.trackerProgress': 'Seans ilerlemesi',
+  'agenda.stepActionHint': 'Seansı açmak için belgeyi imzala.',
+  'agenda.stepPaymentHint': 'Randevunu onaylamak için %25 kapora öde.',
+  'agenda.stepConfirmHint': 'Seans onaylandı. Randevun ayrıldı.',
+  'agenda.stepStateActive': 'Geçerli adım',
+  'agenda.stepStateDone': 'Tamamlandı',
+  'agenda.stepStatePending': 'Beklemede',
+  'agenda.trackerExpand': 'Ayrıntıları gör',
+  'agenda.trackerCollapse': 'Ayrıntıları gizle',
+  'agenda.depositDue': '%{percent} kapora',
 };
 
 export const DISCOVERY_PL: DiscoveryMessages = {
@@ -1377,4 +1537,14 @@ export const DISCOVERY_PL: DiscoveryMessages = {
   'profile.favorites': 'Ulubione',
   'profile.completed': 'Zakończone',
   'profile.verified': 'Zweryfikowany profil',
+  'agenda.trackerProgress': 'Postęp sesji',
+  'agenda.stepActionHint': 'Podpisz dokument, aby odblokować sesję.',
+  'agenda.stepPaymentHint': 'Wpłać zaliczkę 25%, aby potwierdzić termin.',
+  'agenda.stepConfirmHint': 'Sesja potwierdzona. Twój termin jest zarezerwowany.',
+  'agenda.stepStateActive': 'Bieżący etap',
+  'agenda.stepStateDone': 'Zakończono',
+  'agenda.stepStatePending': 'Oczekuje',
+  'agenda.trackerExpand': 'Zobacz szczegóły',
+  'agenda.trackerCollapse': 'Ukryj szczegóły',
+  'agenda.depositDue': 'Zaliczka {percent}%',
 };
