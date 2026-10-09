@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 
 /**
  * `useRotatingToken` — motor de tempo visual TOTP (cliente).
@@ -60,6 +60,22 @@ function deriveCode(seed: string, step: number, digits: number): string {
   return value.toString().padStart(digits, '0');
 }
 
+/** Assina o "tick" de 1s do relógio externo, limpando o timer no unmount. */
+function subscribeToClock(onTick: () => void): () => void {
+  const id = window.setInterval(onTick, 1000);
+  return () => window.clearInterval(id);
+}
+
+/** Snapshot do relógio em segundos (inteiro, estável dentro do mesmo segundo). */
+function getClockSnapshot(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+/** Snapshot determinístico para SSR/hidratação — evita divergência de markup. */
+function getServerClockSnapshot(): number {
+  return 0;
+}
+
 export function useRotatingToken({
   seed,
   digits = DEFAULT_DIGITS,
@@ -68,16 +84,13 @@ export function useRotatingToken({
   const safeDigits = Math.min(Math.max(Math.trunc(digits), 4), 6);
   const safePeriod = Math.max(Math.trunc(period), 1);
 
-  const [now, setNow] = useState<number>(0);
-
-  useEffect(() => {
-    setNow(Date.now());
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
+  const seconds = useSyncExternalStore(
+    subscribeToClock,
+    getClockSnapshot,
+    getServerClockSnapshot
+  );
 
   const { code, remaining, progress, step } = useMemo(() => {
-    const seconds = Math.floor(now / 1000);
     const currentStep = Math.floor(seconds / safePeriod);
     const elapsed = seconds % safePeriod;
     const secondsLeft = secondsLeftOrPeriod(elapsed, safePeriod);
@@ -88,7 +101,7 @@ export function useRotatingToken({
       progress: secondsLeft / safePeriod,
       step: currentStep,
     };
-  }, [now, seed, safeDigits, safePeriod]);
+  }, [seconds, seed, safeDigits, safePeriod]);
 
   return { code, remaining, progress, step };
 }
