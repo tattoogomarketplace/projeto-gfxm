@@ -10,11 +10,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { weekdayKey } from '@/lib/working-hours';
-import {
-  bodyPartLabel,
-  sessionDurationLabel,
-  styleLabel,
-} from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +21,7 @@ type ArtistVitrineProps = {
 export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const router = useRouter();
   const { t } = useI18n();
+  const { styleLabel, bodyPartLabel, sessionDurationLabel } = portfolioLabelResolver(t);
   const { triggerHaptic } = useHapticFeedback();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);

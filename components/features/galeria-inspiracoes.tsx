@@ -12,8 +12,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import {
   PORTFOLIO_BODY_PARTS,
   PORTFOLIO_STYLES,
-  bodyPartLabel,
-  styleLabel,
+  portfolioLabelResolver,
 } from '@/lib/portfolio-metadata';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 import type { MessageKey } from '@/lib/i18n/types';
@@ -135,6 +134,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const [openCategory, setOpenCategory] = useState<FilterCategory>(null);
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
+  const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
 
   useEffect(() => {
     if (!openCategory) return;

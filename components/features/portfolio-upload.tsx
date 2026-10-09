@@ -13,10 +13,7 @@ import {
   PORTFOLIO_BODY_PARTS,
   PORTFOLIO_SESSION_DURATIONS,
   PORTFOLIO_STYLES,
-  bodyPartLabel,
-  healingLabel,
-  sessionDurationLabel,
-  styleLabel,
+  portfolioLabelResolver,
   type PortfolioBodyPart,
   type PortfolioItemDto,
   type PortfolioSessionDuration,
@@ -78,6 +75,8 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
   void tatuadorId;
   const { getToken } = useAuth();
   const { t } = useI18n();
+  const { styleLabel, bodyPartLabel, sessionDurationLabel, healingLabel } =
+    portfolioLabelResolver(t);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
 

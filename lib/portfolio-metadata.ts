@@ -1,3 +1,5 @@
+import type { MessageKey } from '@/lib/i18n/types';
+
 export const PORTFOLIO_STYLES = [
   'Fine Line',
   'Realismo',
@@ -139,6 +141,81 @@ export function bodyPartLabel(value: string): string {
 
 export function sessionDurationLabel(value: string): string {
   return isPortfolioSessionDuration(value) ? DURATION_LABELS[value] : value;
+}
+
+const STYLE_KEYS: Record<PortfolioStyle, MessageKey> = {
+  'Fine Line': 'portfolio.style.fineLine',
+  Realismo: 'portfolio.style.realismo',
+  'Old School': 'portfolio.style.oldSchool',
+  Blackwork: 'portfolio.style.blackwork',
+  Minimalista: 'portfolio.style.minimalista',
+  Oriental: 'portfolio.style.oriental',
+  Geometrico: 'portfolio.style.geometrico',
+  Aquarela: 'portfolio.style.aquarela',
+  Lettering: 'portfolio.style.lettering',
+  'Neo Traditional': 'portfolio.style.neoTradicional',
+};
+
+const BODY_PART_KEYS: Record<PortfolioBodyPart, MessageKey> = {
+  Braco: 'portfolio.body.braco',
+  Antebraco: 'portfolio.body.antebraco',
+  Ombro: 'portfolio.body.ombro',
+  Peito: 'portfolio.body.peito',
+  Costas: 'portfolio.body.costas',
+  Costela: 'portfolio.body.costela',
+  Perna: 'portfolio.body.perna',
+  Coxa: 'portfolio.body.coxa',
+  Panturrilha: 'portfolio.body.panturrilha',
+  Pulso: 'portfolio.body.pulso',
+  Mao: 'portfolio.body.mao',
+  Pescoco: 'portfolio.body.pescoco',
+};
+
+const DURATION_KEYS: Record<PortfolioSessionDuration, MessageKey> = {
+  'Ate 1h': 'portfolio.duration.ate1h',
+  '1-2h': 'portfolio.duration.h1to2',
+  '2-4h': 'portfolio.duration.h2to4',
+  '4-6h': 'portfolio.duration.h4to6',
+  'Dia inteiro': 'portfolio.duration.fullDay',
+  'Multiplas sessoes': 'portfolio.duration.multiSession',
+};
+
+export function portfolioStyleKey(value: string): MessageKey | null {
+  return isPortfolioStyle(value) ? STYLE_KEYS[value] : null;
+}
+
+export function portfolioBodyKey(value: string): MessageKey | null {
+  return isPortfolioBodyPart(value) ? BODY_PART_KEYS[value] : null;
+}
+
+export function portfolioDurationKey(value: string): MessageKey | null {
+  return isPortfolioSessionDuration(value) ? DURATION_KEYS[value] : null;
+}
+
+export function portfolioHealingKey(isHealed: boolean): MessageKey {
+  return isHealed ? 'portfolio.healing.healed' : 'portfolio.healing.fresh';
+}
+
+type TranslateFn = (key: MessageKey) => string;
+
+export function portfolioLabelResolver(t: TranslateFn) {
+  return {
+    styleLabel(value: string): string {
+      const key = portfolioStyleKey(value);
+      return key ? t(key) : value;
+    },
+    bodyPartLabel(value: string): string {
+      const key = portfolioBodyKey(value);
+      return key ? t(key) : value;
+    },
+    sessionDurationLabel(value: string): string {
+      const key = portfolioDurationKey(value);
+      return key ? t(key) : value;
+    },
+    healingLabel(isHealed: boolean): string {
+      return t(portfolioHealingKey(isHealed));
+    },
+  };
 }
 
 const CASUAL_NOISE =

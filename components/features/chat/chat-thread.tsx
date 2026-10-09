@@ -12,7 +12,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import type { ChatArtworkRef, ChatMessageDto } from '@/lib/types/chat';
 import type { MessageKey, TranslateVars } from '@/lib/i18n/types';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
-import { bodyPartLabel, healingLabel, styleLabel } from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 import { formatAppError } from '@/lib/error-handler';
 
@@ -38,6 +38,7 @@ type ChatThreadProps = {
 type Translate = (key: MessageKey, vars?: TranslateVars) => string;
 
 function bookingDraft(t: Translate, artwork?: ChatArtworkRef | null): string {
+  const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   if (artwork) {
     const body = artwork.bodyPart
       ? t('chat.bookingDraftBody', { part: bodyPartLabel(artwork.bodyPart) })
@@ -68,6 +69,7 @@ export function ChatThread({
   onOpenBooking,
 }: ChatThreadProps) {
   const { t } = useI18n();
+  const { styleLabel, bodyPartLabel, healingLabel } = portfolioLabelResolver(t);
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(t, artwork) : ''));
   const [loading, setLoading] = useState(false);

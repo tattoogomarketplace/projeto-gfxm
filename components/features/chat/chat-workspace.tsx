@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
-import { bodyPartLabel, styleLabel } from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { ChatArtworkRef, ChatConversationDto, ChatPeer, ChatTab } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -68,6 +68,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const getTokenRef = useRef(getToken);
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
+  const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const pendingChatArtwork = useUiStore((s) => s.pendingChatArtwork);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);

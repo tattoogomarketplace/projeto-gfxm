@@ -10,7 +10,7 @@ import { GaleriaEntryCard } from '@/components/features/galeria-inspiracoes';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BRAND_NAME } from '@/lib/i18n/brands';
-import { styleLabel } from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 import type { GaleriaItem } from '@/lib/types/galeria';
 
@@ -153,6 +153,7 @@ function StyleCardSkeleton() {
 
 export function HomeDiscover() {
   const { t } = useI18n();
+  const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const { data, isLoading } = useGaleria({ healed: 'all' });

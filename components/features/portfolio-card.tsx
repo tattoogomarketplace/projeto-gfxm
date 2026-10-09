@@ -6,7 +6,8 @@ import { Heart } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
-import { bodyPartLabel, healingLabel, sessionDurationLabel, styleLabel } from '@/lib/portfolio-metadata';
+import { useI18n } from '@/hooks/use-i18n';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 interface PortfolioCardProps {
   id: string;
@@ -33,6 +34,9 @@ export function PortfolioCard({
   const [likes, setLikes] = useState(initialLikes);
   const { triggerHaptic } = useHapticFeedback();
   const enqueue = useOfflineQueue((s) => s.enqueue);
+  const { t } = useI18n();
+  const { styleLabel, bodyPartLabel, sessionDurationLabel, healingLabel } =
+    portfolioLabelResolver(t);
 
   const handleLike = async () => {
     const nextLiked = !isLiked;

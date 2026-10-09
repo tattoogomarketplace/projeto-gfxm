@@ -7,12 +7,9 @@ import { Heart, MapPin, MessageCircle } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
-import {
-  bodyPartLabel,
-  healingLabel,
-  sessionDurationLabel,
-  styleLabel,
-} from '@/lib/portfolio-metadata';
+import { useOfflineQueue } from '@/hooks/use-offline-queue';
+import { useI18n } from '@/hooks/use-i18n';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { GaleriaItem } from '@/lib/types/galeria';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +24,9 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
   const [likes, setLikes] = useState(item.likesCount);
   const { triggerHaptic } = useHapticFeedback();
   const enqueue = useOfflineQueue((s) => s.enqueue);
+  const { t } = useI18n();
+  const { styleLabel, bodyPartLabel, sessionDurationLabel, healingLabel } =
+    portfolioLabelResolver(t);
 
   const openArtistProfile = () => {
     triggerHaptic('light');
