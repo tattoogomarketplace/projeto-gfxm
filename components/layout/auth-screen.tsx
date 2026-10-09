@@ -4,6 +4,7 @@ import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { useI18n } from '@/hooks/use-i18n';
 
 type AuthScreenProps = {
   children: ReactNode;
@@ -34,8 +35,10 @@ type AuthBridgeOverlayProps = {
 
 function AuthBridgeOverlayBase({
   visible,
-  label = 'Carregando',
+  label,
 }: AuthBridgeOverlayProps) {
+  const { t } = useI18n();
+  const resolvedLabel = label ?? t('common.loading');
   return (
     <div
       className={cn(
@@ -45,7 +48,7 @@ function AuthBridgeOverlayBase({
       aria-hidden={!visible}
       role={visible ? 'status' : undefined}
     >
-      <TattooMachineLoader compact label={label} />
+      <TattooMachineLoader compact label={resolvedLabel} />
     </div>
   );
 }

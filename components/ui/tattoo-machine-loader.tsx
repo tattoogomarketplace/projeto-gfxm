@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface TattooMachineLoaderProps {
   label?: string;
@@ -11,11 +12,13 @@ interface TattooMachineLoaderProps {
 }
 
 function TattooMachineLoaderBase({
-  label = 'Tatuando...',
+  label,
   className,
   compact = false,
   failed = false,
 }: TattooMachineLoaderProps) {
+  const { t } = useI18n();
+  const resolvedLabel = label ?? t('common.loading');
   return (
     <div
       className={cn(
@@ -25,7 +28,7 @@ function TattooMachineLoaderBase({
       )}
       role="status"
       aria-live="polite"
-      aria-label={label}
+      aria-label={resolvedLabel}
     >
       <div className={cn('relative', compact ? 'h-7 w-7' : 'h-14 w-14')}>
         <div
@@ -65,14 +68,14 @@ function TattooMachineLoaderBase({
           )}
         />
       </div>
-      {label ? (
+      {resolvedLabel ? (
         <span
           className={cn(
             'text-[11px] font-bold uppercase tracking-[0.2em]',
             failed ? 'text-red-500' : 'text-orange-500'
           )}
         >
-          {label}
+          {resolvedLabel}
         </span>
       ) : null}
     </div>

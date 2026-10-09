@@ -19,7 +19,7 @@ async function fetchGaleria(query: GaleriaQuery): Promise<GaleriaItem[]> {
   };
 
   if (!res.ok || payload.sucesso === false) {
-    throw new Error(payload.erro || 'Falha ao carregar a galeria.');
+    throw new Error(payload.erro || 'gallery.loadError');
   }
 
   return Array.isArray(payload.items) ? payload.items : [];

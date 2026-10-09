@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { t } from '@/lib/i18n';
 
 export default function ChatLoading() {
   return (
@@ -8,7 +9,7 @@ export default function ChatLoading() {
         <aside className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
           <div className="flex items-center gap-2 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
             <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-            <p className="text-sm font-semibold text-neutral-900 dark:text-white">Conversas</p>
+            <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t('chat.conversations')}</p>
           </div>
           <div className="relative min-h-0 flex-1 space-y-2 overflow-hidden p-4">
             <Skeleton className="h-16 w-full rounded-xl" />

@@ -1,5 +1,12 @@
 import { t } from '@/lib/i18n/store';
+import { MESSAGE_KEYS } from '@/lib/i18n/dictionary';
 import type { Locale, MessageKey } from '@/lib/i18n/types';
+
+const MESSAGE_KEY_SET = new Set<string>(MESSAGE_KEYS);
+
+function isMessageKey(value: string): value is MessageKey {
+  return MESSAGE_KEY_SET.has(value);
+}
 
 type ClerkErrorItem = {
   code?: string;
@@ -201,7 +208,14 @@ function matchByText(haystack: string): MessageKey | null {
   ) {
     return 'errors.clerk.emailExists';
   }
-  if (haystack.includes('code is incorrect') || haystack.includes('incorrect code') || haystack.includes('invalid code') || haystack.includes('form_code_incorrect')) {
+  if (
+    haystack.includes('code is incorrect') ||
+    haystack.includes('incorrect code') ||
+    haystack.includes('invalid code') ||
+    haystack.includes('form_code_incorrect') ||
+    haystack.includes('código inválido') ||
+    haystack.includes('codigo invalido')
+  ) {
     return 'errors.clerk.codeInvalid';
   }
   if (haystack.includes('expired') && haystack.includes('code')) {
@@ -266,11 +280,32 @@ function matchByText(haystack: string): MessageKey | null {
     return 'toast.docValidateFailed';
   }
   if (
+    haystack.includes('falha ao carregar a galeria') ||
+    haystack.includes('gallery-load-failed')
+  ) {
+    return 'gallery.loadError';
+  }
+  if (
     haystack.includes('ai-unavailable') ||
     haystack.includes('falar com o assistente') ||
-    haystack.includes('falha ao carregar a galeria')
+    haystack.includes('assistente temporariamente') ||
+    haystack.includes('assistente não retornou') ||
+    haystack.includes('assistente nao retornou')
   ) {
-    return haystack.includes('galeria') ? 'gallery.loadError' : 'errors.generic';
+    return 'ai.unavailable';
+  }
+  if (haystack.includes('falha ao solicitar afiliação') || haystack.includes('falha ao solicitar afiliacao')) {
+    return 'toast.affiliateFailed';
+  }
+  if (
+    haystack.includes('falha ao processar o expediente') ||
+    haystack.includes('falha ao carregar expediente') ||
+    haystack.includes('falha ao carregar o expediente')
+  ) {
+    return 'toast.hoursLoadFailed';
+  }
+  if (haystack.includes('falha ao criar agendamento')) {
+    return 'toast.scheduleFailed';
   }
 
   return null;
@@ -307,6 +342,12 @@ function networkKey(err: unknown): MessageKey | null {
 }
 
 function resolveKey(err: unknown, context: ErrorContext): MessageKey {
+  const rawMessage =
+    err instanceof Error ? err.message.trim() : isRecord(err) ? asString(err.message) : '';
+  if (rawMessage && isMessageKey(rawMessage)) {
+    return rawMessage;
+  }
+
   const clerk = firstClerkError(err);
   const clerkCode = asString(clerk?.code).toLowerCase();
   if (clerkCode && CLERK_CODE_KEYS[clerkCode]) {

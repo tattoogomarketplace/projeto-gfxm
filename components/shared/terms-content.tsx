@@ -19,13 +19,13 @@ export function TermsContent({ className }: TermsContentProps) {
     <div className={cn('space-y-6', className)}>
       <header className="space-y-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-          {t('app.terms.documentBadge')}
+          {t('terms.documentBadge')}
         </p>
         <h3 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
           {TERMS_TITLE}
         </h3>
         <p className="text-xs text-zinc-500">
-          {t('app.terms.updatedAt', { date: TERMS_UPDATED_AT })}
+          {t('terms.updatedAt', { date: TERMS_UPDATED_AT })}
         </p>
       </header>
 

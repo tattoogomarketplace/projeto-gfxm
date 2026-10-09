@@ -171,7 +171,7 @@ export default function ForgotPasswordPage() {
         code: otp,
       });
       if (result.status !== 'needs_new_password' && result.status !== 'complete') {
-        throw new Error('Código inválido.');
+        throw new Error('errors.clerk.codeInvalid');
       }
       setStep('password');
       return true;

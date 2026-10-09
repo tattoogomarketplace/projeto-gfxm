@@ -46,16 +46,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function describeUploadFailure(err: unknown): string {
-  if (err instanceof TypeError) {
-    const raw = err.message || '';
-    if (/load failed|failed to fetch|networkerror/i.test(raw)) {
-      return 'upload-network-failed';
-    }
-  }
-  return err instanceof Error ? err.message : 'upload-failed';
-}
-
 const STATUS_UI: Record<
   KycStatusValue,
   { label: MessageKey; tone: string; icon: typeof CheckCircle2 }

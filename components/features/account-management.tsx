@@ -167,7 +167,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
                       disabled={busy}
                       className="min-h-11 rounded-xl bg-orange-500 font-bold text-black transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
                     >
-                      {busy ? <TattooMachineLoader compact label="Desativando" /> : 'Confirmar'}
+                      {busy ? <TattooMachineLoader compact label={t('common.loading')} /> : t('common.confirm')}
                     </button>
                   ) : (
                     <button
@@ -176,7 +176,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
                       disabled={busy}
                       className="min-h-11 rounded-xl bg-red-600 font-bold text-white transition-all hover:bg-red-500 active:scale-95 disabled:opacity-50"
                     >
-                      {busy ? <TattooMachineLoader compact label="Agendando" /> : 'Confirmar'}
+                      {busy ? <TattooMachineLoader compact label={t('common.loading')} /> : t('common.confirm')}
                     </button>
                   )}
                 </div>
@@ -269,7 +269,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 font-bold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-50"
           >
             {upgrading ? (
-              <TattooMachineLoader compact label="Evoluindo" />
+              <TattooMachineLoader compact label={t('common.loading')} />
             ) : (
               <>
                 <PenTool className="h-5 w-5" strokeWidth={1.75} />

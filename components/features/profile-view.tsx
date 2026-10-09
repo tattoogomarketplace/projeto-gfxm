@@ -198,7 +198,7 @@ export function ProfileView() {
           className="apple-press flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 py-3 text-sm font-semibold text-orange-500 transition-transform transition-opacity duration-300 ease-out hover:border-orange-500 hover:bg-orange-500/10 disabled:opacity-50 dark:text-orange-400"
         >
           {loggingOut ? (
-            <TattooMachineLoader compact label="Saindo" />
+            <TattooMachineLoader compact label={t('auth.signOut')} />
           ) : (
             <>
               <LogOut className="h-5 w-5" strokeWidth={1.75} />

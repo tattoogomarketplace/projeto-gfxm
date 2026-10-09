@@ -1,6 +1,9 @@
+'use client'
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { TattooMachineLoader } from "@/components/ui/tattoo-machine-loader"
+import { useI18n } from "@/hooks/use-i18n"
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,6 +13,7 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', isLoading, children, ...props }, ref) => {
+    const { t } = useI18n()
     const variants = {
       primary:
         "bg-gradient-to-b from-orange-500 to-orange-600 text-white shadow-[0_0_18px_rgba(249,115,22,0.35)] hover:from-orange-400 hover:to-orange-600",
@@ -34,7 +38,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <TattooMachineLoader compact label="Tatuando" />
+          <TattooMachineLoader compact label={t('common.loading')} />
         ) : (
           children
         )}

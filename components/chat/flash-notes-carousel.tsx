@@ -125,7 +125,7 @@ export function FlashNotesCarousel() {
       ativa: true,
       author: ownNote?.author ?? {
         id: actorId ?? 'me',
-        name: t('app.flash.you'),
+        name: t('flash.you'),
         role: 'tatuador',
         initial: 'V',
         cidade: null,
@@ -177,7 +177,7 @@ export function FlashNotesCarousel() {
       <div className="mb-2 flex items-center gap-2 px-1">
         <Zap className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" strokeWidth={2} />
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-          {t('app.flash.heading')}
+          {t('flash.heading')}
         </p>
       </div>
 
@@ -190,14 +190,14 @@ export function FlashNotesCarousel() {
           'transform-gpu will-change-transform'
         )}
         role="list"
-        aria-label={t('app.flash.listAria')}
+        aria-label={t('flash.listAria')}
       >
         {canBroadcast ? (
           <button
             type="button"
             onClick={openComposer}
             className="flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-            aria-label={ownNote ? t('app.flash.updateAria') : t('app.flash.publishAria')}
+            aria-label={ownNote ? t('flash.updateAria') : t('flash.publishAria')}
           >
             <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#F97316,#FFBF00,#F97316)] p-[2px]">
               <span className="flex h-full w-full items-center justify-center rounded-full border border-black/[0.04] bg-white text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-orange-400">
@@ -205,7 +205,7 @@ export function FlashNotesCarousel() {
               </span>
             </span>
             <span className="w-full truncate text-center text-[10px] font-semibold text-neutral-700 dark:text-zinc-300">
-              {ownNote ? t('app.flash.ownNote') : t('app.flash.publish')}
+              {ownNote ? t('flash.ownNote') : t('flash.publish')}
             </span>
           </button>
         ) : null}

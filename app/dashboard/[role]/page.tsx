@@ -40,10 +40,10 @@ export default async function DashboardRolePage({ params }: DashboardPageProps) 
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="h-40 rounded-2xl border border-black/[0.04] bg-white p-6 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
-          <p className="text-zinc-400">Bem-vindo, {resolveDisplayName({
+          <p className="text-zinc-400">{t('welcome.hello', { name: resolveDisplayName({
             full_name: (metadata.full_name as string) || user?.firstName || undefined,
             nome: (metadata.nome as string) || perfil?.nome || undefined,
-          }, 'Artista', perfil?.nome)}</p>
+          }, t('welcome.artistFallback'), perfil?.nome) })}</p>
         </div>
       </div>
     </div>
