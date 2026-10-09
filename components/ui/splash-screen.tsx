@@ -45,7 +45,7 @@ export function SplashScreen({ isVisible = true }: SplashScreenProps) {
       aria-hidden={!isVisible}
       style={{ backgroundColor: '#000000' }}
       className={cn(
-        'splash-root splash-gpu fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden overscroll-none touch-none bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-opacity duration-500 ease-in-out transform-gpu will-change-opacity',
+        'splash-root splash-gpu fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col items-center justify-between overflow-hidden overscroll-none touch-none bg-[radial-gradient(circle_at_50%_42%,_rgba(217,70,14,0.14)_0%,_rgba(26,10,4,0.55)_16%,_#000000_46%)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-opacity duration-500 ease-in-out transform-gpu will-change-opacity',
         isVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
       )}
     >
