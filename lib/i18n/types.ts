@@ -765,9 +765,54 @@ export type MessageKey =
   | 'lifecycle.scheduled'
   | 'lifecycle.healing'
   | 'welcome.hello'
-  | 'welcome.artistFallback';
+  | 'welcome.artistFallback'
+  | LocalizedMessageKey;
 
 export type MessageDictionary = Record<MessageKey, string>;
+
+export type LocalizedMessageKey =
+  | 'kyc.verifying'
+  | 'kyc.preparing'
+  | 'kyc.heroTitle'
+  | 'kyc.heroBody'
+  | 'kyc.benefitAgendaTitle'
+  | 'kyc.benefitAgendaDesc'
+  | 'kyc.benefitPayTitle'
+  | 'kyc.benefitPayDesc'
+  | 'kyc.benefitPortfolioTitle'
+  | 'kyc.benefitPortfolioDesc'
+  | 'kyc.copyPendingTitle'
+  | 'kyc.copyPendingBody'
+  | 'kyc.copyReviewTitle'
+  | 'kyc.copyReviewBody'
+  | 'kyc.copyRejectedTitle'
+  | 'kyc.copyRejectedBody'
+  | 'kyc.copyApprovedTitle'
+  | 'kyc.copyApprovedBody'
+  | 'kyc.copyApprovedRedirect'
+  | 'kyc.copyNaTitle'
+  | 'kyc.copyNaBody'
+  | 'kyc.copyNaRedirect'
+  | 'kyc.statusLabel'
+  | 'kyc.alreadyHomologated'
+  | 'kyc.goToPanel'
+  | 'kyc.becomeTitleNamed'
+  | 'kyc.becomeTitle'
+  | 'kyc.becomeBody'
+  | 'kyc.startSecure'
+  | 'kyc.securityTitle'
+  | 'kyc.securityBody'
+  | 'kyc.emailLabel'
+  | 'kyc.emailPlaceholder'
+  | 'kyc.cpfLabel'
+  | 'kyc.cpfPlaceholder'
+  | 'kyc.confirming'
+  | 'kyc.confirmIdentity'
+  | 'kyc.securityNote'
+  | 'kyc.identityConfirmed'
+  | 'kyc.sendDocsNow';
+
+export type LocalizedDictionary = Record<LocalizedMessageKey, string>;
 
 export type CoreUiMessageKey = Extract<
   MessageKey,
@@ -782,22 +827,25 @@ export type CoreUiMessageKey = Extract<
   | `notif.${string}`
 >;
 
-export type ScreenMessageKey = Extract<
-  MessageKey,
-  | `weekday.${string}`
-  | `hours.${string}`
-  | `kyc.${string}`
-  | `studio.${string}`
-  | `ai.${string}`
-  | `vitrine.${string}`
-  | `flash.${string}`
-  | `portfolio.${string}`
-  | `terms.${string}`
-  | `lifecycle.${string}`
-  | `welcome.${string}`
+export type ScreenMessageKey = Exclude<
+  Extract<
+    MessageKey,
+    | `weekday.${string}`
+    | `hours.${string}`
+    | `kyc.${string}`
+    | `studio.${string}`
+    | `ai.${string}`
+    | `vitrine.${string}`
+    | `flash.${string}`
+    | `portfolio.${string}`
+    | `terms.${string}`
+    | `lifecycle.${string}`
+    | `welcome.${string}`
+  >,
+  LocalizedMessageKey
 >;
 
-export type UiMessageKey = CoreUiMessageKey | ScreenMessageKey;
+export type UiMessageKey = CoreUiMessageKey | ScreenMessageKey | LocalizedMessageKey;
 
 export type CoreUiDictionary = Record<CoreUiMessageKey, string>;
 

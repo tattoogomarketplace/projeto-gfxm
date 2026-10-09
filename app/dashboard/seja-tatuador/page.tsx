@@ -28,24 +28,25 @@ import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
+import type { MessageKey } from '@/lib/i18n/types';
 
 type Stage = 'locked' | 'unlocked';
 
-const BENEFITS: Array<{ icon: typeof CalendarDays; title: string; description: string }> = [
+const BENEFITS: Array<{ icon: typeof CalendarDays; titleKey: MessageKey; descriptionKey: MessageKey }> = [
   {
     icon: CalendarDays,
-    title: 'Agenda inteligente',
-    description: 'Organize sessões, horários e disponibilidade em um só lugar.',
+    titleKey: 'kyc.benefitAgendaTitle',
+    descriptionKey: 'kyc.benefitAgendaDesc',
   },
   {
     icon: Wallet,
-    title: 'Pagamentos seguros',
-    description: 'Receba com split automático e proteção antifraude.',
+    titleKey: 'kyc.benefitPayTitle',
+    descriptionKey: 'kyc.benefitPayDesc',
   },
   {
     icon: Images,
-    title: 'Portfólio em destaque',
-    description: 'Mostre sua arte para clientes de todo o país.',
+    titleKey: 'kyc.benefitPortfolioTitle',
+    descriptionKey: 'kyc.benefitPortfolioDesc',
   },
 ];
 
@@ -189,7 +190,7 @@ export default function SejaTatuadorPage() {
     return (
       <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]">
         <div className="flex flex-1 items-center justify-center">
-          <TattooMachineLoader label="Preparando verificação" />
+          <TattooMachineLoader label={t('kyc.preparing')} />
         </div>
       </div>
     );
@@ -212,33 +213,32 @@ export default function SejaTatuadorPage() {
             className="inline-flex min-h-11 items-center gap-2 rounded-xl text-[13px] font-semibold tracking-tight text-zinc-400 transition-colors hover:text-orange-400 active:scale-[0.98]"
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={1.75} />
-            Voltar
+            {t('common.back')}
           </button>
 
           <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
             <div className="relative">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
-                Atelier Digital
+                {t('role.tatuador.title')}
               </span>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                {firstName ? `${firstName}, transforme` : 'Transforme'} sua arte em profissão.
+                {firstName ? t('kyc.becomeTitleNamed', { name: firstName }) : t('kyc.becomeTitle')}
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-                Abra sua bancada profissional com verificação segura. Você mantém total
-                independência da sua conta e libera agenda, portfólio e recebimentos.
+                {t('kyc.becomeBody')}
               </p>
 
               <ul className="mt-6 space-y-3">
-                {BENEFITS.map(({ icon: Icon, title, description }) => (
-                  <li key={title} className="flex items-start gap-3">
+                {BENEFITS.map(({ icon: Icon, titleKey, descriptionKey }) => (
+                  <li key={titleKey} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
                       <Icon className="h-4 w-4" strokeWidth={1.75} />
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-white">{title}</span>
+                      <span className="block text-sm font-semibold text-white">{t(titleKey)}</span>
                       <span className="block text-xs leading-relaxed text-zinc-400">
-                        {description}
+                        {t(descriptionKey)}
                       </span>
                     </span>
                   </li>
@@ -252,7 +252,7 @@ export default function SejaTatuadorPage() {
                   className="mt-7 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.5)] transition-all duration-300 hover:bg-orange-600 active:scale-95"
                 >
                   <ShieldCheck className="h-5 w-5" strokeWidth={2} />
-                  Iniciar verificação segura
+                  {t('kyc.startSecure')}
                 </button>
               ) : null}
             </div>
@@ -278,10 +278,10 @@ export default function SejaTatuadorPage() {
                   </span>
                   <div className="min-w-0">
                     <h2 id="gate-title" className="text-lg font-bold text-white">
-                      Verificação de segurança
+                      {t('kyc.securityTitle')}
                     </h2>
                     <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">
-                      Confirme sua identidade para liberar o envio dos Documentos Pessoais.
+                      {t('kyc.securityBody')}
                     </p>
                   </div>
                 </div>
@@ -289,7 +289,7 @@ export default function SejaTatuadorPage() {
                 <div className="mt-5 space-y-4">
                   <label className="block">
                     <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">
-                      E-mail da conta
+                      {t('kyc.emailLabel')}
                     </span>
                     <input
                       ref={emailRef}
@@ -302,14 +302,14 @@ export default function SejaTatuadorPage() {
                         setEmailOverride(event.target.value);
                         setError(null);
                       }}
-                      placeholder="voce@email.com"
+                      placeholder={t('kyc.emailPlaceholder')}
                       className="min-h-12 w-full rounded-xl border border-border/60 bg-black/30 px-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/40 disabled:opacity-60"
                     />
                   </label>
 
                   <label className="block">
                     <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400">
-                      CPF cadastrado
+                      {t('kyc.cpfLabel')}
                     </span>
                     <input
                       type="text"
@@ -321,7 +321,7 @@ export default function SejaTatuadorPage() {
                         setCpf(formatCpf(event.target.value));
                         setError(null);
                       }}
-                      placeholder="000.000.000-00"
+                      placeholder={t('kyc.cpfPlaceholder')}
                       className="min-h-12 w-full rounded-xl border border-border/60 bg-black/30 px-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-orange-500/70 focus:ring-2 focus:ring-orange-500/40 disabled:opacity-60"
                     />
                   </label>
@@ -341,20 +341,19 @@ export default function SejaTatuadorPage() {
                     {busy ? (
                       <>
                         <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2} />
-                        Confirmando…
+                        {t('kyc.confirming')}
                       </>
                     ) : (
                       <>
                         <Fingerprint className="h-5 w-5" strokeWidth={1.75} />
-                        Confirmar identidade
+                        {t('kyc.confirmIdentity')}
                       </>
                     )}
                   </button>
 
                   <p className="flex items-start gap-2 text-[11px] leading-relaxed text-zinc-500">
                     <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500/80" strokeWidth={1.75} />
-                    Seus dados são validados com segurança. Você continua um usuário padrão até a
-                    análise dos documentos ser concluída.
+                    {t('kyc.securityNote')}
                   </p>
                 </div>
               </section>
@@ -368,11 +367,10 @@ export default function SejaTatuadorPage() {
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm font-semibold text-emerald-200">
                     <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
-                    Identidade confirmada
+                    {t('kyc.identityConfirmed')}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-emerald-100/80">
-                    Agora envie seus Documentos Pessoais. Sua bancada é liberada somente após a
-                    análise por IA.
+                    {t('kyc.sendDocsNow')}
                   </p>
                 </div>
               </div>

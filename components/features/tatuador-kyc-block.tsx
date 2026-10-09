@@ -9,30 +9,39 @@ import {
 } from '@/components/features/professional-kyc-panel';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useI18n } from '@/hooks/use-i18n';
+import type { MessageKey } from '@/lib/i18n/types';
 
 export type KycStatus = KycStatusValue;
 
-export const DOCUMENTOS_STATUS_COPY: Record<KycStatus, { title: string; body: string }> = {
+export const DOCUMENTOS_STATUS_COPY: Record<KycStatus, { titleKey: MessageKey; bodyKey: MessageKey }> = {
   pendente: {
-    title: 'Conta em análise',
-    body: 'Envie seus documentos sanitários para liberar agenda, portfólio e recebimentos. Sua conta de tatuador é independente do estúdio.',
+    titleKey: 'kyc.copyPendingTitle',
+    bodyKey: 'kyc.copyPendingBody',
   },
   em_analise: {
-    title: 'Documentos em análise',
-    body: 'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
+    titleKey: 'kyc.copyReviewTitle',
+    bodyKey: 'kyc.copyReviewBody',
   },
   rejeitado: {
-    title: 'Documentos Pessoais rejeitados',
-    body: 'Houve inconsistência nos documentos. Envie um documento oficial nítido para nova análise.',
+    titleKey: 'kyc.copyRejectedTitle',
+    bodyKey: 'kyc.copyRejectedBody',
   },
   aprovado: {
-    title: 'Documentos Pessoais aprovados',
-    body: 'Sua bancada está liberada.',
+    titleKey: 'kyc.copyApprovedTitle',
+    bodyKey: 'kyc.copyApprovedBody',
   },
   nao_aplicavel: {
-    title: 'Verificação não aplicável',
-    body: 'A verificação de Documentos Pessoais é exclusiva de tatuadores e estúdios.',
+    titleKey: 'kyc.copyNaTitle',
+    bodyKey: 'kyc.copyNaBody',
   },
+};
+
+const STATUS_LABEL_KEY: Record<KycStatus, MessageKey> = {
+  pendente: 'kyc.statusPending',
+  em_analise: 'kyc.statusReview',
+  rejeitado: 'kyc.statusRejected',
+  aprovado: 'kyc.statusApproved',
+  nao_aplicavel: 'kyc.statusNa',
 };
 
 function normalizeStatus(status: string): KycStatus {
@@ -64,11 +73,11 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
             {BRAND_NAME}
           </p>
-          <h1 className="mt-2 text-2xl font-bold">{copy.title}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">{copy.body}</p>
+          <h1 className="mt-2 text-2xl font-bold">{t(copy.titleKey)}</h1>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-400">{t(copy.bodyKey)}</p>
           <div className="mt-4 flex items-center gap-2 text-xs text-zinc-500">
             <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
-            Status: {normalized.replace('_', ' ')}
+            {t('kyc.statusLabel', { title: t(STATUS_LABEL_KEY[normalized]) })}
           </div>
           <div className="mt-6">
             <ProfessionalKycPanel
