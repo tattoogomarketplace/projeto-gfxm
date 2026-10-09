@@ -11,6 +11,7 @@ import {
   Lock,
   PenLine,
   ShieldCheck,
+  Ticket,
   Unlock,
   Wallet,
 } from 'lucide-react';
@@ -294,63 +295,94 @@ function ReceiptsOverview({
     let gross = 0;
     let held = 0;
     let released = 0;
+    let secured = 0;
     for (const item of items) {
       const value = typeof item.valor_total === 'number' && Number.isFinite(item.valor_total) ? item.valor_total : 0;
       const split = calculateSplits(value, model);
+      const escrow = escrowStateFor(item.status);
       gross += value;
-      if (escrowStateFor(item.status) === 'released') released += split.tatuador;
+      if (escrow === 'released') released += split.tatuador;
       else held += split.tatuador;
+      if (escrow !== 'refunded') secured += depositAmount(value);
     }
-    return { gross, held, released };
+    return { gross, held, released, secured };
   }, [items, model]);
 
   if (isLoading) {
     return (
-      <div className="grid w-full grid-cols-3 gap-2" aria-hidden>
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-20 rounded-2xl" />
+      <div className="min-w-0 w-full space-y-3" aria-hidden>
+        <Skeleton className="h-[122px] w-full rounded-3xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-[100px] rounded-2xl" />
+          <Skeleton className="h-[100px] rounded-2xl" />
+        </div>
+        <Skeleton className="h-[64px] w-full rounded-2xl" />
       </div>
     );
   }
 
-  const tiles = [
-    {
-      key: 'gross',
-      label: t('payments.receiptsGross'),
-      value: formatBRL(summary.gross),
-      Icon: BarChart3,
-      tone: 'border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400',
-    },
-    {
-      key: 'held',
-      label: t('payments.receiptsHeld'),
-      value: formatBRL(summary.held),
-      Icon: Lock,
-      tone: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    },
-    {
-      key: 'released',
-      label: t('payments.receiptsReleased'),
-      value: formatBRL(summary.released),
-      Icon: Unlock,
-      tone: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    },
-  ];
-
   return (
-    <div className="grid w-full grid-cols-3 gap-2">
-      {tiles.map(({ key, label, value, Icon, tone }) => (
-        <GlassContainer key={key} className="min-w-0 p-3">
-          <span className={cn('flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border', tone)}>
-            <Icon className="h-4 w-4" strokeWidth={1.9} />
+    <div className="min-w-0 w-full space-y-3">
+      <GlassContainer className="relative min-h-[122px] w-full overflow-hidden p-4">
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500"
+        />
+        <div className="flex items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-400 dark:text-zinc-500">
+            <Lock className="h-3.5 w-3.5" strokeWidth={2} />
+            {t('payments.receivable')}
+          </span>
+          <span className="flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+            <BarChart3 className="h-4 w-4" strokeWidth={1.9} />
+          </span>
+        </div>
+        <p className="mt-2 truncate text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-white">
+          {formatBRL(summary.held)}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-neutral-500 dark:text-zinc-400">
+          {t('payments.receiptsHeld')} · {t('payments.receiptsGross')} {formatBRL(summary.gross)}
+        </p>
+      </GlassContainer>
+
+      <div className="grid grid-cols-2 gap-3">
+        <GlassContainer className="min-h-[100px] min-w-0 p-3">
+          <span className="flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <ShieldCheck className="h-4 w-4" strokeWidth={1.9} />
           </span>
           <p className="mt-2 truncate text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-zinc-500">
-            {label}
+            {t('payments.depositsSecured')}
           </p>
-          <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">{value}</p>
+          <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+            {formatBRL(summary.secured)}
+          </p>
         </GlassContainer>
-      ))}
+        <GlassContainer className="min-h-[100px] min-w-0 p-3">
+          <span className="flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-600 dark:text-emerald-400">
+            <Unlock className="h-4 w-4" strokeWidth={1.9} />
+          </span>
+          <p className="mt-2 truncate text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-zinc-500">
+            {t('payments.receiptsReleased')}
+          </p>
+          <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+            {formatBRL(summary.released)}
+          </p>
+        </GlassContainer>
+      </div>
+
+      <div className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-black/[0.04] bg-black/[0.02] px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
+        <span className="flex h-9 w-9 min-h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
+          <Ticket className="h-4 w-4" strokeWidth={1.9} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold tracking-tight text-gray-900 dark:text-white">
+            TattooGo Pass
+          </p>
+          <p className="mt-0.5 truncate text-[11px] leading-relaxed text-neutral-500 dark:text-zinc-500">
+            {t('payments.passHint')}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

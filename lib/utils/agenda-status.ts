@@ -116,6 +116,100 @@ export function depositAmount(valorTotal?: number): number {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Studio roster (daily / upcoming) + deposit escrow state                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Estado financeiro do sinal no roster do estúdio.
+ * - `paid`     sinal liquidado (sessão concluída)
+ * - `held`     sinal retido em escrow (sessão confirmada)
+ * - `awaiting` aguardando pagamento do sinal de 25%
+ * - `canceled` sessão cancelada
+ */
+export type DepositVisualState = 'paid' | 'held' | 'awaiting' | 'canceled';
+
+export const DEPOSIT_LABEL_KEY: Record<DepositVisualState, MessageKey> = {
+  paid: 'agenda.depositPaid',
+  held: 'agenda.depositHeld',
+  awaiting: 'agenda.statusAwaitingPayment',
+  canceled: 'agenda.statusCanceled',
+};
+
+/** Deriva o estado do sinal estritamente do status/sinal persistido. */
+export function resolveDepositState(agendamento?: Agendamento): DepositVisualState {
+  const status = agendamento?.status;
+  if (status === 'cancelado') return 'canceled';
+  if (status === 'concluido') return 'paid';
+  if (status === 'confirmado' || agendamento?.sinal_pago === true) return 'held';
+  return 'awaiting';
+}
+
+/** Um agendamento pode ser validado no dia corrente. */
+export function isSessionToday(value?: string): boolean {
+  const date = parseDate(value);
+  if (!date) return false;
+  return isSameLocalDay(date, new Date());
+}
+
+function parseDate(value?: string): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+export interface StudioRoster {
+  readonly today: Agendamento[];
+  readonly upcoming: Agendamento[];
+}
+
+function byChronologicalOrder(a: Agendamento, b: Agendamento): number {
+  const left = parseDate(a.data_hora)?.getTime() ?? Number.POSITIVE_INFINITY;
+  const right = parseDate(b.data_hora)?.getTime() ?? Number.POSITIVE_INFINITY;
+  return left - right;
+}
+
+/**
+ * Particiona o roster do estúdio em `Hoje` e `Próximos`, ordenado
+ * cronologicamente. Sessões passadas ficam de fora do roster operacional (a
+ * trilha financeira vive em Recebimentos). Registros sem data válida são
+ * preservados em `upcoming` para nunca sumirem da UI.
+ */
+export function groupStudioRoster(agendamentos?: Agendamento[]): StudioRoster {
+  const items = agendamentos ?? [];
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const today: Agendamento[] = [];
+  const upcoming: Agendamento[] = [];
+
+  for (const item of items) {
+    if (item.status === 'cancelado') continue;
+    const date = parseDate(item.data_hora);
+    if (!date) {
+      upcoming.push(item);
+      continue;
+    }
+    if (isSameLocalDay(date, now)) {
+      today.push(item);
+    } else if (date.getTime() >= startOfToday.getTime()) {
+      upcoming.push(item);
+    }
+  }
+
+  today.sort(byChronologicalOrder);
+  upcoming.sort(byChronologicalOrder);
+  return { today, upcoming };
+}
+
+/* -------------------------------------------------------------------------- */
 /* Session timeline tracker (client journey)                                   */
 /* -------------------------------------------------------------------------- */
 
