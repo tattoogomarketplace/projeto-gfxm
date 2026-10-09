@@ -253,10 +253,10 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
   const healingOptions = useMemo(
     () => [
-      { value: 'fresh' as const, label: 'Recém-feita' },
-      { value: 'healed' as const, label: 'Cicatrizada' },
+      { value: 'fresh' as const, label: t('portfolio.fresh') },
+      { value: 'healed' as const, label: t('portfolio.healed') },
     ],
-    []
+    [t]
   );
 
   return (
@@ -267,15 +267,15 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
           className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-orange-500/15 blur-3xl"
         />
         <h3 className="relative mb-1 text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
-          Nova peça
+          {t('portfolio.newPiece')}
         </h3>
         <p className="relative mb-4 max-w-sm text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-          Estilo, parte do corpo, duração e cicatrização antes de entrar na galeria.
+          {t('portfolio.newHint')}
         </p>
         <label className="relative flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 transition-colors hover:border-orange-500 dark:border-white/[0.05] dark:bg-white/[0.04]">
           <ImagePlus className="mb-2 h-5 w-5 text-orange-400" strokeWidth={1.75} />
           <span className="text-sm text-zinc-400">
-            {checking ? 'Verificando conteúdo...' : 'Tirar foto ou escolher da galeria'}
+            {checking ? t('portfolio.checking') : t('portfolio.pickImage')}
           </span>
           <input
             ref={fileInputRef}
@@ -296,7 +296,7 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
-          <p className="text-sm text-neutral-500 dark:text-zinc-400">Nenhuma peça publicada ainda.</p>
+          <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('portfolio.empty')}</p>
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-3">
@@ -343,16 +343,16 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-                  Curadoria
+                  {t('portfolio.curation')}
                 </p>
-                <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Classificar peça</h3>
+                <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">{t('portfolio.classify')}</h3>
               </div>
               <button
                 type="button"
                 onClick={resetDraft}
                 disabled={publishing}
                 className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-700 text-zinc-400 hover:border-orange-500/40 hover:text-white"
-                aria-label="Fechar"
+                aria-label={t('common.close')}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -360,27 +360,27 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
             {previewUrl ? (
               <div className="relative mb-4 h-48 overflow-hidden rounded-xl border border-neutral-800">
-                <OptimizedImage src={previewUrl} alt="Pré-visualização" className="h-full w-full" />
+                <OptimizedImage src={previewUrl} alt={t('portfolio.preview')} className="h-full w-full" />
               </div>
             ) : null}
 
             <div className="space-y-5">
               <ChipSelect
-                label="Estilo"
+                label={t('portfolio.style')}
                 values={PORTFOLIO_STYLES}
                 value={style}
                 onChange={setStyle}
                 format={styleLabel}
               />
               <ChipSelect
-                label="Parte do corpo"
+                label={t('portfolio.bodyPart')}
                 values={PORTFOLIO_BODY_PARTS}
                 value={bodyPart}
                 onChange={setBodyPart}
                 format={bodyPartLabel}
               />
               <ChipSelect
-                label="Duração da sessão"
+                label={t('portfolio.duration')}
                 values={PORTFOLIO_SESSION_DURATIONS}
                 value={sessionDuration}
                 onChange={setSessionDuration}
@@ -389,31 +389,31 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
 
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
-                  Status de cicatrização
+                  {t('portfolio.healing')}
                 </p>
                 <SegmentedControl
                   options={healingOptions}
                   value={healing}
                   onChange={setHealing}
-                  ariaLabel="Status de cicatrização"
+                  ariaLabel={t('portfolio.healing')}
                 />
                 <p className="text-xs text-zinc-500">
                   {healing === 'healed'
-                    ? 'Cicatrizada: a peça já passou pelo processo de cura.'
-                    : 'Recém-feita: sessão recente, ainda em processo de cicatrização.'}
+                    ? t('portfolio.healedHint')
+                    : t('portfolio.freshHint')}
                 </p>
               </div>
 
               <label className="block space-y-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-400">
-                  Notas da peça
+                  {t('portfolio.notes')}
                 </span>
                 <textarea
                   value={notes}
                   onChange={(event) => setNotes(event.target.value.slice(0, 180))}
                   rows={3}
                   className="min-h-20 w-full resize-none rounded-xl border border-black/[0.04] bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-white dark:placeholder:text-zinc-500"
-                  placeholder="Opcional. A curadoria converte em legenda formal de studio."
+                  placeholder={t('portfolio.notesPlaceholder')}
                 />
               </label>
             </div>
@@ -426,11 +426,11 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
               }}
             >
               {publishing ? (
-                <TattooMachineLoader compact label="Publicando" />
+                <TattooMachineLoader compact label={t('portfolio.publishing')} />
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Sparkles className="h-4 w-4" strokeWidth={1.75} />
-                  Publicar na galeria
+                  {t('portfolio.publish')}
                 </span>
               )}
             </NeonButton>

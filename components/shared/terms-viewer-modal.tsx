@@ -4,6 +4,7 @@ import { useEffect, type MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, X } from 'lucide-react';
 import { TermsContent } from '@/components/shared/terms-content';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface TermsViewerModalProps {
   isOpen: boolean;
@@ -16,11 +17,9 @@ interface TermsViewerModalProps {
  * Privacidade a partir das Configurações do Perfil. Reaproveita o mesmo
  * conteúdo exibido no primeiro acesso.
  */
-export function TermsViewerModal({
-  isOpen,
-  onClose,
-  closeLabel = 'Entendi e fechar',
-}: TermsViewerModalProps) {
+export function TermsViewerModal({ isOpen, onClose, closeLabel }: TermsViewerModalProps) {
+  const { t } = useI18n();
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -56,7 +55,7 @@ export function TermsViewerModal({
           className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] flex-col justify-end overflow-hidden bg-black/90 p-3 backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:justify-center sm:p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Termos de Uso e Política de Privacidade"
+          aria-label={t('terms.viewerAria')}
         >
           <motion.div
             initial={{ scale: 0.94, opacity: 0, y: 12 }}
@@ -70,12 +69,12 @@ export function TermsViewerModal({
                 <FileText className="h-5 w-5" strokeWidth={1.75} />
               </span>
               <h2 className="min-w-0 flex-1 truncate text-base font-bold text-white">
-                Termos de Uso e Privacidade
+                {t('terms.viewerTitle')}
               </h2>
               <button
                 type="button"
                 onClick={handleClose}
-                aria-label="Fechar termos"
+                aria-label={t('terms.closeAria')}
                 className="pointer-events-auto absolute top-4 right-4 z-50 flex h-11 w-11 min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
               >
                 <X className="h-5 w-5" strokeWidth={1.75} />
@@ -92,7 +91,7 @@ export function TermsViewerModal({
                 onClick={handleClose}
                 className="pointer-events-auto relative z-50 min-h-11 w-full cursor-pointer touch-manipulation rounded-xl bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 active:scale-95"
               >
-                {closeLabel}
+                {closeLabel ?? t('terms.closeDefault')}
               </button>
             </div>
           </motion.div>

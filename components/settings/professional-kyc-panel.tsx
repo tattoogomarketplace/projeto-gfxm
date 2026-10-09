@@ -21,6 +21,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
+import type { MessageKey } from '@/lib/i18n';
 
 export type ProfessionalDocumentStatus = 'pendente' | 'enviado' | 'em_analise' | 'aprovado' | 'rejeitado';
 
@@ -38,16 +39,14 @@ type DocumentSlot = {
 
 type SlotDefinition = {
   key: ProfessionalDocumentKey;
-  title: string;
-  description: string;
-  hint: string;
+  titleKey: MessageKey;
+  descriptionKey: MessageKey;
   icon: typeof Images;
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']);
 const ACCEPTED_INPUT_TYPES = 'application/pdf,image/jpeg,image/png';
-const FORMAT_HINT = 'JPG, PNG ou PDF · até 10 MB';
 
 const CONTENT_TYPE_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg',
@@ -59,51 +58,51 @@ const CONTENT_TYPE_BY_EXT: Record<string, string> = {
 const SLOTS: SlotDefinition[] = [
   {
     key: 'pessoal',
-    title: 'Documentos Pessoais (RG / CNH)',
-    description: 'Frente e verso nítidos do seu documento oficial com foto.',
-    hint: FORMAT_HINT,
+    titleKey: 'kyc.slotPersonalTitle',
+    descriptionKey: 'kyc.slotPersonalDesc',
     icon: Images,
   },
   {
     key: 'habilidade',
-    title: 'Comprovação de Habilidade / Diploma',
-    description: 'Diploma, certificado ou comprovação da sua atuação como tatuador.',
-    hint: FORMAT_HINT,
+    titleKey: 'kyc.slotSkillTitle',
+    descriptionKey: 'kyc.slotSkillDesc',
     icon: BadgeCheck,
   },
 ];
 
 type StatusUi = {
-  label: string;
   tone: string;
   icon: typeof ShieldAlert;
   spin?: boolean;
 };
 
+const STATUS_KEY: Record<ProfessionalDocumentStatus, MessageKey> = {
+  pendente: 'kyc.statusPending',
+  enviado: 'kyc.statusSent',
+  em_analise: 'kyc.statusReview',
+  aprovado: 'kyc.statusApproved',
+  rejeitado: 'kyc.statusRejected',
+};
+
 const STATUS_UI: Record<ProfessionalDocumentStatus, StatusUi> = {
   pendente: {
-    label: 'Pendente',
     tone: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
     icon: ShieldAlert,
   },
   enviado: {
-    label: 'Enviado',
     tone: 'text-orange-300 border-orange-500/30 bg-orange-500/10',
     icon: CheckCircle2,
   },
   em_analise: {
-    label: 'Em análise',
     tone: 'text-sky-300 border-sky-500/30 bg-sky-500/10',
     icon: Loader2,
     spin: true,
   },
   aprovado: {
-    label: 'Aprovado',
     tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
     icon: CheckCircle2,
   },
   rejeitado: {
-    label: 'Rejeitado',
     tone: 'text-red-300 border-red-500/30 bg-red-500/10',
     icon: XCircle,
   },
@@ -124,10 +123,10 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function describeFileType(file: File): string {
+function describeFileTypeKey(file: File): MessageKey {
   const contentType = resolveUploadContentType(file);
-  if (contentType === 'application/pdf') return 'PDF';
-  return 'Imagem';
+  if (contentType === 'application/pdf') return 'kyc.filePdf';
+  return 'kyc.fileImage';
 }
 
 async function uploadDocument(
@@ -188,10 +187,14 @@ function DocumentSlotCard({
   onRemove: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useI18n();
   const [dragging, setDragging] = useState(false);
   const statusUi = STATUS_UI[slot.status];
   const StatusIcon = statusUi.icon;
   const SlotIcon = definition.icon;
+  const title = t(definition.titleKey);
+  const description = t(definition.descriptionKey);
+  const hint = `${t('kyc.formatPdf')} · ${t('kyc.upToSize')}`;
 
   const openPicker = () => {
     if (busy) return;
@@ -211,8 +214,8 @@ function DocumentSlotCard({
             <SlotIcon className="h-5 w-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
-            <h4 className="text-sm font-bold text-white">{definition.title}</h4>
-            <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">{definition.description}</p>
+            <h4 className="text-sm font-bold text-white">{title}</h4>
+            <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">{description}</p>
           </div>
         </div>
         <span
@@ -225,7 +228,7 @@ function DocumentSlotCard({
             className={cn('h-3.5 w-3.5', statusUi.spin && 'animate-spin')}
             strokeWidth={2}
           />
-          {statusUi.label}
+          {t(STATUS_KEY[slot.status])}
         </span>
       </div>
 
@@ -264,14 +267,14 @@ function DocumentSlotCard({
                   {slot.file.name}
                 </span>
                 <span className="mt-0.5 block text-xs text-zinc-500">
-                  {describeFileType(slot.file)} · {formatFileSize(slot.file.size)} · anexado
+                  {t(describeFileTypeKey(slot.file))} · {formatFileSize(slot.file.size)} · {t('kyc.attached')}
                 </span>
               </span>
               <motion.button
                 type="button"
                 onClick={onRemove}
                 disabled={busy}
-                aria-label={`Remover ${definition.title}`}
+                aria-label={`${t('kyc.removeFile')} ${title}`}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
@@ -311,8 +314,8 @@ function DocumentSlotCard({
                 className="mb-2 h-6 w-6 text-amber-500 transition-transform duration-300 group-hover:-translate-y-0.5"
                 strokeWidth={1.75}
               />
-              <span className="text-sm font-semibold text-white">Toque ou arraste para enviar</span>
-              <span className="mt-1 text-xs text-zinc-500">{definition.hint}</span>
+              <span className="text-sm font-semibold text-white">{t('kyc.tapOrDrop')}</span>
+              <span className="mt-1 text-xs text-zinc-500">{hint}</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -367,7 +370,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
     (key: ProfessionalDocumentKey, file: File) => {
       const contentType = resolveUploadContentType(file);
       if (!contentType || !ALLOWED_TYPES.has(contentType)) {
-        const message = t('toast.invalidFormat', { formats: FORMAT_HINT });
+        const message = t('toast.invalidFormat', { formats: `${t('kyc.formatPdf')} · ${t('kyc.upToSize')}` });
         setSlots((prev) => ({ ...prev, [key]: { ...prev[key], error: message } }));
         toast.error(message);
         return;
@@ -502,12 +505,11 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
     <div className="gpu-layer space-y-5">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
-          Verificação profissional
+          {t('kyc.badge')}
         </p>
-        <h3 className="mt-1 text-lg font-bold text-white">Envie seus documentos</h3>
+        <h3 className="mt-1 text-lg font-bold text-white">{t('kyc.sendTitle')}</h3>
         <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-          São necessários dois documentos: identificação pessoal e comprovação de habilidade. Sua
-          bancada é liberada somente após a análise.
+          {t('kyc.sendSubtitle')}
         </p>
       </header>
 
@@ -525,13 +527,13 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
               <BadgeCheck className="h-6 w-6" strokeWidth={1.75} />
             </span>
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
-              APROVADO
+              {t('kyc.approvedLabel')}
             </p>
-            <h4 className="mt-1 text-lg font-bold text-white">Bancada de tatuador liberada</h4>
+            <h4 className="mt-1 text-lg font-bold text-white">{t('kyc.benchUnlocked')}</h4>
             <p className="mt-2 text-sm leading-relaxed text-emerald-100/80">
               {extractedName
-                ? `Documentos homologados para ${extractedName}. Seu papel agora é TATUADOR.`
-                : 'Documentos homologados. Seu papel agora é TATUADOR e o painel do artista está desbloqueado.'}
+                ? t('kyc.homologatedNamed', { name: extractedName })
+                : t('kyc.homologated')}
             </p>
           </motion.section>
         ) : (
@@ -583,22 +585,22 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
                 {phase === 'uploading' || (busy && phase !== 'analyzing') ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                    Enviando documentos…
+                    {t('kyc.sendingDocs')}
                   </>
                 ) : allAnalyzing ? (
                   <>
                     <Sparkles className="h-4 w-4 animate-pulse" strokeWidth={2} />
-                    IA analisando documentos...
+                    {t('kyc.analyzing')}
                   </>
                 ) : rejected ? (
                   <>
                     <Upload className="h-4 w-4" strokeWidth={2} />
-                    Reenviar documentos
+                    {t('kyc.resendDocs')}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" strokeWidth={2} />
-                    Enviar documentos
+                    {t('kyc.sendDocs')}
                   </>
                 )}
               </span>
@@ -609,8 +611,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
 
       <p className="flex items-start gap-2 text-[11px] leading-relaxed text-zinc-500">
         <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500/80" strokeWidth={1.75} />
-        A IA valida autenticidade, metadados e estrutura dos dois documentos. A aprovação promove
-        automaticamente o papel para TATUADOR.
+        {t('kyc.aiHint')}
       </p>
     </div>
   );

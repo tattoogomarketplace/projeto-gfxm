@@ -56,7 +56,7 @@ export function StudioCnpjPanel({
       if (!res.ok || !payload.sucesso) {
         throw new Error(payload.erro || t('toast.cnpjValidateFailed'));
       }
-      setPreview(`${payload.razaoSocial ?? 'Empresa'} · ${payload.situacao ?? ''}`);
+      setPreview(`${payload.razaoSocial ?? t('studio.companyFallback')} · ${payload.situacao ?? ''}`);
       toast.success(t('toast.cnpjValidated'));
     } catch (err) {
       toast.error(formatAppError(err, 'api'));
@@ -114,15 +114,15 @@ export function StudioCnpjPanel({
         </span>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
-            Compliance fiscal
+            {t('studio.fiscalBadge')}
           </p>
-           <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">CNPJ do estúdio</h3>
+           <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">{t('studio.cnpjTitle')}</h3>
         </div>
       </div>
 
       {compliance?.cnpjMasked ? (
          <div className="rounded-xl border border-black/[0.04] bg-neutral-50 p-4 text-sm dark:border-white/[0.05] dark:bg-white/[0.03]">
-           <p className="font-semibold text-neutral-900 dark:text-white">{compliance?.razaoSocial || 'Estúdio registrado'}</p>
+           <p className="font-semibold text-neutral-900 dark:text-white">{compliance?.razaoSocial || t('studio.registered')}</p>
           <p className="mt-1 text-zinc-400">{compliance?.cnpjMasked}</p>
           <p className="mt-1 text-xs uppercase tracking-wider text-emerald-300">
             {compliance?.statusReceita || 'ativa'}
@@ -143,10 +143,10 @@ export function StudioCnpjPanel({
           {preview ? <p className="text-xs text-zinc-400">{preview}</p> : null}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button type="button" variant="outline" isLoading={loading} onClick={() => void validate()}>
-              Validar CNPJ
+              {t('studio.validateCnpj')}
             </Button>
             <Button type="button" isLoading={loading} onClick={() => void register()}>
-              Registrar
+              {t('studio.register')}
             </Button>
           </div>
         </>

@@ -11,6 +11,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
+import type { MessageKey } from '@/lib/i18n';
 
 export type KycStatusValue =
   | 'pendente'
@@ -22,7 +23,6 @@ export type KycStatusValue =
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']);
 const ACCEPTED_INPUT_TYPES = 'application/pdf,image/jpeg,image/png';
-const FORMAT_HINT = 'PDF, JPG ou PNG';
 
 const CONTENT_TYPE_BY_EXT: Record<string, string> = {
   jpg: 'image/jpeg',
@@ -50,38 +50,38 @@ function describeUploadFailure(err: unknown): string {
   if (err instanceof TypeError) {
     const raw = err.message || '';
     if (/load failed|failed to fetch|networkerror/i.test(raw)) {
-      return 'Falha de rede ao enviar o arquivo para o storage. Tente novamente.';
+      return 'upload-network-failed';
     }
   }
-  return err instanceof Error ? err.message : 'Falha no envio do documento.';
+  return err instanceof Error ? err.message : 'upload-failed';
 }
 
 const STATUS_UI: Record<
   KycStatusValue,
-  { label: string; tone: string; icon: typeof CheckCircle2 }
+  { label: MessageKey; tone: string; icon: typeof CheckCircle2 }
 > = {
   pendente: {
-    label: 'Pendente',
+    label: 'kyc.statusPending',
     tone: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
     icon: ShieldAlert,
   },
   em_analise: {
-    label: 'Em Análise',
+    label: 'kyc.statusReview',
     tone: 'text-sky-300 border-sky-500/30 bg-sky-500/10',
     icon: Loader2,
   },
   aprovado: {
-    label: 'Aprovado',
+    label: 'kyc.statusApproved',
     tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
     icon: CheckCircle2,
   },
   rejeitado: {
-    label: 'Rejeitado',
+    label: 'kyc.statusRejected',
     tone: 'text-red-300 border-red-500/30 bg-red-500/10',
     icon: XCircle,
   },
   nao_aplicavel: {
-    label: 'Não aplicável',
+    label: 'kyc.statusNa',
     tone: 'text-zinc-400 border-white/10 bg-white/5',
     icon: FileText,
   },
@@ -139,7 +139,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
       const contentType = resolveUploadContentType(file);
       if (!contentType || !ALLOWED_TYPES.has(contentType)) {
-        const message = t('toast.invalidFormat', { formats: FORMAT_HINT });
+        const message = t('toast.invalidFormat', { formats: t('kyc.formatPdf') });
         setError(message);
         toast.error(message);
         return;
@@ -280,11 +280,11 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
   const phaseLabel =
     phase === 'presigning'
-      ? 'Preparando upload…'
+      ? t('kyc.phasePresign')
       : phase === 'uploading'
-        ? 'Enviando documento…'
+        ? t('kyc.phaseUpload')
         : phase === 'validating'
-          ? 'Analisando documento…'
+          ? t('kyc.phaseValidate')
           : null;
 
   return (
@@ -292,12 +292,11 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
-            Verificação profissional
+            {t('kyc.badge')}
           </p>
-          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Verificação de Documentos Pessoais</h3>
+          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">{t('kyc.title')}</h3>
           <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-            Sua conta de tatuador é independente do estúdio. Envie RG, CNH ou comprovante oficial
-            para liberar agenda e recebimentos.
+            {t('kyc.subtitle')}
           </p>
         </div>
         <span
@@ -307,13 +306,13 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           )}
         >
           <StatusIcon className={cn('h-3.5 w-3.5', currentStatus === 'em_analise' && 'animate-spin')} />
-          {ui.label}
+          {t(ui.label)}
         </span>
       </div>
 
       {currentStatus === 'aprovado' ? (
         <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-          Documentos Pessoais homologados{extractedName ? ` para ${extractedName}` : ''}.
+          {extractedName ? t('kyc.approvedBannerNamed', { name: extractedName }) : t('kyc.approvedBanner')}
         </p>
       ) : (
         <>
@@ -348,14 +347,14 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
                     {pendingFile.name}
                   </span>
                   <span className="mt-0.5 block text-xs text-zinc-500">
-                    {formatFileSize(pendingFile.size)} · pronto para envio
+                    {formatFileSize(pendingFile.size)} · {t('kyc.readyToSend')}
                   </span>
                 </span>
                 <motion.button
                   type="button"
                   onClick={handleRemove}
                   disabled={busy}
-                  aria-label="Remover arquivo"
+                  aria-label={t('kyc.removeFile')}
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 22 }}
@@ -377,9 +376,9 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
               >
                 <Upload className="mb-2 h-6 w-6 text-amber-500 transition-transform duration-300 group-hover:-translate-y-0.5" strokeWidth={1.75} />
                 <span className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  Toque para enviar o documento
+                  {t('kyc.tapSend')}
                 </span>
-                <span className="mt-1 text-xs text-zinc-500">{FORMAT_HINT}, até 10 MB</span>
+                <span className="mt-1 text-xs text-zinc-500">{t('kyc.formatPdf')}, {t('kyc.upToSize')}</span>
               </motion.button>
             )}
           </AnimatePresence>
@@ -409,9 +408,9 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
                   {phaseLabel}
                 </>
               ) : pendingFile ? (
-                'Enviar documentos'
+                t('kyc.sendDocs')
               ) : (
-                'Selecione um documento'
+                t('kyc.selectDoc')
               )}
             </span>
           </motion.button>
@@ -420,7 +419,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
       {phaseLabel ? <p className="text-center text-xs text-amber-400">{phaseLabel}</p> : null}
       {confidence !== null ? (
-        <p className="text-center text-xs text-zinc-500">Confiança da análise: {confidence}%</p>
+        <p className="text-center text-xs text-zinc-500">{t('kyc.confidence', { confidence })}</p>
       ) : null}
       {error ? <p className="text-center text-xs text-red-400">{error}</p> : null}
     </GlassContainer>

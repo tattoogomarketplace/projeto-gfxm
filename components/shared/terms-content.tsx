@@ -1,5 +1,8 @@
+'use client';
+
 import { TERMS_SECTIONS, TERMS_TITLE, TERMS_UPDATED_AT } from '@/lib/terms';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
 
 interface TermsContentProps {
   className?: string;
@@ -11,17 +14,18 @@ interface TermsContentProps {
  * Perfil, garantindo consistência total do conteúdo.
  */
 export function TermsContent({ className }: TermsContentProps) {
+  const { t } = useI18n();
   return (
     <div className={cn('space-y-6', className)}>
       <header className="space-y-1">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-          Documento oficial
+          {t('app.terms.documentBadge')}
         </p>
         <h3 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
           {TERMS_TITLE}
         </h3>
         <p className="text-xs text-zinc-500">
-          Atualizado em {TERMS_UPDATED_AT}
+          {t('app.terms.updatedAt', { date: TERMS_UPDATED_AT })}
         </p>
       </header>
 

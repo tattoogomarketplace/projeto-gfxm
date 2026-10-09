@@ -31,9 +31,9 @@ function truncateNote(content: string): string {
   return `${trimmed.slice(0, FLASH_NOTE_MAX_LENGTH - 1).trimEnd()}…`;
 }
 
-function remainingLabel(expiresAt: string): string {
+function remainingLabel(expiresAt: string, expiringLabel: string): string {
   const ms = new Date(expiresAt).getTime() - Date.now();
-  if (Number.isNaN(ms) || ms <= 0) return 'expirando';
+  if (Number.isNaN(ms) || ms <= 0) return expiringLabel;
   const hours = Math.max(1, Math.round(ms / (60 * 60 * 1000)));
   return hours === 1 ? '1h' : `${hours}h`;
 }
@@ -125,7 +125,7 @@ export function FlashNotesCarousel() {
       ativa: true,
       author: ownNote?.author ?? {
         id: actorId ?? 'me',
-        name: 'Você',
+        name: t('app.flash.you'),
         role: 'tatuador',
         initial: 'V',
         cidade: null,
@@ -177,7 +177,7 @@ export function FlashNotesCarousel() {
       <div className="mb-2 flex items-center gap-2 px-1">
         <Zap className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" strokeWidth={2} />
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-          Flash Notes
+          {t('app.flash.heading')}
         </p>
       </div>
 
@@ -190,14 +190,14 @@ export function FlashNotesCarousel() {
           'transform-gpu will-change-transform'
         )}
         role="list"
-        aria-label="Flash Notes ativas"
+        aria-label={t('app.flash.listAria')}
       >
         {canBroadcast ? (
           <button
             type="button"
             onClick={openComposer}
             className="flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-            aria-label={ownNote ? 'Atualizar sua Flash Note' : 'Publicar Flash Note'}
+            aria-label={ownNote ? t('app.flash.updateAria') : t('app.flash.publishAria')}
           >
             <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#F97316,#FFBF00,#F97316)] p-[2px]">
               <span className="flex h-full w-full items-center justify-center rounded-full border border-black/[0.04] bg-white text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-orange-400">
@@ -205,7 +205,7 @@ export function FlashNotesCarousel() {
               </span>
             </span>
             <span className="w-full truncate text-center text-[10px] font-semibold text-neutral-700 dark:text-zinc-300">
-              {ownNote ? 'Sua nota' : 'Publicar'}
+              {ownNote ? t('app.flash.ownNote') : t('app.flash.publish')}
             </span>
           </button>
         ) : null}
@@ -218,7 +218,7 @@ export function FlashNotesCarousel() {
               </div>
             ))
           : notes.map((note) => {
-              const name = note.author?.name ?? 'Artista';
+              const name = note.author?.name ?? t('flash.artist');
               const initial = note.author?.initial ?? 'A';
               const isOwn = actorId != null && note.userId === actorId;
               return (
@@ -235,7 +235,7 @@ export function FlashNotesCarousel() {
                     setSelected(note);
                   }}
                   className="flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-                  aria-label={`Flash Note de ${name}`}
+                  aria-label={t('flash.aria', { name })}
                 >
                   <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_210deg_at_50%_50%,#F97316,#FFBF00,#ea580c,#F97316)] p-[2px]">
                     <span className="flex h-full w-full items-center justify-center rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
@@ -255,7 +255,7 @@ export function FlashNotesCarousel() {
 
       {!loading && notes.length === 0 && !canBroadcast ? (
         <p className="px-1 pt-2 text-[11px] text-neutral-500 dark:text-zinc-500">
-          Nenhuma Flash Note no ar agora.
+          {t('flash.empty')}
         </p>
       ) : null}
 
@@ -265,20 +265,20 @@ export function FlashNotesCarousel() {
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-                  Status da bancada
+                  {t('flash.benchStatus')}
                 </p>
                 <h3 className="mt-1 text-lg font-semibold tracking-tight text-neutral-900 dark:text-white">
-                  {ownNote ? 'Atualizar Flash Note' : 'Nova Flash Note'}
+                  {ownNote ? t('flash.update') : t('flash.new')}
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-                  Até {FLASH_NOTE_MAX_LENGTH} caracteres. Expira em 24h.
+                  {t('flash.limit', { count: FLASH_NOTE_MAX_LENGTH })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeComposer}
                 className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full text-neutral-500 dark:text-zinc-400"
-                aria-label="Fechar"
+                aria-label={t('common.close')}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -293,11 +293,11 @@ export function FlashNotesCarousel() {
               }
               maxLength={FLASH_NOTE_MAX_LENGTH}
               rows={3}
-              placeholder="Agenda aberta hoje. Flashs na vitrine."
+              placeholder={t('flash.placeholder')}
               className="w-full resize-none rounded-xl border border-black/[0.04] bg-white px-3 py-3 text-sm text-neutral-900 outline-none ring-orange-500/40 placeholder:text-neutral-400 focus:ring-2 dark:border-white/[0.05] dark:bg-white/[0.05] dark:text-white dark:placeholder:text-zinc-600"
             />
             <div className="mt-2 flex items-center justify-between text-[11px] text-neutral-500 dark:text-zinc-500">
-              <span>No ar por 24 horas</span>
+              <span>{t('flash.live24h')}</span>
               <span className={cn(remaining < 8 ? 'text-orange-500' : '')}>{remaining}</span>
             </div>
             <NeonButton
@@ -308,7 +308,7 @@ export function FlashNotesCarousel() {
                 void publishNote();
               }}
             >
-              {composer.submitting ? 'Publicando...' : ownNote ? 'Atualizar nota' : 'Publicar nota'}
+              {composer.submitting ? t('flash.publishing') : ownNote ? t('flash.updateNote') : t('flash.publishNote')}
             </NeonButton>
           </div>
         </div>
@@ -324,10 +324,10 @@ export function FlashNotesCarousel() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">
-                    {selected.author?.name ?? 'Artista'}
+                    {selected.author?.name ?? t('flash.artist')}
                   </p>
                   <p className="text-[11px] text-orange-500 dark:text-orange-400">
-                    Ativa · {remainingLabel(selected.expiresAt)}
+                    {t('flash.active')} · {remainingLabel(selected.expiresAt, t('flash.expiring'))}
                   </p>
                 </div>
               </div>
@@ -335,7 +335,7 @@ export function FlashNotesCarousel() {
                 type="button"
                 onClick={() => setSelected(null)}
                 className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full text-neutral-500 dark:text-zinc-400"
-                aria-label="Fechar"
+                aria-label={t('common.close')}
               >
                 <X className="h-5 w-5" />
               </button>

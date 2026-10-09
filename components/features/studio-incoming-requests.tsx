@@ -11,6 +11,7 @@ import { StudioCnpjPanel } from '@/components/features/studio-cnpj-panel';
 import type { StudioArtistRow, StudioComplianceView } from '@/lib/types/studio-affiliation';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
+import type { MessageKey } from '@/lib/i18n';
 
 type ArtistRow = StudioArtistRow;
 
@@ -22,6 +23,20 @@ type Pedido = {
 };
 
 type Compliance = StudioComplianceView;
+
+const KYC_STATUS_KEY: Record<string, MessageKey> = {
+  pendente: 'kyc.statusPending',
+  enviado: 'kyc.statusSent',
+  em_analise: 'kyc.statusReview',
+  aprovado: 'kyc.statusApproved',
+  rejeitado: 'kyc.statusRejected',
+  na: 'kyc.statusNa',
+};
+
+function kycStatusLabel(status: string | null | undefined, t: (key: MessageKey) => string): string {
+  const key = KYC_STATUS_KEY[status ?? ''] ?? 'kyc.statusPending';
+  return t(key);
+}
 
 export function StudioIncomingRequests() {
   const { getToken } = useAuth();
@@ -108,12 +123,12 @@ export function StudioIncomingRequests() {
       <GlassContainer className="space-y-4 p-5 sm:p-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
-            Pedidos de afiliação
+            {t('studio.incomingBadge')}
           </p>
-          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">Artistas querendo se conectar</h3>
+          <h3 className="mt-1 text-lg font-bold text-neutral-900 dark:text-white">{t('studio.incomingTitle')}</h3>
         </div>
         {pendentes.length === 0 ? (
-          <p className="text-sm text-zinc-400">Nenhum pedido pendente no momento.</p>
+          <p className="text-sm text-zinc-400">{t('studio.noPending')}</p>
         ) : (
           <ul className="space-y-3">
             {(pendentes ?? []).map((pedido) => (
@@ -122,11 +137,11 @@ export function StudioIncomingRequests() {
                 className="flex flex-col gap-3 rounded-xl border border-black/[0.04] bg-neutral-50 p-3 dark:border-white/[0.05] dark:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-neutral-900 dark:text-white">{pedido?.tatuador?.nome || 'Artista'}</p>
+                  <p className="font-semibold text-neutral-900 dark:text-white">{pedido?.tatuador?.nome || t('studio.artistFallback')}</p>
                   <p className="text-xs text-zinc-500">
                     {[pedido?.tatuador?.cidade, pedido?.tatuador?.estado].filter(Boolean).join(' / ') ||
-                      'Local não informado'}{' '}
-                    · Documentos Pessoais {(pedido?.tatuador?.kyc_status ?? 'pendente').replace('_', ' ')}
+                      t('studio.locationUnknown')}{' '}
+                    · {t('studio.docsLabel')} {kycStatusLabel(pedido?.tatuador?.kyc_status, t)}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -137,7 +152,7 @@ export function StudioIncomingRequests() {
                     disabled={!pedido?.id}
                     onClick={() => pedido?.id && void decide(pedido.id, 'reject')}
                   >
-                    Recusar
+                    {t('studio.reject')}
                   </Button>
                   <Button
                     type="button"
@@ -145,7 +160,7 @@ export function StudioIncomingRequests() {
                     disabled={!pedido?.id}
                     onClick={() => pedido?.id && void decide(pedido.id, 'accept')}
                   >
-                    Aceitar
+                    {t('studio.accept')}
                   </Button>
                 </div>
               </li>
@@ -155,16 +170,16 @@ export function StudioIncomingRequests() {
       </GlassContainer>
 
       <GlassContainer className="space-y-3 p-5 sm:p-6">
-        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Artistas parceiros</h3>
+        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">{t('studio.partners')}</h3>
         {artistas.length === 0 ? (
-          <p className="text-sm text-zinc-400">Nenhum artista vinculado ainda.</p>
+          <p className="text-sm text-zinc-400">{t('studio.noPartners')}</p>
         ) : (
           <ul className="divide-y divide-white/10">
             {(artistas ?? []).map((artista) => (
               <li key={artista?.id ?? artista?.nome} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-neutral-900 dark:text-white">{artista?.nome ?? 'Artista'}</span>
+                <span className="text-neutral-900 dark:text-white">{artista?.nome ?? t('studio.artistFallback')}</span>
                 <span className="text-xs uppercase tracking-wider text-zinc-500">
-                  {(artista?.kyc_status ?? 'pendente').replace('_', ' ')}
+                  {kycStatusLabel(artista?.kyc_status, t)}
                 </span>
               </li>
             ))}
