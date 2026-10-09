@@ -621,6 +621,41 @@
   }
 }
 
+/*
+ * TattooGo Pass — anti-screenshot sweep.
+ *
+ * Faixa de luz em cobre varrendo o cartão do token para que capturas de tela
+ * pareçam mortas/estáticas. Puro `transform`/`opacity` (GPU) para não custar
+ * layout ao rolar.
+ */
+@keyframes pass-sweep {
+  0% {
+    transform: translate3d(-120%, 0, 0);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(120%, 0, 0);
+    opacity: 0;
+  }
+}
+
+.pass-sweep {
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(249, 115, 22, 0.1) 50%,
+    transparent 65%
+  );
+  animation: pass-sweep 4.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 .splash-gpu {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
@@ -694,6 +729,7 @@ html.splash-seen .splash-root {
   .splash-enter,
   .splash-icon-enter,
   .splash-glow,
+  .pass-sweep,
   .animate-float {
     animation: none;
   }

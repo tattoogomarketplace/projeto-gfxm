@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CalendarClock, Check, ChevronDown, CreditCard, PenLine } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TattooGoPassCard } from '@/components/features/tattoogo-pass-card';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -221,10 +222,15 @@ function StepDetails({
               {isAction ? t('agenda.signDocument') : t('agenda.payDeposit')}
             </Link>
           ) : (
-            <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <Check className="h-4 w-4" strokeWidth={2.4} />
-              {t('agenda.statusConfirmed')}
-            </p>
+            <div className="space-y-4">
+              <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <Check className="h-4 w-4" strokeWidth={2.4} />
+                {t('agenda.statusConfirmed')}
+              </p>
+              {timeline.status === 'confirmado' ? (
+                <TattooGoPassCard seed={timeline.agendamentoId} />
+              ) : null}
+            </div>
           )}
         </div>
       </div>

@@ -12,7 +12,7 @@ import {
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/lib/toast';
-import { TattooOTPVerification } from '@/components/features/tattoo-otp';
+import { SessionValidationSheet } from '@/components/features/session-validation-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { getRoleExperience } from '@/lib/content/role-experience';
@@ -105,40 +105,23 @@ function SessionTokenSheet({
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
-  const handleVerify = useCallback(
-    async (code: string) => {
-      if (code.trim().length !== 6) return false;
-      triggerHaptic('medium');
-      return true;
-    },
-    [triggerHaptic]
-  );
+  const handleVerify = useCallback(async (code: string) => {
+    if (code.trim().length !== 6) return false;
+    triggerHaptic('medium');
+    return true;
+  }, [triggerHaptic]);
 
   return (
-    <div
-      id={panelId}
-      className={cn(
-        'grid transition-[grid-template-rows] duration-300 ease-out',
-        open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-      )}
-    >
-      <div className="min-h-0 overflow-hidden">
-        <div className="mt-4 space-y-3 border-t border-black/[0.04] pt-4 dark:border-white/[0.05]">
-          <p className="flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-neutral-500 dark:text-zinc-400">
-            <ScanLine className="h-4 w-4 shrink-0 text-orange-500 dark:text-orange-400" strokeWidth={2} />
-            {t('agenda.tokenSheetHint')}
-          </p>
-          <TattooOTPVerification
-            onVerify={handleVerify}
-            onSuccess={() => {
-              triggerHaptic('success');
-              toast.success(t('agenda.statusConfirmed'));
-              onValidated();
-            }}
-          />
-        </div>
-      </div>
-    </div>
+    <SessionValidationSheet
+      open={open}
+      panelId={panelId}
+      onVerify={handleVerify}
+      onValidated={() => {
+        triggerHaptic('success');
+        toast.success(t('agenda.sessionValidated'));
+        onValidated();
+      }}
+    />
   );
 }
 

@@ -24,6 +24,7 @@ import {
 import { VIEW_MESSAGES } from '@/lib/i18n/views';
 import { UI_MESSAGES } from '@/lib/i18n/ui';
 import { STUDIO_AGENDA_MESSAGES } from '@/lib/i18n/studio-agenda';
+import { PASS_MESSAGES } from '@/lib/i18n/tattoogo-pass';
 import {
   AR,
   DE,
@@ -44,6 +45,7 @@ export const PT_BR: MessageDictionary = {
   ...ERROR_MESSAGES['pt-BR'],
   ...UI_MESSAGES['pt-BR'],
   ...STUDIO_AGENDA_MESSAGES['pt-BR'],
+  ...PASS_MESSAGES['pt-BR'],
   'nav.home': 'Início',
   'nav.schedule': 'Agenda',
   'nav.book': 'Agendar',
@@ -119,6 +121,7 @@ export const EN: MessageDictionary = {
   ...ERROR_MESSAGES.en,
   ...UI_MESSAGES.en,
   ...STUDIO_AGENDA_MESSAGES.en,
+  ...PASS_MESSAGES.en,
   'nav.home': 'Home',
   'nav.schedule': 'Schedule',
   'nav.book': 'Book',
@@ -194,6 +197,7 @@ export const ES: MessageDictionary = {
   ...ERROR_MESSAGES.es,
   ...UI_MESSAGES.es,
   ...STUDIO_AGENDA_MESSAGES.es,
+  ...PASS_MESSAGES.es,
   'nav.home': 'Inicio',
   'nav.schedule': 'Agenda',
   'nav.book': 'Reservar',
@@ -274,21 +278,21 @@ function withFallback(
 
 export const DICTIONARIES: Record<Locale, MessageDictionary> = {
   'pt-BR': PT_BR,
-  'pt-PT': withFallback({ ...PT_PT, ...UI_MESSAGES['pt-PT'], ...DISCOVERY_PT_PT, ...STUDIO_AGENDA_MESSAGES['pt-PT'] }, PT_BR),
+  'pt-PT': withFallback({ ...PT_PT, ...UI_MESSAGES['pt-PT'], ...DISCOVERY_PT_PT, ...STUDIO_AGENDA_MESSAGES['pt-PT'], ...PASS_MESSAGES['pt-PT'] }, PT_BR),
   en: EN,
   es: ES,
-  fr: withFallback({ ...FR, ...UI_MESSAGES.fr, ...DISCOVERY_FR, ...STUDIO_AGENDA_MESSAGES.fr }),
-  de: withFallback({ ...DE, ...UI_MESSAGES.de, ...DISCOVERY_DE, ...STUDIO_AGENDA_MESSAGES.de }),
-  it: withFallback({ ...IT, ...UI_MESSAGES.it, ...DISCOVERY_IT, ...STUDIO_AGENDA_MESSAGES.it }),
-  ja: withFallback({ ...JA, ...UI_MESSAGES.ja, ...DISCOVERY_JA, ...STUDIO_AGENDA_MESSAGES.ja }),
-  zh: withFallback({ ...ZH, ...UI_MESSAGES.zh, ...DISCOVERY_ZH, ...STUDIO_AGENDA_MESSAGES.zh }),
-  ko: withFallback({ ...KO, ...UI_MESSAGES.ko, ...DISCOVERY_KO, ...STUDIO_AGENDA_MESSAGES.ko }),
-  ar: withFallback({ ...AR, ...UI_MESSAGES.ar, ...DISCOVERY_AR, ...STUDIO_AGENDA_MESSAGES.ar }),
-  ru: withFallback({ ...RU, ...UI_MESSAGES.ru, ...DISCOVERY_RU, ...STUDIO_AGENDA_MESSAGES.ru }),
-  hi: withFallback({ ...HI, ...UI_MESSAGES.hi, ...DISCOVERY_HI, ...STUDIO_AGENDA_MESSAGES.hi }),
-  nl: withFallback({ ...NL, ...UI_MESSAGES.nl, ...DISCOVERY_NL, ...STUDIO_AGENDA_MESSAGES.nl }),
-  tr: withFallback({ ...TR, ...UI_MESSAGES.tr, ...DISCOVERY_TR, ...STUDIO_AGENDA_MESSAGES.tr }),
-  pl: withFallback({ ...PL, ...UI_MESSAGES.pl, ...DISCOVERY_PL, ...STUDIO_AGENDA_MESSAGES.pl }),
+  fr: withFallback({ ...FR, ...UI_MESSAGES.fr, ...DISCOVERY_FR, ...STUDIO_AGENDA_MESSAGES.fr, ...PASS_MESSAGES.fr }),
+  de: withFallback({ ...DE, ...UI_MESSAGES.de, ...DISCOVERY_DE, ...STUDIO_AGENDA_MESSAGES.de, ...PASS_MESSAGES.de }),
+  it: withFallback({ ...IT, ...UI_MESSAGES.it, ...DISCOVERY_IT, ...STUDIO_AGENDA_MESSAGES.it, ...PASS_MESSAGES.it }),
+  ja: withFallback({ ...JA, ...UI_MESSAGES.ja, ...DISCOVERY_JA, ...STUDIO_AGENDA_MESSAGES.ja, ...PASS_MESSAGES.ja }),
+  zh: withFallback({ ...ZH, ...UI_MESSAGES.zh, ...DISCOVERY_ZH, ...STUDIO_AGENDA_MESSAGES.zh, ...PASS_MESSAGES.zh }),
+  ko: withFallback({ ...KO, ...UI_MESSAGES.ko, ...DISCOVERY_KO, ...STUDIO_AGENDA_MESSAGES.ko, ...PASS_MESSAGES.ko }),
+  ar: withFallback({ ...AR, ...UI_MESSAGES.ar, ...DISCOVERY_AR, ...STUDIO_AGENDA_MESSAGES.ar, ...PASS_MESSAGES.ar }),
+  ru: withFallback({ ...RU, ...UI_MESSAGES.ru, ...DISCOVERY_RU, ...STUDIO_AGENDA_MESSAGES.ru, ...PASS_MESSAGES.ru }),
+  hi: withFallback({ ...HI, ...UI_MESSAGES.hi, ...DISCOVERY_HI, ...STUDIO_AGENDA_MESSAGES.hi, ...PASS_MESSAGES.hi }),
+  nl: withFallback({ ...NL, ...UI_MESSAGES.nl, ...DISCOVERY_NL, ...STUDIO_AGENDA_MESSAGES.nl, ...PASS_MESSAGES.nl }),
+  tr: withFallback({ ...TR, ...UI_MESSAGES.tr, ...DISCOVERY_TR, ...STUDIO_AGENDA_MESSAGES.tr, ...PASS_MESSAGES.tr }),
+  pl: withFallback({ ...PL, ...UI_MESSAGES.pl, ...DISCOVERY_PL, ...STUDIO_AGENDA_MESSAGES.pl, ...PASS_MESSAGES.pl }),
 };
 
 export const MESSAGE_KEYS = Object.keys(PT_BR) as MessageKey[];

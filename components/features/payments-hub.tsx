@@ -379,7 +379,7 @@ function ReceiptsOverview({
             TattooGo Pass
           </p>
           <p className="mt-0.5 truncate text-[11px] leading-relaxed text-neutral-500 dark:text-zinc-500">
-            {t('payments.passHint')}
+            {t('pass.subtitle')}
           </p>
         </div>
       </div>
