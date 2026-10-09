@@ -125,7 +125,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
                   type="button"
                   onClick={() => setConfirmKind(null)}
                   disabled={busy}
-                  aria-label="Fechar"
+                  aria-label={t('common.close')}
                   className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 text-zinc-400 transition-colors hover:border-orange-500/40 hover:text-orange-400 active:scale-95 disabled:opacity-50"
                 >
                   <X className="h-5 w-5" strokeWidth={1.75} />
@@ -259,8 +259,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             {t('profile.becomeArtist')}
           </h2>
           <p className="text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
-            Abra sua bancada profissional, envie os Documentos Pessoais e publique seu portfólio. Este fluxo é exclusivo
-            para clientes.
+            {t('profile.evolutionArtistBody')}
           </p>
           <button
             type="button"
@@ -289,8 +288,7 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
             {t('profile.openStudio')}
           </h2>
           <p className="text-[13px] leading-relaxed text-neutral-600 dark:text-zinc-400">
-            Homologue o ateliê com CNPJ e gerencie tatuadores parceiros. Este fluxo é exclusivo para
-            tatuadores.
+            {t('profile.evolutionStudioBody')}
           </p>
           <button
             type="button"

@@ -5,6 +5,7 @@ import { CalendarDays, X } from 'lucide-react';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useCriarAgendamento } from '@/hooks/use-agendamentos';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 
 export const SESSION_HOLD_BRL = 400;
@@ -48,6 +49,7 @@ export function AtomicBookingSheet({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const { mutateAsync, isPending } = useCriarAgendamento();
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const sinal = useMemo(() => Number((SESSION_HOLD_BRL * 0.25).toFixed(2)), []);
   const activeSlot = selectedSlot && slots.includes(selectedSlot) ? selectedSlot : slots[0] ?? null;
 
@@ -92,7 +94,7 @@ export function AtomicBookingSheet({
             type="button"
             onClick={onClose}
             className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-black/[0.04] text-neutral-500 hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:text-zinc-400"
-            aria-label="Fechar"
+            aria-label={t('common.close')}
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>

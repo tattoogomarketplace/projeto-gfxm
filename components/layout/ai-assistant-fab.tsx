@@ -5,10 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/hooks/use-i18n';
 
 function AiAssistantFabBase() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
   const constraintsRef = useRef<HTMLDivElement>(null);
 
   // O FAB só pertence ao casco padrão. Nas rotas "sem casco" (onboarding, IA,
@@ -38,7 +40,7 @@ function AiAssistantFabBase() {
         dragElastic={0.06}
         dragMomentum={false}
         onClick={() => router.push('/dashboard/ai')}
-        aria-label="Abrir assistente de IA"
+        aria-label={t('aria.aiOpen')}
         style={{ touchAction: 'none' }}
         className={cn(
           'pointer-events-auto absolute bottom-0 right-0 flex h-12 w-12 min-h-11 min-w-11 items-center justify-center rounded-full',

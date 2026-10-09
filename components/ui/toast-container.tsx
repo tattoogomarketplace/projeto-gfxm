@@ -4,6 +4,7 @@ import { memo, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { useToastStore, type ToastItem, type ToastType } from '@/lib/toast';
+import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
 
 const ICONS: Record<ToastType, typeof CheckCircle2> = {
@@ -53,6 +54,7 @@ const ToastCard = memo(function ToastCard({
 }) {
   const Icon = ICONS[item.type];
   const accent = ACCENTS[item.type];
+  const { t } = useI18n();
 
   return (
     <motion.li
@@ -95,7 +97,7 @@ const ToastCard = memo(function ToastCard({
       <button
         type="button"
         onClick={() => onDismiss(item.id)}
-        aria-label="Fechar notificação"
+        aria-label={t('aria.notificationClose')}
         className={cn(
           'mt-0.5 flex h-8 w-8 min-h-8 min-w-8 shrink-0 items-center justify-center rounded-lg',
           'text-neutral-400 transition-colors duration-200 hover:bg-neutral-900/5 hover:text-neutral-700',

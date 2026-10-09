@@ -810,7 +810,32 @@ export type LocalizedMessageKey =
   | 'kyc.confirmIdentity'
   | 'kyc.securityNote'
   | 'kyc.identityConfirmed'
-  | 'kyc.sendDocsNow';
+  | 'kyc.sendDocsNow'
+  | 'geo.allRegions'
+  | 'geo.connectionError'
+  | 'aria.aiOpen'
+  | 'aria.profileOpen'
+  | 'aria.themeSelect'
+  | 'aria.notificationClose'
+  | 'aria.digit'
+  | 'otp.cliente.success'
+  | 'otp.cliente.error'
+  | 'otp.tatuador.success'
+  | 'otp.tatuador.error'
+  | 'otp.estudio.success'
+  | 'otp.estudio.error'
+  | 'otp.incorrect'
+  | 'profile.evolutionArtistBody'
+  | 'profile.evolutionStudioBody'
+  | 'theme.dark'
+  | 'theme.light'
+  | 'theme.system'
+  | 'theme.darkSubtitle'
+  | 'theme.lightSubtitle'
+  | 'theme.systemSubtitle'
+  | 'theme.darkDescription'
+  | 'theme.lightDescription'
+  | 'theme.systemDescription';
 
 export type LocalizedDictionary = Record<LocalizedMessageKey, string>;
 

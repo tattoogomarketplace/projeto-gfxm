@@ -5,7 +5,9 @@ import { Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useTattooMachine } from '@/hooks/use-tattoo-machine';
+import { useI18n } from '@/hooks/use-i18n';
 import { TattooMachineAnimationPlaceholder } from '@/components/ui/tattoo-machine-animation-placeholder';
+import type { MessageKey } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export type OtpUserRole = 'cliente' | 'tatuador' | 'estudio';
@@ -22,19 +24,16 @@ export interface OtpInputProps {
 const SUCCESS_HOLD_MS = 1400;
 const ERROR_HOLD_MS = 2500;
 
-const MESSAGES: Record<OtpUserRole, { success: string; error: string }> = {
-  cliente: {
-    success: 'Jornada na pele iniciada! Sua próxima tattoo está sendo desenhada.',
-    error: 'Falha no traço. A tinta não fixou na pele. Verifique o código e tente novamente.',
-  },
-  tatuador: {
-    success: 'Decalque confirmado. Máquina ligada, bem-vindo ao seu Atelier Digital.',
-    error: 'Máquina descalibrada. O traço tremeu e o código falhou. Refaça a calibragem.',
-  },
-  estudio: {
-    success: 'Gestão master conectada. A agenda do seu império está online.',
-    error: 'Curto-circuito na bancada principal. Credenciais fiscais ou código inválidos.',
-  },
+const SUCCESS_KEY: Record<OtpUserRole, MessageKey> = {
+  cliente: 'otp.cliente.success',
+  tatuador: 'otp.tatuador.success',
+  estudio: 'otp.estudio.success',
+};
+
+const ERROR_KEY: Record<OtpUserRole, MessageKey> = {
+  cliente: 'otp.cliente.error',
+  tatuador: 'otp.tatuador.error',
+  estudio: 'otp.estudio.error',
 };
 
 function vibrate(pattern: number | number[]) {
@@ -52,11 +51,11 @@ export function OtpInput({
 }: OtpInputProps) {
   const [digits, setDigits] = useState<string[]>(Array(length).fill(''));
   const [status, setStatus] = useState<OtpStatus>('idle');
-  const [message, setMessage] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const locked = useRef(false);
   const { startTattooing, stopTattooing, triggerError } = useTattooMachine();
   const { playTattoo, playError, playSuccess, stopTattoo } = useSoundEffects();
+  const { t } = useI18n();
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -95,7 +94,6 @@ export function OtpInput({
         stopTattooing(true);
         playSuccess();
         setStatus('success');
-        setMessage(MESSAGES[userRole].success);
         await new Promise((resolve) => window.setTimeout(resolve, SUCCESS_HOLD_MS));
         onSuccess?.();
         return;
@@ -109,11 +107,9 @@ export function OtpInput({
     playError();
     vibrate([200, 100, 200]);
     setStatus('error');
-    setMessage(`Código Incorreto. ${MESSAGES[userRole].error}`);
     window.setTimeout(() => {
       locked.current = false;
       setStatus('idle');
-      setMessage('');
       resetDigits();
     }, ERROR_HOLD_MS);
   };
@@ -129,7 +125,6 @@ export function OtpInput({
       const padded = [...pasteData, ...Array(length - pasteData.length).fill('')];
       setDigits(padded);
       setStatus((current) => (current === 'success' ? current : 'buzzing'));
-      setMessage('');
       if (pasteData.length === length) {
         void handleSubmit(pasteData.join(''));
       } else {
@@ -147,7 +142,6 @@ export function OtpInput({
     setDigits(next);
     if (status === 'error') {
       setStatus('buzzing');
-      setMessage('');
     }
 
     if (value !== '') {
@@ -163,6 +157,11 @@ export function OtpInput({
   const isError = status === 'error';
   const isSuccess = status === 'success';
   const disabled = Boolean(isLoading) || isSuccess;
+  const displayMessage = isSuccess
+    ? t(SUCCESS_KEY[userRole])
+    : isError
+      ? t('otp.incorrect', { message: t(ERROR_KEY[userRole]) })
+      : '';
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -181,7 +180,7 @@ export function OtpInput({
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={1}
-            aria-label={`Dígito ${index + 1} de ${length}`}
+            aria-label={t('aria.digit', { index: index + 1, length })}
             aria-invalid={isError}
             value={digit}
             disabled={disabled}
@@ -221,9 +220,9 @@ export function OtpInput({
             <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-[#F97316] bg-[#F97316]/10 text-[#F97316] shadow-[0_0_16px_rgba(249,115,22,0.35)]">
               <Check className="h-5 w-5" strokeWidth={2.4} />
             </span>
-            <p className="text-sm font-medium text-[#F97316]">{message}</p>
+            <p className="text-sm font-medium text-[#F97316]">{displayMessage}</p>
           </motion.div>
-        ) : message ? (
+        ) : displayMessage ? (
           <motion.p
             key="otp-message"
             initial={{ opacity: 0, y: 12 }}
@@ -234,7 +233,7 @@ export function OtpInput({
               isError ? 'text-red-500' : 'text-[#F97316]'
             )}
           >
-            {message}
+            {displayMessage}
           </motion.p>
         ) : null}
       </AnimatePresence>

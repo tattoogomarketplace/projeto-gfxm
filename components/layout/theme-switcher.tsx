@@ -4,39 +4,41 @@ import { memo, useCallback, useSyncExternalStore, type MouseEvent } from 'react'
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useI18n } from '@/hooks/use-i18n';
+import type { MessageKey } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export type AppTheme = 'dark' | 'light' | 'system';
 
 const THEMES: Array<{
   id: AppTheme;
-  title: string;
-  subtitle: string;
-  description: string;
+  titleKey: MessageKey;
+  subtitleKey: MessageKey;
+  descriptionKey: MessageKey;
   icon: typeof Moon;
   preview: string;
 }> = [
   {
     id: 'dark',
-    title: 'Escuro',
-    subtitle: 'Dark Luxury',
-    description: 'Grafite profundo e neon laranja para sessões noturnas.',
+    titleKey: 'theme.dark',
+    subtitleKey: 'theme.darkSubtitle',
+    descriptionKey: 'theme.darkDescription',
     icon: Moon,
     preview: 'from-[#0a0a0a] via-[#1a1a1a] to-[#2a1810]',
   },
   {
     id: 'light',
-    title: 'Claro',
-    subtitle: 'Studio Clean',
-    description: 'Superfície clara de estúdio, leitura confortável à luz do dia.',
+    titleKey: 'theme.light',
+    subtitleKey: 'theme.lightSubtitle',
+    descriptionKey: 'theme.lightDescription',
     icon: Sun,
     preview: 'from-[#FAFAFA] via-[#FFFFFF] to-[#F3E6DA]',
   },
   {
     id: 'system',
-    title: 'Padrão do Sistema',
-    subtitle: 'Automático',
-    description: 'Acompanha o tema do seu dispositivo automaticamente.',
+    titleKey: 'theme.system',
+    subtitleKey: 'theme.systemSubtitle',
+    descriptionKey: 'theme.systemDescription',
     icon: Monitor,
     preview: 'from-[#0a0a0a] via-[#FAFAFA] to-[#F97316]/30',
   },
@@ -47,6 +49,7 @@ const emptySubscribe = () => () => undefined;
 export const ThemeSwitcher = memo(function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const { triggerHaptic } = useHapticFeedback();
+  const { t } = useI18n();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const active = (mounted ? theme : 'dark') as AppTheme;
@@ -69,7 +72,7 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
   );
 
   return (
-    <div role="radiogroup" aria-label="Seleção de tema" className="space-y-2">
+    <div role="radiogroup" aria-label={t('aria.themeSelect')} className="space-y-2">
       {THEMES.map((option) => {
         const Icon = option.icon;
         const selected = active === option.id;
@@ -100,10 +103,10 @@ export const ThemeSwitcher = memo(function ThemeSwitcher() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                {option.title}
+                {t(option.titleKey)}
               </span>
               <span className="mt-0.5 block text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
-                {option.subtitle} · {option.description}
+                {t(option.subtitleKey)} · {t(option.descriptionKey)}
               </span>
             </span>
             <span
