@@ -4,11 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  BarChart3,
   CheckCircle2,
   ChevronRight,
   CreditCard,
+  Lock,
   PenLine,
   ShieldCheck,
+  Unlock,
   Wallet,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -20,8 +23,10 @@ import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { getRoleExperience } from '@/lib/content/role-experience';
+import { calculateSplits } from '@/lib/finance';
 import { BRAND_NAME } from '@/lib/i18n/brands';
-import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { dashboardPathForRole, type AppRole } from '@/lib/utils/auth-redirect';
 import {
   depositAmount,
   formatBRL,
@@ -32,6 +37,7 @@ import {
 } from '@/lib/utils/agenda-status';
 import { cn } from '@/lib/utils';
 import type { Agendamento } from '@/lib/types/database';
+import type { EscrowLedgerState, StudioSplitModel } from '@/lib/types/escrow';
 
 const ENTRY_CARD_CLASS =
   'group flex min-h-11 min-w-0 w-full items-center gap-3 rounded-2xl border border-black/[0.04] bg-white px-4 py-3 text-left shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-all hover:border-orange-500/40 hover:bg-orange-500/[0.04] active:scale-[0.99] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none';
@@ -261,12 +267,176 @@ function PaymentSessionCard({
   );
 }
 
-export function PaymentsHub() {
+const RECEIPT_STATUSES: AgendaStatus[] = ['confirmado', 'concluido'];
+
+function receiptModelForRole(role: AppRole): StudioSplitModel {
+  return role === 'estudio' ? 'estudio' : 'solo';
+}
+
+function escrowStateFor(status: AgendaStatus): EscrowLedgerState {
+  if (status === 'concluido') return 'released';
+  if (status === 'cancelado') return 'refunded';
+  return 'held';
+}
+
+function ReceiptsOverview({
+  items,
+  model,
+  isLoading,
+}: {
+  items: Agendamento[];
+  model: StudioSplitModel;
+  isLoading?: boolean;
+}) {
   const { t } = useI18n();
-  const router = useRouter();
-  const role = useAuthStore((s) => s.role);
+
+  const summary = useMemo(() => {
+    let gross = 0;
+    let held = 0;
+    let released = 0;
+    for (const item of items) {
+      const value = typeof item.valor_total === 'number' && Number.isFinite(item.valor_total) ? item.valor_total : 0;
+      const split = calculateSplits(value, model);
+      gross += value;
+      if (escrowStateFor(item.status) === 'released') released += split.tatuador;
+      else held += split.tatuador;
+    }
+    return { gross, held, released };
+  }, [items, model]);
+
+  if (isLoading) {
+    return (
+      <div className="grid w-full grid-cols-3 gap-2" aria-hidden>
+        <Skeleton className="h-20 rounded-2xl" />
+        <Skeleton className="h-20 rounded-2xl" />
+        <Skeleton className="h-20 rounded-2xl" />
+      </div>
+    );
+  }
+
+  const tiles = [
+    {
+      key: 'gross',
+      label: t('payments.receiptsGross'),
+      value: formatBRL(summary.gross),
+      Icon: BarChart3,
+      tone: 'border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400',
+    },
+    {
+      key: 'held',
+      label: t('payments.receiptsHeld'),
+      value: formatBRL(summary.held),
+      Icon: Lock,
+      tone: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    },
+    {
+      key: 'released',
+      label: t('payments.receiptsReleased'),
+      value: formatBRL(summary.released),
+      Icon: Unlock,
+      tone: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    },
+  ];
+
+  return (
+    <div className="grid w-full grid-cols-3 gap-2">
+      {tiles.map(({ key, label, value, Icon, tone }) => (
+        <GlassContainer key={key} className="min-w-0 p-3">
+          <span className={cn('flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border', tone)}>
+            <Icon className="h-4 w-4" strokeWidth={1.9} />
+          </span>
+          <p className="mt-2 truncate text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-zinc-500">
+            {label}
+          </p>
+          <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">{value}</p>
+        </GlassContainer>
+      ))}
+    </div>
+  );
+}
+
+function ReceiptCard({ agendamento, model }: { agendamento: Agendamento; model: StudioSplitModel }) {
+  const { t } = useI18n();
+  const tone = resolveTone(agendamento.status);
+  const Icon = tone.icon;
+  const value = typeof agendamento.valor_total === 'number' && Number.isFinite(agendamento.valor_total) ? agendamento.valor_total : 0;
+  const split = calculateSplits(value, model);
+  const escrow = escrowStateFor(agendamento.status);
+  const escrowLabel =
+    escrow === 'released'
+      ? t('payments.receiptsReleased')
+      : escrow === 'refunded'
+        ? t('agenda.statusCanceled')
+        : t('payments.receiptsHeld');
+  const escrowTone =
+    escrow === 'released'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : escrow === 'refunded'
+        ? 'text-zinc-500 dark:text-zinc-400'
+        : 'text-amber-600 dark:text-amber-400';
+
+  return (
+    <GlassContainer className="relative w-full overflow-hidden p-4">
+      <span
+        aria-hidden
+        className={cn('absolute left-0 top-0 h-full w-1 bg-gradient-to-b', tone.accent)}
+      />
+      <div className="pl-2">
+        <div className="flex items-start justify-between gap-3">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide',
+              tone.pill
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+            {t(tone.labelKey)}
+          </span>
+          <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-zinc-400">
+            {formatWhen(agendamento.data_hora)}
+          </span>
+        </div>
+
+        <p className="mt-3 text-sm font-semibold tracking-tight text-gray-900 dark:text-white">
+          {t('agenda.session')}
+        </p>
+
+        <div className="mt-2 grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-zinc-500">
+              {t('payments.receiptsGross')}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+              {formatBRL(value)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-zinc-500">
+              {t('role.tatuador.label')}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+              {formatBRL(split.tatuador)}
+            </p>
+          </div>
+        </div>
+
+        <p className={cn('mt-3 inline-flex items-center gap-1.5 text-xs font-semibold', escrowTone)}>
+          <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} />
+          {escrowLabel}
+        </p>
+      </div>
+    </GlassContainer>
+  );
+}
+
+export function PaymentsPanel({ role }: { role: AppRole }) {
+  const { t } = useI18n();
   const { data, isLoading } = useAgendamentos();
   const [overrides, setOverrides] = useState<Record<string, AgendaStatus>>({});
+
+  const isStudio = role !== 'cliente';
+  const experience = getRoleExperience(role).dashboard;
+  const model = receiptModelForRole(role);
 
   const items = useMemo(() => data ?? [], [data]);
   const tracked = useMemo(
@@ -277,6 +447,10 @@ export function PaymentsHub() {
       }),
     [items, overrides]
   );
+  const receipts = useMemo(
+    () => items.filter((item) => RECEIPT_STATUSES.includes(item.status)),
+    [items]
+  );
 
   const handleSigned = useCallback((id: string) => {
     setOverrides((prev) => ({ ...prev, [id]: 'aguardando_sinal' }));
@@ -286,31 +460,27 @@ export function PaymentsHub() {
     setOverrides((prev) => ({ ...prev, [id]: 'confirmado' }));
   }, []);
 
-  return (
-    <div className="min-w-0 w-full flex-1 space-y-6 pt-5">
-      <SegmentedControl
-        options={[
-          { value: 'agenda', label: t('agenda.tab') },
-          { value: 'pagamentos', label: t('payments.title') },
-        ]}
-        value="pagamentos"
-        onChange={(value) => {
-          if (value === 'agenda') {
-            router.push(`${dashboardPathForRole(role)}?tab=agendar`);
-          }
-        }}
-        ariaLabel={t('agenda.tab')}
-      />
+  const emptyState = (
+    <GlassContainer className="border-dashed p-6 text-center">
+      <Wallet className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
+      <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-zinc-300">
+        {t('agenda.empty')}
+      </p>
+      <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('agenda.emptyHint')}</p>
+    </GlassContainer>
+  );
 
-      <header className="relative min-w-0 w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
+  return (
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6">
+      <header className="relative min-w-0 w-full shrink-0 overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
           {BRAND_NAME}
         </p>
         <h1 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight text-gray-900 dark:text-white">
-          {t('payments.title')}
+          {isStudio ? t('payments.tabStudio') : t('payments.title')}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-zinc-400">
-          {t('payments.subtitle')}
+          {isStudio ? t(experience.subtitle) : t('payments.subtitle')}
         </p>
         <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 dark:text-zinc-500">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" strokeWidth={2} />
@@ -318,31 +488,64 @@ export function PaymentsHub() {
         </p>
       </header>
 
-      <JourneyStepper />
-
-      {isLoading ? (
-        <PaymentsSkeleton />
-      ) : tracked.length === 0 ? (
-        <GlassContainer className="border-dashed p-6 text-center">
-          <Wallet className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
-          <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-zinc-300">
-            {t('agenda.empty')}
-          </p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('agenda.emptyHint')}</p>
-        </GlassContainer>
+      {isStudio ? (
+        <>
+          <ReceiptsOverview items={receipts} model={model} isLoading={isLoading} />
+          {isLoading ? <PaymentsSkeleton /> : receipts.length === 0 ? emptyState : (
+            <div className="space-y-4">
+              {receipts.map((agendamento) => (
+                <ReceiptCard key={agendamento.id} agendamento={agendamento} model={model} />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="space-y-4">
-          {tracked.map((agendamento) => (
-            <PaymentSessionCard
-              key={agendamento.id}
-              agendamento={agendamento}
-              localStatus={overrides[agendamento.id] ?? agendamento.status}
-              onSigned={handleSigned}
-              onPaid={handlePaid}
-            />
-          ))}
-        </div>
+        <>
+          <JourneyStepper />
+          {isLoading ? <PaymentsSkeleton /> : tracked.length === 0 ? emptyState : (
+            <div className="space-y-4">
+              {tracked.map((agendamento) => (
+                <PaymentSessionCard
+                  key={agendamento.id}
+                  agendamento={agendamento}
+                  localStatus={overrides[agendamento.id] ?? agendamento.status}
+                  onSigned={handleSigned}
+                  onPaid={handlePaid}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+export function PaymentsHub() {
+  const { t } = useI18n();
+  const router = useRouter();
+  const role = useAuthStore((s) => s.role) ?? 'cliente';
+  const isClient = role === 'cliente';
+  const agendaLabel = isClient ? t('agenda.tabClient') : t('agenda.tabStudio');
+  const paymentsLabel = isClient ? t('payments.tabClient') : t('payments.tabStudio');
+
+  return (
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6 pt-5">
+      <SegmentedControl
+        options={[
+          { value: 'agenda', label: agendaLabel },
+          { value: 'payments', label: paymentsLabel },
+        ]}
+        value="payments"
+        onChange={(value) => {
+          if (value === 'agenda') {
+            router.push(`${dashboardPathForRole(role)}?tab=agendar`);
+          }
+        }}
+        ariaLabel={agendaLabel}
+      />
+
+      <PaymentsPanel role={role} />
     </div>
   );
 }

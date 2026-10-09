@@ -1,73 +1,20 @@
 'use client';
 
-import { type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { CalendarDays } from 'lucide-react';
-import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { HomeDiscover } from '@/components/features/home-discover';
-import { AgendaTimeline } from '@/components/features/agenda-timeline';
-import { PaymentsEntryCard } from '@/components/features/payments-hub';
-import { SegmentedControl } from '@/components/ui/segmented-control';
+import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
 import { useUiStore } from '@/hooks/use-ui-store';
-import { useI18n } from '@/hooks/use-i18n';
+import type { AppRole } from '@/lib/utils/auth-redirect';
 
-function SectionHeading({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: ReactNode;
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.22)] dark:text-orange-400">
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h2 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
-          {title}
-        </h2>
-        {subtitle ? <p className="mt-0.5 text-sm text-neutral-600 dark:text-zinc-400">{subtitle}</p> : null}
-      </div>
-    </div>
-  );
-}
-
-export default function ClienteDashboard() {
-  const { data: agendamentos, isLoading } = useAgendamentos();
-  const { t } = useI18n();
-  const router = useRouter();
-
+export default function ClienteDashboard({ role = 'cliente' }: { role?: AppRole }) {
   const activeTab = useUiStore((s) => s.activeTab);
 
   return (
     <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="min-w-0 w-full flex-1 space-y-5">
-            <SegmentedControl
-              options={[
-                { value: 'agenda', label: t('agenda.tab') },
-                { value: 'pagamentos', label: t('payments.title') },
-              ]}
-              value="agenda"
-              onChange={(value) => {
-                if (value === 'pagamentos') {
-                  router.push('/dashboard/pagamentos');
-                }
-              }}
-              ariaLabel={t('agenda.tab')}
-            />
-            <SectionHeading
-              icon={<CalendarDays className="h-5 w-5" strokeWidth={1.75} />}
-              title={t('agenda.timeline')}
-              subtitle={t('agenda.timelineSubtitle')}
-            />
-            <AgendaTimeline agendamentos={agendamentos} isLoading={isLoading} />
-            <PaymentsEntryCard />
+          <section key="agendar" className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+            <AgendaPaymentsWorkspace role={role} />
           </section>
         )}
 

@@ -171,7 +171,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     : isGaleria
       ? t('nav.gallery')
       : isPagamentos
-        ? t('payments.title')
+        ? role && role !== 'cliente'
+          ? t('payments.tabStudio')
+          : t('payments.tabClient')
         : selectedTab === 'perfil'
           ? t('profile.title')
           : selectedTab === 'agendar'

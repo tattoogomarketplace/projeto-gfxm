@@ -4,21 +4,33 @@ import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StudioIncomingRequests } from '@/components/features/studio-incoming-requests';
+import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { useI18n } from '@/hooks/use-i18n';
+import { useUiStore } from '@/hooks/use-ui-store';
 import type { Agendamento } from '@/lib/types/database';
+import type { AppRole } from '@/lib/utils/auth-redirect';
 
 const EXPERIENCE = getRoleExperience('estudio').dashboard;
 
-export default function EstudioDashboard() {
+export default function EstudioDashboard({ role = 'estudio' }: { role?: AppRole }) {
   const { data: agendamentos, isLoading } = useAgendamentos();
   const { t } = useI18n();
+  const activeTab = useUiStore((s) => s.activeTab);
+
+  if (activeTab === 'agendar') {
+    return (
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 dark:text-white">
+        <AgendaPaymentsWorkspace role={role} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 dark:text-white">
       <h1 className="text-2xl font-bold mb-1">{t(EXPERIENCE.heading)}</h1>
       <p className="mb-6 text-sm text-neutral-600 dark:text-zinc-400">{t(EXPERIENCE.subtitle)}</p>
-      
+
       {isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-24 w-full rounded-xl" />
@@ -32,7 +44,7 @@ export default function EstudioDashboard() {
               {agendamentos?.length || 0}
             </p>
           </GlassContainer>
-          
+
           <div className="mt-6">
             <h3 className="font-bold mb-4">{t('dashboard.artistsOverview')}</h3>
             {agendamentos?.map((ag: Agendamento, index: number) => (
