@@ -26,8 +26,12 @@ type FlashNoteBackground = {
   id: string;
   /** Decorative ring color — uses the brand tokens. */
   ring: string;
-  /** Full-bleed surface applied to the composer canvas. */
-  surface: string;
+  /**
+   * Tailwind gradient utilities applied to the composer canvas. Kept as static
+   * class strings (never interpolated) so Tailwind's JIT compiler can detect and
+   * emit them, guaranteeing the preview repaints the instant the state changes.
+   */
+  gradient: string;
 };
 
 /**
@@ -39,22 +43,22 @@ const BACKGROUNDS: FlashNoteBackground[] = [
   {
     id: 'graphite',
     ring: '#3f3f46',
-    surface: 'linear-gradient(155deg, #131313 0%, #0a0a0a 58%, #1c1c1c 100%)',
+    gradient: 'bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#1c1c1c]',
   },
   {
     id: 'ember',
     ring: '#F97316',
-    surface: 'linear-gradient(155deg, #1b0a02 0%, #3d1404 54%, #0a0a0a 100%)',
+    gradient: 'bg-gradient-to-br from-[#1b0a02] via-[#3d1404] to-[#0a0a0a]',
   },
   {
     id: 'copper',
     ring: '#D9460E',
-    surface: 'linear-gradient(155deg, #1e0b03 0%, #4b1405 48%, #130705 100%)',
+    gradient: 'bg-gradient-to-br from-[#1e0b03] via-[#4b1405] to-[#130705]',
   },
   {
     id: 'emerald',
     ring: '#10B981',
-    surface: 'linear-gradient(155deg, #03130c 0%, #063a25 54%, #04120c 100%)',
+    gradient: 'bg-gradient-to-br from-[#03130c] via-[#063a25] to-[#04120c]',
   },
 ];
 
@@ -231,8 +235,10 @@ export function FlashNoteCreatorSheet({
             {/* Composer canvas — WYSIWYG surface, typography first. */}
             <div className="px-5 pb-2 pt-4">
               <div
-                className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
-                style={{ backgroundImage: background.surface }}
+                className={cn(
+                  'relative overflow-hidden rounded-3xl border border-white/[0.08]',
+                  background.gradient
+                )}
               >
                 <span
                   aria-hidden
@@ -277,10 +283,10 @@ export function FlashNoteCreatorSheet({
                       }}
                       className={cn(
                         'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
+                        option.gradient,
                         active ? 'scale-110' : 'scale-100'
                       )}
                       style={{
-                        backgroundImage: option.surface,
                         boxShadow: active
                           ? `0 0 0 2px #0d0d0d, 0 0 0 4px ${option.ring}`
                           : `0 0 0 1px rgba(255,255,255,0.14)`,
