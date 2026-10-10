@@ -80,6 +80,7 @@ enum TransactionType {
   DEPOSIT
   FINAL_PAYMENT
   PLATFORM_FEE
+  REFUND
 
   @@map("transaction_type")
 }
