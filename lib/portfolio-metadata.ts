@@ -52,7 +52,23 @@ export type PortfolioItemDto = {
   createdAt: string;
   likesCount: number;
   descricao: string | null;
+  location?: string | null;
 };
+
+export function resolvePortfolioLocation(input: {
+  studioCity?: string | null;
+  studioState?: string | null;
+  artistCity?: string | null;
+  artistState?: string | null;
+}): string | null {
+  const pick = (city?: string | null, state?: string | null): string | null => {
+    const c = (city ?? '').trim();
+    const uf = (state ?? '').trim();
+    if (c && uf) return `${c}/${uf}`;
+    return c || uf || null;
+  };
+  return pick(input.studioCity, input.studioState) ?? pick(input.artistCity, input.artistState);
+}
 
 export type PortfolioPublishInput = {
   imageUrl: string;

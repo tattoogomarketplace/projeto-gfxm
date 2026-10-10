@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import {
   isPortfolioBodyPart,
   isPortfolioStyle,
+  resolvePortfolioLocation,
   type PortfolioBodyPart,
   type PortfolioStyle,
 } from '@/lib/portfolio-metadata';
@@ -156,6 +157,8 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
             select: {
               id: true,
               nome: true,
+              cidade: true,
+              estado: true,
             },
           },
         },
@@ -187,9 +190,20 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
         cidade: row.tatuador.cidade,
         estado: row.tatuador.estado,
         studio: row.tatuador.studio
-          ? { id: row.tatuador.studio.id, name: studioName || '' }
+          ? {
+              id: row.tatuador.studio.id,
+              name: studioName || '',
+              cidade: row.tatuador.studio.cidade,
+              estado: row.tatuador.studio.estado,
+            }
           : null,
       },
+      location: resolvePortfolioLocation({
+        studioCity: row.tatuador.studio?.cidade,
+        studioState: row.tatuador.studio?.estado,
+        artistCity: row.tatuador.cidade,
+        artistState: row.tatuador.estado,
+      }),
     };
   });
 }

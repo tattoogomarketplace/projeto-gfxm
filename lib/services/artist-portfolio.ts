@@ -6,6 +6,7 @@ import {
   isPortfolioBodyPart,
   isPortfolioSessionDuration,
   isPortfolioStyle,
+  resolvePortfolioLocation,
   sanitizePortfolioNotes,
   type PortfolioItemDto,
   type PortfolioPublishInput,
@@ -38,6 +39,11 @@ type PortfolioRow = {
   descricao: string | null;
   likes_count: number;
   created_at: Date;
+  tatuador: {
+    cidade: string | null;
+    estado: string | null;
+    studio: { cidade: string | null; estado: string | null } | null;
+  };
 };
 
 export async function loadTatuadorActor(clerkId: string): Promise<TatuadorActor | null> {
@@ -72,6 +78,12 @@ export function toPortfolioItemDto(row: PortfolioRow): PortfolioItemDto {
     createdAt: row.created_at.toISOString(),
     likesCount: row.likes_count,
     descricao: row.descricao,
+    location: resolvePortfolioLocation({
+      studioCity: row.tatuador?.studio?.cidade,
+      studioState: row.tatuador?.studio?.estado,
+      artistCity: row.tatuador?.cidade,
+      artistState: row.tatuador?.estado,
+    }),
   };
 }
 
@@ -149,6 +161,18 @@ const ITEM_SELECT = {
   descricao: true,
   likes_count: true,
   created_at: true,
+  tatuador: {
+    select: {
+      cidade: true,
+      estado: true,
+      studio: {
+        select: {
+          cidade: true,
+          estado: true,
+        },
+      },
+    },
+  },
 } as const;
 
 export async function listArtistPortfolio(tatuadorId: string): Promise<PortfolioItemDto[]> {

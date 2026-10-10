@@ -89,6 +89,13 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
 
+        {item.location ? (
+          <div className="pointer-events-none absolute right-3 top-3 z-[2] inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
+            <MapPin className="h-3 w-3 text-orange-400" strokeWidth={2} />
+            <span className="max-w-[10rem] truncate">{item.location}</span>
+          </div>
+        ) : null}
+
         <div className="pointer-events-none absolute left-3 top-3 z-[2] flex flex-wrap gap-1.5">
           <span className="rounded-full border border-orange-500/40 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-300 backdrop-blur-md">
             {styleLabel(item.style)}

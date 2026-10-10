@@ -5,7 +5,7 @@ export type GaleriaArtist = {
   initial: string;
   cidade: string | null;
   estado: string | null;
-  studio: { id: string; name: string } | null;
+  studio: { id: string; name: string; cidade: string | null; estado: string | null } | null;
 };
 
 export type GaleriaItem = {
@@ -20,6 +20,7 @@ export type GaleriaItem = {
   likesCount: number;
   descricao: string | null;
   artist: GaleriaArtist;
+  location: string | null;
 };
 
 export type GaleriaHealingFilter = 'all' | 'fresh' | 'healed';

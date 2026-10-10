@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { Heart, MapPin } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
@@ -18,6 +18,7 @@ interface PortfolioCardProps {
   bodyPart?: string;
   sessionDuration?: string;
   isHealed?: boolean;
+  location?: string | null;
 }
 
 export function PortfolioCard({
@@ -29,6 +30,7 @@ export function PortfolioCard({
   bodyPart,
   sessionDuration,
   isHealed,
+  location,
 }: PortfolioCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
@@ -73,6 +75,12 @@ export function PortfolioCard({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative h-64 w-full overflow-hidden">
         <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
+        {location ? (
+          <div className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
+            <MapPin className="h-3 w-3 text-orange-400" strokeWidth={2} />
+            <span className="max-w-[10rem] truncate">{location}</span>
+          </div>
+        ) : null}
       </div>
       
       <div className="flex items-center justify-between bg-neutral-50 p-4 dark:bg-white/[0.03]">

@@ -325,6 +325,10 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
                   <p className="line-clamp-3 text-xs leading-relaxed text-neutral-500 dark:text-zinc-400">{item.descricao}</p>
                 ) : null}
                 <p className="flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-400">
+                  <MapPin className="h-3 w-3 shrink-0 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
+                  <span className="truncate">{item.location ?? t('vitrine.independent')}</span>
+                </p>
+                <p className="flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-400">
                   <MapPin className="h-3 w-3" strokeWidth={1.75} />
                   {bodyPartLabel(item.bodyPart)}
                   <Clock3 className="ml-2 h-3 w-3" strokeWidth={1.75} />
