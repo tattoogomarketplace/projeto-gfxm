@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Pencil, Plus, Radio, X, Zap } from 'lucide-react';
 import { FlashNoteCreatorSheet, FLASH_NOTE_MAX_LENGTH } from '@/components/chat/flash-note-creator-sheet';
+import { getFlashNoteBackground, type FlashNoteStyle } from '@/lib/flash-notes-style';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -60,6 +61,13 @@ export function FlashNotesCarousel() {
     [actorId, notes]
   );
 
+  // The ring is the persisted style's source of truth on the Hub — it reflects
+  // the note's backgroundId the instant the optimistic update lands.
+  const ownBackground = useMemo(
+    () => (ownNote ? getFlashNoteBackground(ownNote.backgroundId) : null),
+    [ownNote]
+  );
+
   const loadNotes = useCallback(async () => {
     try {
       const headers = await authHeaders(getTokenRef.current);
@@ -94,9 +102,12 @@ export function FlashNotesCarousel() {
   }, []);
 
   // Returns `true` when the note is persisted. Keeps optimistic rollback so the
-  // composer can safely retry without desyncing the carousel.
+  // composer can safely retry without desyncing the carousel. When the artist
+  // already owns a note we PATCH it; otherwise we POST a brand new one. Either
+  // way the full style payload (backgroundId/fontClass/alignClass) is sent so
+  // the ring and preview survive reloads.
   const publishNote = useCallback(
-    async (content: string): Promise<boolean> => {
+    async (content: string, style: FlashNoteStyle): Promise<boolean> => {
       const trimmed = content.trim();
       if (!trimmed) return false;
       if (trimmed.length > FLASH_NOTE_MAX_LENGTH) {
@@ -104,15 +115,19 @@ export function FlashNotesCarousel() {
         return false;
       }
 
+      const editing = ownNote;
       snapshotRef.current = notes;
       const optimistic: FlashNoteDto = {
-        id: ownNote?.id ?? `optimistic-${Date.now()}`,
+        id: editing?.id ?? `optimistic-${Date.now()}`,
         userId: actorId ?? 'me',
         content: trimmed,
-        createdAt: new Date().toISOString(),
+        backgroundId: style.backgroundId,
+        fontClass: style.fontClass,
+        alignClass: style.alignClass,
+        createdAt: editing?.createdAt ?? new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         ativa: true,
-        author: ownNote?.author ?? {
+        author: editing?.author ?? {
           id: actorId ?? 'me',
           name: t('flash.you'),
           role: 'tatuador',
@@ -129,11 +144,19 @@ export function FlashNotesCarousel() {
 
       try {
         const headers = await authHeaders(getTokenRef.current);
-        const res = await fetch('/api/chat/flash-notes', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ content: trimmed }),
-        });
+        const res = await fetch(
+          editing ? `/api/chat/flash-notes/${encodeURIComponent(editing.id)}` : '/api/chat/flash-notes',
+          {
+            method: editing ? 'PATCH' : 'POST',
+            headers,
+            body: JSON.stringify({
+              content: trimmed,
+              backgroundId: style.backgroundId,
+              fontClass: style.fontClass,
+              alignClass: style.alignClass,
+            }),
+          }
+        );
         const json = (await res.json().catch(() => ({}))) as {
           sucesso?: boolean;
           erro?: string;
@@ -226,7 +249,14 @@ export function FlashNotesCarousel() {
             className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
             aria-label={ownNote ? t('flash.updateAria') : t('flash.publishAria')}
           >
-            <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_180deg_at_50%_50%,#F97316,#FFBF00,#F97316)] p-[2px]">
+            <span
+              className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
+              style={{
+                backgroundImage: ownBackground
+                  ? `conic-gradient(from 180deg at 50% 50%, ${ownBackground.ring}, #FFBF00, ${ownBackground.ring})`
+                  : 'conic-gradient(from 180deg at 50% 50%, #F97316, #FFBF00, #F97316)',
+              }}
+            >
               <span className="flex h-full w-full items-center justify-center rounded-full border border-black/[0.04] bg-white text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-orange-400">
                 {ownNote ? <Pencil className="h-5 w-5" strokeWidth={1.75} /> : <Plus className="h-5 w-5" strokeWidth={1.75} />}
               </span>
@@ -248,6 +278,7 @@ export function FlashNotesCarousel() {
               const name = note.author?.name || t('flash.artist');
               const initial = note.author?.initial ?? 'A';
               const isOwn = actorId != null && note.userId === actorId;
+              const ring = getFlashNoteBackground(note.backgroundId).ring;
               return (
                 <button
                   key={note.id}
@@ -264,7 +295,12 @@ export function FlashNotesCarousel() {
                   className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
                   aria-label={t('flash.aria', { name })}
                 >
-                  <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full bg-[conic-gradient(from_210deg_at_50%_50%,#F97316,#FFBF00,#ea580c,#F97316)] p-[2px]">
+                  <span
+                    className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
+                    style={{
+                      backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
+                    }}
+                  >
                     <span className="flex h-full w-full items-center justify-center rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
                       {initial}
                     </span>
@@ -293,6 +329,9 @@ export function FlashNotesCarousel() {
         open={creatorOpen}
         isEditing={Boolean(ownNote)}
         initialContent={ownNote?.content ?? ''}
+        initialBackgroundId={ownNote?.backgroundId}
+        initialFontClass={ownNote?.fontClass}
+        initialAlignClass={ownNote?.alignClass}
         onClose={closeComposer}
         onPublish={publishNote}
         onDelete={ownNote ? deleteOwnNote : undefined}

@@ -29,7 +29,6 @@ import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import {
   FLASH_NOTE_BACKGROUNDS,
-  FLASH_NOTE_GRADIENTS,
   FLASH_NOTE_MAX_LENGTH,
   cycleFlashNoteAlign,
   cycleFlashNoteFont,
@@ -247,7 +246,6 @@ const ComposerControls = memo(function ComposerControls({
               }}
               className={cn(
                 'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
-                FLASH_NOTE_GRADIENTS[option.id],
                 active ? 'scale-110' : 'scale-100'
               )}
               style={{
@@ -440,7 +438,11 @@ export function FlashNoteCreatorSheet({
     setIsPublishing(true);
     startTransition(async () => {
       try {
-        const published = await onPublish(content);
+        const published = await onPublish(content, {
+          backgroundId,
+          fontClass: typeface.className,
+          alignClass: alignment.className,
+        });
         if (!published) return;
         triggerHaptic('heavy');
         toast.success(t('toast.flashLive'));
@@ -449,7 +451,7 @@ export function FlashNoteCreatorSheet({
         setIsPublishing(false);
       }
     });
-  }, [busy, onClose, onPublish, store, t, triggerHaptic]);
+  }, [alignment.className, backgroundId, busy, onClose, onPublish, store, t, triggerHaptic, typeface.className]);
 
   if (!mounted) return null;
 
@@ -539,7 +541,7 @@ export function FlashNoteCreatorSheet({
                     to Tailwind purging, so selecting a color always paints. */}
                 <div
                   aria-hidden
-                  className={cn('absolute inset-0 z-0 bg-transparent', GRADIENTS[background.id])}
+                  className="absolute inset-0 z-0 bg-transparent"
                   style={{ background: background.css }}
                 />
                 {/* Layer 1 — decorative brand glow. */}
@@ -570,21 +572,17 @@ export function FlashNoteCreatorSheet({
               </div>
             </div>
 
-            {/* Creator toolbar — alignment + typography. */}
-            <CreatorControls
+            {/* Creator toolbar — minimalist Instagram-style cycling toggles + color deck. */}
+            <ComposerControls
+              backgroundId={backgroundId}
               align={align}
               font={font}
+              backgroundLabel={t('flash.background')}
               alignLabel={t('flash.alignment')}
               fontLabel={t('flash.typography')}
-              onAlign={handleSelectAlign}
-              onFont={handleSelectFont}
-            />
-
-            {/* Background selector — brand-token gradients. */}
-            <BackgroundSelector
-              activeId={backgroundId}
-              label={t('flash.background')}
-              onSelect={handleSelectBackground}
+              onSelectBackground={handleSelectBackground}
+              onCycleAlign={handleCycleAlign}
+              onCycleFont={handleCycleFont}
             />
 
             {/* Live indicator + counter. */}
