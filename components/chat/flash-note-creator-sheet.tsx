@@ -34,6 +34,7 @@ import {
   cycleFlashNoteFont,
   getFlashNoteAlignByClass,
   getFlashNoteAlignById,
+  getFlashNoteBackground,
   getFlashNoteFontByClass,
   getFlashNoteFontById,
   type FlashNoteAlignId,
