@@ -3,8 +3,7 @@
 import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, MessageCircle, ReceiptText, Sparkles } from 'lucide-react';
-import { FlashNotesCarousel } from '@/components/chat/flash-notes-carousel';
+import { ArrowLeft, FileText, MessageCircle, ReceiptText } from 'lucide-react';
 import { ConversationLifecycleBadge } from '@/components/chat/conversation-lifecycle-badge';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
@@ -298,7 +297,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         <ChatQuerySync onChange={handleQueryChange} />
       </Suspense>
 
-      {/* Inbox chrome — glass header + Flash Notes + segmented control. */}
+      {/* Inbox chrome — glass header + segmented control. */}
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
         <header className="glass-chrome sticky top-0 z-30 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
           <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
@@ -316,10 +315,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
           </div>
         </header>
 
-        <div className="relative px-1 pb-1 pt-3">
-          <FlashNotesCarousel />
-        </div>
-        <div className="relative px-3 pb-3 pt-2">
+        <div className="relative px-3 pb-3 pt-3">
           <ChatCategoryTabs
             value={activeCategory}
             onChange={handleCategoryChange}
@@ -366,14 +362,20 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               )}
             >
             {!loadingList && orderedConversations.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
-                <Sparkles className="h-5 w-5 text-orange-500 dark:text-orange-400" />
-                <p className="mt-3 max-w-full text-balance text-sm text-neutral-500 dark:text-zinc-400">
+              <div className="flex flex-1 flex-col items-center justify-center px-8 py-12 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/[0.05] bg-white/70 text-orange-500/70 opacity-70 shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-orange-400/70">
+                  {activeCategory === 'BUDGET' ? (
+                    <FileText className="h-6 w-6" strokeWidth={1.6} aria-hidden />
+                  ) : (
+                    <MessageCircle className="h-6 w-6" strokeWidth={1.6} aria-hidden />
+                  )}
+                </div>
+                <p className="mt-4 max-w-[22rem] text-balance text-[15px] font-semibold tracking-tight text-neutral-700 dark:text-zinc-200">
                   {activeCategory === 'BUDGET'
                     ? t(isProfessional ? 'chat.emptyQuotesProfessional' : 'chat.emptyQuotes')
                     : t('chat.empty')}
                 </p>
-                <p className="mt-1 max-w-full text-pretty text-xs text-neutral-500 dark:text-zinc-500">
+                <p className="mt-1.5 max-w-[22rem] text-pretty text-[13px] leading-relaxed text-neutral-400 dark:text-zinc-500">
                   {activeCategory === 'BUDGET'
                     ? t(isProfessional ? 'chat.emptyQuotesProfessionalHint' : 'chat.emptyQuotesHint')
                     : t(isProfessional ? 'chat.emptyProfessionalHint' : 'chat.emptyHint')}

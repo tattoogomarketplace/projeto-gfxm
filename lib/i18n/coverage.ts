@@ -36,8 +36,8 @@ export type ExtraMessages = Pick<
 
 export const EXTRA_PT_BR: ExtraMessages = {
   'chat.quotes': 'Orçamentos',
-  'chat.emptyQuotes': 'Nenhum orçamento ainda.',
-  'chat.emptyQuotesHint': 'Peça um orçamento a partir da galeria de inspirações.',
+  'chat.emptyQuotes': 'Seus pedidos de orçamento.',
+  'chat.emptyQuotesHint': 'Acompanhe as propostas em andamento, prontas para agendar e pagar o sinal.',
   'chat.filterAria': 'Filtrar conversas por categoria',
   'chat.directAria': 'Conversas diretas',
   'chat.quotesAria': 'Orçamentos e solicitações',
