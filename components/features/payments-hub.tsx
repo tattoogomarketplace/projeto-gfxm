@@ -496,9 +496,11 @@ export function PaymentsPanel({ role }: { role: AppRole }) {
     <GlassContainer className="border-dashed p-6 text-center">
       <Wallet className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
       <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-zinc-300">
-        {t('agenda.empty')}
+        {t(isStudio ? 'payments.emptyReceipts' : 'payments.empty')}
       </p>
-      <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('agenda.emptyHint')}</p>
+      <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
+        {t(isStudio ? 'payments.emptyReceiptsHint' : 'payments.emptyHint')}
+      </p>
     </GlassContainer>
   );
 

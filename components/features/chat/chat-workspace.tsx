@@ -338,7 +338,9 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
                 <Sparkles className="h-5 w-5 text-orange-500 dark:text-orange-400" />
                 <p className="mt-3 max-w-full text-balance text-sm text-neutral-500 dark:text-zinc-400">
-                  {activeCategory === 'BUDGET' ? t('chat.emptyQuotes') : t('chat.empty')}
+                  {activeCategory === 'BUDGET'
+                    ? t(isProfessional ? 'chat.emptyQuotesProfessional' : 'chat.emptyQuotes')
+                    : t('chat.empty')}
                 </p>
                 <p className="mt-1 max-w-full text-pretty text-xs text-neutral-500 dark:text-zinc-500">
                   {activeCategory === 'BUDGET'
