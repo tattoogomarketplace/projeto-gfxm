@@ -67,7 +67,7 @@ export function StudioActiveSessionCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-500 dark:text-orange-400">
-              {t('clientAgenda.activeSession')}
+              {t('studioAgenda.activeSession')}
             </p>
             <p className="mt-1 truncate text-base font-bold tracking-tight text-gray-900 dark:text-white">
               {t('agenda.session')}
@@ -93,7 +93,7 @@ export function StudioActiveSessionCard({
           <div className="flex items-center justify-between gap-3">
             <dt className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-zinc-400">
               <CalendarClock className="h-4 w-4 shrink-0 text-neutral-400 dark:text-zinc-500" strokeWidth={1.9} />
-              <span className="truncate">{t('clientAgenda.schedule')}</span>
+              <span className="truncate">{t('studioAgenda.schedule')}</span>
             </dt>
             <dd className="shrink-0 text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
               {formatWhen(session.agendamento.data_hora)}
@@ -103,7 +103,7 @@ export function StudioActiveSessionCard({
           <div className="flex items-center justify-between gap-3">
             <dt className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-neutral-500 dark:text-zinc-400">
               <Wallet className="h-4 w-4 shrink-0 text-neutral-400 dark:text-zinc-500" strokeWidth={1.9} />
-              <span className="truncate">{t('clientAgenda.total')}</span>
+              <span className="truncate">{t('studioAgenda.total')}</span>
             </dt>
             <dd className="shrink-0 text-sm font-bold tabular-nums text-gray-900 dark:text-white">
               {formatBRL(total)}
@@ -114,7 +114,7 @@ export function StudioActiveSessionCard({
         <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.08] px-4 py-3">
           <span className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
             <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="truncate">{t('clientAgenda.depositLabel')}</span>
+            <span className="truncate">{t('studioAgenda.depositLabel')}</span>
           </span>
           <span className="shrink-0 text-base font-bold tabular-nums text-gray-900 dark:text-white">
             {formatBRL(deposit)}

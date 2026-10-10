@@ -23,6 +23,10 @@ export type StudioAgendaMessages = Pick<
   | 'payments.receivable'
   | 'payments.depositsSecured'
   | 'payments.passHint'
+  | 'studioAgenda.activeSession'
+  | 'studioAgenda.schedule'
+  | 'studioAgenda.total'
+  | 'studioAgenda.depositLabel'
 >;
 
 export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
@@ -37,6 +41,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Valores a Receber',
     'payments.depositsSecured': 'Sinais Garantidos',
     'payments.passHint': 'Validação criptográfica das sessões. Em breve.',
+    'studioAgenda.activeSession': 'Sessão Ativa',
+    'studioAgenda.schedule': 'Data e Hora',
+    'studioAgenda.total': 'Valor Total',
+    'studioAgenda.depositLabel': 'Sinal de 25%',
   },
   'pt-PT': {
     'agenda.today': 'Hoje',
@@ -49,6 +57,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Valores a Receber',
     'payments.depositsSecured': 'Sinais Garantidos',
     'payments.passHint': 'Validação criptográfica das sessões. Brevemente.',
+    'studioAgenda.activeSession': 'Sessão Ativa',
+    'studioAgenda.schedule': 'Data e Hora',
+    'studioAgenda.total': 'Valor Total',
+    'studioAgenda.depositLabel': 'Sinal de 25%',
   },
   en: {
     'agenda.today': 'Today',
@@ -61,6 +73,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Amounts Receivable',
     'payments.depositsSecured': 'Secured Deposits',
     'payments.passHint': 'Cryptographic session validation. Coming soon.',
+    'studioAgenda.activeSession': 'Active Session',
+    'studioAgenda.schedule': 'Date & Time',
+    'studioAgenda.total': 'Total Amount',
+    'studioAgenda.depositLabel': '25% Deposit',
   },
   es: {
     'agenda.today': 'Hoy',
@@ -73,6 +89,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Importes por Cobrar',
     'payments.depositsSecured': 'Señales Garantizadas',
     'payments.passHint': 'Validación criptográfica de las sesiones. Próximamente.',
+    'studioAgenda.activeSession': 'Sesión Activa',
+    'studioAgenda.schedule': 'Fecha y Hora',
+    'studioAgenda.total': 'Importe Total',
+    'studioAgenda.depositLabel': 'Señal del 25%',
   },
   fr: {
     'agenda.today': "Aujourd'hui",
@@ -85,6 +105,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Montants à recevoir',
     'payments.depositsSecured': 'Acomptes sécurisés',
     'payments.passHint': 'Validation cryptographique des séances. Bientôt disponible.',
+    'studioAgenda.activeSession': 'Séance active',
+    'studioAgenda.schedule': 'Date et heure',
+    'studioAgenda.total': 'Montant total',
+    'studioAgenda.depositLabel': 'Acompte de 25 %',
   },
   de: {
     'agenda.today': 'Heute',
@@ -97,6 +121,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Forderungen',
     'payments.depositsSecured': 'Gesicherte Anzahlungen',
     'payments.passHint': 'Kryptografische Validierung der Sitzungen. Bald verfügbar.',
+    'studioAgenda.activeSession': 'Aktive Sitzung',
+    'studioAgenda.schedule': 'Datum und Uhrzeit',
+    'studioAgenda.total': 'Gesamtbetrag',
+    'studioAgenda.depositLabel': '25 % Anzahlung',
   },
   it: {
     'agenda.today': 'Oggi',
@@ -109,6 +137,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Importi da ricevere',
     'payments.depositsSecured': 'Acconti garantiti',
     'payments.passHint': 'Validazione crittografica delle sessioni. In arrivo.',
+    'studioAgenda.activeSession': 'Sessione attiva',
+    'studioAgenda.schedule': 'Data e ora',
+    'studioAgenda.total': 'Importo totale',
+    'studioAgenda.depositLabel': 'Acconto del 25%',
   },
   ja: {
     'agenda.today': '今日',
@@ -121,6 +153,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': '受取予定額',
     'payments.depositsSecured': '確保済みデポジット',
     'payments.passHint': 'セッションの暗号検証。近日公開。',
+    'studioAgenda.activeSession': 'アクティブなセッション',
+    'studioAgenda.schedule': '日時',
+    'studioAgenda.total': '合計金額',
+    'studioAgenda.depositLabel': '25%の手付金',
   },
   zh: {
     'agenda.today': '今天',
@@ -133,6 +169,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': '应收金额',
     'payments.depositsSecured': '已保障定金',
     'payments.passHint': '会话的加密验证。敬请期待。',
+    'studioAgenda.activeSession': '进行中的会话',
+    'studioAgenda.schedule': '日期与时间',
+    'studioAgenda.total': '总金额',
+    'studioAgenda.depositLabel': '25% 定金',
   },
   ko: {
     'agenda.today': '오늘',
@@ -145,6 +185,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': '받을 금액',
     'payments.depositsSecured': '보장된 예치금',
     'payments.passHint': '세션의 암호화 검증. 곧 출시됩니다.',
+    'studioAgenda.activeSession': '진행 중인 세션',
+    'studioAgenda.schedule': '날짜 및 시간',
+    'studioAgenda.total': '총 금액',
+    'studioAgenda.depositLabel': '25% 예치금',
   },
   ar: {
     'agenda.today': 'اليوم',
@@ -157,6 +201,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'المبالغ المستحقة',
     'payments.depositsSecured': 'عرابين مضمونة',
     'payments.passHint': 'التحقق المشفر من الجلسات. قريباً.',
+    'studioAgenda.activeSession': 'جلسة نشطة',
+    'studioAgenda.schedule': 'التاريخ والوقت',
+    'studioAgenda.total': 'المبلغ الإجمالي',
+    'studioAgenda.depositLabel': 'عربون 25%',
   },
   ru: {
     'agenda.today': 'Сегодня',
@@ -169,6 +217,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'К получению',
     'payments.depositsSecured': 'Гарантированные депозиты',
     'payments.passHint': 'Криптографическая проверка сеансов. Скоро.',
+    'studioAgenda.activeSession': 'Активный сеанс',
+    'studioAgenda.schedule': 'Дата и время',
+    'studioAgenda.total': 'Итоговая сумма',
+    'studioAgenda.depositLabel': 'Депозит 25 %',
   },
   hi: {
     'agenda.today': 'आज',
@@ -181,6 +233,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'प्राप्य राशि',
     'payments.depositsSecured': 'सुरक्षित जमा',
     'payments.passHint': 'सत्रों का क्रिप्टोग्राफ़िक सत्यापन। जल्द आ रहा है।',
+    'studioAgenda.activeSession': 'सक्रिय सत्र',
+    'studioAgenda.schedule': 'दिनांक और समय',
+    'studioAgenda.total': 'कुल राशि',
+    'studioAgenda.depositLabel': '25% जमा',
   },
   nl: {
     'agenda.today': 'Vandaag',
@@ -193,6 +249,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Te ontvangen bedragen',
     'payments.depositsSecured': 'Gegarandeerde aanbetalingen',
     'payments.passHint': 'Cryptografische sessievalidatie. Binnenkort.',
+    'studioAgenda.activeSession': 'Actieve sessie',
+    'studioAgenda.schedule': 'Datum en tijd',
+    'studioAgenda.total': 'Totaalbedrag',
+    'studioAgenda.depositLabel': '25% aanbetaling',
   },
   tr: {
     'agenda.today': 'Bugün',
@@ -205,6 +265,10 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Alacak tutarı',
     'payments.depositsSecured': 'Güvence altına alınan kaporolar',
     'payments.passHint': 'Oturumların kriptografik doğrulaması. Yakında.',
+    'studioAgenda.activeSession': 'Aktif Oturum',
+    'studioAgenda.schedule': 'Tarih ve Saat',
+    'studioAgenda.total': 'Toplam Tutar',
+    'studioAgenda.depositLabel': '%25 Kapora',
   },
   pl: {
     'agenda.today': 'Dziś',
@@ -217,5 +281,9 @@ export const STUDIO_AGENDA_MESSAGES: Record<Locale, StudioAgendaMessages> = {
     'payments.receivable': 'Kwoty do otrzymania',
     'payments.depositsSecured': 'Zabezpieczone zaliczki',
     'payments.passHint': 'Kryptograficzna weryfikacja sesji. Wkrótce.',
+    'studioAgenda.activeSession': 'Aktywna sesja',
+    'studioAgenda.schedule': 'Data i godzina',
+    'studioAgenda.total': 'Kwota łączna',
+    'studioAgenda.depositLabel': 'Zaliczka 25%',
   },
 };
