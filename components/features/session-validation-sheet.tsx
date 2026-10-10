@@ -7,7 +7,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
-import { processDepositPayment } from '@/lib/actions/transaction.actions';
+import { validateStudioSessionPass } from '@/lib/actions/transaction.actions';
 import { toast } from '@/lib/toast';
 
 /**
@@ -19,9 +19,10 @@ import { toast } from '@/lib/toast';
  * operação de alto risco, então exige confirmação explícita com estado de
  * loading.
  *
- * A validação é simulada no frontend nesta etapa (sem backend): o `onVerify`
- * padrão aprova qualquer token de 6 dígitos após um delay curto. Toda a
- * resposta tátil/sonora reaproveita os hooks de marca.
+ * A validação é executada pela Server Action `validateStudioSessionPass`: o
+ * profissional autenticado (tatuador ou estúdio vinculado) confirma o token do
+ * TattooGo Pass, a sessão é marcada como concluída e o repasse é registrado com
+ * idempotência. Toda a resposta tátil/sonora reaproveita os hooks de marca.
  */
 export type SessionValidationStatus = 'idle' | 'validating' | 'error' | 'success';
 
@@ -159,7 +160,7 @@ export function SessionValidationSheet({
         }
 
         const idempotencyKey = crypto.randomUUID();
-        const result = await processDepositPayment({ sessionId, idempotencyKey });
+        const result = await validateStudioSessionPass(sessionId, code, idempotencyKey);
 
         if (!result.success) {
           toast.error(result.error);
