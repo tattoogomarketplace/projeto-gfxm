@@ -26,6 +26,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { calculateSplits } from '@/lib/finance';
+import { MOCK_STUDIO_FINANCIAL_LEDGER } from '@/lib/mocks/studio-financial-ledger';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { dashboardPathForRole, type AppRole } from '@/lib/utils/auth-redirect';
 import {
@@ -292,6 +293,9 @@ function ReceiptsOverview({
   const { t } = useI18n();
 
   const summary = useMemo(() => {
+    if (items.length === 0) {
+      return { ...MOCK_STUDIO_FINANCIAL_LEDGER };
+    }
     let gross = 0;
     let held = 0;
     let released = 0;
