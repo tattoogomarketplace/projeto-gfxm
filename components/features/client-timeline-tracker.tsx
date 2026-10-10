@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useState, type ReactNode } from 'react';
-import Link from 'next/link';
 import { CalendarClock, Check, ChevronDown, CreditCard, PenLine } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TattooGoPassCard } from '@/components/features/tattoogo-pass-card';
+import { ClientActiveSessionCard } from '@/components/features/client-active-session-card';
+import { ClientActionCTA } from '@/components/features/client-action-cta';
+import { MOCK_ACTIVE_SESSIONS } from '@/lib/mocks/client-active-sessions';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -175,7 +177,6 @@ function StepDetails({
 }) {
   const { t } = useI18n();
   const step = timeline.steps.find((item) => item.id === timeline.currentStepId) ?? timeline.steps[0];
-  const accent = STEP_ACCENT[step.id];
   const isAction = step.id === 'action_required';
   const isPayment = step.id === 'awaiting_deposit';
   const percent = Math.round(timeline.payment.depositRatio * 100);
@@ -207,20 +208,7 @@ function StepDetails({
           ) : null}
 
           {isAction || isPayment ? (
-            <Link
-              href="/dashboard/pagamentos"
-              className={cn(
-                'apple-press inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold hover:brightness-110',
-                accent.node
-              )}
-            >
-              {isAction ? (
-                <PenLine className="h-4 w-4" strokeWidth={2} />
-              ) : (
-                <CreditCard className="h-4 w-4" strokeWidth={2} />
-              )}
-              {isAction ? t('agenda.signDocument') : t('agenda.payDeposit')}
-            </Link>
+            <ClientActionCTA kind={isAction ? 'sign' : 'pay'} href="/dashboard/pagamentos" />
           ) : (
             <div className="space-y-4">
               <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -368,17 +356,22 @@ function TrackerEmptyState() {
 export function ClientTimelineTracker({
   agendamentos,
   isLoading,
+  showActiveSession = true,
 }: {
   agendamentos?: Agendamento[];
   isLoading?: boolean;
+  showActiveSession?: boolean;
 }): ReactNode {
-  const items = agendamentos ?? [];
+  const realItems = agendamentos ?? [];
+  const usingMock = realItems.length === 0 && showActiveSession;
+  const items = usingMock ? MOCK_ACTIVE_SESSIONS.map((session) => session.agendamento) : realItems;
 
   if (isLoading) return <TimelineTrackerSkeleton />;
 
   return (
     <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4">
       <TimelineHeader />
+      {usingMock ? <ClientActiveSessionCard session={MOCK_ACTIVE_SESSIONS[0]} /> : null}
       {items.length === 0 ? (
         <TrackerEmptyState />
       ) : (
