@@ -166,6 +166,38 @@ export function FlashNotesCarousel() {
     [actorId, notes, ownNote, t]
   );
 
+  // Removes the artist's own note. Optimistic with rollback so a flaky network
+  // never desyncs the carousel from the backend.
+  const deleteOwnNote = useCallback(async (): Promise<boolean> => {
+    if (!ownNote) return false;
+    const target = ownNote;
+    snapshotRef.current = notes;
+    setNotes((current) => current.filter((note) => note.userId !== target.userId));
+
+    try {
+      const headers = await authHeaders(getTokenRef.current);
+      const res = await fetch(`/api/chat/flash-notes/${encodeURIComponent(target.id)}`, {
+        method: 'DELETE',
+        headers,
+      });
+      const json = (await res.json().catch(() => ({}))) as { sucesso?: boolean; erro?: string };
+      if (!res.ok || !json.sucesso) {
+        if (snapshotRef.current) setNotes(snapshotRef.current);
+        toast.error(
+          json.erro
+            ? formatAppError({ message: json.erro }, 'api')
+            : t('toast.flashDeleteFailed')
+        );
+        return false;
+      }
+      return true;
+    } catch {
+      if (snapshotRef.current) setNotes(snapshotRef.current);
+      toast.error(t('toast.flashDeleteFailed'));
+      return false;
+    }
+  }, [notes, ownNote, t]);
+
   return (
     <section className="relative shrink-0 px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(0.25rem,env(safe-area-inset-right,0px))]">
       <div className="mb-2 flex items-center gap-2 px-1">
@@ -263,6 +295,7 @@ export function FlashNotesCarousel() {
         initialContent={ownNote?.content ?? ''}
         onClose={closeComposer}
         onPublish={publishNote}
+        onDelete={ownNote ? deleteOwnNote : undefined}
       />
 
       {selected ? (

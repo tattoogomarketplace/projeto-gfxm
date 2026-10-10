@@ -194,14 +194,18 @@ const FlashNoteTextarea = memo(function FlashNoteTextarea({
       rows={3}
       placeholder={placeholder}
       className={cn(
-        'relative z-10 block w-full resize-none border-0 bg-transparent px-5 py-5',
-        'backdrop-blur-none',
+        'relative z-10 block w-full resize-none px-5 py-5',
+        // Nuclear override — destroys any global/base `textarea` background,
+        // focus ring, outline, or border so the gradient layer is never masked.
+        '!border-none !bg-transparent !outline-none !ring-0 backdrop-blur-none',
         'text-lg font-medium leading-relaxed tracking-tight text-white',
-        'outline-none placeholder:text-zinc-600'
+        'placeholder:text-zinc-600',
+        alignClass,
+        fontClass
       )}
       // Inline override guarantees the field never masks the gradient behind it,
       // even against the global `textarea { background-color }` base rule.
-      style={{ backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent', backgroundImage: 'none' }}
     />
   );
 });
@@ -285,6 +289,89 @@ const BackgroundSelector = memo(function BackgroundSelector({
   );
 });
 
+type CreatorControlsProps = {
+  align: FlashNoteAlign;
+  font: FlashNoteFontId;
+  alignLabel: string;
+  fontLabel: string;
+  onAlign: (id: FlashNoteAlign) => void;
+  onFont: (id: FlashNoteFontId) => void;
+};
+
+/**
+ * Premium creator toolbar — alignment + typography. Memoized and independent
+ * from the draft so it stays completely inert while the artist types.
+ */
+const CreatorControls = memo(function CreatorControls({
+  align,
+  font,
+  alignLabel,
+  fontLabel,
+  onAlign,
+  onFont,
+}: CreatorControlsProps) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-5 pt-3">
+      <div
+        className="flex items-center gap-0.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-0.5"
+        role="radiogroup"
+        aria-label={alignLabel}
+      >
+        {ALIGNMENTS.map(({ id, Icon }) => {
+          const active = id === align;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              aria-label={id}
+              onClick={() => {
+                if (!active) onAlign(id);
+              }}
+              className={cn(
+                'flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-lg transition-colors active:scale-95',
+                active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
+              )}
+            >
+              <Icon className="h-4 w-4" strokeWidth={1.9} />
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        className="flex items-center gap-0.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-0.5"
+        role="radiogroup"
+        aria-label={fontLabel}
+      >
+        {TYPEFACES.map((typeface) => {
+          const active = typeface.id === font;
+          return (
+            <button
+              key={typeface.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              aria-label={typeface.id}
+              onClick={() => {
+                if (!active) onFont(typeface.id);
+              }}
+              className={cn(
+                'flex h-9 min-h-9 items-center justify-center rounded-lg px-2.5 text-[13px] font-semibold transition-colors active:scale-95',
+                typeface.glyphClass,
+                active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
+              )}
+            >
+              Aa
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 type FlashNoteCreatorSheetProps = {
   open: boolean;
   isEditing?: boolean;
@@ -292,6 +379,8 @@ type FlashNoteCreatorSheetProps = {
   onClose: () => void;
   /** Resolves `true` once the note has been persisted (optimistically or not). */
   onPublish: (content: string) => Promise<boolean>;
+  /** Present only when editing; resolves `true` once the note is removed. */
+  onDelete?: () => Promise<boolean>;
 };
 
 export function FlashNoteCreatorSheet({
@@ -300,6 +389,7 @@ export function FlashNoteCreatorSheet({
   initialContent = '',
   onClose,
   onPublish,
+  onDelete,
 }: FlashNoteCreatorSheetProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
@@ -311,14 +401,27 @@ export function FlashNoteCreatorSheet({
   const store = storeRef.current;
 
   const [backgroundId, setBackgroundId] = useState<FlashNoteBackgroundId>(BACKGROUNDS[0].id);
+  const [align, setAlign] = useState<FlashNoteAlign>('center');
+  const [font, setFont] = useState<FlashNoteFontId>('sans');
   const [hasText, setHasText] = useState(() => initialContent.trim().length > 0);
   const [isPending, startTransition] = useTransition();
   // Urgent, synchronous flag so the spinner paints on the very first frame.
   const [isPublishing, setIsPublishing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const background = useMemo(
     () => BACKGROUNDS.find((option) => option.id === backgroundId) ?? BACKGROUNDS[0],
     [backgroundId]
+  );
+
+  const alignment = useMemo(
+    () => ALIGNMENTS.find((option) => option.id === align) ?? ALIGNMENTS[1],
+    [align]
+  );
+
+  const typeface = useMemo(
+    () => TYPEFACES.find((option) => option.id === font) ?? TYPEFACES[0],
+    [font]
   );
 
   const busy = isPending || isPublishing;
@@ -351,12 +454,20 @@ export function FlashNoteCreatorSheet({
     store.set(initialContent);
     setHasText(initialContent.trim().length > 0);
     setBackgroundId(BACKGROUNDS[0].id);
+    setAlign('center');
+    setFont('sans');
+    setConfirmDelete(false);
   }, [open, initialContent, store]);
 
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !busy) onClose();
+      if (event.key !== 'Escape' || busy) return;
+      if (confirmDelete) {
+        setConfirmDelete(false);
+        return;
+      }
+      onClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -365,7 +476,7 @@ export function FlashNoteCreatorSheet({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, busy, onClose]);
+  }, [open, busy, onClose, confirmDelete]);
 
   const dismiss = useCallback(() => {
     if (busy) return;
@@ -391,6 +502,46 @@ export function FlashNoteCreatorSheet({
     },
     [triggerHaptic]
   );
+
+  const handleSelectAlign = useCallback(
+    (id: FlashNoteAlign) => {
+      triggerHaptic('light');
+      setAlign(id);
+    },
+    [triggerHaptic]
+  );
+
+  const handleSelectFont = useCallback(
+    (id: FlashNoteFontId) => {
+      triggerHaptic('light');
+      setFont(id);
+    },
+    [triggerHaptic]
+  );
+
+  const requestDelete = useCallback(() => {
+    if (busy) return;
+    triggerHaptic('light');
+    setConfirmDelete(true);
+  }, [busy, triggerHaptic]);
+
+  const handleDelete = useCallback(() => {
+    if (!onDelete || busy) return;
+    setConfirmDelete(false);
+    triggerHaptic('medium');
+    setIsPublishing(true);
+    startTransition(async () => {
+      try {
+        const deleted = await onDelete();
+        if (!deleted) return;
+        triggerHaptic('success');
+        toast.success(t('toast.flashDeleted'));
+        onClose();
+      } finally {
+        setIsPublishing(false);
+      }
+    });
+  }, [busy, onClose, onDelete, t, triggerHaptic]);
 
   const handlePublish = useCallback(() => {
     const content = store.get().trim();
@@ -443,7 +594,7 @@ export function FlashNoteCreatorSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            drag={busy ? false : 'y'}
+            drag={busy || confirmDelete ? false : 'y'}
             dragDirectionLock
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.35 }}
@@ -469,15 +620,28 @@ export function FlashNoteCreatorSheet({
                   {isEditing ? t('flash.update') : t('flash.new')}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={dismiss}
-                disabled={busy}
-                aria-label={t('common.close')}
-                className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/[0.06] text-zinc-400 transition-colors active:scale-[0.96] disabled:opacity-40"
-              >
-                <X className="h-5 w-5" strokeWidth={1.75} />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                {isEditing && onDelete ? (
+                  <button
+                    type="button"
+                    onClick={requestDelete}
+                    disabled={busy}
+                    aria-label={t('common.delete')}
+                    className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-red-500/[0.14] text-red-400 transition-colors active:scale-[0.96] disabled:opacity-40"
+                  >
+                    <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  disabled={busy}
+                  aria-label={t('common.close')}
+                  className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/[0.06] text-zinc-400 transition-colors active:scale-[0.96] disabled:opacity-40"
+                >
+                  <X className="h-5 w-5" strokeWidth={1.75} />
+                </button>
+              </div>
             </header>
 
             {/* Composer canvas — WYSIWYG surface, typography first. */}
@@ -496,16 +660,37 @@ export function FlashNoteCreatorSheet({
                   className="pointer-events-none absolute -right-10 -top-12 z-[1] h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
                   style={{ backgroundColor: `${background.ring}33` }}
                 />
-                {/* Layer 2 — content sits above the gradient, fully transparent. */}
+                {/* Layer 2 — vignette. Subtle darkening so white text always pops. */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 z-[2] bg-black/20"
+                  style={{
+                    backgroundImage:
+                      'radial-gradient(120% 100% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.28) 100%)',
+                  }}
+                />
+                {/* Layer 3 — content sits above the gradient, fully transparent. */}
                 <div className="relative z-10 bg-transparent backdrop-blur-none">
                   <FlashNoteTextarea
                     store={store}
                     maxLength={FLASH_NOTE_MAX_LENGTH}
                     placeholder={t('flash.placeholder')}
+                    alignClass={alignment.className}
+                    fontClass={typeface.className}
                   />
                 </div>
               </div>
             </div>
+
+            {/* Creator toolbar — alignment + typography. */}
+            <CreatorControls
+              align={align}
+              font={font}
+              alignLabel={t('flash.alignment')}
+              fontLabel={t('flash.typography')}
+              onAlign={handleSelectAlign}
+              onFont={handleSelectFont}
+            />
 
             {/* Background selector — brand-token gradients. */}
             <BackgroundSelector
@@ -554,6 +739,57 @@ export function FlashNoteCreatorSheet({
                 )}
               </button>
             </div>
+
+            {/* Destructive confirm — Apple-tier alert dialog, never shifts layout. */}
+            <AnimatePresence>
+              {confirmDelete ? (
+                <motion.div
+                  key="flash-delete-confirm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm"
+                >
+                  <motion.div
+                    role="alertdialog"
+                    aria-modal="true"
+                    aria-label={t('flash.deleteTitle')}
+                    initial={{ scale: 0.94, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.96, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-[#151515] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
+                  >
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-400">
+                      <Trash2 className="h-5 w-5" strokeWidth={1.9} />
+                    </div>
+                    <h3 className="mt-4 text-center text-lg font-bold tracking-tight text-white">
+                      {t('flash.deleteTitle')}
+                    </h3>
+                    <div className="mt-6 flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setConfirmDelete(false);
+                        }}
+                        className="flex min-h-[48px] flex-1 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 text-[15px] font-semibold text-zinc-300 transition-colors active:scale-[0.98]"
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="flex min-h-[48px] flex-1 items-center justify-center rounded-2xl bg-gradient-to-b from-red-500 to-red-600 px-4 text-[15px] font-bold text-white shadow-[0_0_24px_rgba(239,68,68,0.45)] transition-transform active:scale-[0.98]"
+                      >
+                        {t('common.delete')}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </motion.section>
         </motion.div>
       ) : null}
