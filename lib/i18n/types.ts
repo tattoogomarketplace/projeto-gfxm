@@ -846,6 +846,7 @@ export type MessageKey =
   | 'flash.publishAria'
   | 'flash.ownNote'
   | 'flash.publish'
+  | 'flash.background'
   | 'portfolio.newPiece'
   | 'portfolio.newHint'
   | 'portfolio.checking'
