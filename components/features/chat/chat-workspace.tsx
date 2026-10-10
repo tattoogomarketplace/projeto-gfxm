@@ -11,6 +11,7 @@ import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs'
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
@@ -68,6 +69,8 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const getTokenRef = useRef(getToken);
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
+  const role = useAuthStore((s) => s.role);
+  const isProfessional = role === 'tatuador' || role === 'estudio';
   const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const pendingChatArtwork = useUiStore((s) => s.pendingChatArtwork);
@@ -338,7 +341,9 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                   {activeCategory === 'BUDGET' ? t('chat.emptyQuotes') : t('chat.empty')}
                 </p>
                 <p className="mt-1 max-w-full text-pretty text-xs text-neutral-500 dark:text-zinc-500">
-                  {activeCategory === 'BUDGET' ? t('chat.emptyQuotesHint') : t('chat.emptyHint')}
+                  {activeCategory === 'BUDGET'
+                    ? t(isProfessional ? 'chat.emptyQuotesProfessionalHint' : 'chat.emptyQuotesHint')
+                    : t(isProfessional ? 'chat.emptyProfessionalHint' : 'chat.emptyHint')}
                 </p>
               </div>
             ) : null}

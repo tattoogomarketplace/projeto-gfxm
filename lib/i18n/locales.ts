@@ -73,6 +73,8 @@ export const FR: Partial<MessageDictionary> = {
   'chat.empty': 'Aucune conversation pour le moment.',
   'chat.emptyHint':
     'Appuyez sur Démarrer la conversation dans la galerie pour demander un devis.',
+  'chat.emptyProfessionalHint': 'Les demandes des clients et les devis apparaîtront ici.',
+  'chat.emptyQuotesProfessionalHint': 'Les demandes de devis des clients apparaîtront ici.',
   'chat.selectArtist': 'Sélectionnez un artiste',
   'chat.selectArtistHint':
     'Choisissez une conversation ou démarrez un devis depuis la galerie.',
@@ -143,6 +145,8 @@ export const DE: Partial<MessageDictionary> = {
   'chat.empty': 'Noch keine Unterhaltungen.',
   'chat.emptyHint':
     'Tippen Sie in der Galerie auf Unterhaltung starten, um ein Angebot anzufordern.',
+  'chat.emptyProfessionalHint': 'Kundenanfragen und Angebote erscheinen hier.',
+  'chat.emptyQuotesProfessionalHint': 'Angebotsanfragen von Kunden erscheinen hier.',
   'chat.selectArtist': 'Wählen Sie einen Künstler',
   'chat.selectArtistHint':
     'Wählen Sie eine Unterhaltung oder starten Sie ein Angebot aus der Galerie.',
@@ -212,6 +216,8 @@ export const IT: Partial<MessageDictionary> = {
   'chat.empty': 'Ancora nessuna conversazione.',
   'chat.emptyHint':
     'Tocca Avvia conversazione nella galleria per richiedere un preventivo.',
+  'chat.emptyProfessionalHint': 'Le richieste dei clienti e i preventivi appariranno qui.',
+  'chat.emptyQuotesProfessionalHint': 'Le richieste di preventivo dei clienti appariranno qui.',
   'chat.selectArtist': 'Seleziona un artista',
   'chat.selectArtistHint':
     'Scegli una conversazione o avvia un preventivo dalla galleria.',
@@ -281,6 +287,8 @@ export const JA: Partial<MessageDictionary> = {
   'chat.empty': 'まだ会話がありません。',
   'chat.emptyHint':
     'ギャラリーで「会話を開始」をタップして見積もりを依頼してください。',
+  'chat.emptyProfessionalHint': 'クライアントからの相談や見積もり依頼がここに表示されます。',
+  'chat.emptyQuotesProfessionalHint': 'クライアントからの見積もり依頼がここに表示されます。',
   'chat.selectArtist': 'アーティストを選択',
   'chat.selectArtistHint': '会話を選ぶか、ギャラリーから見積もりを開始してください。',
   'chat.newQuote': '新しい見積もり会話',
@@ -347,6 +355,8 @@ export const ZH: Partial<MessageDictionary> = {
   'chat.conversations': '对话',
   'chat.empty': '还没有对话。',
   'chat.emptyHint': '在图库中点击“开始对话”以请求报价。',
+  'chat.emptyProfessionalHint': '客户的咨询和报价请求将显示在这里。',
+  'chat.emptyQuotesProfessionalHint': '客户的报价请求将显示在这里。',
   'chat.selectArtist': '选择艺术家',
   'chat.selectArtistHint': '选择对话或从图库开始报价。',
   'chat.newQuote': '新的报价对话',
@@ -414,6 +424,8 @@ export const KO: Partial<MessageDictionary> = {
   'chat.conversations': '대화',
   'chat.empty': '아직 대화가 없습니다.',
   'chat.emptyHint': '갤러리에서 대화 시작을 눌러 견적을 요청하세요.',
+  'chat.emptyProfessionalHint': '고객의 요청과 견적 요청이 여기에 표시됩니다.',
+  'chat.emptyQuotesProfessionalHint': '고객의 견적 요청이 여기에 표시됩니다.',
   'chat.selectArtist': '아티스트 선택',
   'chat.selectArtistHint': '대화를 선택하거나 갤러리에서 견적을 시작하세요.',
   'chat.newQuote': '새 견적 대화',
@@ -482,6 +494,8 @@ export const AR: Partial<MessageDictionary> = {
   'chat.conversations': 'المحادثات',
   'chat.empty': 'لا توجد محادثات بعد.',
   'chat.emptyHint': 'اضغط على بدء محادثة في المعرض لطلب عرض سعر.',
+  'chat.emptyProfessionalHint': 'ستظهر طلبات العملاء وطلبات عروض الأسعار هنا.',
+  'chat.emptyQuotesProfessionalHint': 'ستظهر طلبات عروض الأسعار من العملاء هنا.',
   'chat.selectArtist': 'اختر فنانًا',
   'chat.selectArtistHint': 'اختر محادثة أو ابدأ عرض سعر من المعرض.',
   'chat.newQuote': 'محادثة عرض سعر جديدة',
@@ -551,6 +565,8 @@ export const RU: Partial<MessageDictionary> = {
   'chat.empty': 'Пока нет бесед.',
   'chat.emptyHint':
     'Нажмите «Начать беседу» в галерее, чтобы запросить смету.',
+  'chat.emptyProfessionalHint': 'Здесь появятся запросы клиентов и заявки на смету.',
+  'chat.emptyQuotesProfessionalHint': 'Здесь появятся заявки клиентов на смету.',
   'chat.selectArtist': 'Выберите мастера',
   'chat.selectArtistHint': 'Выберите беседу или начните смету из галереи.',
   'chat.newQuote': 'Новая беседа по смете',
@@ -619,6 +635,8 @@ export const HI: Partial<MessageDictionary> = {
   'chat.empty': 'अभी कोई बातचीत नहीं।',
   'chat.emptyHint':
     'कोटेशन का अनुरोध करने के लिए गैलरी में बातचीत शुरू करें पर टैप करें।',
+  'chat.emptyProfessionalHint': 'ग्राहकों के अनुरोध और कोटेशन अनुरोध यहाँ दिखाई देंगे।',
+  'chat.emptyQuotesProfessionalHint': 'ग्राहकों के कोटेशन अनुरोध यहाँ दिखाई देंगे।',
   'chat.selectArtist': 'एक कलाकार चुनें',
   'chat.selectArtistHint': 'कोई बातचीत चुनें या गैलरी से कोटेशन शुरू करें।',
   'chat.newQuote': 'नई कोटेशन बातचीत',
@@ -688,6 +706,8 @@ export const NL: Partial<MessageDictionary> = {
   'chat.empty': 'Nog geen gesprekken.',
   'chat.emptyHint':
     'Tik op Gesprek starten in de galerij om een offerte aan te vragen.',
+  'chat.emptyProfessionalHint': 'Verzoeken van klanten en offerteaanvragen verschijnen hier.',
+  'chat.emptyQuotesProfessionalHint': 'Offerteaanvragen van klanten verschijnen hier.',
   'chat.selectArtist': 'Selecteer een artiest',
   'chat.selectArtistHint': 'Kies een gesprek of start een offerte vanuit de galerij.',
   'chat.newQuote': 'Nieuw offertegesprek',
@@ -757,6 +777,8 @@ export const TR: Partial<MessageDictionary> = {
   'chat.conversations': 'Konuşmalar',
   'chat.empty': 'Henüz konuşma yok.',
   'chat.emptyHint': 'Teklif istemek için galeride Konuşma Başlat’a dokunun.',
+  'chat.emptyProfessionalHint': 'Müşteri talepleri ve teklif istekleri burada görünecek.',
+  'chat.emptyQuotesProfessionalHint': 'Müşterilerin teklif istekleri burada görünecek.',
   'chat.selectArtist': 'Bir sanatçı seçin',
   'chat.selectArtistHint': 'Bir konuşma seçin veya galeriden teklif başlatın.',
   'chat.newQuote': 'Yeni teklif konuşması',
@@ -826,6 +848,8 @@ export const PT_PT: Partial<MessageDictionary> = {
   'chat.conversations': 'Conversas',
   'chat.empty': 'Ainda não há conversas.',
   'chat.emptyHint': 'Toque em Iniciar Conversa na galeria para pedir um orçamento.',
+  'chat.emptyProfessionalHint': 'As solicitações de clientes e orçamentos aparecerão aqui.',
+  'chat.emptyQuotesProfessionalHint': 'As solicitações de orçamento dos clientes aparecerão aqui.',
   'chat.selectArtist': 'Selecione um artista',
   'chat.selectArtistHint':
     'Escolha uma conversa ou inicie um orçamento a partir da galeria.',
@@ -896,6 +920,8 @@ export const PL: Partial<MessageDictionary> = {
   'chat.empty': 'Brak rozmów.',
   'chat.emptyHint':
     'Dotknij Rozpocznij rozmowę w galerii, aby poprosić o wycenę.',
+  'chat.emptyProfessionalHint': 'Prośby klientów i zapytania o wycenę pojawią się tutaj.',
+  'chat.emptyQuotesProfessionalHint': 'Zapytania klientów o wycenę pojawią się tutaj.',
   'chat.selectArtist': 'Wybierz artystę',
   'chat.selectArtistHint': 'Wybierz rozmowę lub rozpocznij wycenę z galerii.',
   'chat.newQuote': 'Nowa rozmowa o wycenę',
