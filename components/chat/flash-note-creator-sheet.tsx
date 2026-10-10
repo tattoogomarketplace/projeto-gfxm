@@ -23,16 +23,31 @@ export const FLASH_NOTE_MAX_LENGTH = 80;
 const DISMISS_DISTANCE = 128;
 const DISMISS_VELOCITY = 700;
 
+/**
+ * Strict, STATIC dictionary of complete Tailwind gradient classes. These string
+ * literals must never be assembled dynamically (e.g. `from-[${color}]`) — doing
+ * so hides them from Tailwind's JIT scanner and is the exact cause of the "dead
+ * color" regression, because no gradient utility ever gets emitted.
+ */
+const GRADIENTS = {
+  graphite: 'bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#1c1c1c]',
+  ember: 'bg-gradient-to-br from-[#1b0a02] via-[#3d1404] to-[#0a0a0a]',
+  copper: 'bg-gradient-to-br from-[#1e0b03] via-[#4b1405] to-[#130705]',
+  emerald: 'bg-gradient-to-br from-[#03130c] via-[#063a25] to-[#04120c]',
+} as const;
+
+type FlashNoteBackgroundId = keyof typeof GRADIENTS;
+
 type FlashNoteBackground = {
-  id: string;
+  id: FlashNoteBackgroundId;
   /** Decorative ring color — uses the brand tokens. */
   ring: string;
   /**
-   * Tailwind gradient utilities applied to the composer canvas. Kept as static
-   * class strings (never interpolated) so Tailwind's JIT compiler can detect and
-   * emit them, guaranteeing the preview repaints the instant the state changes.
+   * Raw CSS gradient. This is the bulletproof source of truth for the live
+   * preview: it is applied inline, so it renders with absolute certainty
+   * regardless of Tailwind's compiler / purge configuration.
    */
-  gradient: string;
+  css: string;
 };
 
 /**
@@ -44,22 +59,22 @@ const BACKGROUNDS: FlashNoteBackground[] = [
   {
     id: 'graphite',
     ring: '#3f3f46',
-    gradient: 'bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#1c1c1c]',
+    css: 'linear-gradient(155deg, #131313 0%, #0a0a0a 58%, #1c1c1c 100%)',
   },
   {
     id: 'ember',
     ring: '#F97316',
-    gradient: 'bg-gradient-to-br from-[#1b0a02] via-[#3d1404] to-[#0a0a0a]',
+    css: 'linear-gradient(155deg, #1b0a02 0%, #3d1404 54%, #0a0a0a 100%)',
   },
   {
     id: 'copper',
     ring: '#D9460E',
-    gradient: 'bg-gradient-to-br from-[#1e0b03] via-[#4b1405] to-[#130705]',
+    css: 'linear-gradient(155deg, #1e0b03 0%, #4b1405 48%, #130705 100%)',
   },
   {
     id: 'emerald',
     ring: '#10B981',
-    gradient: 'bg-gradient-to-br from-[#03130c] via-[#063a25] to-[#04120c]',
+    css: 'linear-gradient(155deg, #03130c 0%, #063a25 54%, #04120c 100%)',
   },
 ];
 
@@ -137,10 +152,14 @@ const FlashNoteTextarea = memo(function FlashNoteTextarea({
       rows={3}
       placeholder={placeholder}
       className={cn(
-        'relative block w-full resize-none border-0 bg-transparent px-5 py-5',
+        'relative z-10 block w-full resize-none border-0 bg-transparent px-5 py-5',
+        'backdrop-blur-none',
         'text-lg font-medium leading-relaxed tracking-tight text-white',
         'outline-none placeholder:text-zinc-600'
       )}
+      // Inline override guarantees the field never masks the gradient behind it,
+      // even against the global `textarea { background-color }` base rule.
+      style={{ backgroundColor: 'transparent' }}
     />
   );
 });
@@ -170,9 +189,9 @@ const FlashNoteCounter = memo(function FlashNoteCounter({
 });
 
 type BackgroundSelectorProps = {
-  activeId: string;
+  activeId: FlashNoteBackgroundId;
   label: string;
-  onSelect: (id: string) => void;
+  onSelect: (id: FlashNoteBackgroundId) => void;
 };
 
 /**
@@ -206,10 +225,12 @@ const BackgroundSelector = memo(function BackgroundSelector({
               }}
               className={cn(
                 'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
-                option.gradient,
+                GRADIENTS[option.id],
                 active ? 'scale-110' : 'scale-100'
               )}
               style={{
+                // Raw CSS guarantees the swatch paints even if a utility is purged.
+                backgroundImage: option.css,
                 boxShadow: active
                   ? `0 0 0 2px #0d0d0d, 0 0 0 4px ${option.ring}`
                   : `0 0 0 1px rgba(255,255,255,0.14)`,
@@ -247,7 +268,7 @@ export function FlashNoteCreatorSheet({
   }
   const store = storeRef.current;
 
-  const [backgroundId, setBackgroundId] = useState<string>(BACKGROUNDS[0].id);
+  const [backgroundId, setBackgroundId] = useState<FlashNoteBackgroundId>(BACKGROUNDS[0].id);
   const [hasText, setHasText] = useState(() => initialContent.trim().length > 0);
   const [isPending, startTransition] = useTransition();
   // Urgent, synchronous flag so the spinner paints on the very first frame.
@@ -322,7 +343,7 @@ export function FlashNoteCreatorSheet({
   );
 
   const handleSelectBackground = useCallback(
-    (id: string) => {
+    (id: FlashNoteBackgroundId) => {
       triggerHaptic('light');
       setBackgroundId(id);
     },
@@ -419,22 +440,28 @@ export function FlashNoteCreatorSheet({
 
             {/* Composer canvas — WYSIWYG surface, typography first. */}
             <div className="px-5 pb-2 pt-4">
-              <div
-                className={cn(
-                  'relative overflow-hidden rounded-3xl border border-white/[0.08]',
-                  background.gradient
-                )}
-              >
+              <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
+                {/* Layer 0 — gradient background. Raw inline CSS keeps it immune
+                    to Tailwind purging, so selecting a color always paints. */}
+                <div
+                  aria-hidden
+                  className={cn('absolute inset-0 z-0 bg-transparent', GRADIENTS[background.id])}
+                  style={{ background: background.css }}
+                />
+                {/* Layer 1 — decorative brand glow. */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
+                  className="pointer-events-none absolute -right-10 -top-12 z-[1] h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
                   style={{ backgroundColor: `${background.ring}33` }}
                 />
-                <FlashNoteTextarea
-                  store={store}
-                  maxLength={FLASH_NOTE_MAX_LENGTH}
-                  placeholder={t('flash.placeholder')}
-                />
+                {/* Layer 2 — content sits above the gradient, fully transparent. */}
+                <div className="relative z-10 bg-transparent backdrop-blur-none">
+                  <FlashNoteTextarea
+                    store={store}
+                    maxLength={FLASH_NOTE_MAX_LENGTH}
+                    placeholder={t('flash.placeholder')}
+                  />
+                </div>
               </div>
             </div>
 
