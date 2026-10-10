@@ -19,6 +19,7 @@ import { toast } from '@/lib/toast';
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { BankPayoutSection } from '@/components/features/financial/bank-payout-section';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -312,6 +313,16 @@ function ReceiptsOverview({
     return { gross, held, released, secured };
   }, [items, model]);
 
+  const [releasedOverride, setReleasedOverride] = useState<number | null>(null);
+  const available = releasedOverride ?? summary.released;
+
+  const handleWithdraw = useCallback(
+    (amount: number) => {
+      setReleasedOverride(Math.max(available - amount, 0));
+    },
+    [available]
+  );
+
   if (isLoading) {
     return (
       <div className="min-w-0 w-full space-y-3" aria-hidden>
@@ -369,10 +380,12 @@ function ReceiptsOverview({
             {t('payments.receiptsReleased')}
           </p>
           <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-gray-900 dark:text-white">
-            {formatBRL(summary.released)}
+            {formatBRL(available)}
           </p>
         </GlassContainer>
       </div>
+
+      <BankPayoutSection available={available} onWithdraw={handleWithdraw} />
 
       <div className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-black/[0.04] bg-black/[0.02] px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
         <span className="flex h-9 w-9 min-h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-400">
