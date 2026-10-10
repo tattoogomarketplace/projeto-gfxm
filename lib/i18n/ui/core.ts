@@ -141,7 +141,7 @@ export const UI_PT_BR: CoreUiDictionary = {
   'toast.flashLive': 'Flash Note no ar.',
   'toast.hoursLoadFailed': 'Falha ao carregar expediente.',
   'toast.hoursReview': 'Revise os horários destacados antes de salvar.',
-  'toast.hoursSaved': 'Expediente salvo.',
+  'toast.hoursSaved': 'Expediente atualizado com sucesso.',
   'toast.hoursSavedHint': '{count} dias ativos sincronizados com a agenda.',
   'toast.hoursSaveFailed': 'Falha ao salvar expediente.',
   'toast.kycApproved': 'Documentos aprovados. Sua bancada de tatuador está liberada.',

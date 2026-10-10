@@ -1,12 +1,15 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import { Clock3, Coffee, Plus, Save, Trash2 } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore, useTransition } from 'react';
+import { Clock3, Coffee, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { authedFetch } from '@/lib/utils/authed-fetch';
+import {
+  getWeeklySchedule,
+  updateWeeklySchedule,
+  type WeeklyScheduleInput,
+} from '@/lib/actions/schedule.actions';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
@@ -30,6 +33,30 @@ import {
   type WorkingHoursIssue,
   type WorkingHoursSchedule as WorkingHoursDraft,
 } from '@/lib/working-hours';
+
+/** Maps the editor's `WeekdayId` to the server action's JS `Date.getDay()` index. */
+const DAY_OF_WEEK: Record<WeekdayId, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+function toWeeklyScheduleInput(schedule: WorkingHoursDraft): WeeklyScheduleInput {
+  return {
+    timezone: schedule.timezone,
+    days: schedule.days.map((day) => ({
+      dayOfWeek: DAY_OF_WEEK[day.day],
+      startTime: day.start,
+      endTime: day.end,
+      isClosed: !day.active,
+      breaks: day.breaks.map((interval) => ({ startTime: interval.start, endTime: interval.end })),
+    })),
+  };
+}
 
 const DayToggle = memo(function DayToggle({
   checked,
@@ -283,31 +310,23 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     getWorkingHoursSnapshot,
     getWorkingHoursServerSnapshot
   );
-  const { getToken } = useAuth();
   const { t } = useI18n();
   const [draft, setDraft] = useState<WorkingHoursDraft>(() => cloneWorkingHours(persisted));
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isSaving, startSaving] = useTransition();
   const { triggerHaptic } = useHapticFeedback();
-
-  const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
 
   useEffect(() => {
     let cancelled = false;
     const boot = async () => {
       try {
-        const res = await authedFetch('/api/tatuador/schedule', {}, tokenFn);
-        const payload = (await res.json().catch(() => ({}))) as {
-          sucesso?: boolean;
-          schedule?: WorkingHoursDraft;
-          erro?: string;
-        };
-        if (!res.ok || !payload.schedule) {
-          throw new Error(payload.erro || t('toast.hoursLoadFailed'));
-        }
+        const result = await getWeeklySchedule();
         if (cancelled) return;
-        const synced = hydrateWorkingHours(payload.schedule);
+        if (!result.success) {
+          throw new Error(result.error || t('toast.hoursLoadFailed'));
+        }
+        const synced = hydrateWorkingHours(result.data.schedule);
         setDraft(cloneWorkingHours(synced));
         setHydrated(true);
       } catch (error) {
@@ -322,7 +341,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     return () => {
       cancelled = true;
     };
-  }, [tokenFn, t]);
+  }, [t]);
 
   const syncedDraft = useMemo(() => {
     if (!hydrated) return cloneWorkingHours(persisted);
@@ -411,7 +430,7 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
     [ensureHydrated, triggerHaptic]
   );
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(() => {
     const nextIssues = validateWorkingHours(syncedDraft);
     if (nextIssues.length > 0) {
       triggerHaptic('heavy');
@@ -421,41 +440,24 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
 
     const payload = cloneWorkingHours(syncedDraft);
     payload.timezone = resolveTimezone();
-    setSaving(true);
-    try {
-      const res = await authedFetch(
-        '/api/tatuador/schedule',
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ schedule: payload }),
-        },
-        tokenFn
-      );
-      const body = (await res.json().catch(() => ({}))) as {
-        sucesso?: boolean;
-        schedule?: WorkingHoursDraft;
-        erro?: string;
-      };
-      if (!res.ok || !body.schedule) {
-        throw new Error(body.erro || t('toast.hoursSaveFailed'));
+
+    startSaving(async () => {
+      const result = await updateWeeklySchedule(toWeeklyScheduleInput(payload));
+      if (!result.success) {
+        triggerHaptic('heavy');
+        toast.error(result.error || t('toast.hoursSaveFailed'));
+        return;
       }
-      const saved = saveWorkingHours(body.schedule);
+
+      const saved = saveWorkingHours(payload);
       setDraft(cloneWorkingHours(saved));
       setHydrated(true);
       triggerHaptic('success');
       toast.success(t('toast.hoursSaved'), {
-        description: t('toast.hoursSavedHint', {
-          count: saved.days.filter((day) => day.active).length,
-        }),
+        description: t('toast.hoursSavedHint', { count: result.data.activeDays }),
       });
-    } catch (error) {
-      triggerHaptic('heavy');
-      toast.error(formatAppError(error, 'api'));
-    } finally {
-      setSaving(false);
-    }
-  }, [syncedDraft, tokenFn, triggerHaptic, t]);
+    });
+  }, [syncedDraft, triggerHaptic, t]);
 
   if (loading) {
     return (
@@ -492,10 +494,10 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
 
       <button
         type="button"
-        onClick={() => {
-          void handleSave();
-        }}
-        disabled={saving}
+        onClick={handleSave}
+        disabled={isSaving}
+        aria-busy={isSaving}
+        aria-live="polite"
         className={cn(
           'flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold',
           'bg-[#F97316] text-white shadow-[0_0_18px_rgba(249,115,22,0.35)]',
@@ -504,8 +506,12 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
           'disabled:cursor-wait disabled:opacity-70'
         )}
       >
-        <Save className="h-4 w-4" strokeWidth={1.75} />
-        {saving ? t('hours.saving') : t('hours.save')}
+        {isSaving ? (
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+        ) : (
+          <Save className="h-4 w-4" strokeWidth={1.75} />
+        )}
+        {isSaving ? t('hours.saving') : t('hours.save')}
       </button>
       <p className="text-center text-[11px] text-neutral-500 dark:text-zinc-500">
         {dirty ? t('hours.pending') : t('hours.updated')}{' '}

@@ -231,6 +231,30 @@ export async function updateWeeklySchedule(
   }
 }
 
+export type WeeklyScheduleResult = {
+  schedule: WorkingHoursSchedule;
+  persisted: boolean;
+  updatedAt: string;
+};
+
+/**
+ * Reads the authenticated professional's entire weekly schedule, hydrating the
+ * "Gestão de Horários e Expediente" editor. Falls back to the default schedule
+ * (unpersisted) when the artist has never configured their expediente.
+ */
+export async function getWeeklySchedule(): Promise<ScheduleActionResult<WeeklyScheduleResult>> {
+  const actorId = await requireActorId();
+  if (!actorId) return { success: false, error: 'Não autenticado.' };
+
+  try {
+    const actor = assertTatuador(await loadTatuadorActor(actorId));
+    const { schedule, persisted, updatedAt } = await getArtistSchedule(actor.id);
+    return { success: true, data: { schedule, persisted, updatedAt } };
+  } catch (error) {
+    return { success: false, error: errorMessage(error) };
+  }
+}
+
 /**
  * Reads an artist's working hours and breaks for a specific day, feeding the
  * client's booking calendar. Falls back to the default schedule (unpersisted)
