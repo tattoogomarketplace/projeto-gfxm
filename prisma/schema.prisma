@@ -76,15 +76,23 @@ enum AccountStatus {
   @@map("account_status")
 }
 
+enum TransactionType {
+  DEPOSIT
+  FINAL_PAYMENT
+  PLATFORM_FEE
+
+  @@map("transaction_type")
+}
+
 model Perfil {
-  id                             String     @id @db.Uuid
-  clerk_id                       String?    @unique
+  id                             String            @id @db.Uuid
+  clerk_id                       String?           @unique
   email                          String
   nome                           String?
-  cpf                            String?    @unique(map: "perfis_cpf_unique_idx")
-  role                           PerfilRole @default(cliente)
-  kyc_status                     KycStatus  @default(pendente)
-  has_seen_welcome_notice        Boolean    @default(false)
+  cpf                            String?           @unique(map: "perfis_cpf_unique_idx")
+  role                           PerfilRole        @default(cliente)
+  kyc_status                     KycStatus         @default(pendente)
+  has_seen_welcome_notice        Boolean           @default(false)
   bank_account                   Json?
   cidade                         String?
   estado                         String?
@@ -94,34 +102,36 @@ model Perfil {
   responsavel_cpf                String?
   responsavel_email              String?
   status_responsavel             StatusResponsavel @default(dispensado)
-  accepted_terms                 Boolean    @default(false)
-  language                       String     @default("pt-BR")
-  agendamentos_pendentes_repasse Int        @default(0)
-  agenda_bloqueada               Boolean    @default(false)
-  studio_id                      String?    @db.Uuid
-  created_at                     DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at                     DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
-  deleted_at                     DateTime?  @db.Timestamptz(6)
-  statusConta                    AccountStatus @default(ATIVO) @map("status_conta")
-  dataFim                        DateTime?     @db.Timestamptz(6) @map("data_fim")
+  accepted_terms                 Boolean           @default(false)
+  onboarded                      Boolean           @default(false)
+  language                       String            @default("pt-BR")
+  agendamentos_pendentes_repasse Int               @default(0)
+  agenda_bloqueada               Boolean           @default(false)
+  studio_id                      String?           @db.Uuid
+  created_at                     DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at                     DateTime?         @db.Timestamptz(6)
+  statusConta                    AccountStatus     @default(ATIVO) @map("status_conta")
+  dataFim                        DateTime?         @map("data_fim") @db.Timestamptz(6)
 
-  studio                   Perfil?  @relation("TatuadorVinculoEstudio", fields: [studio_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  tatuadoresVinculados     Perfil[] @relation("TatuadorVinculoEstudio")
+  studio               Perfil?  @relation("TatuadorVinculoEstudio", fields: [studio_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  tatuadoresVinculados Perfil[] @relation("TatuadorVinculoEstudio")
 
   portfolios               Portfolio[]
-  agendamentosComoCliente  Agendamento[]     @relation("AgendamentoCliente")
-  agendamentosComoTatuador Agendamento[]     @relation("AgendamentoTatuador")
+  agendamentosComoCliente  Agendamento[]        @relation("AgendamentoCliente")
+  agendamentosComoTatuador Agendamento[]        @relation("AgendamentoTatuador")
   likes                    PortfolioLike[]
-  mensagensEnviadas        MensagemChat[]    @relation("ChatRemetente")
-  mensagensRecebidas       MensagemChat[]    @relation("ChatDestinatario")
+  mensagensEnviadas        MensagemChat[]       @relation("ChatRemetente")
+  mensagensRecebidas       MensagemChat[]       @relation("ChatDestinatario")
   transacoesComoCliente    TransacaoPagamento[] @relation("TransacaoCliente")
   transacoesComoTatuador   TransacaoPagamento[] @relation("TransacaoTatuador")
   estudioCompliance        EstudioCompliance?
-  vinculosComoEstudio      EstudioTatuador[] @relation("EstudioDoVinculo")
-  vinculosComoTatuador     EstudioTatuador[] @relation("TatuadorDoVinculo")
+  kycProfile               KycProfile?
+  vinculosComoEstudio      EstudioTatuador[]    @relation("EstudioDoVinculo")
+  vinculosComoTatuador     EstudioTatuador[]    @relation("TatuadorDoVinculo")
   complianceLogs           ComplianceLog[]
-  convitesEnviados         EstudioConvite[]  @relation("ConviteEstudio")
-  convitesRecebidos        EstudioConvite[]  @relation("ConviteTatuador")
+  convitesEnviados         EstudioConvite[]     @relation("ConviteEstudio")
+  convitesRecebidos        EstudioConvite[]     @relation("ConviteTatuador")
   artistSchedule           ArtistSchedule?
   flashNotes               FlashNote[]
 
@@ -138,19 +148,41 @@ model Perfil {
   @@map("perfis")
 }
 
-model Portfolio {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tatuador_id       String    @db.Uuid
-  url_imagem        String
-  estilo            String
-  body_part         String    @default("")
-  session_duration  String    @default("")
-  is_healed         Boolean   @default(false)
-  descricao         String?
-  likes_count       Int       @default(0)
+model KycProfile {
+  id                String    @id @default(uuid()) @db.Uuid
+  user_id           String    @unique @db.Uuid
+  status            KycStatus @default(pendente)
+  document_type     String?
+  document_ref      String?
+  selfie_ref        String?
+  address_proof_ref String?
+  documents         Json?
+  rejection_reason  String?
+  reviewed_at       DateTime? @db.Timestamptz(6)
   created_at        DateTime  @default(now()) @db.Timestamptz(6)
   updated_at        DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at        DateTime? @db.Timestamptz(6)
+
+  user Perfil @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([status], map: "kyc_profiles_status_idx")
+  @@index([deleted_at], map: "kyc_profiles_deleted_at_idx")
+  @@map("kyc_profiles")
+}
+
+model Portfolio {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tatuador_id      String    @db.Uuid
+  url_imagem       String
+  estilo           String
+  body_part        String    @default("")
+  session_duration String    @default("")
+  is_healed        Boolean   @default(false)
+  descricao        String?
+  likes_count      Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at       DateTime? @db.Timestamptz(6)
 
   tatuador Perfil          @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   likes    PortfolioLike[]
@@ -171,6 +203,7 @@ model Agendamento {
   status                        AgendamentoStatus @default(rascunho)
   valor_total                   Decimal           @db.Decimal(12, 2)
   valor_sinal                   Decimal           @default(0) @db.Decimal(12, 2)
+  currency                      String            @default("BRL") @db.VarChar(3)
   sinal_pago                    Boolean           @default(false)
   pagamento_restante_presencial Boolean           @default(false)
   mutex_expira_em               DateTime?         @db.Timestamptz(6)
@@ -179,10 +212,10 @@ model Agendamento {
   updated_at                    DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at                    DateTime?         @db.Timestamptz(6)
 
-  cliente     Perfil               @relation("AgendamentoCliente", fields: [cliente_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  tatuador    Perfil               @relation("AgendamentoTatuador", fields: [tatuador_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  transacoes  TransacaoPagamento[]
-  extras      AgendamentoExtra[]
+  cliente    Perfil               @relation("AgendamentoCliente", fields: [cliente_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  tatuador   Perfil               @relation("AgendamentoTatuador", fields: [tatuador_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  transacoes TransacaoPagamento[]
+  extras     AgendamentoExtra[]
 
   @@index([cliente_id], map: "agendamentos_cliente_id_idx")
   @@index([tatuador_id], map: "agendamentos_tatuador_id_idx")
@@ -195,11 +228,11 @@ model Agendamento {
 }
 
 model AgendamentoExtra {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agendamento_id String   @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamento_id String    @db.Uuid
   descricao      String
-  valor          Decimal  @db.Decimal(12, 2)
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  valor          Decimal   @db.Decimal(12, 2)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime? @db.Timestamptz(6)
 
   agendamento Agendamento @relation(fields: [agendamento_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -209,9 +242,9 @@ model AgendamentoExtra {
 }
 
 model PortfolioLike {
-  user_id      String   @db.Uuid
-  portfolio_id String   @db.Uuid
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  user_id      String    @db.Uuid
+  portfolio_id String    @db.Uuid
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at   DateTime? @db.Timestamptz(6)
 
   user      Perfil    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -262,14 +295,14 @@ model FlashNote {
 }
 
 model EstudioConvite {
-  id          String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  estudio_id  String                @db.Uuid
-  tatuador_id String                @db.Uuid
-  status      EstudioConviteStatus  @default(pendente)
-  expires_at  DateTime              @db.Timestamptz(6)
-  accepted_at DateTime?             @db.Timestamptz(6)
-  created_at  DateTime              @default(now()) @db.Timestamptz(6)
-  deleted_at  DateTime?             @db.Timestamptz(6)
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  estudio_id  String               @db.Uuid
+  tatuador_id String               @db.Uuid
+  status      EstudioConviteStatus @default(pendente)
+  expires_at  DateTime             @db.Timestamptz(6)
+  accepted_at DateTime?            @db.Timestamptz(6)
+  created_at  DateTime             @default(now()) @db.Timestamptz(6)
+  deleted_at  DateTime?            @db.Timestamptz(6)
 
   estudio  Perfil @relation("ConviteEstudio", fields: [estudio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   tatuador Perfil @relation("ConviteTatuador", fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -281,23 +314,24 @@ model EstudioConvite {
 }
 
 model TransacaoPagamento {
-  id                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  agendamento_id                 String   @db.Uuid
-  cliente_id                     String?  @db.Uuid
-  tatuador_id                    String?  @db.Uuid
+  id                             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agendamento_id                 String          @db.Uuid
+  cliente_id                     String?         @db.Uuid
+  tatuador_id                    String?         @db.Uuid
   gateway_id                     String
-  metodo_pagamento               String   @default("pix")
-  valor_bruto                    Decimal  @db.Decimal(12, 2)
-  taxa_plataforma                Decimal  @default(0) @db.Decimal(12, 2)
-  valor_liquido_tatuador         Decimal  @default(0) @db.Decimal(12, 2)
-  valor_bonus_estudio            Decimal  @default(0) @db.Decimal(12, 2)
-  valor_fundo_reserva            Decimal  @default(0) @db.Decimal(12, 2)
-  comissao_plataforma_percentual Decimal  @default(0) @db.Decimal(5, 2)
+  metodo_pagamento               String          @default("pix")
+  tipo                           TransactionType @default(DEPOSIT)
+  valor_bruto                    Decimal         @db.Decimal(12, 2)
+  taxa_plataforma                Decimal         @default(0) @db.Decimal(12, 2)
+  valor_liquido_tatuador         Decimal         @default(0) @db.Decimal(12, 2)
+  valor_bonus_estudio            Decimal         @default(0) @db.Decimal(12, 2)
+  valor_fundo_reserva            Decimal         @default(0) @db.Decimal(12, 2)
+  comissao_plataforma_percentual Decimal         @default(0) @db.Decimal(5, 2)
   idempotency_key                String
-  status                         String   @default("aprovado")
+  status                         String          @default("aprovado")
   webhook_payload                Json?
-  created_at                     DateTime @default(now()) @db.Timestamptz(6)
-  deleted_at                     DateTime? @db.Timestamptz(6)
+  created_at                     DateTime        @default(now()) @db.Timestamptz(6)
+  deleted_at                     DateTime?       @db.Timestamptz(6)
 
   agendamento Agendamento @relation(fields: [agendamento_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
   cliente     Perfil?     @relation("TransacaoCliente", fields: [cliente_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -311,12 +345,12 @@ model TransacaoPagamento {
 }
 
 model EstudioCompliance {
-  id               String   @id @db.Uuid
+  id               String    @id @db.Uuid
   cnpj             String
   razao_social     String?
   endereco_oficial String?
-  status_receita   String   @default("pendente")
-  updated_at       DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  status_receita   String    @default("pendente")
+  updated_at       DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at       DateTime? @db.Timestamptz(6)
 
   perfil Perfil @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -326,10 +360,10 @@ model EstudioCompliance {
 }
 
 model EstudioTatuador {
-  estudio_id     String   @db.Uuid
-  tatuador_id    String   @db.Uuid
-  status_vinculo String   @default("ativo")
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  estudio_id     String    @db.Uuid
+  tatuador_id    String    @db.Uuid
+  status_vinculo String    @default("ativo")
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime? @db.Timestamptz(6)
 
   estudio  Perfil @relation("EstudioDoVinculo", fields: [estudio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -352,11 +386,11 @@ model ArtistSchedule {
 }
 
 model ComplianceLog {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String   @db.Uuid
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String    @db.Uuid
   termo_detectado String
   acao_tomada     String
-  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at      DateTime? @db.Timestamptz(6)
 
   user Perfil @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
