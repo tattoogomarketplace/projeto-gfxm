@@ -138,6 +138,7 @@ export function StudioActiveSessionCard({
         <SessionValidationSheet
           open={open}
           panelId={panelId}
+          sessionId={session.agendamento.id}
           onVerify={handleVerify}
           onValidated={() => {
             triggerHaptic('success');

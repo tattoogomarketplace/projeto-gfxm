@@ -362,16 +362,20 @@ export async function checkTimeslotLock(input: {
  */
 export async function processDepositPayment(input: {
   sessionId: string;
-  gatewayId: string;
+  idempotencyKey?: string;
+  gatewayId?: string;
   method?: 'pix' | 'credit';
 }): Promise<TransactionActionResult<DepositResult>> {
   const actorId = await requireActorId();
   if (!actorId) return { success: false, error: 'Não autenticado.' };
 
   const sessionId = String(input?.sessionId ?? '').trim();
-  const gatewayId = String(input?.gatewayId ?? '').trim();
   if (!sessionId) return { success: false, error: 'sessionId é obrigatório.' };
-  if (!gatewayId) return { success: false, error: 'gatewayId é obrigatório.' };
+
+  const idempotencyKey =
+    String(input?.idempotencyKey ?? '').trim() || `deposit:${sessionId}`;
+  const gatewayId =
+    String(input?.gatewayId ?? '').trim() || `otp:${idempotencyKey}`;
 
   const method = input?.method === 'credit' ? 'credit' : 'pix';
 
@@ -403,7 +407,6 @@ export async function processDepositPayment(input: {
         }
 
         const currency = agendamento.currency || CURRENCY_DEFAULT;
-        const idempotencyKey = `deposit:${sessionId}`;
 
         const existing = await tx.transacaoPagamento.findUnique({
           where: { idempotency_key: idempotencyKey },

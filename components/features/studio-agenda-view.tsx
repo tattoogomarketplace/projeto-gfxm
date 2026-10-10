@@ -98,10 +98,12 @@ function DepositPill({ state, labelKey }: { state: DepositVisualState; labelKey:
 function SessionTokenSheet({
   open,
   panelId,
+  sessionId,
   onValidated,
 }: {
   open: boolean;
   panelId: string;
+  sessionId: string;
   onValidated: () => void;
 }) {
   const { t } = useI18n();
@@ -117,6 +119,7 @@ function SessionTokenSheet({
     <SessionValidationSheet
       open={open}
       panelId={panelId}
+      sessionId={sessionId}
       onVerify={handleVerify}
       onValidated={() => {
         triggerHaptic('success');
@@ -185,6 +188,7 @@ function StudioSessionCard({ agendamento }: { agendamento: Agendamento }) {
         <SessionTokenSheet
           open={open}
           panelId={panelId}
+          sessionId={agendamento.id}
           onValidated={() => setOpen(false)}
         />
       </div>

@@ -330,6 +330,8 @@ export type MessageKey =
   | 'agenda.sessionValidated'
   | 'agenda.invalidToken'
   | 'agenda.tokenInputHint'
+  | 'agenda.validating'
+  | 'agenda.payout_success'
   | 'clientAgenda.activeSession'
   | 'clientAgenda.artist'
   | 'clientAgenda.schedule'

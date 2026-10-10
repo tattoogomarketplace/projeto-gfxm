@@ -25,6 +25,8 @@ export type PassMessages = Pick<
   | 'agenda.sessionValidated'
   | 'agenda.invalidToken'
   | 'agenda.tokenInputHint'
+  | 'agenda.validating'
+  | 'agenda.payout_success'
 >;
 
 export const PASS_MESSAGES: Record<Locale, PassMessages> = {
@@ -40,6 +42,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sessão validada',
     'agenda.invalidToken': 'Token inválido ou expirado',
     'agenda.tokenInputHint': 'Digite o token de 6 dígitos do cliente.',
+    'agenda.validating': 'Validando…',
+    'agenda.payout_success': 'Pagamento liberado com sucesso',
   },
   'pt-PT': {
     'pass.subtitle': 'Aperto de mão digital que liberta o pagamento da sessão.',
@@ -53,6 +57,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sessão validada',
     'agenda.invalidToken': 'Token inválido ou expirado',
     'agenda.tokenInputHint': 'Introduza o token de 6 dígitos do cliente.',
+    'agenda.validating': 'A validar…',
+    'agenda.payout_success': 'Pagamento libertado com sucesso',
   },
   en: {
     'pass.subtitle': 'Digital handshake that releases the session payment.',
@@ -66,6 +72,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Session validated',
     'agenda.invalidToken': 'Invalid or expired token',
     'agenda.tokenInputHint': "Enter the client's 6-digit token.",
+    'agenda.validating': 'Validating…',
+    'agenda.payout_success': 'Payout released successfully',
   },
   es: {
     'pass.subtitle': 'Apretón de manos digital que libera el pago de la sesión.',
@@ -79,6 +87,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sesión validada',
     'agenda.invalidToken': 'Token inválido o expirado',
     'agenda.tokenInputHint': 'Introduce el token de 6 dígitos del cliente.',
+    'agenda.validating': 'Validando…',
+    'agenda.payout_success': 'Pago liberado con éxito',
   },
   fr: {
     'pass.subtitle': 'Poignée de main numérique qui libère le paiement de la séance.',
@@ -92,6 +102,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Séance validée',
     'agenda.invalidToken': 'Jeton invalide ou expiré',
     'agenda.tokenInputHint': 'Saisissez le jeton à 6 chiffres du client.',
+    'agenda.validating': 'Validation…',
+    'agenda.payout_success': 'Paiement libéré avec succès',
   },
   de: {
     'pass.subtitle': 'Digitaler Handschlag, der die Sitzungszahlung freigibt.',
@@ -105,6 +117,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sitzung validiert',
     'agenda.invalidToken': 'Ungültiges oder abgelaufenes Token',
     'agenda.tokenInputHint': 'Gib das 6-stellige Token des Kunden ein.',
+    'agenda.validating': 'Wird validiert…',
+    'agenda.payout_success': 'Auszahlung erfolgreich freigegeben',
   },
   it: {
     'pass.subtitle': 'Stretta di mano digitale che sblocca il pagamento della sessione.',
@@ -118,6 +132,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sessione validata',
     'agenda.invalidToken': 'Token non valido o scaduto',
     'agenda.tokenInputHint': 'Inserisci il token di 6 cifre del cliente.',
+    'agenda.validating': 'Convalida…',
+    'agenda.payout_success': 'Pagamento sbloccato con successo',
   },
   ja: {
     'pass.subtitle': 'セッションの支払いを解放するデジタルの握手。',
@@ -131,6 +147,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'セッションを承認しました',
     'agenda.invalidToken': '無効または期限切れのトークン',
     'agenda.tokenInputHint': '顧客の6桁のトークンを入力してください。',
+    'agenda.validating': '確認中…',
+    'agenda.payout_success': '支払いを正常に解放しました',
   },
   zh: {
     'pass.subtitle': '释放会话付款的数字握手。',
@@ -144,6 +162,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': '会话已验证',
     'agenda.invalidToken': '令牌无效或已过期',
     'agenda.tokenInputHint': '请输入客户的6位令牌。',
+    'agenda.validating': '验证中…',
+    'agenda.payout_success': '付款已成功释放',
   },
   ko: {
     'pass.subtitle': '세션 결제를 해제하는 디지털 악수.',
@@ -157,6 +177,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': '세션이 검증되었습니다',
     'agenda.invalidToken': '유효하지 않거나 만료된 토큰',
     'agenda.tokenInputHint': '고객님의 6자리 토큰을 입력하세요.',
+    'agenda.validating': '확인 중…',
+    'agenda.payout_success': '결제가 성공적으로 해제되었습니다',
   },
   ar: {
     'pass.subtitle': 'مصافحة رقمية تطلق دفع الجلسة.',
@@ -170,6 +192,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'تم التحقق من الجلسة',
     'agenda.invalidToken': 'رمز غير صالح أو منتهي',
     'agenda.tokenInputHint': 'أدخل رمز العميل المكوّن من 6 أرقام.',
+    'agenda.validating': 'جارٍ التحقق…',
+    'agenda.payout_success': 'تم إطلاق الدفع بنجاح',
   },
   ru: {
     'pass.subtitle': 'Цифровое рукопожатие, открывающее оплату сеанса.',
@@ -183,6 +207,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Сеанс подтверждён',
     'agenda.invalidToken': 'Неверный или истёкший токен',
     'agenda.tokenInputHint': 'Введите 6-значный токен клиента.',
+    'agenda.validating': 'Проверка…',
+    'agenda.payout_success': 'Выплата успешно разблокирована',
   },
   hi: {
     'pass.subtitle': 'डिजिटल हैंडशेक जो सत्र भुगतान जारी करता है।',
@@ -196,6 +222,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'सत्र सत्यापित',
     'agenda.invalidToken': 'अमान्य या समाप्त टोकन',
     'agenda.tokenInputHint': 'ग्राहक का 6 अंकों का टोकन दर्ज करें।',
+    'agenda.validating': 'सत्यापित किया जा रहा है…',
+    'agenda.payout_success': 'भुगतान सफलतापूर्वक जारी किया गया',
   },
   nl: {
     'pass.subtitle': 'Digitale handdruk die de sessiebetaling vrijgeeft.',
@@ -209,6 +237,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sessie gevalideerd',
     'agenda.invalidToken': 'Ongeldig of verlopen token',
     'agenda.tokenInputHint': 'Voer het 6-cijferige token van de klant in.',
+    'agenda.validating': 'Valideren…',
+    'agenda.payout_success': 'Betaling succesvol vrijgegeven',
   },
   tr: {
     'pass.subtitle': 'Oturum ödemesini açan dijital el sıkışma.',
@@ -222,6 +252,8 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Oturum doğrulandı',
     'agenda.invalidToken': 'Geçersiz veya süresi dolmuş jeton',
     'agenda.tokenInputHint': 'Müşterinin 6 haneli jetonunu girin.',
+    'agenda.validating': 'Doğrulanıyor…',
+    'agenda.payout_success': 'Ödeme başarıyla serbest bırakıldı',
   },
   pl: {
     'pass.subtitle': 'Cyfrowy uścisk dłoni, który zwalnia płatność za sesję.',
@@ -235,5 +267,7 @@ export const PASS_MESSAGES: Record<Locale, PassMessages> = {
     'agenda.sessionValidated': 'Sesja zatwierdzona',
     'agenda.invalidToken': 'Nieprawidłowy lub wygasły token',
     'agenda.tokenInputHint': 'Wprowadź 6-cyfrowy token klienta.',
+    'agenda.validating': 'Weryfikacja…',
+    'agenda.payout_success': 'Płatność została pomyślnie zwolniona',
   },
 };

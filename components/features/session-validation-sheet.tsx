@@ -1,12 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Loader2, ScanLine, ShieldCheck } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
+import { processDepositPayment } from '@/lib/actions/transaction.actions';
+import { toast } from '@/lib/toast';
 
 /**
  * SessionValidationSheet — validador de sessão do tatuador (OTP Input).
@@ -26,6 +28,8 @@ export type SessionValidationStatus = 'idle' | 'validating' | 'error' | 'success
 export interface SessionValidationSheetProps {
   open: boolean;
   panelId: string;
+  /** Identificador da sessão (`agendamento`) cujo sinal será processado. */
+  sessionId: string;
   onValidated: () => void;
   /** Validação injetável. Retorna `true` para liberar o pagamento. */
   onVerify?: (code: string) => Promise<boolean> | boolean;
@@ -36,15 +40,10 @@ export interface SessionValidationSheetProps {
 const SUCCESS_HOLD_MS = 1200;
 const ERROR_HOLD_MS = 2200;
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
-
 export function SessionValidationSheet({
   open,
   panelId,
+  sessionId,
   onValidated,
   onVerify,
   length = 6,
@@ -115,39 +114,11 @@ export function SessionValidationSheet({
   };
 
   const complete = digits.every((digit) => digit !== '');
+  const [isPending, startTransition] = useTransition();
+  const pending = isPending || status === 'validating';
 
-  const handleConfirm = useCallback(async () => {
-    const code = digits.join('');
-    if (lockedRef.current || code.length !== length) return;
-
-    lockedRef.current = true;
-    setStatus('validating');
-    triggerHaptic('medium');
-
-    try {
-      const valid = onVerify ? await onVerify(code) : await (async () => {
-        playTattoo();
-        await delay(900);
-        return code.length === length;
-      })();
-
-      stopTattoo();
-
-      if (valid !== false) {
-        playSuccess();
-        triggerHaptic('success');
-        setStatus('success');
-        resetTimerRef.current = window.setTimeout(() => {
-          resetTimerRef.current = null;
-          onValidated();
-          reset();
-        }, SUCCESS_HOLD_MS);
-        return;
-      }
-    } catch {
-      stopTattoo();
-    }
-
+  const failValidation = useCallback(() => {
+    stopTattoo();
     playError();
     triggerHaptic('heavy');
     setStatus('error');
@@ -155,7 +126,64 @@ export function SessionValidationSheet({
       resetTimerRef.current = null;
       reset();
     }, ERROR_HOLD_MS);
-  }, [digits, length, onValidated, onVerify, playError, playSuccess, playTattoo, reset, stopTattoo, triggerHaptic]);
+  }, [playError, reset, stopTattoo, triggerHaptic]);
+
+  const succeed = useCallback(() => {
+    stopTattoo();
+    playSuccess();
+    triggerHaptic('success');
+    toast.success(t('agenda.payout_success'));
+    setStatus('success');
+    resetTimerRef.current = window.setTimeout(() => {
+      resetTimerRef.current = null;
+      onValidated();
+      reset();
+    }, SUCCESS_HOLD_MS);
+  }, [onValidated, playSuccess, reset, stopTattoo, t, triggerHaptic]);
+
+  const handleConfirm = useCallback(() => {
+    const code = digits.join('');
+    if (lockedRef.current || code.length !== length) return;
+
+    lockedRef.current = true;
+    setStatus('validating');
+    triggerHaptic('medium');
+    playTattoo();
+
+    startTransition(async () => {
+      try {
+        const valid = onVerify ? (await onVerify(code)) !== false : code.length === length;
+        if (!valid) {
+          failValidation();
+          return;
+        }
+
+        const idempotencyKey = crypto.randomUUID();
+        const result = await processDepositPayment({ sessionId, idempotencyKey });
+
+        if (!result.success) {
+          toast.error(result.error);
+          failValidation();
+          return;
+        }
+
+        succeed();
+      } catch {
+        toast.error('Falha ao processar o pagamento.');
+        failValidation();
+      }
+    });
+  }, [
+    digits,
+    length,
+    onVerify,
+    sessionId,
+    startTransition,
+    failValidation,
+    succeed,
+    playTattoo,
+    triggerHaptic,
+  ]);
 
   return (
     <div
@@ -189,7 +217,7 @@ export function SessionValidationSheet({
                 aria-label={t('aria.digit', { index: index + 1, length })}
                 aria-invalid={status === 'error'}
                 value={digit}
-                disabled={status === 'validating' || status === 'success'}
+                disabled={pending || status === 'success'}
                 onChange={(event) => fill(index, event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Backspace' && !digit && index > 0) {
@@ -217,7 +245,7 @@ export function SessionValidationSheet({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={!complete || status === 'validating' || status === 'success'}
+            disabled={!complete || pending || status === 'success'}
             className={cn(
               'apple-press inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-all',
               status === 'success'
@@ -226,18 +254,7 @@ export function SessionValidationSheet({
             )}
           >
             <AnimatePresence mode="wait" initial={false}>
-              {status === 'validating' ? (
-                <motion.span
-                  key="validating"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="inline-flex items-center gap-2"
-                >
-                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.4} />
-                  {t('agenda.releasingPayment')}
-                </motion.span>
-              ) : status === 'success' ? (
+              {status === 'success' ? (
                 <motion.span
                   key="success"
                   initial={{ opacity: 0, y: 4 }}
@@ -247,6 +264,17 @@ export function SessionValidationSheet({
                 >
                   <Check className="h-4 w-4" strokeWidth={2.6} />
                   {t('agenda.sessionValidated')}
+                </motion.span>
+              ) : pending ? (
+                <motion.span
+                  key="validating"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="inline-flex items-center gap-2"
+                >
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.4} />
+                  {t('agenda.validating')}
                 </motion.span>
               ) : (
                 <motion.span
