@@ -110,6 +110,10 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
   const busy = phase !== 'idle';
   const canSubmit = Boolean(pendingFile) && !busy;
   const progress = PHASE_PROGRESS[phase];
+  // Fase de processamento no servidor (validação por IA pode levar ~30s): é o
+  // "deadzone" que precisa de feedback contínuo para não parecer travado.
+  const analyzing = phase === 'validating';
+  const cardProcessing = phase === 'uploading' || analyzing;
   const ui = STATUS_UI[currentStatus];
   const StatusIcon = ui.icon;
 
@@ -327,12 +331,25 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-white/5 p-3 backdrop-blur-md dark:bg-white/[0.04]"
+                className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-border/60 bg-white/5 p-3 backdrop-blur-md dark:bg-white/[0.04]"
               >
-                <span className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
+                {cardProcessing ? (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+                  >
+                    <motion.span
+                      className="absolute inset-y-0 w-1/2 bg-[linear-gradient(110deg,transparent,rgba(249,115,22,0.22),transparent)]"
+                      initial={{ x: '-150%' }}
+                      animate={{ x: '250%' }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  </span>
+                ) : null}
+                <span className="relative flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
                   <FileText className="h-5 w-5" strokeWidth={1.75} />
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="relative min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">
                     {pendingFile.name}
                   </span>
@@ -348,7 +365,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                  className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 text-zinc-400 transition-colors hover:border-red-500/50 hover:text-red-400 disabled:opacity-50"
+                  className="relative flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 text-zinc-400 transition-colors hover:border-red-500/50 hover:text-red-400 disabled:opacity-50"
                 >
                   <X className="h-4 w-4" strokeWidth={2} />
                 </motion.button>
@@ -407,7 +424,33 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         </>
       )}
 
-      {phaseLabel ? <p className="text-center text-xs text-amber-400">{phaseLabel}</p> : null}
+      {phaseLabel ? (
+        <p
+          className={cn(
+            'flex items-center justify-center gap-2 text-center text-xs text-amber-400',
+            analyzing && 'animate-pulse'
+          )}
+        >
+          {phaseLabel}
+          {analyzing ? (
+            <span className="inline-flex items-center gap-1" aria-hidden>
+              {[0, 1, 2].map((dot) => (
+                <motion.span
+                  key={dot}
+                  className="h-1 w-1 rounded-full bg-amber-400"
+                  animate={{ opacity: [0.25, 1, 0.25] }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    delay: dot * 0.18,
+                  }}
+                />
+              ))}
+            </span>
+          ) : null}
+        </p>
+      ) : null}
       {confidence !== null ? (
         <p className="text-center text-xs text-zinc-500">{t('kyc.confidence', { confidence })}</p>
       ) : null}
