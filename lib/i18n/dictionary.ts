@@ -155,6 +155,15 @@ export const PT_BR: MessageDictionary = {
   'chat.newQuote': 'Nova conversa de orçamento',
   'chat.book': 'Agendar',
 
+  'username.placeholder': 'seu_usuario',
+  'username.hint': '3–20 caracteres. Letras minúsculas, números, ponto e underline.',
+  'username.checking': 'Verificando disponibilidade...',
+  'username.available': '@{username} está disponível.',
+  'username.taken': 'Este @username já está em uso.',
+  'username.invalid': 'Use apenas letras minúsculas, números, ponto e underline.',
+  'username.reserved': 'Este @username é reservado.',
+  'username.forbidden': 'Estudios não podem definir um @username.',
+
   'payments.bankTitle': 'Conta para Recebimento',
   'payments.bankConnected': 'Conectada',
   'payments.bankNotConnected': 'Nenhuma conta conectada',
@@ -301,6 +310,15 @@ export const EN: MessageDictionary = {
   'chat.newQuote': 'New quote conversation',
   'chat.book': 'Book',
 
+  'username.placeholder': 'your_username',
+  'username.hint': '3–20 characters. Lowercase letters, numbers, dot and underscore.',
+  'username.checking': 'Checking availability...',
+  'username.available': '@{username} is available.',
+  'username.taken': 'This @username is already taken.',
+  'username.invalid': 'Use only lowercase letters, numbers, dot and underscore.',
+  'username.reserved': 'This @username is reserved.',
+  'username.forbidden': 'Studios cannot set a @username.',
+
   'payments.bankTitle': 'Payout Account',
   'payments.bankConnected': 'Connected',
   'payments.bankNotConnected': 'No account connected',
@@ -446,6 +464,15 @@ export const ES: MessageDictionary = {
   'chat.selectArtistHint': 'Elige una conversación o inicia un presupuesto desde la galería.',
   'chat.newQuote': 'Nueva conversación de presupuesto',
   'chat.book': 'Reservar',
+
+  'username.placeholder': 'tu_usuario',
+  'username.hint': '3–20 caracteres. Letras minúsculas, números, punto y guion bajo.',
+  'username.checking': 'Comprobando disponibilidad...',
+  'username.available': '@{username} está disponible.',
+  'username.taken': 'Este @username ya está en uso.',
+  'username.invalid': 'Usa solo letras minúsculas, números, punto y guion bajo.',
+  'username.reserved': 'Este @username está reservado.',
+  'username.forbidden': 'Los estudios no pueden definir un @username.',
 
   'payments.bankTitle': 'Cuenta de Cobro',
   'payments.bankConnected': 'Conectada',
