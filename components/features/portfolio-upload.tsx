@@ -3,9 +3,14 @@
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { Clock3, ImagePlus, MapPin, Sparkles, X } from 'lucide-react';
+import { ImagePlus, Sparkles, X } from 'lucide-react';
 import { NeonButton } from '@/components/ui/neon-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { PortfolioCard } from '@/components/features/portfolio-card';
+import {
+  PortfolioFilterBar,
+  type PortfolioHealingFilter,
+} from '@/components/features/portfolio-filter-bar';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
@@ -71,12 +76,17 @@ function ChipSelect<T extends string>({
   );
 }
 
-export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
+export function PortfolioUpload({
+  tatuadorId,
+  artistName = '',
+}: {
+  tatuadorId: string;
+  artistName?: string;
+}) {
   void tatuadorId;
   const { getToken } = useAuth();
   const { t } = useI18n();
-  const { styleLabel, bodyPartLabel, sessionDurationLabel, healingLabel } =
-    portfolioLabelResolver(t);
+  const { styleLabel, bodyPartLabel, sessionDurationLabel } = portfolioLabelResolver(t);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
 
@@ -92,8 +102,24 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
   const [sessionDuration, setSessionDuration] = useState<PortfolioSessionDuration | ''>('');
   const [healing, setHealing] = useState<HealingStatus>('fresh');
   const [notes, setNotes] = useState('');
+  const [filterStyle, setFilterStyle] = useState('');
+  const [filterBodyPart, setFilterBodyPart] = useState('');
+  const [filterHealing, setFilterHealing] = useState<PortfolioHealingFilter>('all');
 
   const canPublish = Boolean(pendingFile && style && bodyPart && sessionDuration);
+
+  const visibleItems = useMemo(
+    () =>
+      items.filter((item) => {
+        if (filterStyle && item.style !== filterStyle) return false;
+        if (filterBodyPart && item.bodyPart !== filterBodyPart) return false;
+        if (filterHealing === 'fresh' && item.isHealed) return false;
+        if (filterHealing === 'healed' && !item.isHealed) return false;
+        return true;
+      }),
+    [items, filterStyle, filterBodyPart, filterHealing]
+  );
+  const hasFilters = Boolean(filterStyle || filterBodyPart || filterHealing !== 'all');
 
   const loadItems = useCallback(async () => {
     const res = await authedFetch('/api/tatuador/portfolio', {}, tokenFn);
@@ -289,55 +315,57 @@ export function PortfolioUpload({ tatuadorId }: { tatuadorId: string }) {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-28 w-full rounded-2xl" />
-          <Skeleton className="h-28 w-full rounded-2xl" />
+        <div className="columns-1 gap-4 sm:columns-2">
+          <Skeleton className="mb-4 h-80 w-full break-inside-avoid rounded-2xl" />
+          <Skeleton className="mb-4 h-64 w-full break-inside-avoid rounded-2xl" />
+          <Skeleton className="mb-4 h-56 w-full break-inside-avoid rounded-2xl" />
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
           <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('portfolio.empty')}</p>
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-3">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white dark:border-white/[0.05] dark:bg-white/[0.03]"
+        <div className="space-y-4">
+          <PortfolioFilterBar
+            style={filterStyle}
+            bodyPart={filterBodyPart}
+            healed={filterHealing}
+            onStyleChange={setFilterStyle}
+            onBodyPartChange={setFilterBodyPart}
+            onHealingChange={setFilterHealing}
+          />
+
+          {visibleItems.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
+              <p className="text-sm text-neutral-500 dark:text-zinc-400">
+                {t('gallery.emptyFiltered')}
+              </p>
+            </div>
+          ) : (
+            <div
+              className={cn(
+                'columns-1 gap-4 sm:columns-2',
+                hasFilters && 'transition-opacity duration-300'
+              )}
             >
-              <div className="relative h-40 w-full overflow-hidden">
-                <OptimizedImage src={item.imageUrl} alt={styleLabel(item.style)} className="h-full w-full" />
-              </div>
-              <div className="space-y-2 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white">{styleLabel(item.style)}</span>
-                  <span
-                    className={cn(
-                      'rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-wide',
-                      item.isHealed
-                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/40 dark:text-emerald-300'
-                        : 'border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                    )}
-                  >
-                    {healingLabel(item.isHealed)}
-                  </span>
+              {visibleItems.map((item) => (
+                <div key={item.id} className="mb-4 break-inside-avoid">
+                  <PortfolioCard
+                    id={item.id}
+                    imageUrl={item.imageUrl}
+                    artistName={artistName || t('welcome.artistFallback')}
+                    initialLikes={item.likesCount}
+                    style={item.style}
+                    bodyPart={item.bodyPart}
+                    sessionDuration={item.sessionDuration}
+                    isHealed={item.isHealed}
+                    location={item.location}
+                  />
                 </div>
-                {item.descricao ? (
-                  <p className="line-clamp-3 text-xs leading-relaxed text-neutral-500 dark:text-zinc-400">{item.descricao}</p>
-                ) : null}
-                <p className="flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-400">
-                  <MapPin className="h-3 w-3 shrink-0 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
-                  <span className="truncate">{item.location ?? t('vitrine.independent')}</span>
-                </p>
-                <p className="flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-400">
-                  <MapPin className="h-3 w-3" strokeWidth={1.75} />
-                  {bodyPartLabel(item.bodyPart)}
-                  <Clock3 className="ml-2 h-3 w-3" strokeWidth={1.75} />
-                  {sessionDurationLabel(item.sessionDuration)}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {modalOpen ? (

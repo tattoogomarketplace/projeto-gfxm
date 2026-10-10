@@ -29,7 +29,7 @@ export default function TatuadorDashboard({ role = 'tatuador' }: { role?: AppRol
             </div>
           </div>
           {user?.id ? (
-            <PortfolioUpload tatuadorId={user.id} />
+            <PortfolioUpload tatuadorId={user.id} artistName={user.fullName ?? ''} />
           ) : (
             <div className="space-y-4">
               <Skeleton className="h-40 w-full rounded-2xl" />
