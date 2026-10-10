@@ -656,6 +656,26 @@
   will-change: transform, opacity;
 }
 
+/*
+ * Sessão de hoje — pulso sutil no CTA de validação do TattooGo Pass.
+ * Apenas `box-shadow` (composta em GPU) para sinalizar urgência sem custo de
+ * layout. Nunca é aplicado fora do dia corrente.
+ */
+@keyframes today-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0), 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.14), 0 0 20px rgba(249, 115, 22, 0.28);
+  }
+}
+
+.today-pulse {
+  animation: today-pulse 2.6s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
 .splash-gpu {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
@@ -730,6 +750,7 @@ html.splash-seen .splash-root {
   .splash-icon-enter,
   .splash-glow,
   .pass-sweep,
+  .today-pulse,
   .animate-float {
     animation: none;
   }

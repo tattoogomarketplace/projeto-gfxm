@@ -39,14 +39,22 @@ export default function GlobalRootError({
       <p className="mt-2 max-w-xs text-sm leading-relaxed text-zinc-400">
         {t('error.appLoad')}
       </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
-      >
-        <RotateCcw className="h-4 w-4" strokeWidth={2} />
-        {t('common.retry')}
-      </button>
+      <div className="mt-6 flex w-full max-w-[15rem] flex-col items-stretch gap-2.5">
+        <button
+          type="button"
+          onClick={reset}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-5 text-sm font-semibold text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-500/20"
+        >
+          <RotateCcw className="h-4 w-4" strokeWidth={2} />
+          {t('common.retry')}
+        </button>
+        <a
+          href="/"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-5 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/5"
+        >
+          {t('nav.home')}
+        </a>
+      </div>
       </div>
     </div>
   );

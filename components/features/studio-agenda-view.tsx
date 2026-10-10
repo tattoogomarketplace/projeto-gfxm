@@ -13,6 +13,8 @@ import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/lib/toast';
 import { SessionValidationSheet } from '@/components/features/session-validation-sheet';
+import { StudioActiveSessionCard } from '@/components/features/studio-active-session-card';
+import { MOCK_STUDIO_ACTIVE_SESSIONS } from '@/lib/mocks/studio-active-sessions';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { getRoleExperience } from '@/lib/content/role-experience';
@@ -237,6 +239,7 @@ export function StudioAgendaView({
   const experience = getRoleExperience(role).dashboard;
   const roster = groupStudioRoster(agendamentos);
   const isEmpty = roster.today.length === 0 && roster.upcoming.length === 0;
+  const demoSession = MOCK_STUDIO_ACTIVE_SESSIONS[0] ?? null;
 
   return (
     <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-4">
@@ -257,16 +260,20 @@ export function StudioAgendaView({
       {isLoading ? (
         <StudioAgendaSkeleton />
       ) : isEmpty ? (
-        <GlassContainer className="border-dashed p-6 text-center">
-          <CalendarClock
-            className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400"
-            strokeWidth={1.75}
-          />
-          <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-zinc-300">
-            {t('agenda.empty')}
-          </p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('agenda.emptyHint')}</p>
-        </GlassContainer>
+        demoSession ? (
+          <StudioActiveSessionCard session={demoSession} />
+        ) : (
+          <GlassContainer className="border-dashed p-6 text-center">
+            <CalendarClock
+              className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400"
+              strokeWidth={1.75}
+            />
+            <p className="mt-3 text-sm font-medium text-neutral-600 dark:text-zinc-300">
+              {t('agenda.empty')}
+            </p>
+            <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('agenda.emptyHint')}</p>
+          </GlassContainer>
+        )
       ) : (
         <div className="min-w-0 w-full flex-1 space-y-6">
           <RosterSection titleKey="agenda.today" items={roster.today} />
