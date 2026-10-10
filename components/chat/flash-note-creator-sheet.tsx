@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -64,6 +65,163 @@ const BACKGROUNDS: FlashNoteBackground[] = [
 
 const MAX_TEXTAREA_HEIGHT = 260;
 
+/**
+ * Tiny external store for the composer draft. It lets the textarea and the
+ * character counter subscribe independently, so a keystroke only re-renders
+ * those two leaf nodes — never the sheet shell, its framer-motion drag layer,
+ * or the background/color buttons. This is what keeps typing at a locked 60fps.
+ */
+type DraftStore = {
+  get: () => string;
+  set: (value: string) => void;
+  subscribe: (listener: () => void) => () => void;
+};
+
+function createDraftStore(initial: string): DraftStore {
+  let value = initial;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set: (next: string) => {
+      if (value === next) return;
+      value = next;
+      listeners.forEach((listener) => listener());
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
+type FlashNoteTextareaProps = {
+  store: DraftStore;
+  maxLength: number;
+  placeholder: string;
+};
+
+/**
+ * Isolated controlled textarea. Subscribes to the draft store so the input can
+ * stay fully controlled while the keystroke re-render is confined to this node.
+ */
+const FlashNoteTextarea = memo(function FlashNoteTextarea({
+  store,
+  maxLength,
+  placeholder,
+}: FlashNoteTextareaProps) {
+  const value = useSyncExternalStore(store.subscribe, store.get, store.get);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fluid auto-expanding textarea — grows with content, never scrolls on itself.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
+  }, [value]);
+
+  // Focus once the entrance animation settles.
+  useEffect(() => {
+    const focusTimer = window.setTimeout(() => textareaRef.current?.focus(), 260);
+    return () => window.clearTimeout(focusTimer);
+  }, []);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(event) => store.set(event.target.value.slice(0, maxLength))}
+      maxLength={maxLength}
+      rows={3}
+      placeholder={placeholder}
+      className={cn(
+        'relative block w-full resize-none border-0 bg-transparent px-5 py-5',
+        'text-lg font-medium leading-relaxed tracking-tight text-white',
+        'outline-none placeholder:text-zinc-600'
+      )}
+    />
+  );
+});
+
+type FlashNoteCounterProps = {
+  store: DraftStore;
+  maxLength: number;
+};
+
+/** Subscribes to the draft store in isolation — the sheet chrome never updates. */
+const FlashNoteCounter = memo(function FlashNoteCounter({
+  store,
+  maxLength,
+}: FlashNoteCounterProps) {
+  const value = useSyncExternalStore(store.subscribe, store.get, store.get);
+  const remaining = maxLength - value.length;
+  return (
+    <span
+      className={cn(
+        'text-xs font-semibold tabular-nums transition-colors',
+        remaining < 8 ? 'text-orange-400' : 'text-zinc-500'
+      )}
+    >
+      {remaining}
+    </span>
+  );
+});
+
+type BackgroundSelectorProps = {
+  activeId: string;
+  label: string;
+  onSelect: (id: string) => void;
+};
+
+/**
+ * Memoized color deck. Because its props are independent from the draft, it is
+ * completely inert while the user types — it only re-renders when a color is
+ * actually picked.
+ */
+const BackgroundSelector = memo(function BackgroundSelector({
+  activeId,
+  label,
+  onSelect,
+}: BackgroundSelectorProps) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-5 pt-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+        {label}
+      </p>
+      <div className="flex items-center gap-2.5" role="radiogroup" aria-label={label}>
+        {BACKGROUNDS.map((option) => {
+          const active = option.id === activeId;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              aria-label={option.id}
+              onClick={() => {
+                if (active) return;
+                onSelect(option.id);
+              }}
+              className={cn(
+                'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
+                option.gradient,
+                active ? 'scale-110' : 'scale-100'
+              )}
+              style={{
+                boxShadow: active
+                  ? `0 0 0 2px #0d0d0d, 0 0 0 4px ${option.ring}`
+                  : `0 0 0 1px rgba(255,255,255,0.14)`,
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 type FlashNoteCreatorSheetProps = {
   open: boolean;
   isEditing?: boolean;
@@ -82,16 +240,26 @@ export function FlashNoteCreatorSheet({
 }: FlashNoteCreatorSheetProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [draft, setDraft] = useState(initialContent);
+  const storeRef = useRef<DraftStore | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createDraftStore(initialContent);
+  }
+  const store = storeRef.current;
+
   const [backgroundId, setBackgroundId] = useState<string>(BACKGROUNDS[0].id);
+  const [hasText, setHasText] = useState(() => initialContent.trim().length > 0);
   const [isPending, startTransition] = useTransition();
+  // Urgent, synchronous flag so the spinner paints on the very first frame.
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const background = useMemo(
     () => BACKGROUNDS.find((option) => option.id === backgroundId) ?? BACKGROUNDS[0],
     [backgroundId]
   );
+
+  const busy = isPending || isPublishing;
+  const canPublish = hasText && !busy;
 
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -99,70 +267,87 @@ export function FlashNoteCreatorSheet({
     () => false
   );
 
+  // Mirror the store's emptiness into local state — but only flip it on the
+  // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
+  // re-render of the sheet shell or its framer-motion drag layer.
+  useEffect(() => {
+    let previous = store.get().trim().length > 0;
+    setHasText(previous);
+    return store.subscribe(() => {
+      const next = store.get().trim().length > 0;
+      if (next === previous) return;
+      previous = next;
+      setHasText(next);
+    });
+  }, [store]);
+
   // Re-seed the draft every time the sheet is opened so an edited note always
   // reflects the latest published content.
   useEffect(() => {
     if (!open) return;
-    setDraft(initialContent);
+    store.set(initialContent);
+    setHasText(initialContent.trim().length > 0);
     setBackgroundId(BACKGROUNDS[0].id);
-  }, [open, initialContent]);
-
-  // Fluid auto-expanding textarea — grows with content, never scrolls on itself.
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
-  }, [draft, open]);
+  }, [open, initialContent, store]);
 
   useEffect(() => {
     if (!open) return;
-    const focusTimer = window.setTimeout(() => textareaRef.current?.focus(), 260);
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isPending) onClose();
+      if (event.key === 'Escape' && !busy) onClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, isPending, onClose]);
+  }, [open, busy, onClose]);
 
   const dismiss = useCallback(() => {
-    if (isPending) return;
+    if (busy) return;
     triggerHaptic('light');
     onClose();
-  }, [isPending, onClose, triggerHaptic]);
+  }, [busy, onClose, triggerHaptic]);
 
   const handleDragEnd = useCallback(
     (_event: unknown, info: PanInfo) => {
-      if (isPending) return;
+      if (busy) return;
       if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) {
         triggerHaptic('light');
         onClose();
       }
     },
-    [isPending, onClose, triggerHaptic]
+    [busy, onClose, triggerHaptic]
   );
 
-  const trimmed = draft.trim();
-  const remaining = FLASH_NOTE_MAX_LENGTH - draft.length;
-  const canPublish = trimmed.length > 0 && !isPending;
+  const handleSelectBackground = useCallback(
+    (id: string) => {
+      triggerHaptic('light');
+      setBackgroundId(id);
+    },
+    [triggerHaptic]
+  );
 
   const handlePublish = useCallback(() => {
-    if (!canPublish) return;
+    const content = store.get().trim();
+    if (!content || busy) return;
     triggerHaptic('medium');
+    // Set the pending UI urgently so the button + spinner react on the same
+    // frame as the tap; the transition then carries the async network work.
+    setIsPublishing(true);
     startTransition(async () => {
-      const published = await onPublish(trimmed);
-      if (!published) return;
-      triggerHaptic('heavy');
-      toast.success(t('toast.flashLive'));
-      onClose();
+      try {
+        const published = await onPublish(content);
+        if (!published) return;
+        triggerHaptic('heavy');
+        toast.success(t('toast.flashLive'));
+        onClose();
+      } finally {
+        setIsPublishing(false);
+      }
     });
-  }, [canPublish, onClose, onPublish, t, triggerHaptic, trimmed]);
+  }, [busy, onClose, onPublish, store, t, triggerHaptic]);
 
   if (!mounted) return null;
 
@@ -171,7 +356,7 @@ export function FlashNoteCreatorSheet({
       {open ? (
         <motion.div
           key="flash-note-creator"
-          className="fixed inset-0 z-[95] flex h-[100dvh] w-full flex-col justify-end overflow-hidden"
+          className="fixed inset-0 z-[95] flex h-[100dvh] w-full flex-col justify-end overflow-hidden transform-gpu will-change-transform"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -195,14 +380,14 @@ export function FlashNoteCreatorSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            drag={isPending ? false : 'y'}
+            drag={busy ? false : 'y'}
             dragDirectionLock
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.35 }}
             onDragEnd={handleDragEnd}
             className={cn(
               'relative mx-auto flex w-full max-w-app flex-col overflow-hidden rounded-t-[28px]',
-              'gpu-layer border-t border-white/[0.08] bg-[#0d0d0d] text-white',
+              'gpu-layer transform-gpu will-change-transform border-t border-white/[0.08] bg-[#0d0d0d] text-white',
               'shadow-[0_-24px_60px_rgba(0,0,0,0.55)]'
             )}
           >
@@ -224,7 +409,7 @@ export function FlashNoteCreatorSheet({
               <button
                 type="button"
                 onClick={dismiss}
-                disabled={isPending}
+                disabled={busy}
                 aria-label={t('common.close')}
                 className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/[0.06] text-zinc-400 transition-colors active:scale-[0.96] disabled:opacity-40"
               >
@@ -245,57 +430,20 @@ export function FlashNoteCreatorSheet({
                   className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
                   style={{ backgroundColor: `${background.ring}33` }}
                 />
-                <textarea
-                  ref={textareaRef}
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
+                <FlashNoteTextarea
+                  store={store}
                   maxLength={FLASH_NOTE_MAX_LENGTH}
-                  rows={3}
                   placeholder={t('flash.placeholder')}
-                  className={cn(
-                    'relative block w-full resize-none border-0 bg-transparent px-5 py-5',
-                    'text-lg font-medium leading-relaxed tracking-tight text-white',
-                    'outline-none placeholder:text-zinc-600'
-                  )}
                 />
               </div>
             </div>
 
             {/* Background selector — brand-token gradients. */}
-            <div className="flex items-center justify-between gap-3 px-5 pt-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                {t('flash.background')}
-              </p>
-              <div className="flex items-center gap-2.5" role="radiogroup" aria-label={t('flash.background')}>
-                {BACKGROUNDS.map((option) => {
-                  const active = option.id === backgroundId;
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      aria-label={option.id}
-                      onClick={() => {
-                        if (active) return;
-                        triggerHaptic('light');
-                        setBackgroundId(option.id);
-                      }}
-                      className={cn(
-                        'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
-                        option.gradient,
-                        active ? 'scale-110' : 'scale-100'
-                      )}
-                      style={{
-                        boxShadow: active
-                          ? `0 0 0 2px #0d0d0d, 0 0 0 4px ${option.ring}`
-                          : `0 0 0 1px rgba(255,255,255,0.14)`,
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+            <BackgroundSelector
+              activeId={backgroundId}
+              label={t('flash.background')}
+              onSelect={handleSelectBackground}
+            />
 
             {/* Live indicator + counter. */}
             <div className="flex items-center justify-between gap-3 px-5 pt-4">
@@ -306,14 +454,7 @@ export function FlashNoteCreatorSheet({
                 </span>
                 {t('flash.live24h')}
               </span>
-              <span
-                className={cn(
-                  'text-xs font-semibold tabular-nums transition-colors',
-                  remaining < 8 ? 'text-orange-400' : 'text-zinc-500'
-                )}
-              >
-                {remaining}
-              </span>
+              <FlashNoteCounter store={store} maxLength={FLASH_NOTE_MAX_LENGTH} />
             </div>
 
             {/* Glowing CTA — safe-area padded. */}
@@ -322,7 +463,7 @@ export function FlashNoteCreatorSheet({
                 type="button"
                 onClick={handlePublish}
                 disabled={!canPublish}
-                aria-busy={isPending}
+                aria-busy={busy}
                 className={cn(
                   'group inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl px-6 text-[15px] font-bold tracking-tight',
                   'transition-[transform,box-shadow,filter] duration-150 active:scale-[0.98]',
@@ -331,7 +472,7 @@ export function FlashNoteCreatorSheet({
                     : 'cursor-not-allowed bg-white/[0.06] text-zinc-500 shadow-none'
                 )}
               >
-                {isPending ? (
+                {busy ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.6} />
                     {t('flash.publishing')}
