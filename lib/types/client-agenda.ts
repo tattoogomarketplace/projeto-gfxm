@@ -15,3 +15,18 @@ export interface ClientActiveSession {
   /** Nome de exibição do artista responsável pela sessão. */
   readonly artistName: string;
 }
+
+/**
+ * Sessão encerrada projetada para o "Livro-Caixa" (Histórico Premium).
+ *
+ * Reusa a verdade do domínio (`Agendamento`) e acrescenta apenas o código
+ * imutável do comprovante (`receiptCode`) e o nome de exibição do artista.
+ * Presentacional: a UI nunca recalcula valores — apenas projeta o recibo.
+ */
+export interface ClientHistorySession {
+  readonly agendamento: Agendamento;
+  /** Nome de exibição do artista que assinou a sessão. */
+  readonly artistName: string;
+  /** Código intocável do comprovante emitido pelo motor financeiro. */
+  readonly receiptCode: string;
+}

@@ -1,8 +1,14 @@
 export const BRAND_NAME = 'TattooGo MK' as const;
 export const BRAND_MARKETPLACE = 'TattooGo Marketplace' as const;
 export const BRAND_STUDIO = 'TattooGo Studio' as const;
+export const BRAND_PASS = 'TattooGo Pass' as const;
 
-export const PROTECTED_BRANDS = [BRAND_NAME, BRAND_MARKETPLACE, BRAND_STUDIO] as const;
+export const PROTECTED_BRANDS = [
+  BRAND_NAME,
+  BRAND_MARKETPLACE,
+  BRAND_STUDIO,
+  BRAND_PASS,
+] as const;
 
 export type ProtectedBrand = (typeof PROTECTED_BRANDS)[number];
 
@@ -23,5 +29,6 @@ export function protectBrand(value: string): string {
   if (value === 'brand.name' || isProtectedBrand(value)) return BRAND_NAME;
   if (value === 'brand.marketplace') return BRAND_MARKETPLACE;
   if (value === 'brand.studio') return BRAND_STUDIO;
+  if (value === 'brand.pass') return BRAND_PASS;
   return value;
 }

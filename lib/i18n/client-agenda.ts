@@ -1,18 +1,21 @@
 import type { Locale, MessageDictionary } from '@/lib/i18n/types';
 
 /**
- * TATTOOGO MK — ESTADO ATIVO DO CLIENTE (AGENDA + PAGAMENTOS)
+ * TATTOOGO MK — ESTADO ATIVO DO CLIENTE (AGENDA + PAGAMENTOS + HISTÓRICO)
  *
  * Camada isolada de mensagens do "estado ativo" da linha do tempo do cliente:
- * o card de sessão em curso, o detalhamento do sinal de 25% e os CTAs
- * contextuais ("Assinar Termo de Responsabilidade" e "Pagar Sinal (25%)").
+ * o card de sessão em curso, o detalhamento do sinal de 25%, os CTAs
+ * contextuais ("Assinar Termo de Responsabilidade" e "Pagar Sinal (25%)") e o
+ * "Livro-Caixa Visual" — histórico de sessões passadas com selo de validação do
+ * `TattooGo Pass` e o CTA de comprovante.
  *
  * Vive num único módulo `Partial<MessageDictionary>` para manter os 16 idiomas
  * tipados sem inflar os dicionários centrais. Resolução em `t()` cai para
  * EN/PT-BR quando uma locale não define a chave.
  *
  * Blindagem de marca: `TattooGo MK` / `TattooGo Marketplace` / `TattooGo Pass`
- * permanecem literais e intocáveis — nunca passam por aqui.
+ * permanecem literais e intocáveis — nunca passam por aqui. O selo do histórico
+ * injeta o `TattooGo Pass` via `{brand}` a partir do componente.
  */
 export type ClientAgendaMessages = Pick<
   MessageDictionary,
@@ -25,6 +28,14 @@ export type ClientAgendaMessages = Pick<
   | 'clientAgenda.payDeposit'
   | 'clientAgenda.signing'
   | 'clientAgenda.paying'
+  | 'clientHistory.title'
+  | 'clientHistory.subtitle'
+  | 'clientHistory.badgeCompleted'
+  | 'clientHistory.passValidated'
+  | 'clientHistory.receiptCode'
+  | 'clientHistory.viewReceipt'
+  | 'clientHistory.preparing'
+  | 'clientHistory.empty'
 >;
 
 export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
@@ -38,6 +49,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Pagar Sinal (25%)',
     'clientAgenda.signing': 'Assinando…',
     'clientAgenda.paying': 'Gerando Pagamento…',
+    'clientHistory.title': 'Histórico de Sessões',
+    'clientHistory.subtitle': 'Sessões concluídas e comprovantes arquivados.',
+    'clientHistory.badgeCompleted': 'Sessão Concluída',
+    'clientHistory.passValidated': '{brand} Validado',
+    'clientHistory.receiptCode': 'Comprovante',
+    'clientHistory.viewReceipt': 'Ver Comprovante',
+    'clientHistory.preparing': 'Preparando comprovante…',
+    'clientHistory.empty': 'Nenhuma sessão concluída ainda.',
   },
   'pt-PT': {
     'clientAgenda.activeSession': 'Sessão Ativa',
@@ -49,6 +68,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Pagar Sinal (25%)',
     'clientAgenda.signing': 'A assinar…',
     'clientAgenda.paying': 'A gerar pagamento…',
+    'clientHistory.title': 'Histórico de Sessões',
+    'clientHistory.subtitle': 'Sessões concluídas e comprovativos arquivados.',
+    'clientHistory.badgeCompleted': 'Sessão Concluída',
+    'clientHistory.passValidated': '{brand} Validado',
+    'clientHistory.receiptCode': 'Comprovativo',
+    'clientHistory.viewReceipt': 'Ver Comprovativo',
+    'clientHistory.preparing': 'A preparar comprovativo…',
+    'clientHistory.empty': 'Ainda sem sessões concluídas.',
   },
   en: {
     'clientAgenda.activeSession': 'Active Session',
@@ -60,6 +87,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Pay Deposit (25%)',
     'clientAgenda.signing': 'Signing…',
     'clientAgenda.paying': 'Generating Payment…',
+    'clientHistory.title': 'Session History',
+    'clientHistory.subtitle': 'Completed sessions and archived receipts.',
+    'clientHistory.badgeCompleted': 'Session Completed',
+    'clientHistory.passValidated': '{brand} Validated',
+    'clientHistory.receiptCode': 'Receipt',
+    'clientHistory.viewReceipt': 'View Receipt',
+    'clientHistory.preparing': 'Preparing receipt…',
+    'clientHistory.empty': 'No completed sessions yet.',
   },
   es: {
     'clientAgenda.activeSession': 'Sesión Activa',
@@ -71,6 +106,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Pagar Señal (25%)',
     'clientAgenda.signing': 'Firmando…',
     'clientAgenda.paying': 'Generando Pago…',
+    'clientHistory.title': 'Historial de Sesiones',
+    'clientHistory.subtitle': 'Sesiones completadas y comprobantes archivados.',
+    'clientHistory.badgeCompleted': 'Sesión Completada',
+    'clientHistory.passValidated': '{brand} Validado',
+    'clientHistory.receiptCode': 'Comprobante',
+    'clientHistory.viewReceipt': 'Ver Comprobante',
+    'clientHistory.preparing': 'Preparando comprobante…',
+    'clientHistory.empty': 'Aún no hay sesiones completadas.',
   },
   fr: {
     'clientAgenda.activeSession': 'Séance active',
@@ -82,6 +125,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Payer l’acompte (25 %)',
     'clientAgenda.signing': 'Signature…',
     'clientAgenda.paying': 'Génération du paiement…',
+    'clientHistory.title': 'Historique des séances',
+    'clientHistory.subtitle': 'Séances terminées et reçus archivés.',
+    'clientHistory.badgeCompleted': 'Séance terminée',
+    'clientHistory.passValidated': '{brand} validé',
+    'clientHistory.receiptCode': 'Reçu',
+    'clientHistory.viewReceipt': 'Voir le reçu',
+    'clientHistory.preparing': 'Préparation du reçu…',
+    'clientHistory.empty': 'Aucune séance terminée pour le moment.',
   },
   de: {
     'clientAgenda.activeSession': 'Aktive Sitzung',
@@ -93,6 +144,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Anzahlung zahlen (25 %)',
     'clientAgenda.signing': 'Wird unterschrieben…',
     'clientAgenda.paying': 'Zahlung wird erstellt…',
+    'clientHistory.title': 'Sitzungsverlauf',
+    'clientHistory.subtitle': 'Abgeschlossene Sitzungen und archivierte Belege.',
+    'clientHistory.badgeCompleted': 'Sitzung abgeschlossen',
+    'clientHistory.passValidated': '{brand} validiert',
+    'clientHistory.receiptCode': 'Beleg',
+    'clientHistory.viewReceipt': 'Beleg ansehen',
+    'clientHistory.preparing': 'Beleg wird vorbereitet…',
+    'clientHistory.empty': 'Noch keine abgeschlossenen Sitzungen.',
   },
   it: {
     'clientAgenda.activeSession': 'Sessione attiva',
@@ -104,6 +163,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Paga acconto (25%)',
     'clientAgenda.signing': 'Firma in corso…',
     'clientAgenda.paying': 'Generazione pagamento…',
+    'clientHistory.title': 'Cronologia delle sessioni',
+    'clientHistory.subtitle': 'Sessioni completate e ricevute archiviate.',
+    'clientHistory.badgeCompleted': 'Sessione completata',
+    'clientHistory.passValidated': '{brand} validato',
+    'clientHistory.receiptCode': 'Ricevuta',
+    'clientHistory.viewReceipt': 'Vedi ricevuta',
+    'clientHistory.preparing': 'Preparazione ricevuta…',
+    'clientHistory.empty': 'Nessuna sessione completata.',
   },
   ja: {
     'clientAgenda.activeSession': 'アクティブなセッション',
@@ -115,6 +182,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': '手付金を支払う（25%）',
     'clientAgenda.signing': '署名中…',
     'clientAgenda.paying': '支払いを生成中…',
+    'clientHistory.title': 'セッション履歴',
+    'clientHistory.subtitle': '完了したセッションと保存された領収書。',
+    'clientHistory.badgeCompleted': 'セッション完了',
+    'clientHistory.passValidated': '{brand} 検証済み',
+    'clientHistory.receiptCode': '領収書',
+    'clientHistory.viewReceipt': '領収書を表示',
+    'clientHistory.preparing': '領収書を準備中…',
+    'clientHistory.empty': '完了したセッションはまだありません。',
   },
   zh: {
     'clientAgenda.activeSession': '进行中的会话',
@@ -126,6 +201,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': '支付定金（25%）',
     'clientAgenda.signing': '签署中…',
     'clientAgenda.paying': '正在生成付款…',
+    'clientHistory.title': '会话历史',
+    'clientHistory.subtitle': '已完成的会话和存档收据。',
+    'clientHistory.badgeCompleted': '会话已完成',
+    'clientHistory.passValidated': '{brand} 已验证',
+    'clientHistory.receiptCode': '收据',
+    'clientHistory.viewReceipt': '查看收据',
+    'clientHistory.preparing': '正在准备收据…',
+    'clientHistory.empty': '还没有已完成的会话。',
   },
   ko: {
     'clientAgenda.activeSession': '진행 중인 세션',
@@ -137,6 +220,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': '예치금 결제 (25%)',
     'clientAgenda.signing': '서명 중…',
     'clientAgenda.paying': '결제 생성 중…',
+    'clientHistory.title': '세션 기록',
+    'clientHistory.subtitle': '완료된 세션 및 보관된 영수증.',
+    'clientHistory.badgeCompleted': '세션 완료',
+    'clientHistory.passValidated': '{brand} 검증됨',
+    'clientHistory.receiptCode': '영수증',
+    'clientHistory.viewReceipt': '영수증 보기',
+    'clientHistory.preparing': '영수증 준비 중…',
+    'clientHistory.empty': '아직 완료된 세션이 없습니다.',
   },
   ar: {
     'clientAgenda.activeSession': 'جلسة نشطة',
@@ -148,6 +239,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'دفع العربون (25%)',
     'clientAgenda.signing': 'جارٍ التوقيع…',
     'clientAgenda.paying': 'جارٍ إنشاء الدفع…',
+    'clientHistory.title': 'سجل الجلسات',
+    'clientHistory.subtitle': 'الجلسات المكتملة والإيصالات المؤرشفة.',
+    'clientHistory.badgeCompleted': 'جلسة مكتملة',
+    'clientHistory.passValidated': '{brand} موثّق',
+    'clientHistory.receiptCode': 'الإيصال',
+    'clientHistory.viewReceipt': 'عرض الإيصال',
+    'clientHistory.preparing': 'جارٍ تحضير الإيصال…',
+    'clientHistory.empty': 'لا توجد جلسات مكتملة بعد.',
   },
   ru: {
     'clientAgenda.activeSession': 'Активный сеанс',
@@ -159,6 +258,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Оплатить депозит (25 %)',
     'clientAgenda.signing': 'Подписание…',
     'clientAgenda.paying': 'Создание платежа…',
+    'clientHistory.title': 'История сеансов',
+    'clientHistory.subtitle': 'Завершённые сеансы и архивные чеки.',
+    'clientHistory.badgeCompleted': 'Сеанс завершён',
+    'clientHistory.passValidated': '{brand} подтверждён',
+    'clientHistory.receiptCode': 'Чек',
+    'clientHistory.viewReceipt': 'Посмотреть чек',
+    'clientHistory.preparing': 'Подготовка чека…',
+    'clientHistory.empty': 'Пока нет завершённых сеансов.',
   },
   hi: {
     'clientAgenda.activeSession': 'सक्रिय सत्र',
@@ -170,6 +277,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'जमा भुगतान करें (25%)',
     'clientAgenda.signing': 'हस्ताक्षर हो रहा है…',
     'clientAgenda.paying': 'भुगतान बनाया जा रहा है…',
+    'clientHistory.title': 'सत्र इतिहास',
+    'clientHistory.subtitle': 'पूर्ण सत्र और संग्रहीत रसीदें।',
+    'clientHistory.badgeCompleted': 'सत्र पूर्ण',
+    'clientHistory.passValidated': '{brand} सत्यापित',
+    'clientHistory.receiptCode': 'रसीद',
+    'clientHistory.viewReceipt': 'रसीद देखें',
+    'clientHistory.preparing': 'रसीद तैयार हो रही है…',
+    'clientHistory.empty': 'अभी कोई पूर्ण सत्र नहीं।',
   },
   nl: {
     'clientAgenda.activeSession': 'Actieve sessie',
@@ -181,6 +296,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Aanbetaling betalen (25%)',
     'clientAgenda.signing': 'Ondertekenen…',
     'clientAgenda.paying': 'Betaling genereren…',
+    'clientHistory.title': 'Sessiegeschiedenis',
+    'clientHistory.subtitle': 'Afgeronde sessies en gearchiveerde bonnen.',
+    'clientHistory.badgeCompleted': 'Sessie afgerond',
+    'clientHistory.passValidated': '{brand} gevalideerd',
+    'clientHistory.receiptCode': 'Bon',
+    'clientHistory.viewReceipt': 'Bon bekijken',
+    'clientHistory.preparing': 'Bon wordt voorbereid…',
+    'clientHistory.empty': 'Nog geen afgeronde sessies.',
   },
   tr: {
     'clientAgenda.activeSession': 'Aktif Oturum',
@@ -192,6 +315,14 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Kapora Öde (%25)',
     'clientAgenda.signing': 'İmzalanıyor…',
     'clientAgenda.paying': 'Ödeme oluşturuluyor…',
+    'clientHistory.title': 'Oturum Geçmişi',
+    'clientHistory.subtitle': 'Tamamlanan oturumlar ve arşivlenen makbuzlar.',
+    'clientHistory.badgeCompleted': 'Oturum Tamamlandı',
+    'clientHistory.passValidated': '{brand} Doğrulandı',
+    'clientHistory.receiptCode': 'Makbuz',
+    'clientHistory.viewReceipt': 'Makbuzu Görüntüle',
+    'clientHistory.preparing': 'Makbuz hazırlanıyor…',
+    'clientHistory.empty': 'Henüz tamamlanmış oturum yok.',
   },
   pl: {
     'clientAgenda.activeSession': 'Aktywna sesja',
@@ -203,5 +334,13 @@ export const CLIENT_AGENDA_MESSAGES: Record<Locale, ClientAgendaMessages> = {
     'clientAgenda.payDeposit': 'Zapłać zaliczkę (25%)',
     'clientAgenda.signing': 'Podpisywanie…',
     'clientAgenda.paying': 'Generowanie płatności…',
+    'clientHistory.title': 'Historia sesji',
+    'clientHistory.subtitle': 'Zakończone sesje i zarchiwizowane potwierdzenia.',
+    'clientHistory.badgeCompleted': 'Sesja zakończona',
+    'clientHistory.passValidated': '{brand} zweryfikowany',
+    'clientHistory.receiptCode': 'Potwierdzenie',
+    'clientHistory.viewReceipt': 'Zobacz potwierdzenie',
+    'clientHistory.preparing': 'Przygotowywanie potwierdzenia…',
+    'clientHistory.empty': 'Brak zakończonych sesji.',
   },
 };

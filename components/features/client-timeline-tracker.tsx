@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TattooGoPassCard } from '@/components/features/tattoogo-pass-card';
 import { ClientActiveSessionCard } from '@/components/features/client-active-session-card';
 import { ClientActionCTA } from '@/components/features/client-action-cta';
+import { ClientHistoryList } from '@/components/features/client-history-list';
 import { MOCK_ACTIVE_SESSIONS } from '@/lib/mocks/client-active-sessions';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -383,6 +384,7 @@ export function ClientTimelineTracker({
           ))}
         </ol>
       )}
+      <ClientHistoryList className="mt-2 border-t border-black/[0.04] pt-5 dark:border-white/[0.05]" />
     </div>
   );
 }
