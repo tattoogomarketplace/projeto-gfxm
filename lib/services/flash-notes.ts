@@ -5,6 +5,8 @@ import type { FlashNoteDto } from '@/lib/types/chat';
 const FLASH_NOTE_MAX_LENGTH = 80;
 const FLASH_NOTE_TTL_MS = 24 * 60 * 60 * 1000;
 const ACTIVE_NOTES_LIMIT = 80;
+const FLASH_NOTE_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type FlashNoteRow = {
   id: string;
@@ -148,4 +150,27 @@ export async function createFlashNote(params: {
 
 export function isFlashNoteExpired(row: { expiresAt: Date; ativa: boolean }, now = new Date()) {
   return isExpired(row, now);
+}
+
+export async function deleteFlashNote(params: {
+  actorId: string;
+  noteId: string;
+}): Promise<void> {
+  if (!FLASH_NOTE_ID_RE.test(params.noteId)) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
+
+  const existing = await prisma.flashNote.findUnique({
+    where: { id: params.noteId },
+    select: { id: true, userId: true },
+  });
+
+  if (!existing || existing.userId !== params.actorId) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
+
+  await prisma.flashNote.update({
+    where: { id: existing.id },
+    data: { ativa: false },
+  });
 }

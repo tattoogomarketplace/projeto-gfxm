@@ -12,7 +12,17 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import { Loader2, Radio, Sparkles, X } from 'lucide-react';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Loader2,
+  Radio,
+  Sparkles,
+  Trash2,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { toast } from '@/lib/toast';
@@ -80,6 +90,34 @@ const BACKGROUNDS: FlashNoteBackground[] = [
 
 const MAX_TEXTAREA_HEIGHT = 260;
 
+type FlashNoteAlign = 'left' | 'center' | 'right';
+
+type FlashNoteFontId = 'sans' | 'serif' | 'mono';
+
+type AlignmentOption = {
+  id: FlashNoteAlign;
+  className: string;
+  Icon: LucideIcon;
+};
+
+const ALIGNMENTS: AlignmentOption[] = [
+  { id: 'left', className: 'text-left', Icon: AlignLeft },
+  { id: 'center', className: 'text-center', Icon: AlignCenter },
+  { id: 'right', className: 'text-right', Icon: AlignRight },
+];
+
+type TypefaceOption = {
+  id: FlashNoteFontId;
+  className: string;
+  glyphClass: string;
+};
+
+const TYPEFACES: TypefaceOption[] = [
+  { id: 'sans', className: 'font-sans', glyphClass: 'font-sans' },
+  { id: 'serif', className: 'font-serif', glyphClass: 'font-serif' },
+  { id: 'mono', className: 'font-mono', glyphClass: 'font-mono tracking-tight' },
+];
+
 /**
  * Tiny external store for the composer draft. It lets the textarea and the
  * character counter subscribe independently, so a keystroke only re-renders
@@ -115,6 +153,8 @@ type FlashNoteTextareaProps = {
   store: DraftStore;
   maxLength: number;
   placeholder: string;
+  alignClass: string;
+  fontClass: string;
 };
 
 /**
@@ -125,6 +165,8 @@ const FlashNoteTextarea = memo(function FlashNoteTextarea({
   store,
   maxLength,
   placeholder,
+  alignClass,
+  fontClass,
 }: FlashNoteTextareaProps) {
   const value = useSyncExternalStore(store.subscribe, store.get, store.get);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
