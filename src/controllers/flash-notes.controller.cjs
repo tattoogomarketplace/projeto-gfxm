@@ -21,6 +21,9 @@ async function criar(req, res) {
       actorRole: req.user.role || req.perfil?.role,
       content: req.body?.content,
       expiresAt: req.body?.expiresAt ?? req.body?.expires_at,
+      backgroundId: req.body?.backgroundId,
+      fontClass: req.body?.fontClass,
+      alignClass: req.body?.alignClass,
     });
     return res.status(201).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {
@@ -32,4 +35,24 @@ async function criar(req, res) {
   }
 }
 
-module.exports = { listar, criar };
+async function atualizar(req, res) {
+  try {
+    const note = await flashNotesService.updateFlashNote({
+      actorId: req.user.id,
+      noteId: req.params.id,
+      content: req.body?.content,
+      backgroundId: req.body?.backgroundId,
+      fontClass: req.body?.fontClass,
+      alignClass: req.body?.alignClass,
+    });
+    return res.status(200).json({ sucesso: true, actorId: req.user.id, note });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "Erro ao atualizar Flash Note");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao atualizar Flash Note." });
+  }
+}
+
+module.exports = { listar, criar, atualizar };

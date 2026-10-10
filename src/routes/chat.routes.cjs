@@ -12,5 +12,6 @@ router.post("/lido", requireAuth, chatController.marcarLido);
 router.get("/conversas", requireAuth, chatController.conversas);
 router.get("/flash-notes", requireAuth, flashNotesController.listar);
 router.post("/flash-notes", requireAuth, flashNotesController.criar);
+router.patch("/flash-notes/:id", requireAuth, flashNotesController.atualizar);
 
 module.exports = router;

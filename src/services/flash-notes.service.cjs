@@ -4,10 +4,40 @@ const FLASH_NOTE_MAX_LENGTH = 80;
 const FLASH_NOTE_TTL_MS = 24 * 60 * 60 * 1000;
 const ACTIVE_NOTES_LIMIT = 80;
 
+const BACKGROUND_IDS = ["graphite", "ember", "copper", "emerald"];
+const FONT_CLASSES = ["font-sans", "font-serif", "font-mono"];
+const ALIGN_CLASSES = ["text-left", "text-center", "text-right"];
+const DEFAULT_BACKGROUND_ID = "graphite";
+const DEFAULT_FONT_CLASS = "font-sans";
+const DEFAULT_ALIGN_CLASS = "text-center";
+
 function httpError(status, message) {
   const error = new Error(message);
   error.status = status;
   return error;
+}
+
+function pick(value, allowed, fallback) {
+  return typeof value === "string" && allowed.includes(value) ? value : fallback;
+}
+
+function sanitizeStyle({ backgroundId, fontClass, alignClass } = {}) {
+  return {
+    backgroundId: pick(backgroundId, BACKGROUND_IDS, DEFAULT_BACKGROUND_ID),
+    fontClass: pick(fontClass, FONT_CLASSES, DEFAULT_FONT_CLASS),
+    alignClass: pick(alignClass, ALIGN_CLASSES, DEFAULT_ALIGN_CLASS),
+  };
+}
+
+function normalizeContent(value) {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (!trimmed) {
+    throw httpError(400, "O conteúdo da Flash Note não pode estar vazio.");
+  }
+  if (trimmed.length > FLASH_NOTE_MAX_LENGTH) {
+    throw httpError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
+  }
+  return trimmed;
 }
 
 function authorName(nome, role) {
@@ -31,6 +61,9 @@ function toFlashNoteDto(row) {
     id: row.id,
     userId: row.userId,
     content: row.content,
+    backgroundId: row.backgroundId,
+    fontClass: row.fontClass,
+    alignClass: row.alignClass,
     createdAt: row.createdAt,
     expiresAt: row.expiresAt,
     ativa: row.ativa,
@@ -74,18 +107,12 @@ async function listActiveFlashNotes(userId) {
   return rows.map(toFlashNoteDto);
 }
 
-async function createFlashNote({ actorId, actorRole, content, expiresAt }) {
+async function createFlashNote({ actorId, actorRole, content, expiresAt, backgroundId, fontClass, alignClass }) {
   if (actorRole !== "tatuador") {
     throw httpError(403, "Apenas tatuadores podem publicar Flash Notes.");
   }
 
-  const trimmed = typeof content === "string" ? content.trim() : "";
-  if (!trimmed) {
-    throw httpError(400, "O conteúdo da Flash Note não pode estar vazio.");
-  }
-  if (trimmed.length > FLASH_NOTE_MAX_LENGTH) {
-    throw httpError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
-  }
+  const trimmed = normalizeContent(content);
 
   const now = new Date();
   let expires = new Date(now.getTime() + FLASH_NOTE_TTL_MS);
@@ -97,6 +124,8 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt }) {
     expires = parsed;
   }
 
+  const style = sanitizeStyle({ backgroundId, fontClass, alignClass });
+
   await prisma.flashNote.updateMany({
     where: { userId: actorId, ativa: true },
     data: { ativa: false },
@@ -106,6 +135,9 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt }) {
     data: {
       userId: actorId,
       content: trimmed,
+      backgroundId: style.backgroundId,
+      fontClass: style.fontClass,
+      alignClass: style.alignClass,
       expiresAt: expires,
       ativa: true,
     },
@@ -119,8 +151,45 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt }) {
   return toFlashNoteDto(created);
 }
 
+async function updateFlashNote({ actorId, noteId, content, backgroundId, fontClass, alignClass }) {
+  const existing = await prisma.flashNote.findUnique({
+    where: { id: noteId },
+    select: { id: true, userId: true, content: true, backgroundId: true, fontClass: true, alignClass: true },
+  });
+
+  if (!existing || existing.userId !== actorId) {
+    throw httpError(404, "Flash Note não encontrada.");
+  }
+
+  const nextContent = content === undefined ? existing.content : normalizeContent(content);
+  const style = sanitizeStyle({
+    backgroundId: backgroundId ?? existing.backgroundId,
+    fontClass: fontClass ?? existing.fontClass,
+    alignClass: alignClass ?? existing.alignClass,
+  });
+
+  const updated = await prisma.flashNote.update({
+    where: { id: existing.id },
+    data: {
+      content: nextContent,
+      backgroundId: style.backgroundId,
+      fontClass: style.fontClass,
+      alignClass: style.alignClass,
+      expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
+    },
+    include: {
+      user: {
+        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+      },
+    },
+  });
+
+  return toFlashNoteDto(updated);
+}
+
 module.exports = {
   listActiveFlashNotes,
   createFlashNote,
+  updateFlashNote,
   expireStaleFlashNotes,
 };

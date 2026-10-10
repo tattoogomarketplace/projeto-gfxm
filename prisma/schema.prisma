@@ -280,12 +280,15 @@ model MensagemChat {
 }
 
 model FlashNote {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  content   String   @db.VarChar(80)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
-  ativa     Boolean  @default(true)
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  content      String   @db.VarChar(80)
+  backgroundId String   @default("graphite") @map("background_id") @db.VarChar(24)
+  fontClass    String   @default("font-sans") @map("font_class") @db.VarChar(24)
+  alignClass   String   @default("text-center") @map("align_class") @db.VarChar(16)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  ativa        Boolean  @default(true)
 
   user Perfil @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 

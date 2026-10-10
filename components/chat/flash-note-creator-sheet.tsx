@@ -27,96 +27,34 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import {
+  FLASH_NOTE_BACKGROUNDS,
+  FLASH_NOTE_GRADIENTS,
+  FLASH_NOTE_MAX_LENGTH,
+  cycleFlashNoteAlign,
+  cycleFlashNoteFont,
+  getFlashNoteAlignByClass,
+  getFlashNoteAlignById,
+  getFlashNoteFontByClass,
+  getFlashNoteFontById,
+  type FlashNoteAlignId,
+  type FlashNoteBackgroundId,
+  type FlashNoteFontId,
+  type FlashNoteStyle,
+} from '@/lib/flash-notes-style';
 
-export const FLASH_NOTE_MAX_LENGTH = 80;
+export { FLASH_NOTE_MAX_LENGTH };
 
 const DISMISS_DISTANCE = 128;
 const DISMISS_VELOCITY = 700;
 
-/**
- * Strict, STATIC dictionary of complete Tailwind gradient classes. These string
- * literals must never be assembled dynamically (e.g. `from-[${color}]`) — doing
- * so hides them from Tailwind's JIT scanner and is the exact cause of the "dead
- * color" regression, because no gradient utility ever gets emitted.
- */
-const GRADIENTS = {
-  graphite: 'bg-gradient-to-br from-[#131313] via-[#0a0a0a] to-[#1c1c1c]',
-  ember: 'bg-gradient-to-br from-[#1b0a02] via-[#3d1404] to-[#0a0a0a]',
-  copper: 'bg-gradient-to-br from-[#1e0b03] via-[#4b1405] to-[#130705]',
-  emerald: 'bg-gradient-to-br from-[#03130c] via-[#063a25] to-[#04120c]',
-} as const;
-
-type FlashNoteBackgroundId = keyof typeof GRADIENTS;
-
-type FlashNoteBackground = {
-  id: FlashNoteBackgroundId;
-  /** Decorative ring color — uses the brand tokens. */
-  ring: string;
-  /**
-   * Raw CSS gradient. This is the bulletproof source of truth for the live
-   * preview: it is applied inline, so it renders with absolute certainty
-   * regardless of Tailwind's compiler / purge configuration.
-   */
-  css: string;
+const ALIGN_ICONS: Record<FlashNoteAlignId, LucideIcon> = {
+  left: AlignLeft,
+  center: AlignCenter,
+  right: AlignRight,
 };
-
-/**
- * Premium dark-luxury surfaces. Each gradient is derived from a brand token
- * (graphite #0a0a0a, orange #F97316, copper #D9460E, emerald #10B981) so the
- * composer never drifts from the TattooGo MK palette.
- */
-const BACKGROUNDS: FlashNoteBackground[] = [
-  {
-    id: 'graphite',
-    ring: '#3f3f46',
-    css: 'linear-gradient(155deg, #131313 0%, #0a0a0a 58%, #1c1c1c 100%)',
-  },
-  {
-    id: 'ember',
-    ring: '#F97316',
-    css: 'linear-gradient(155deg, #1b0a02 0%, #3d1404 54%, #0a0a0a 100%)',
-  },
-  {
-    id: 'copper',
-    ring: '#D9460E',
-    css: 'linear-gradient(155deg, #1e0b03 0%, #4b1405 48%, #130705 100%)',
-  },
-  {
-    id: 'emerald',
-    ring: '#10B981',
-    css: 'linear-gradient(155deg, #03130c 0%, #063a25 54%, #04120c 100%)',
-  },
-];
 
 const MAX_TEXTAREA_HEIGHT = 260;
-
-type FlashNoteAlign = 'left' | 'center' | 'right';
-
-type FlashNoteFontId = 'sans' | 'serif' | 'mono';
-
-type AlignmentOption = {
-  id: FlashNoteAlign;
-  className: string;
-  Icon: LucideIcon;
-};
-
-const ALIGNMENTS: AlignmentOption[] = [
-  { id: 'left', className: 'text-left', Icon: AlignLeft },
-  { id: 'center', className: 'text-center', Icon: AlignCenter },
-  { id: 'right', className: 'text-right', Icon: AlignRight },
-];
-
-type TypefaceOption = {
-  id: FlashNoteFontId;
-  className: string;
-  glyphClass: string;
-};
-
-const TYPEFACES: TypefaceOption[] = [
-  { id: 'sans', className: 'font-sans', glyphClass: 'font-sans' },
-  { id: 'serif', className: 'font-serif', glyphClass: 'font-serif' },
-  { id: 'mono', className: 'font-mono', glyphClass: 'font-mono tracking-tight' },
-];
 
 /**
  * Tiny external store for the composer draft. It lets the textarea and the
@@ -234,30 +172,68 @@ const FlashNoteCounter = memo(function FlashNoteCounter({
   );
 });
 
-type BackgroundSelectorProps = {
-  activeId: FlashNoteBackgroundId;
-  label: string;
-  onSelect: (id: FlashNoteBackgroundId) => void;
+type ComposerControlsProps = {
+  backgroundId: FlashNoteBackgroundId;
+  align: FlashNoteAlignId;
+  font: FlashNoteFontId;
+  backgroundLabel: string;
+  alignLabel: string;
+  fontLabel: string;
+  onSelectBackground: (id: FlashNoteBackgroundId) => void;
+  onCycleAlign: () => void;
+  onCycleFont: () => void;
 };
 
 /**
- * Memoized color deck. Because its props are independent from the draft, it is
- * completely inert while the user types — it only re-renders when a color is
- * actually picked.
+ * Minimalist Instagram-style cycling toggles + brand-token color deck.
+ * Memoized and independent from the draft so it stays inert while typing.
  */
-const BackgroundSelector = memo(function BackgroundSelector({
-  activeId,
-  label,
-  onSelect,
-}: BackgroundSelectorProps) {
+const ComposerControls = memo(function ComposerControls({
+  backgroundId,
+  align,
+  font,
+  backgroundLabel,
+  alignLabel,
+  fontLabel,
+  onSelectBackground,
+  onCycleAlign,
+  onCycleFont,
+}: ComposerControlsProps) {
+  const AlignIcon = ALIGN_ICONS[align];
+  const typeface = getFlashNoteFontById(font);
+
   return (
-    <div className="flex items-center justify-between gap-3 px-5 pt-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-        {label}
-      </p>
-      <div className="flex items-center gap-2.5" role="radiogroup" aria-label={label}>
-        {BACKGROUNDS.map((option) => {
-          const active = option.id === activeId;
+    <div className="flex items-center justify-between gap-3 px-5 pt-3">
+      <div className="flex items-center gap-2">
+        {/* Alignment — tap cycles left → center → right. */}
+        <button
+          type="button"
+          onClick={onCycleAlign}
+          aria-label={`${alignLabel}: ${align}`}
+          className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-zinc-200 transition-transform active:scale-90"
+        >
+          <AlignIcon className="h-4 w-4" strokeWidth={1.9} />
+        </button>
+
+        {/* Typography — tap cycles Classic → Editorial → Neon. */}
+        <button
+          type="button"
+          onClick={onCycleFont}
+          aria-label={`${fontLabel}: ${typeface.label}`}
+          className="flex h-9 min-h-9 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 text-white transition-transform active:scale-95"
+        >
+          <span className={cn('text-[15px] font-semibold leading-none', typeface.glyphClass)}>
+            Aa
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+            {typeface.label}
+          </span>
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2.5" role="radiogroup" aria-label={backgroundLabel}>
+        {FLASH_NOTE_BACKGROUNDS.map((option) => {
+          const active = option.id === backgroundId;
           return (
             <button
               key={option.id}
@@ -267,11 +243,11 @@ const BackgroundSelector = memo(function BackgroundSelector({
               aria-label={option.id}
               onClick={() => {
                 if (active) return;
-                onSelect(option.id);
+                onSelectBackground(option.id);
               }}
               className={cn(
                 'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',
-                GRADIENTS[option.id],
+                FLASH_NOTE_GRADIENTS[option.id],
                 active ? 'scale-110' : 'scale-100'
               )}
               style={{
@@ -289,96 +265,16 @@ const BackgroundSelector = memo(function BackgroundSelector({
   );
 });
 
-type CreatorControlsProps = {
-  align: FlashNoteAlign;
-  font: FlashNoteFontId;
-  alignLabel: string;
-  fontLabel: string;
-  onAlign: (id: FlashNoteAlign) => void;
-  onFont: (id: FlashNoteFontId) => void;
-};
-
-/**
- * Premium creator toolbar — alignment + typography. Memoized and independent
- * from the draft so it stays completely inert while the artist types.
- */
-const CreatorControls = memo(function CreatorControls({
-  align,
-  font,
-  alignLabel,
-  fontLabel,
-  onAlign,
-  onFont,
-}: CreatorControlsProps) {
-  return (
-    <div className="flex items-center justify-between gap-3 px-5 pt-3">
-      <div
-        className="flex items-center gap-0.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-0.5"
-        role="radiogroup"
-        aria-label={alignLabel}
-      >
-        {ALIGNMENTS.map(({ id, Icon }) => {
-          const active = id === align;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              aria-label={id}
-              onClick={() => {
-                if (!active) onAlign(id);
-              }}
-              className={cn(
-                'flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-lg transition-colors active:scale-95',
-                active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
-              )}
-            >
-              <Icon className="h-4 w-4" strokeWidth={1.9} />
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        className="flex items-center gap-0.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-0.5"
-        role="radiogroup"
-        aria-label={fontLabel}
-      >
-        {TYPEFACES.map((typeface) => {
-          const active = typeface.id === font;
-          return (
-            <button
-              key={typeface.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              aria-label={typeface.id}
-              onClick={() => {
-                if (!active) onFont(typeface.id);
-              }}
-              className={cn(
-                'flex h-9 min-h-9 items-center justify-center rounded-lg px-2.5 text-[13px] font-semibold transition-colors active:scale-95',
-                typeface.glyphClass,
-                active ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
-              )}
-            >
-              Aa
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-});
-
 type FlashNoteCreatorSheetProps = {
   open: boolean;
   isEditing?: boolean;
   initialContent?: string;
+  initialBackgroundId?: string;
+  initialFontClass?: string;
+  initialAlignClass?: string;
   onClose: () => void;
   /** Resolves `true` once the note has been persisted (optimistically or not). */
-  onPublish: (content: string) => Promise<boolean>;
+  onPublish: (content: string, style: FlashNoteStyle) => Promise<boolean>;
   /** Present only when editing; resolves `true` once the note is removed. */
   onDelete?: () => Promise<boolean>;
 };
@@ -387,6 +283,9 @@ export function FlashNoteCreatorSheet({
   open,
   isEditing = false,
   initialContent = '',
+  initialBackgroundId,
+  initialFontClass,
+  initialAlignClass,
   onClose,
   onPublish,
   onDelete,
@@ -400,29 +299,24 @@ export function FlashNoteCreatorSheet({
   }
   const store = storeRef.current;
 
-  const [backgroundId, setBackgroundId] = useState<FlashNoteBackgroundId>(BACKGROUNDS[0].id);
-  const [align, setAlign] = useState<FlashNoteAlign>('center');
-  const [font, setFont] = useState<FlashNoteFontId>('sans');
+  const [backgroundId, setBackgroundId] = useState<FlashNoteBackgroundId>(
+    () => getFlashNoteBackground(initialBackgroundId).id
+  );
+  const [align, setAlign] = useState<FlashNoteAlignId>(
+    () => getFlashNoteAlignByClass(initialAlignClass).id
+  );
+  const [font, setFont] = useState<FlashNoteFontId>(
+    () => getFlashNoteFontByClass(initialFontClass).id
+  );
   const [hasText, setHasText] = useState(() => initialContent.trim().length > 0);
   const [isPending, startTransition] = useTransition();
   // Urgent, synchronous flag so the spinner paints on the very first frame.
   const [isPublishing, setIsPublishing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const background = useMemo(
-    () => BACKGROUNDS.find((option) => option.id === backgroundId) ?? BACKGROUNDS[0],
-    [backgroundId]
-  );
-
-  const alignment = useMemo(
-    () => ALIGNMENTS.find((option) => option.id === align) ?? ALIGNMENTS[1],
-    [align]
-  );
-
-  const typeface = useMemo(
-    () => TYPEFACES.find((option) => option.id === font) ?? TYPEFACES[0],
-    [font]
-  );
+  const background = useMemo(() => getFlashNoteBackground(backgroundId), [backgroundId]);
+  const alignment = useMemo(() => getFlashNoteAlignById(align), [align]);
+  const typeface = useMemo(() => getFlashNoteFontById(font), [font]);
 
   const busy = isPending || isPublishing;
   const canPublish = hasText && !busy;
@@ -448,16 +342,16 @@ export function FlashNoteCreatorSheet({
   }, [store]);
 
   // Re-seed the draft every time the sheet is opened so an edited note always
-  // reflects the latest published content.
+  // reflects the latest published content AND its persisted style.
   useEffect(() => {
     if (!open) return;
     store.set(initialContent);
     setHasText(initialContent.trim().length > 0);
-    setBackgroundId(BACKGROUNDS[0].id);
-    setAlign('center');
-    setFont('sans');
+    setBackgroundId(getFlashNoteBackground(initialBackgroundId).id);
+    setAlign(getFlashNoteAlignByClass(initialAlignClass).id);
+    setFont(getFlashNoteFontByClass(initialFontClass).id);
     setConfirmDelete(false);
-  }, [open, initialContent, store]);
+  }, [open, initialContent, initialBackgroundId, initialFontClass, initialAlignClass, store]);
 
   useEffect(() => {
     if (!open) return;
@@ -503,21 +397,15 @@ export function FlashNoteCreatorSheet({
     [triggerHaptic]
   );
 
-  const handleSelectAlign = useCallback(
-    (id: FlashNoteAlign) => {
-      triggerHaptic('light');
-      setAlign(id);
-    },
-    [triggerHaptic]
-  );
+  const handleCycleAlign = useCallback(() => {
+    triggerHaptic('light');
+    setAlign((current) => cycleFlashNoteAlign(current));
+  }, [triggerHaptic]);
 
-  const handleSelectFont = useCallback(
-    (id: FlashNoteFontId) => {
-      triggerHaptic('light');
-      setFont(id);
-    },
-    [triggerHaptic]
-  );
+  const handleCycleFont = useCallback(() => {
+    triggerHaptic('light');
+    setFont((current) => cycleFlashNoteFont(current));
+  }, [triggerHaptic]);
 
   const requestDelete = useCallback(() => {
     if (busy) return;

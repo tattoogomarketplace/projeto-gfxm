@@ -64,6 +64,9 @@ export type FlashNoteDto = {
   id: string;
   userId: string;
   content: string;
+  backgroundId: string;
+  fontClass: string;
+  alignClass: string;
   createdAt: string;
   expiresAt: string;
   ativa: boolean;

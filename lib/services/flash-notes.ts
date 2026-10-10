@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { ChatError } from '@/lib/services/chat';
+import {
+  FLASH_NOTE_MAX_LENGTH,
+  sanitizeFlashNoteStyle,
+} from '@/lib/flash-notes-style';
 import type { FlashNoteDto } from '@/lib/types/chat';
 
-const FLASH_NOTE_MAX_LENGTH = 80;
 const FLASH_NOTE_TTL_MS = 24 * 60 * 60 * 1000;
 const ACTIVE_NOTES_LIMIT = 80;
 const FLASH_NOTE_ID_RE =
@@ -12,6 +15,9 @@ type FlashNoteRow = {
   id: string;
   userId: string;
   content: string;
+  backgroundId: string;
+  fontClass: string;
+  alignClass: string;
   createdAt: Date;
   expiresAt: Date;
   ativa: boolean;
@@ -51,6 +57,9 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
     id: row.id,
     userId: row.userId,
     content: row.content,
+    backgroundId: row.backgroundId,
+    fontClass: row.fontClass,
+    alignClass: row.alignClass,
     createdAt: row.createdAt.toISOString(),
     expiresAt: row.expiresAt.toISOString(),
     ativa: row.ativa,
@@ -103,18 +112,15 @@ export async function createFlashNote(params: {
   actorRole: string;
   content: unknown;
   expiresAt?: unknown;
+  backgroundId?: unknown;
+  fontClass?: unknown;
+  alignClass?: unknown;
 }): Promise<FlashNoteDto> {
   if (params.actorRole !== 'tatuador') {
     throw new ChatError(403, 'Apenas tatuadores podem publicar Flash Notes.');
   }
 
-  const content = typeof params.content === 'string' ? params.content.trim() : '';
-  if (!content) {
-    throw new ChatError(400, 'O conteúdo da Flash Note não pode estar vazio.');
-  }
-  if (content.length > FLASH_NOTE_MAX_LENGTH) {
-    throw new ChatError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
-  }
+  const content = normalizeContent(params.content);
 
   const now = new Date();
   let expiresAt = new Date(now.getTime() + FLASH_NOTE_TTL_MS);
@@ -126,6 +132,8 @@ export async function createFlashNote(params: {
     expiresAt = parsed;
   }
 
+  const style = sanitizeFlashNoteStyle(params);
+
   await prisma.flashNote.updateMany({
     where: { userId: params.actorId, ativa: true },
     data: { ativa: false },
@@ -135,6 +143,9 @@ export async function createFlashNote(params: {
     data: {
       userId: params.actorId,
       content,
+      backgroundId: style.backgroundId,
+      fontClass: style.fontClass,
+      alignClass: style.alignClass,
       expiresAt,
       ativa: true,
     },
@@ -146,6 +157,66 @@ export async function createFlashNote(params: {
   });
 
   return toFlashNoteDto(created);
+}
+
+export async function updateFlashNote(params: {
+  actorId: string;
+  noteId: string;
+  content?: unknown;
+  backgroundId?: unknown;
+  fontClass?: unknown;
+  alignClass?: unknown;
+}): Promise<FlashNoteDto> {
+  if (!FLASH_NOTE_ID_RE.test(params.noteId)) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
+
+  const existing = await prisma.flashNote.findUnique({
+    where: { id: params.noteId },
+    select: { id: true, userId: true, content: true, backgroundId: true, fontClass: true, alignClass: true },
+  });
+
+  if (!existing || existing.userId !== params.actorId) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
+
+  const content =
+    params.content === undefined ? existing.content : normalizeContent(params.content);
+
+  const style = sanitizeFlashNoteStyle({
+    backgroundId: params.backgroundId ?? existing.backgroundId,
+    fontClass: params.fontClass ?? existing.fontClass,
+    alignClass: params.alignClass ?? existing.alignClass,
+  });
+
+  const updated = await prisma.flashNote.update({
+    where: { id: existing.id },
+    data: {
+      content,
+      backgroundId: style.backgroundId,
+      fontClass: style.fontClass,
+      alignClass: style.alignClass,
+      expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
+    },
+    include: {
+      user: {
+        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+      },
+    },
+  });
+
+  return toFlashNoteDto(updated);
+}
+
+function normalizeContent(value: unknown): string {
+  const content = typeof value === 'string' ? value.trim() : '';
+  if (!content) {
+    throw new ChatError(400, 'O conteúdo da Flash Note não pode estar vazio.');
+  }
+  if (content.length > FLASH_NOTE_MAX_LENGTH) {
+    throw new ChatError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
+  }
+  return content;
 }
 
 export function isFlashNoteExpired(row: { expiresAt: Date; ativa: boolean }, now = new Date()) {

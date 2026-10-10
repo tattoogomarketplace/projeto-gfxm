@@ -20,7 +20,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await requireChatActor(request);
-    let body: { content?: unknown; expiresAt?: unknown; expires_at?: unknown } = {};
+    let body: {
+      content?: unknown;
+      expiresAt?: unknown;
+      expires_at?: unknown;
+      backgroundId?: unknown;
+      fontClass?: unknown;
+      alignClass?: unknown;
+    } = {};
     try {
       body = (await request.json()) as typeof body;
     } catch {
@@ -32,6 +39,9 @@ export async function POST(request: Request) {
       actorRole: actor.role,
       content: body.content,
       expiresAt: body.expiresAt ?? body.expires_at,
+      backgroundId: body.backgroundId,
+      fontClass: body.fontClass,
+      alignClass: body.alignClass,
     });
 
     return NextResponse.json({ sucesso: true, actorId: actor.id, note }, { status: 201 });
