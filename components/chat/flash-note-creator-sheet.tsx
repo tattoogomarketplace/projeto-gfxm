@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import { Loader2, Radio, Sparkles, X } from 'lucide-react';
@@ -73,8 +81,13 @@ export function FlashNoteCreatorSheet({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [draft, setDraft] = useState(initialContent);
-  const [background, setBackground] = useState<FlashNoteBackground>(BACKGROUNDS[0]);
+  const [backgroundId, setBackgroundId] = useState<string>(BACKGROUNDS[0].id);
   const [isPending, startTransition] = useTransition();
+
+  const background = useMemo(
+    () => BACKGROUNDS.find((option) => option.id === backgroundId) ?? BACKGROUNDS[0],
+    [backgroundId]
+  );
 
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -87,7 +100,7 @@ export function FlashNoteCreatorSheet({
   useEffect(() => {
     if (!open) return;
     setDraft(initialContent);
-    setBackground(BACKGROUNDS[0]);
+    setBackgroundId(BACKGROUNDS[0].id);
   }, [open, initialContent]);
 
   // Fluid auto-expanding textarea — grows with content, never scrolls on itself.
@@ -218,12 +231,13 @@ export function FlashNoteCreatorSheet({
             {/* Composer canvas — WYSIWYG surface, typography first. */}
             <div className="px-5 pb-2 pt-4">
               <div
-                className="relative overflow-hidden rounded-3xl border border-white/[0.08] transition-[background] duration-500 ease-out"
+                className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
                 style={{ backgroundImage: background.surface }}
               >
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-orange-500/20 blur-3xl"
+                  className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
+                  style={{ backgroundColor: `${background.ring}33` }}
                 />
                 <textarea
                   ref={textareaRef}
@@ -248,7 +262,7 @@ export function FlashNoteCreatorSheet({
               </p>
               <div className="flex items-center gap-2.5" role="radiogroup" aria-label={t('flash.background')}>
                 {BACKGROUNDS.map((option) => {
-                  const active = option.id === background.id;
+                  const active = option.id === backgroundId;
                   return (
                     <button
                       key={option.id}
@@ -259,7 +273,7 @@ export function FlashNoteCreatorSheet({
                       onClick={() => {
                         if (active) return;
                         triggerHaptic('light');
-                        setBackground(option);
+                        setBackgroundId(option.id);
                       }}
                       className={cn(
                         'h-8 w-8 min-h-8 min-w-8 rounded-full transition-transform duration-200 active:scale-90',

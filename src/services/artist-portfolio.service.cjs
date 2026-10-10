@@ -240,8 +240,84 @@ async function publishMine(tatuadorId, raw) {
   return toPortfolioItemDto(created);
 }
 
+async function findOwnedItem(tatuadorId, itemId) {
+  const existing = await prisma.portfolio.findFirst({
+    where: { id: itemId, tatuador_id: tatuadorId, deleted_at: null },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw httpError(404, "Obra não encontrada.");
+  }
+  return existing;
+}
+
+function parseUpdatePayload(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw httpError(400, "Payload inválido.");
+  }
+
+  const style = readString(raw.style ?? raw.estilo);
+  const bodyPart = readString(raw.bodyPart ?? raw.body_part);
+  const sessionDuration = readString(raw.sessionDuration ?? raw.session_duration);
+  const isHealed = readBoolean(raw.isHealed ?? raw.is_healed);
+
+  const missing = [];
+  if (!style) missing.push("style");
+  if (!bodyPart) missing.push("bodyPart");
+  if (!sessionDuration) missing.push("sessionDuration");
+  if (isHealed === null) missing.push("isHealed");
+
+  if (missing.length > 0) {
+    throw httpError(400, `Campos obrigatórios ausentes: ${missing.join(", ")}.`);
+  }
+  if (!STYLES.has(style)) {
+    throw httpError(400, "Estilo inválido.");
+  }
+  if (!BODY_PARTS.has(bodyPart)) {
+    throw httpError(400, "Parte do corpo inválida.");
+  }
+  if (!SESSION_DURATIONS.has(sessionDuration)) {
+    throw httpError(400, "Duração da sessão inválida.");
+  }
+
+  const notes = sanitizeNotes(raw.notes ?? raw.caption ?? raw.descricao ?? raw.description);
+  return { style, bodyPart, sessionDuration, isHealed, notes };
+}
+
+async function updateMine(tatuadorId, itemId, raw) {
+  const payload = parseUpdatePayload(raw);
+  await findOwnedItem(tatuadorId, itemId);
+  const descricao = composeStudioCaption(payload);
+
+  const updated = await prisma.portfolio.update({
+    where: { id: itemId },
+    data: {
+      estilo: payload.style,
+      body_part: payload.bodyPart,
+      session_duration: payload.sessionDuration,
+      is_healed: payload.isHealed,
+      descricao,
+    },
+    select: ITEM_SELECT,
+  });
+
+  await cacheDel("feed:portfolios:v2");
+  return toPortfolioItemDto(updated);
+}
+
+async function archiveMine(tatuadorId, itemId) {
+  await findOwnedItem(tatuadorId, itemId);
+  await prisma.portfolio.update({
+    where: { id: itemId },
+    data: { deleted_at: new Date() },
+  });
+  await cacheDel("feed:portfolios:v2");
+}
+
 module.exports = {
   assertTatuadorRole,
   listMine,
   publishMine,
+  updateMine,
+  archiveMine,
 };

@@ -150,6 +150,75 @@ export function parsePublishPayload(raw: unknown): PortfolioPublishInput {
   };
 }
 
+export type PortfolioUpdateInput = Omit<PortfolioPublishInput, 'imageUrl'>;
+
+export function parseUpdatePayload(raw: unknown): PortfolioUpdateInput {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new ArtistPortfolioError(400, 'Payload inválido.');
+  }
+
+  const body = raw as Record<string, unknown>;
+  const style = readString(body.style ?? body.estilo);
+  const bodyPart = readString(body.bodyPart ?? body.body_part);
+  const sessionDuration = readString(body.sessionDuration ?? body.session_duration);
+  const isHealed = readBoolean(body.isHealed ?? body.is_healed);
+
+  const missing: string[] = [];
+  if (!style) missing.push('style');
+  if (!bodyPart) missing.push('bodyPart');
+  if (!sessionDuration) missing.push('sessionDuration');
+  if (isHealed === null) missing.push('isHealed');
+
+  if (missing.length > 0 || isHealed === null) {
+    throw new ArtistPortfolioError(
+      400,
+      `Campos obrigatórios ausentes: ${missing.join(', ') || 'isHealed'}.`
+    );
+  }
+  if (!isPortfolioStyle(style)) {
+    throw new ArtistPortfolioError(400, 'Estilo inválido.');
+  }
+  if (!isPortfolioBodyPart(bodyPart)) {
+    throw new ArtistPortfolioError(400, 'Parte do corpo inválida.');
+  }
+  if (!isPortfolioSessionDuration(sessionDuration)) {
+    throw new ArtistPortfolioError(400, 'Duração da sessão inválida.');
+  }
+
+  const notes = sanitizePortfolioNotes(
+    readString(body.notes ?? body.caption ?? body.descricao ?? body.description)
+  );
+
+  return {
+    style,
+    bodyPart,
+    sessionDuration,
+    isHealed,
+    ...(notes ? { notes } : {}),
+  };
+}
+
+async function invalidatePortfolioFeed() {
+  try {
+    const { Redis } = await import('@upstash/redis');
+    const redis = Redis.fromEnv();
+    await redis.del('feed:portfolios:v2');
+  } catch {
+    void 0;
+  }
+}
+
+async function findOwnedItem(tatuadorId: string, itemId: string) {
+  const existing = await prisma.portfolio.findFirst({
+    where: { id: itemId, tatuador_id: tatuadorId, deleted_at: null },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new ArtistPortfolioError(404, 'Obra não encontrada.');
+  }
+  return existing;
+}
+
 const ITEM_SELECT = {
   id: true,
   tatuador_id: true,
@@ -237,13 +306,51 @@ export async function publishArtistPortfolio(
     select: ITEM_SELECT,
   });
 
-  try {
-    const { Redis } = await import('@upstash/redis');
-    const redis = Redis.fromEnv();
-    await redis.del('feed:portfolios:v2');
-  } catch {
-    void 0;
-  }
+  await invalidatePortfolioFeed();
 
   return toPortfolioItemDto(created);
+}
+
+export async function updateArtistPortfolio(
+  tatuadorId: string,
+  itemId: string,
+  raw: unknown
+): Promise<PortfolioItemDto> {
+  const payload = parseUpdatePayload(raw);
+  await findOwnedItem(tatuadorId, itemId);
+
+  const descricao = composeStudioCaption({
+    style: payload.style,
+    bodyPart: payload.bodyPart,
+    sessionDuration: payload.sessionDuration,
+    isHealed: payload.isHealed,
+    notes: payload.notes,
+  });
+
+  const updated = await prisma.portfolio.update({
+    where: { id: itemId },
+    data: {
+      estilo: payload.style,
+      body_part: payload.bodyPart,
+      session_duration: payload.sessionDuration,
+      is_healed: payload.isHealed,
+      descricao,
+    },
+    select: ITEM_SELECT,
+  });
+
+  await invalidatePortfolioFeed();
+  return toPortfolioItemDto(updated);
+}
+
+export async function archiveArtistPortfolio(
+  tatuadorId: string,
+  itemId: string
+): Promise<void> {
+  await findOwnedItem(tatuadorId, itemId);
+  await prisma.portfolio.update({
+    where: { id: itemId },
+    data: { deleted_at: new Date() },
+  });
+  await invalidatePortfolioFeed();
 }
