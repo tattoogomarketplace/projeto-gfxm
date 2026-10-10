@@ -50,7 +50,7 @@ export const EXTRA_PT_BR: ExtraMessages = {
   'profile.openStudio': 'Abrir/Registrar um Estúdio',
   'profile.openStudioSubtitle': 'Homologue o ateliê com CNPJ e gerencie artistas',
   'profile.personalDocuments': 'Documentos Pessoais',
-  'profile.personalDocumentsSubtitle': 'Envie credenciais sanitárias para liberar a bancada',
+  'profile.personalDocumentsSubtitle': 'Envie seus documentos pessoais oficiais para liberar a bancada',
   'account.management': 'Gerenciamento de Conta',
   'account.managementSubtitle':
     'Pause a conta ou agende a exclusão definitiva com 90 dias de carência.',
@@ -85,7 +85,7 @@ export const EXTRA_EN: ExtraMessages = {
   'profile.openStudio': 'Open/Register a Studio',
   'profile.openStudioSubtitle': 'Verify the studio with a tax ID and manage artists',
   'profile.personalDocuments': 'Personal Documents',
-  'profile.personalDocumentsSubtitle': 'Submit sanitary credentials to unlock your studio',
+  'profile.personalDocumentsSubtitle': 'Submit your official personal documents to unlock your studio',
   'account.management': 'Account Management',
   'account.managementSubtitle':
     'Pause the account or schedule permanent deletion with a 90-day grace period.',
@@ -120,7 +120,7 @@ export const EXTRA_ES: ExtraMessages = {
   'profile.openStudio': 'Abrir/Registrar un Estudio',
   'profile.openStudioSubtitle': 'Homologa el estudio con CIF y gestiona artistas',
   'profile.personalDocuments': 'Documentos Personales',
-  'profile.personalDocumentsSubtitle': 'Envía credenciales sanitarias para liberar la mesa',
+  'profile.personalDocumentsSubtitle': 'Envía tus documentos personales oficiales para liberar la mesa',
   'account.management': 'Gestión de Cuenta',
   'account.managementSubtitle':
     'Pausa la cuenta o programa la eliminación definitiva con 90 días de gracia.',
@@ -155,7 +155,7 @@ export const EXTRA_PT_PT: ExtraMessages = {
   'profile.openStudio': 'Abrir/Registar um Estúdio',
   'profile.openStudioSubtitle': 'Homologue o ateliê com NIF e gira artistas',
   'profile.personalDocuments': 'Documentos Pessoais',
-  'profile.personalDocumentsSubtitle': 'Envie credenciais sanitárias para libertar a banca',
+  'profile.personalDocumentsSubtitle': 'Envie os seus documentos pessoais oficiais para libertar a banca',
   'account.management': 'Gestão de Conta',
   'account.managementSubtitle':
     'Pause a conta ou agende a exclusão definitiva com 90 dias de carência.',
@@ -191,7 +191,7 @@ export const EXTRA_FR: ExtraMessages = {
   'profile.openStudioSubtitle': 'Homologuez l’atelier avec un SIRET et gérez les artistes',
   'profile.personalDocuments': 'Documents personnels',
   'profile.personalDocumentsSubtitle':
-    'Envoyez les justificatifs sanitaires pour débloquer l’atelier',
+    'Envoyez vos documents personnels officiels pour débloquer l’atelier',
   'account.management': 'Gestion du compte',
   'account.managementSubtitle':
     'Mettez le compte en pause ou planifiez la suppression définitive avec 90 jours de délai.',
@@ -227,7 +227,7 @@ export const EXTRA_DE: ExtraMessages = {
   'profile.openStudioSubtitle': 'Homologieren Sie das Atelier mit Steuernummer und verwalten Sie Künstler',
   'profile.personalDocuments': 'Persönliche Dokumente',
   'profile.personalDocumentsSubtitle':
-    'Senden Sie sanitäre Nachweise, um den Arbeitsplatz freizuschalten',
+    'Senden Sie Ihre offiziellen persönlichen Dokumente, um den Arbeitsplatz freizuschalten',
   'account.management': 'Kontoverwaltung',
   'account.managementSubtitle':
     'Pausieren Sie das Konto oder planen Sie die endgültige Löschung mit 90 Tagen Frist.',
@@ -262,7 +262,7 @@ export const EXTRA_IT: ExtraMessages = {
   'profile.openStudio': 'Apri/Registra uno studio',
   'profile.openStudioSubtitle': 'Omologa l’atelier con P. IVA e gestisci gli artisti',
   'profile.personalDocuments': 'Documenti personali',
-  'profile.personalDocumentsSubtitle': 'Invia credenziali sanitarie per sbloccare il banco',
+  'profile.personalDocumentsSubtitle': 'Invia i tuoi documenti personali ufficiali per sbloccare il banco',
   'account.management': 'Gestione account',
   'account.managementSubtitle':
     'Metti in pausa l’account o programma l’eliminazione definitiva con 90 giorni di attesa.',
@@ -297,7 +297,7 @@ export const EXTRA_JA: ExtraMessages = {
   'profile.openStudio': 'スタジオを開設/登録',
   'profile.openStudioSubtitle': '税番号でアトリエを認証し、アーティストを管理します',
   'profile.personalDocuments': '個人書類',
-  'profile.personalDocumentsSubtitle': '衛生証明を提出してブースを解放します',
+  'profile.personalDocumentsSubtitle': '公式の個人書類を提出してブースを解放します',
   'account.management': 'アカウント管理',
   'account.managementSubtitle':
     'アカウントを一時停止するか、90日間の猶予後に完全削除を予約します。',
@@ -331,7 +331,7 @@ export const EXTRA_ZH: ExtraMessages = {
   'profile.openStudio': '开设/注册工作室',
   'profile.openStudioSubtitle': '使用税号认证工作室并管理艺术家',
   'profile.personalDocuments': '个人文件',
-  'profile.personalDocumentsSubtitle': '提交卫生资质以解锁工位',
+  'profile.personalDocumentsSubtitle': '提交您的官方个人证件以解锁工位',
   'account.management': '账户管理',
   'account.managementSubtitle': '暂停账户或安排 90 天宽限期后的永久删除。',
   'account.deactivate': '暂时停用',
@@ -364,7 +364,7 @@ export const EXTRA_KO: ExtraMessages = {
   'profile.openStudio': '스튜디오 개설/등록',
   'profile.openStudioSubtitle': '사업자 등록으로 스튜디오를 인증하고 아티스트를 관리하세요',
   'profile.personalDocuments': '개인 서류',
-  'profile.personalDocumentsSubtitle': '위생 자격 서류를 제출하여 작업대를 해제하세요',
+  'profile.personalDocumentsSubtitle': '공식 개인 증명서를 제출하여 작업대를 해제하세요',
   'account.management': '계정 관리',
   'account.managementSubtitle': '계정을 일시 중지하거나 90일 유예 후 영구 삭제를 예약하세요.',
   'account.deactivate': '일시적으로 비활성화',
@@ -398,7 +398,7 @@ export const EXTRA_AR: ExtraMessages = {
   'profile.openStudio': 'فتح/تسجيل استوديو',
   'profile.openStudioSubtitle': 'وثّق المشغل برقم ضريبي وأدر الفنانين',
   'profile.personalDocuments': 'المستندات الشخصية',
-  'profile.personalDocumentsSubtitle': 'أرسل الشهادات الصحية لفتح المقعد',
+  'profile.personalDocumentsSubtitle': 'أرسل مستنداتك الشخصية الرسمية لفتح المقعد',
   'account.management': 'إدارة الحساب',
   'account.managementSubtitle':
     'أوقف الحساب مؤقتًا أو جدول الحذف النهائي مع مهلة 90 يومًا.',
@@ -433,7 +433,7 @@ export const EXTRA_RU: ExtraMessages = {
   'profile.openStudio': 'Открыть/зарегистрировать студию',
   'profile.openStudioSubtitle': 'Подтвердите ателье по ИНН и управляйте мастерами',
   'profile.personalDocuments': 'Личные документы',
-  'profile.personalDocumentsSubtitle': 'Отправьте санитарные документы, чтобы открыть место',
+  'profile.personalDocumentsSubtitle': 'Отправьте официальные личные документы, чтобы открыть рабочее место',
   'account.management': 'Управление аккаунтом',
   'account.managementSubtitle':
     'Приостановите аккаунт или запланируйте окончательное удаление с отсрочкой 90 дней.',
@@ -468,7 +468,7 @@ export const EXTRA_HI: ExtraMessages = {
   'profile.openStudio': 'स्टूडियो खोलें/पंजीकृत करें',
   'profile.openStudioSubtitle': 'टैक्स आईडी से स्टूडियो सत्यापित करें और कलाकारों का प्रबंधन करें',
   'profile.personalDocuments': 'व्यक्तिगत दस्तावेज़',
-  'profile.personalDocumentsSubtitle': 'स्थान खोलने के लिए स्वास्थ्य प्रमाण पत्र भेजें',
+  'profile.personalDocumentsSubtitle': 'स्थान खोलने के लिए अपने आधिकारिक व्यक्तिगत दस्तावेज़ भेजें',
   'account.management': 'खाता प्रबंधन',
   'account.managementSubtitle':
     'खाता रोकें या 90 दिनों की छूट अवधि के साथ स्थायी हटाने का शेड्यूल करें।',
@@ -503,7 +503,7 @@ export const EXTRA_NL: ExtraMessages = {
   'profile.openStudio': 'Studio openen/registreren',
   'profile.openStudioSubtitle': 'Homologeer het atelier met btw-nummer en beheer artiesten',
   'profile.personalDocuments': 'Persoonlijke documenten',
-  'profile.personalDocumentsSubtitle': 'Stuur sanitaire gegevens om de werkplek vrij te geven',
+  'profile.personalDocumentsSubtitle': 'Stuur je officiële persoonlijke documenten om de werkplek vrij te geven',
   'account.management': 'Accountbeheer',
   'account.managementSubtitle':
     'Pauzeer het account of plan definitieve verwijdering met 90 dagen bedenktijd.',
@@ -538,7 +538,7 @@ export const EXTRA_TR: ExtraMessages = {
   'profile.openStudio': 'Stüdyo aç/kaydet',
   'profile.openStudioSubtitle': 'Atölyeyi vergi numarasıyla doğrulayın ve sanatçıları yönetin',
   'profile.personalDocuments': 'Kişisel belgeler',
-  'profile.personalDocumentsSubtitle': 'Tezgahı açmak için sağlık belgelerini gönderin',
+  'profile.personalDocumentsSubtitle': 'Tezgahı açmak için resmi kişisel belgelerinizi gönderin',
   'account.management': 'Hesap yönetimi',
   'account.managementSubtitle':
     'Hesabı duraklatın veya 90 günlük bekleme süresiyle kalıcı silmeyi planlayın.',
@@ -573,7 +573,7 @@ export const EXTRA_PL: ExtraMessages = {
   'profile.openStudio': 'Otwórz/zarejestruj studio',
   'profile.openStudioSubtitle': 'Zatwierdź atelier numerem NIP i zarządzaj artystami',
   'profile.personalDocuments': 'Dokumenty osobiste',
-  'profile.personalDocumentsSubtitle': 'Wyślij dokumenty sanitarne, aby odblokować stanowisko',
+  'profile.personalDocumentsSubtitle': 'Wyślij swoje oficjalne dokumenty osobiste, aby odblokować stanowisko',
   'account.management': 'Zarządzanie kontem',
   'account.managementSubtitle':
     'Wstrzymaj konto lub zaplanuj trwałe usunięcie z 90-dniowym okresem karencji.',

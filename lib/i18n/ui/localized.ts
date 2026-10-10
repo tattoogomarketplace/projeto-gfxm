@@ -14,7 +14,7 @@ const PT_BR: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Mostre sua arte para clientes de todo o país.',
   'kyc.copyPendingTitle': 'Conta em análise',
   'kyc.copyPendingBody':
-    'Envie seus documentos sanitários para liberar agenda, portfólio e recebimentos. Sua conta de tatuador é independente do estúdio.',
+    'Envie seus documentos de identidade oficiais para liberar agenda, portfólio e recebimentos. Sua conta de tatuador é independente do estúdio.',
   'kyc.copyReviewTitle': 'Documentos em análise',
   'kyc.copyReviewBody':
     'Recebemos seu envio. A bancada fica bloqueada até a homologação. Você pode reenviar um documento mais nítido se quiser.',
@@ -124,7 +124,7 @@ const PT_PT: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Mostre a sua arte a clientes de todo o país.',
   'kyc.copyPendingTitle': 'Conta em análise',
   'kyc.copyPendingBody':
-    'Envie os seus documentos sanitários para desbloquear agenda, portfólio e recebimentos. A sua conta de tatuador é independente do estúdio.',
+    'Envie os seus documentos de identidade oficiais para desbloquear agenda, portfólio e recebimentos. A sua conta de tatuador é independente do estúdio.',
   'kyc.copyReviewTitle': 'Documentos em análise',
   'kyc.copyReviewBody':
     'Recebemos o seu envio. A bancada fica bloqueada até à homologação. Pode reenviar um documento mais nítido, se quiser.',
@@ -234,7 +234,7 @@ const EN: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Show your art to clients across the country.',
   'kyc.copyPendingTitle': 'Account under review',
   'kyc.copyPendingBody':
-    'Send your health documents to unlock your schedule, portfolio, and payouts. Your artist account is independent from the studio.',
+    'Send your official identification documents to unlock your schedule, portfolio, and payouts. Your artist account is independent from the studio.',
   'kyc.copyReviewTitle': 'Documents under review',
   'kyc.copyReviewBody':
     'We received your submission. Your workspace stays locked until approval. You can resend a sharper document if you like.',
@@ -343,7 +343,7 @@ const ES: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Muestra tu arte a clientes de todo el país.',
   'kyc.copyPendingTitle': 'Cuenta en revisión',
   'kyc.copyPendingBody':
-    'Envía tus documentos sanitarios para desbloquear agenda, portafolio y cobros. Tu cuenta de tatuador es independiente del estudio.',
+    'Envía tus documentos de identidad oficiales para desbloquear agenda, portafolio y cobros. Tu cuenta de tatuador es independiente del estudio.',
   'kyc.copyReviewTitle': 'Documentos en revisión',
   'kyc.copyReviewBody':
     'Recibimos tu envío. El puesto queda bloqueado hasta la homologación. Puedes reenviar un documento más nítido si quieres.',
@@ -453,7 +453,7 @@ const FR: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Montrez votre art à des clients de tout le pays.',
   'kyc.copyPendingTitle': "Compte en cours d'examen",
   'kyc.copyPendingBody':
-    "Envoyez vos documents sanitaires pour débloquer l'agenda, le portfolio et les paiements. Votre compte d'artiste est indépendant du studio.",
+    "Envoyez vos documents d'identité officiels pour débloquer l'agenda, le portfolio et les paiements. Votre compte d'artiste est indépendant du studio.",
   'kyc.copyReviewTitle': "Documents en cours d'examen",
   'kyc.copyReviewBody':
     "Nous avons reçu votre envoi. L'espace reste bloqué jusqu'à la validation. Vous pouvez renvoyer un document plus net si vous le souhaitez.",
@@ -564,7 +564,7 @@ const DE: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Zeige deine Kunst Kunden im ganzen Land.',
   'kyc.copyPendingTitle': 'Konto in Prüfung',
   'kyc.copyPendingBody':
-    'Sende deine Gesundheitsdokumente, um Kalender, Portfolio und Auszahlungen freizuschalten. Dein Künstlerkonto ist unabhängig vom Studio.',
+    'Sende deine offiziellen Ausweisdokumente, um Kalender, Portfolio und Auszahlungen freizuschalten. Dein Künstlerkonto ist unabhängig vom Studio.',
   'kyc.copyReviewTitle': 'Dokumente in Prüfung',
   'kyc.copyReviewBody':
     'Wir haben deine Einsendung erhalten. Der Arbeitsplatz bleibt bis zur Freigabe gesperrt. Du kannst bei Bedarf ein schärferes Dokument erneut senden.',
@@ -675,7 +675,7 @@ const IT: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Mostra la tua arte a clienti di tutto il Paese.',
   'kyc.copyPendingTitle': 'Account in esame',
   'kyc.copyPendingBody':
-    'Invia i tuoi documenti sanitari per sbloccare agenda, portfolio e incassi. Il tuo account tatuatore è indipendente dallo studio.',
+    "Invia i tuoi documenti d'identità ufficiali per sbloccare agenda, portfolio e incassi. Il tuo account tatuatore è indipendente dallo studio.",
   'kyc.copyReviewTitle': 'Documenti in esame',
   'kyc.copyReviewBody':
     "Abbiamo ricevuto il tuo invio. La postazione resta bloccata fino all'omologazione. Puoi inviare di nuovo un documento più nitido se vuoi.",
@@ -785,7 +785,7 @@ const JA: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': '全国のクライアントにあなたのアートを披露。',
   'kyc.copyPendingTitle': 'アカウント審査中',
   'kyc.copyPendingBody':
-    '衛生書類を送信して、スケジュール、ポートフォリオ、入金を解放しましょう。タトゥーアーティストのアカウントはスタジオとは独立しています。',
+    '公式の本人確認書類を送信して、スケジュール、ポートフォリオ、入金を解放しましょう。タトゥーアーティストのアカウントはスタジオとは独立しています。',
   'kyc.copyReviewTitle': '書類を審査中',
   'kyc.copyReviewBody':
     '提出を受け取りました。承認まで作業スペースはロックされます。必要なら、より鮮明な書類を再送できます。',
@@ -893,7 +893,7 @@ const ZH: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': '向全国客户展示您的艺术。',
   'kyc.copyPendingTitle': '账户审核中',
   'kyc.copyPendingBody':
-    '发送您的卫生证件以解锁日程、作品集和收款。您的纹身师账户独立于工作室。',
+    '发送您的官方身份证明以解锁日程、作品集和收款。您的纹身师账户独立于工作室。',
   'kyc.copyReviewTitle': '证件审核中',
   'kyc.copyReviewBody':
     '我们已收到您的提交。审核通过前工作区将保持锁定。如有需要，可重新发送更清晰的证件。',
@@ -998,7 +998,7 @@ const KO: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': '전국의 고객에게 당신의 작품을 보여주세요.',
   'kyc.copyPendingTitle': '계정 심사 중',
   'kyc.copyPendingBody':
-    '위생 서류를 제출하여 일정, 포트폴리오, 정산을 활성화하세요. 타투어 계정은 스튜디오와 별개입니다.',
+    '공식 신분 증명서를 제출하여 일정, 포트폴리오, 정산을 활성화하세요. 타투어 계정은 스튜디오와 별개입니다.',
   'kyc.copyReviewTitle': '서류 심사 중',
   'kyc.copyReviewBody':
     '제출을 접수했습니다. 승인 전까지 작업 공간이 잠깁니다. 필요하면 더 선명한 서류를 다시 보낼 수 있습니다.',
@@ -1103,7 +1103,7 @@ const AR: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'اعرض فنك لعملاء في كل أنحاء البلاد.',
   'kyc.copyPendingTitle': 'الحساب قيد المراجعة',
   'kyc.copyPendingBody':
-    'أرسل مستنداتك الصحية لفتح الجدول والأعمال والتحصيلات. حسابك كفنان مستقل عن الاستوديو.',
+    'أرسل مستندات هويتك الرسمية لفتح الجدول والأعمال والتحصيلات. حسابك كفنان مستقل عن الاستوديو.',
   'kyc.copyReviewTitle': 'المستندات قيد المراجعة',
   'kyc.copyReviewBody':
     'استلمنا إرسالك. تبقى مساحة العمل مقفلة حتى الاعتماد. يمكنك إعادة إرسال مستند أوضح إذا أردت.',
@@ -1210,7 +1210,7 @@ const RU: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Покажите своё искусство клиентам по всей стране.',
   'kyc.copyPendingTitle': 'Аккаунт на проверке',
   'kyc.copyPendingBody':
-    'Отправьте санитарные документы, чтобы открыть расписание, портфолио и выплаты. Ваш аккаунт мастера не зависит от студии.',
+    'Отправьте официальные документы, удостоверяющие личность, чтобы открыть расписание, портфолио и выплаты. Ваш аккаунт мастера не зависит от студии.',
   'kyc.copyReviewTitle': 'Документы на проверке',
   'kyc.copyReviewBody':
     'Мы получили вашу заявку. Рабочее место заблокировано до одобрения. При желании можно повторно отправить более чёткий документ.',
@@ -1318,7 +1318,7 @@ const HI: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'देश भर के ग्राहकों को अपनी कला दिखाएँ।',
   'kyc.copyPendingTitle': 'खाता समीक्षा में',
   'kyc.copyPendingBody':
-    'शेड्यूल, पोर्टफ़ोलियो और भुगतान अनलॉक करने के लिए अपने स्वास्थ्य दस्तावेज़ भेजें। आपका टैटू आर्टिस्ट खाता स्टूडियो से स्वतंत्र है।',
+    'शेड्यूल, पोर्टफ़ोलियो और भुगतान अनलॉक करने के लिए अपने आधिकारिक पहचान दस्तावेज़ भेजें। आपका टैटू आर्टिस्ट खाता स्टूडियो से स्वतंत्र है।',
   'kyc.copyReviewTitle': 'दस्तावेज़ समीक्षा में',
   'kyc.copyReviewBody':
     'हमें आपका सबमिशन मिल गया है। मंज़ूरी तक वर्कस्पेस लॉक रहेगा। चाहें तो अधिक स्पष्ट दस्तावेज़ दोबारा भेज सकते हैं।',
@@ -1428,7 +1428,7 @@ const NL: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Toon je kunst aan klanten in het hele land.',
   'kyc.copyPendingTitle': 'Account wordt beoordeeld',
   'kyc.copyPendingBody':
-    'Stuur je gezondheidsdocumenten om agenda, portfolio en uitbetalingen te ontgrendelen. Je artiestenaccount staat los van de studio.',
+    'Stuur je officiële identiteitsdocumenten om agenda, portfolio en uitbetalingen te ontgrendelen. Je artiestenaccount staat los van de studio.',
   'kyc.copyReviewTitle': 'Documenten worden beoordeeld',
   'kyc.copyReviewBody':
     'We hebben je inzending ontvangen. De werkplek blijft vergrendeld tot goedkeuring. Je kunt indien gewenst een scherper document opnieuw sturen.',
@@ -1539,7 +1539,7 @@ const TR: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Sanatınızı ülkenin dört bir yanındaki müşterilere gösterin.',
   'kyc.copyPendingTitle': 'Hesap inceleniyor',
   'kyc.copyPendingBody':
-    'Takvimi, portföyü ve ödemeleri açmak için sağlık belgelerinizi gönderin. Dövme sanatçısı hesabınız stüdyodan bağımsızdır.',
+    'Takvimi, portföyü ve ödemeleri açmak için resmi kimlik belgelerinizi gönderin. Dövme sanatçısı hesabınız stüdyodan bağımsızdır.',
   'kyc.copyReviewTitle': 'Belgeler inceleniyor',
   'kyc.copyReviewBody':
     'Gönderiminizi aldık. Onaya kadar çalışma alanı kilitli kalır. İsterseniz daha net bir belgeyi yeniden gönderebilirsiniz.',
@@ -1650,7 +1650,7 @@ const PL: LocalizedDictionary = {
   'kyc.benefitPortfolioDesc': 'Pokaż swoją sztukę klientom w całym kraju.',
   'kyc.copyPendingTitle': 'Konto w trakcie weryfikacji',
   'kyc.copyPendingBody':
-    'Wyślij dokumenty sanitarne, aby odblokować grafik, portfolio i wypłaty. Twoje konto tatuatora jest niezależne od studia.',
+    'Wyślij swoje oficjalne dokumenty tożsamości, aby odblokować grafik, portfolio i wypłaty. Twoje konto tatuatora jest niezależne od studia.',
   'kyc.copyReviewTitle': 'Dokumenty w trakcie weryfikacji',
   'kyc.copyReviewBody':
     'Otrzymaliśmy Twoje zgłoszenie. Warsztat pozostaje zablokowany do zatwierdzenia. W razie potrzeby możesz ponownie wysłać wyraźniejszy dokument.',
