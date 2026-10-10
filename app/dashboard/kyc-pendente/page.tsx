@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Calendar, ShieldCheck, Sparkles } from 'lucide-react';
@@ -194,13 +193,6 @@ export default function KycPendentePage() {
               }
             }}
           />
-
-          <p className="text-center text-xs text-zinc-500">
-            {t('kyc.alreadyHomologated')}{' '}
-            <Link href="/dashboard/tatuador" className="text-amber-500 hover:underline">
-              {t('kyc.goToPanel')}
-            </Link>
-          </p>
         </div>
       </div>
     </div>
