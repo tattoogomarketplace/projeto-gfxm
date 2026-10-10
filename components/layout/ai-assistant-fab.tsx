@@ -20,6 +20,7 @@ function AiAssistantFabBase() {
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
     pathname.startsWith('/dashboard/kyc-pendente') ||
+    pathname.startsWith('/dashboard/chat') ||
     pathname.startsWith('/dashboard/seja-tatuador')
   ) {
     return null;

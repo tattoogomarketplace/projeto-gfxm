@@ -43,7 +43,10 @@ function shouldHideNav(pathname: string): boolean {
   return (
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
-    pathname.startsWith('/dashboard/kyc-pendente')
+    pathname.startsWith('/dashboard/kyc-pendente') ||
+    // Chat imersivo: o composer é ancorado na base com safe-area; a dock
+    // flutuante colidiria com o campo de mensagem.
+    pathname.startsWith('/dashboard/chat')
   );
 }
 
@@ -59,7 +62,8 @@ function isShellBypassedRoute(pathname: string): boolean {
     pathname.startsWith('/dashboard/seja-tatuador') ||
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
-    pathname.startsWith('/dashboard/kyc-pendente')
+    pathname.startsWith('/dashboard/kyc-pendente') ||
+    pathname.startsWith('/dashboard/chat')
   );
 }
 

@@ -30,15 +30,15 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
       role="tablist"
       aria-label={t('chat.filterAria')}
       className={cn(
-        'relative grid w-full rounded-2xl border border-black/[0.04] bg-neutral-100 p-1 backdrop-blur-xl',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:border-white/[0.05] dark:bg-white/10',
+        'relative grid w-full rounded-2xl border border-black/[0.06] bg-neutral-100 p-1 backdrop-blur-xl',
+        'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] dark:border-white/[0.08] dark:bg-black/40 dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]',
         className
       )}
       style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-500/30 to-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform"
+        className="pointer-events-none absolute top-1 bottom-1 rounded-xl border border-orange-500/40 bg-gradient-to-b from-orange-500/35 to-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform"
         style={{
           width: `calc((100% - 0.5rem) / ${TABS.length})`,
           transform: `translateX(calc(${activeIndex} * 100%))`,

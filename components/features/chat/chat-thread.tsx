@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { CalendarDays, ChevronRight, Send, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChevronRight, Send, ShieldAlert } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,6 +32,7 @@ type ChatThreadProps = {
   artworkId?: string;
   artwork?: ChatArtworkRef | null;
   bookingIntent?: boolean;
+  onBack?: () => void;
   onOpenProfile?: (artistId: string) => void;
   onOpenBooking?: (artistId: string, artworkId?: string) => void;
 };
@@ -67,6 +68,7 @@ export function ChatThread({
   artworkId,
   artwork,
   bookingIntent = false,
+  onBack,
   onOpenProfile,
   onOpenBooking,
 }: ChatThreadProps) {
@@ -206,11 +208,27 @@ export function ChatThread({
 
   if (!destinatarioId) {
     return (
-      <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center rounded-2xl border border-black/[0.04] bg-white px-6 py-10 text-center shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
-        <p className="max-w-full text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
-        <p className="mt-1 max-w-xs text-balance text-xs text-neutral-500 dark:text-zinc-500">
-          {t('chat.selectArtistHint')}
-        </p>
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
+        {onBack ? (
+          <header className="glass-chrome shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06] lg:hidden">
+            <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
+              <button
+                type="button"
+                onClick={onBack}
+                className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-transform active:scale-95 dark:text-zinc-400"
+                aria-label={t('common.back')}
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+              </button>
+            </div>
+          </header>
+        ) : null}
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+          <p className="max-w-full text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
+          <p className="mt-1 max-w-xs text-balance text-xs text-neutral-500 dark:text-zinc-500">
+            {t('chat.selectArtistHint')}
+          </p>
+        </div>
       </div>
     );
   }
@@ -221,43 +239,56 @@ export function ChatThread({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-[0_0_32px_rgba(0,0,0,0.35)]">
-      <div className="flex items-center gap-3 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
-        <button
-          type="button"
-          onClick={openProfile}
-          disabled={!destinatarioId || !onOpenProfile}
-          className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
-          aria-label={t('chat.openVitrine', { name: peerName || peerFallback })}
-        >
-          <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400">
-            {(peerName || 'A').charAt(0).toUpperCase()}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || peerFallback}</span>
-            <span className="block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
-              {bookingIntent ? t('chat.requestBooking') : t('chat.sessionQuestions')}
-            </span>
-          </span>
-          {onOpenProfile ? (
-            <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400 dark:text-zinc-400" strokeWidth={1.75} />
+    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
+      {/* Header — sticky, glassmorphism, safe-area aware. */}
+      <header className="glass-chrome sticky top-0 z-30 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
+        <div className="flex items-center gap-2 px-2 pb-3 sm:px-3">
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-transform active:scale-95 dark:text-zinc-400 lg:hidden"
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+            </button>
           ) : null}
-        </button>
-        {destinatarioId && onOpenBooking ? (
           <button
             type="button"
-            onClick={() => onOpenBooking(destinatarioId, artworkId)}
-            className="flex h-11 min-h-11 shrink-0 items-center gap-1 rounded-xl border border-orange-500/40 px-3 text-xs font-semibold text-orange-600 dark:text-orange-300"
-            aria-label={t('chat.bookWith', { name: peerName || peerFallback })}
+            onClick={openProfile}
+            disabled={!destinatarioId || !onOpenProfile}
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
+            aria-label={t('chat.openVitrine', { name: peerName || peerFallback })}
           >
-            <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            {t('chat.book')}
+            <span className="flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/40 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.06] dark:text-orange-400">
+              {(peerName || 'A').charAt(0).toUpperCase()}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-neutral-900 dark:text-white">{peerName || peerFallback}</span>
+              <span className="block truncate text-[11px] text-neutral-500 dark:text-zinc-400">
+                {bookingIntent ? t('chat.requestBooking') : t('chat.sessionQuestions')}
+              </span>
+            </span>
+            {onOpenProfile ? (
+              <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400 dark:text-zinc-500" strokeWidth={1.75} />
+            ) : null}
           </button>
-        ) : null}
-      </div>
+          {destinatarioId && onOpenBooking ? (
+            <button
+              type="button"
+              onClick={() => onOpenBooking(destinatarioId, artworkId)}
+              className="flex h-11 min-h-11 shrink-0 items-center gap-1 rounded-xl border border-orange-500/40 px-3 text-xs font-semibold text-orange-600 dark:text-orange-300"
+              aria-label={t('chat.bookWith', { name: peerName || peerFallback })}
+            >
+              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+              {t('chat.book')}
+            </button>
+          ) : null}
+        </div>
+      </header>
 
       {artwork ? (
-        <div className="flex gap-3 border-b border-black/[0.04] bg-neutral-50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.04]">
+        <div className="flex shrink-0 gap-3 border-b border-black/[0.04] bg-neutral-50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.04]">
           <div className="relative h-14 w-14 min-h-14 min-w-14 overflow-hidden rounded-xl border border-orange-500/30">
             <OptimizedImage src={artwork.imageUrl} alt={styleLabel(artwork.style)} className="h-full w-full" />
           </div>
@@ -283,7 +314,11 @@ export function ChatThread({
         </div>
       ) : null}
 
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      {/* Message thread — the single scrolling surface; flex-1 fills the gap. */}
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch]"
+      >
         {loading && messages.length === 0 ? (
           <div className="space-y-3">
             <Skeleton className="h-12 w-2/3 rounded-2xl" />
@@ -300,8 +335,8 @@ export function ChatThread({
               className={cn(
                 'max-w-[82%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                 message.sender === 'user'
-                  ? 'rounded-br-md bg-orange-500 text-white shadow-[0_0_18px_rgba(249,115,22,0.28)]'
-                  : 'rounded-bl-md border border-black/[0.04] bg-neutral-50 text-neutral-800 dark:border-white/[0.05] dark:bg-white/[0.05] dark:text-zinc-200'
+                  ? 'rounded-br-md bg-gradient-to-b from-orange-500 to-orange-600 text-white shadow-[0_6px_18px_rgba(249,115,22,0.32)]'
+                  : 'rounded-bl-md border border-black/[0.04] bg-white text-neutral-800 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-zinc-100 dark:shadow-[0_2px_10px_rgba(0,0,0,0.35)]'
               )}
             >
               {message.text}
@@ -309,14 +344,15 @@ export function ChatThread({
           </div>
         ))}
         {!loading && messages.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center dark:border-white/[0.05]">
+          <div className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center dark:border-white/[0.06]">
             <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('chat.emptyMessages')}</p>
             <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('chat.emptyMessagesHint')}</p>
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-black/[0.04] bg-white px-3 py-3 dark:border-white/[0.05] dark:bg-white/[0.03]">
+      {/* Composer — anchored to the base with safe-area padding. */}
+      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-white/[0.06]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}
@@ -337,7 +373,7 @@ export function ChatThread({
               }
             }}
             rows={1}
-            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-black/[0.04] bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
+            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-black/[0.04] bg-white px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.06] dark:bg-white/[0.05] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
             placeholder={
               bookingIntent
                 ? bookingDraft(t, artwork)
@@ -350,7 +386,7 @@ export function ChatThread({
             type="button"
             onClick={() => void sendMessage()}
             disabled={sending || !input.trim()}
-            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/15 text-orange-600 transition-all hover:bg-orange-500/25 active:scale-95 disabled:opacity-40 dark:text-orange-400"
+            className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/15 text-orange-600 transition-all hover:bg-orange-500/25 active:scale-95 disabled:opacity-40 dark:text-orange-400"
             aria-label={t('chat.sendAria')}
           >
             <Send size={18} />

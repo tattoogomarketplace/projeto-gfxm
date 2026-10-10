@@ -59,8 +59,15 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
     isOnboarding || isAiChat || isKycPendente || isArtistVerification;
-  const hideTabs = isChromeLess;
-  const showMachineTrigger = !isChromeLess;
+  // O chat é uma experiência imersiva (padrão iMessage): a própria thread
+  // gerencia header/scroll/composer e ocupa 100% do viewport dinâmico, então
+  // não pode ficar preso ao casco (que adiciona header e área de dock). Ele
+  // esconde o chrome, mas — diferente das rotas "sem casco" — ainda participa
+  // da sincronização de papel (o back e o copy dependem do role).
+  const isImmersiveChat = isDedicatedChat;
+  const hideShellChrome = isChromeLess || isImmersiveChat;
+  const hideTabs = hideShellChrome;
+  const showMachineTrigger = !hideShellChrome;
 
   // Estável entre renders (só muda com o locale): evita recriar o array de
   // opções a cada render e mantém a referência limpa para o SegmentedControl
@@ -225,12 +232,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <div
       className={cn(
         'luxury-canvas relative flex h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
-        // Rotas "sem casco" gerenciam o próprio safe-area (eram montadas fora
-        // do AppShell antes); não adicionamos clearance de dock a elas.
-        isChromeLess ? '' : 'nav-safe-pad'
+        // Rotas "sem casco" e o chat imersivo gerenciam o próprio safe-area
+        // (eram montadas fora do AppShell antes); não adicionamos clearance de
+        // dock a elas.
+        hideShellChrome ? '' : 'nav-safe-pad'
       )}
     >
-      {isChromeLess ? null : (
+      {hideShellChrome ? null : (
       <header
         className={cn(
             'glass-chrome z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]',
@@ -268,7 +276,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       <div
         className={cn(
           'relative flex min-h-0 min-w-0 w-full flex-1 flex-col',
-          isChromeLess || isSettingsHub || isGaleria
+          hideShellChrome || isSettingsHub || isGaleria
             ? 'overflow-hidden'
             : 'min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}

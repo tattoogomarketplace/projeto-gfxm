@@ -15,6 +15,8 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
+import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import type { ChatArtworkRef, ChatConversationDto, ChatPeer, ChatTab } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -280,17 +282,44 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
     void openBooking(selectedPeer.id, artworkId);
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
+  const handleBackToDashboard = useCallback(() => {
+    triggerHaptic('light');
+    // Hard clean-up ao sair do chat imersivo: purga foco/transform/escala
+    // residual do viewport (mesmo fluxo das rotas "sem casco") para que a
+    // dock do painel de destino monte perfeitamente alinhada no iOS.
+    resetViewportScale({ forceBlur: true });
+    forceViewportRecalibration();
+    router.push(dashboardPathForRole(role));
+  }, [role, router, triggerHaptic]);
+
   return (
-    <div className="relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-x-hidden pt-3 text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <Suspense fallback={null}>
         <ChatQuerySync onChange={handleQueryChange} />
       </Suspense>
 
+      {/* Inbox chrome — glass header + Flash Notes + segmented control. */}
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
-        <div className="relative mb-3 px-1 lg:mb-4">
+        <header className="glass-chrome sticky top-0 z-30 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
+          <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
+            <button
+              type="button"
+              onClick={handleBackToDashboard}
+              className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-transform active:scale-95 dark:text-zinc-400"
+              aria-label={t('common.back')}
+            >
+              <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+            </button>
+            <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
+              {t('chat.title')}
+            </h1>
+          </div>
+        </header>
+
+        <div className="relative px-1 pb-1 pt-3">
           <FlashNotesCarousel />
         </div>
-        <div className="relative mb-3 px-1 lg:mb-4">
+        <div className="relative px-3 pb-3 pt-2">
           <ChatCategoryTabs
             value={activeCategory}
             onChange={handleCategoryChange}
@@ -299,10 +328,12 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         </div>
       </div>
 
-      <div className="relative grid min-h-0 flex-1 grid-rows-1 gap-4 lg:min-h-[32rem] lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      {/* Conversation area — single pane on mobile, split view on desktop. */}
+      <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-4 lg:p-3">
         <aside
           className={cn(
-            'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none',
+            'flex min-h-0 min-w-0 flex-col overflow-hidden',
+            'lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]',
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
@@ -316,7 +347,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               {activeCategoryLabel}
             </p>
           </div>
-          <div className="relative min-h-0 flex-1 overflow-y-auto p-2">
+          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 [-webkit-overflow-scrolling:touch]">
             <div
               className={cn(
                 'pointer-events-none absolute inset-x-0 top-0 space-y-2 p-2 transform-gpu transition-opacity duration-200',
@@ -351,6 +382,11 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
             ) : null}
             {orderedConversations.map((item) => {
               const active = selectedId === item.peer.id;
+              // Structured booking request (Lead) vs. casual chat — surfaced
+              // regardless of the active tab so the professional never misses
+              // an orçamento hidden inside the Conversas list.
+              const isQuoteItem =
+                activeCategory === 'BUDGET' || item.categoria === 'ORCAMENTO';
               return (
                 <div
                   key={item.peer.id}
@@ -378,7 +414,18 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                     className="min-w-0 flex-1 text-left active:scale-[0.99]"
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{item.peer.name}</span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{item.peer.name}</span>
+                        {isQuoteItem ? (
+                          <span
+                            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-300"
+                            aria-label={t('chat.quotes')}
+                            title={t('chat.quotes')}
+                          >
+                            <ReceiptText className="h-2.5 w-2.5" strokeWidth={2.4} aria-hidden />
+                          </span>
+                        ) : null}
+                      </span>
                       {item.unreadCount > 0 ? (
                         <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
                           {item.unreadCount}
@@ -402,35 +449,30 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
           </div>
         </aside>
 
-        <section className={cn('min-h-0', mobileThreadOpen ? 'flex' : 'hidden lg:flex')}>
-          <div className="flex min-h-0 w-full flex-col">
-            {selectedPeer ? (
-              <button
-                type="button"
-                onClick={() => setMobileThreadOpen(false)}
-                className="mb-3 flex min-h-11 items-center gap-2 text-sm text-neutral-500 dark:text-zinc-400 lg:hidden"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t('chat.conversations')}
-              </button>
-            ) : null}
-            <ChatThread
-              actorId={actorId}
-              destinatarioId={selectedPeer?.id}
-              peerName={selectedPeer?.name}
-              peerRole={selectedPeer?.role}
-              artworkId={artworkId}
-              artwork={artwork}
-              bookingIntent={bookingIntent}
-              onOpenProfile={(artistId) => {
-                triggerHaptic('light');
-                router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);
-              }}
-              onOpenBooking={(artistId, nextArtworkId) => {
-                void openBooking(artistId, nextArtworkId);
-              }}
-            />
-          </div>
+        <section
+          className={cn(
+            'min-h-0 min-w-0 overflow-hidden',
+            'lg:rounded-2xl',
+            mobileThreadOpen ? 'flex' : 'hidden lg:flex'
+          )}
+        >
+          <ChatThread
+            actorId={actorId}
+            destinatarioId={selectedPeer?.id}
+            peerName={selectedPeer?.name}
+            peerRole={selectedPeer?.role}
+            artworkId={artworkId}
+            artwork={artwork}
+            bookingIntent={bookingIntent}
+            onBack={() => setMobileThreadOpen(false)}
+            onOpenProfile={(artistId) => {
+              triggerHaptic('light');
+              router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);
+            }}
+            onOpenBooking={(artistId, nextArtworkId) => {
+              void openBooking(artistId, nextArtworkId);
+            }}
+          />
         </section>
       </div>
 
