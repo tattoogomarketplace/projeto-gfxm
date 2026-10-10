@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ProfileView } from '@/components/features/profile-view';
 import { SettingsHub } from '@/components/settings/settings-hub';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { cn } from '@/lib/utils';
 
 export default function PerfilLayout({
@@ -32,7 +33,9 @@ export default function PerfilLayout({
         aria-hidden={isSettings}
         inert={isSettings ? true : undefined}
       >
-        <ProfileView />
+        <ErrorBoundary>
+          <ProfileView />
+        </ErrorBoundary>
       </div>
 
       <div
