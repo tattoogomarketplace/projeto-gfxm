@@ -1,7 +1,9 @@
 'use client';
 
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
+import { motion } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 import {
   ProfessionalKycPanel,
@@ -60,8 +62,24 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
   const { signOut } = useClerk();
   const router = useRouter();
   const { t } = useI18n();
-  const normalized = normalizeStatus(status);
-  const copy = DOCUMENTOS_STATUS_COPY[normalized];
+  // O status de homologação vive em estado reativo para que o card inteiro
+  // (título, corpo e selo) reflita a Promise de análise no mesmo frame em que o
+  // toast de sucesso dispara — sem esperar uma nova renderização do servidor.
+  const [currentStatus, setCurrentStatus] = useState<KycStatus>(() => normalizeStatus(status));
+  const copy = DOCUMENTOS_STATUS_COPY[currentStatus];
+
+  const handleStatusChange = useCallback(
+    (next: KycStatus) => {
+      setCurrentStatus(next);
+      // A mutação já persistiu `perfil.kyc_status` no banco (validate-document).
+      // Revalidamos a árvore de servidor para liberar os `children` reais
+      // (Studio Agenda / Payments Hub) assim que a conta é aprovada.
+      if (next === 'aprovado') {
+        router.refresh();
+      }
+    },
+    [router]
+  );
 
   return (
     <div className="fixed inset-0 z-[100] flex h-[100dvh] w-full flex-col overflow-hidden bg-background text-white">
@@ -73,20 +91,23 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
             {BRAND_NAME}
           </p>
-          <h1 className="mt-2 text-2xl font-bold">{t(copy.titleKey)}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">{t(copy.bodyKey)}</p>
-          <div className="mt-4 flex items-center gap-2 text-xs text-zinc-500">
-            <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
-            {t('kyc.statusLabel', { title: t(STATUS_LABEL_KEY[normalized]) })}
-          </div>
+          <motion.div
+            key={currentStatus}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <h1 className="mt-2 text-2xl font-bold">{t(copy.titleKey)}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{t(copy.bodyKey)}</p>
+            <div className="mt-4 flex items-center gap-2 text-xs text-zinc-500">
+              <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
+              {t('kyc.statusLabel', { title: t(STATUS_LABEL_KEY[currentStatus]) })}
+            </div>
+          </motion.div>
           <div className="mt-6">
             <ProfessionalKycPanel
-              status={normalized}
-              onStatusChange={(next) => {
-                if (next === 'aprovado') {
-                  router.push('/dashboard/tatuador');
-                }
-              }}
+              status={currentStatus}
+              onStatusChange={handleStatusChange}
             />
           </div>
         </div>
