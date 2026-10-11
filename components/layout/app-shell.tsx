@@ -40,8 +40,24 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
   const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
   const { t } = useI18n();
-  const tabRole = role ?? 'cliente';
   const pathnameRef = useRef(pathname);
+
+  // Papel derivado da PRÓPRIA rota. Como o pathname é conhecido de forma
+  // síncrona no primeiro frame (antes de `/api/perfil/ensure` resolver o papel
+  // assíncrono), o header nasce com o título definitivo — ex.:
+  // `/dashboard/tatuador` pinta "Atelier Digital" imediatamente, eliminando o
+  // swap de texto "TattooGo MK" -> título do papel que causava layout shift.
+  const pathRole = useMemo<AppRole | null>(() => {
+    if (pathname.startsWith('/dashboard/tatuador')) return 'tatuador';
+    if (pathname.startsWith('/dashboard/estudio')) return 'estudio';
+    if (pathname.startsWith('/dashboard/cliente')) return 'cliente';
+    return null;
+  }, [pathname]);
+  // O store é a fonte de verdade quando a rota não nomeia o papel (ex.: o
+  // despachante `/dashboard`); a rota tem precedência para manter o título
+  // estável entre skeleton e conteúdo resolvido.
+  const shellRole = pathRole ?? role;
+  const tabRole = shellRole ?? 'cliente';
 
   // Detecção de rota derivada do pathname (cliente). É avaliada a cada render,
   // então nunca fica fora de sincronia com a navegação — ao contrário de uma
@@ -178,7 +194,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     : isGaleria
       ? t('nav.gallery')
       : isPagamentos
-        ? role && role !== 'cliente'
+        ? shellRole && shellRole !== 'cliente'
           ? t('payments.tabStudio')
           : t('payments.tabClient')
         : selectedTab === 'perfil'
@@ -187,8 +203,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
             ? t('nav.schedule')
             : selectedTab === 'chat'
               ? t('chat.title')
-              : role && role !== 'cliente'
-                ? t(ROLE_EXPERIENCE[role].dashboard.title)
+              : shellRole && shellRole !== 'cliente'
+                ? t(ROLE_EXPERIENCE[shellRole].dashboard.title)
                 : title;
 
   const handleTabChange = useCallback(

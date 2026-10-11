@@ -108,11 +108,12 @@ export function HubActivityFeed() {
       {isLoading ? (
         <div className="space-y-3" aria-hidden>
           <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-[4.5rem] w-full rounded-2xl" />
-            <Skeleton className="h-[4.5rem] w-full rounded-2xl" />
+            <Skeleton className="h-[4.25rem] w-full rounded-2xl" />
+            <Skeleton className="h-[4.25rem] w-full rounded-2xl" />
           </div>
-          <Skeleton className="h-16 w-full rounded-2xl" />
-          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-[5.5rem] w-full rounded-2xl" />
+          <Skeleton className="h-[3.75rem] w-full rounded-2xl" />
+          <Skeleton className="h-[3.75rem] w-full rounded-2xl" />
         </div>
       ) : (
         <div className="space-y-3">

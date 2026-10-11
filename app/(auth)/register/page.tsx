@@ -26,7 +26,7 @@ import { ONBOARDING_PATH, assignAppPath, normalizeAppRole } from '@/lib/utils/au
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
-import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
+import { AuthScreen } from '@/components/layout/auth-screen';
 import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
@@ -167,7 +167,9 @@ export default function RegisterPage() {
   const nextPathRef = useRef<string | null>(null);
   const prevLocaleRef = useRef(locale);
 
-  const { bridging: sessionBridge } = useRedirectIfAuthenticated(
+  // Redirect-only guard: a transição de cadastro -> onboarding entrega direto
+  // o App Shell/onboarding, sem overlay intermediário de "ENTRANDO".
+  useRedirectIfAuthenticated(
     !isVerifying && !showWelcome && !isActivating && !loading
   );
 
@@ -437,7 +439,6 @@ export default function RegisterPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={sessionBridge || isActivating} label={t('auth.entering')} />
       <div
         id="clerk-captcha"
         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}

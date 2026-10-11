@@ -17,7 +17,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
-import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
+import { AuthScreen } from '@/components/layout/auth-screen';
 import { formatAppError } from '@/lib/error-handler';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
@@ -44,7 +44,10 @@ export default function LoginPage() {
   const resetToastShown = useRef(false);
   const prevLocaleRef = useRef(locale);
 
-  const { bridging: sessionBridge } = useRedirectIfAuthenticated(!isVerifying && !isLoading && !bridging);
+  // Mantém usuários já autenticados fora da tela de login. O redirect é o
+  // único efeito necessário aqui: não há mais overlay de "ENTRANDO" cobrindo a
+  // transição — a navegação entrega direto o App Shell com seus skeletons.
+  useRedirectIfAuthenticated(!isVerifying && !isLoading && !bridging);
 
   useEffect(() => {
     if (resetToastShown.current) return;
@@ -266,7 +269,6 @@ export default function LoginPage() {
   if (isVerifying) {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={bridging || sessionBridge} label={t('auth.entering')} />
         <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">{t('auth.otpTitle')}</h1>
@@ -311,7 +313,6 @@ export default function LoginPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={bridging || sessionBridge} label={t('auth.entering')} />
       <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">
@@ -355,7 +356,7 @@ export default function LoginPage() {
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
-              <TattooMachineLoader compact label={t('auth.entering')} />
+              <TattooMachineLoader compact label="" />
             ) : (
               t('auth.signIn')
             )}

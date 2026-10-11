@@ -135,10 +135,8 @@ function styleGradient(seed: string): string {
 
 function ArtistCardSkeleton() {
   return (
-    <div className="w-64 shrink-0 snap-start space-y-3">
+    <div className="w-64 shrink-0 snap-start">
       <Skeleton className="h-44 w-full rounded-2xl" />
-      <Skeleton className="h-3 w-32 rounded-full" />
-      <Skeleton className="h-3 w-20 rounded-full" />
     </div>
   );
 }

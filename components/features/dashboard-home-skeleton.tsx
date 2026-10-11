@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { normalizeAppRole } from '@/lib/utils/auth-redirect';
@@ -26,10 +27,8 @@ const ROOT_CLASS = 'min-w-0 w-full flex-1 bg-transparent pt-5';
 
 function ArtistCardSkeleton() {
   return (
-    <div className="w-64 shrink-0 snap-start space-y-3">
+    <div className="w-64 shrink-0 snap-start">
       <Skeleton className="h-44 w-full rounded-2xl" />
-      <Skeleton className="h-3 w-32 rounded-full" />
-      <Skeleton className="h-3 w-20 rounded-full" />
     </div>
   );
 }
@@ -109,12 +108,12 @@ function DiscoverSkeleton() {
 function AtelierHubSkeleton() {
   return (
     <div className={`${ROOT_CLASS} flex flex-col gap-6`}>
-      <section className="relative shrink-0">
+      <section className="relative shrink-0 px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(0.25rem,env(safe-area-inset-right,0px))]">
         <div className="mb-2 flex items-center gap-2 px-1">
           <Skeleton className="h-3.5 w-3.5 rounded-full" />
           <Skeleton className="h-3.5 w-24 rounded-full" />
         </div>
-        <div className="flex min-h-[5.25rem] gap-3 overflow-hidden pb-1 pt-0.5">
+        <div className="flex min-h-[5.25rem] gap-3 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-0">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={`flash-skeleton-${index}`}
@@ -147,12 +146,12 @@ function AtelierHubSkeleton() {
         </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-[4.5rem] w-full rounded-2xl" />
-            <Skeleton className="h-[4.5rem] w-full rounded-2xl" />
+            <Skeleton className="h-[4.25rem] w-full rounded-2xl" />
+            <Skeleton className="h-[4.25rem] w-full rounded-2xl" />
           </div>
           <Skeleton className="h-[5.5rem] w-full rounded-2xl" />
-          <Skeleton className="h-16 w-full rounded-2xl" />
-          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-[3.75rem] w-full rounded-2xl" />
+          <Skeleton className="h-[3.75rem] w-full rounded-2xl" />
         </div>
       </section>
     </div>
@@ -160,8 +159,21 @@ function AtelierHubSkeleton() {
 }
 
 function DashboardHomeSkeletonBase({ role }: { role?: string | null }) {
+  const pathname = usePathname();
   const storeRole = useAuthStore((state) => state.role);
-  const resolvedRole = normalizeAppRole(role ?? storeRole);
+
+  // Papel derivado da rota (síncrono, primeiro frame). Sem isso, uma abertura a
+  // frio em `/dashboard/tatuador` pintava o skeleton de cliente e só depois
+  // trocava para o Atelier — exatamente o layout shift que estamos erradicando.
+  const routeRole = pathname.startsWith('/dashboard/tatuador')
+    ? 'tatuador'
+    : pathname.startsWith('/dashboard/estudio')
+      ? 'estudio'
+      : pathname.startsWith('/dashboard/cliente')
+        ? 'cliente'
+        : null;
+
+  const resolvedRole = normalizeAppRole(role ?? routeRole ?? storeRole);
 
   return (
     <div aria-hidden aria-busy="true">

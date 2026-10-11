@@ -17,7 +17,7 @@ import { createPasswordSchema } from '@/lib/utils/password-strength';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { useI18n } from '@/hooks/use-i18n';
-import { AuthBridgeOverlay, AuthScreen } from '@/components/layout/auth-screen';
+import { AuthScreen } from '@/components/layout/auth-screen';
 import { formatAppError } from '@/lib/error-handler';
 
 type CredentialsValues = {
@@ -43,7 +43,9 @@ export default function ForgotPasswordPage() {
   const [forceShow, setForceShow] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
 
-  const { bridging: sessionBridge } = useRedirectIfAuthenticated(
+  // Guard de redirecionamento puro: sem overlay bloqueante durante a
+  // reautenticação — o App Shell resolve o destino imediatamente.
+  useRedirectIfAuthenticated(
     step === 'credentials' && !isLoading && !resetComplete
   );
 
@@ -229,7 +231,6 @@ export default function ForgotPasswordPage() {
   if (step === 'otp') {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
         <div className="screen-fade-in w-full max-w-md space-y-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">{t('auth.otpTitle')}</h1>
@@ -268,7 +269,6 @@ export default function ForgotPasswordPage() {
   if (step === 'password') {
     return (
       <AuthScreen>
-        <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
         <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
           <div className="text-center">
             <h1 className="text-2xl font-extrabold text-white">{t('auth.newPasswordTitle')}</h1>
@@ -318,7 +318,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthScreen>
-      <AuthBridgeOverlay visible={sessionBridge} label={t('common.loading')} />
       <div className="screen-fade-in w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-white">{t('auth.recoverTitle')}</h1>
