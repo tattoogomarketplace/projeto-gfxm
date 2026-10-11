@@ -34,7 +34,7 @@ export function TermsModal({ isOpen, onClose, onAccept }: TermsModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[99] flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md sm:p-4"
+          className="fixed inset-0 z-[9999] flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md sm:p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -45,7 +45,7 @@ export function TermsModal({ isOpen, onClose, onAccept }: TermsModalProps) {
               type="button"
               onClick={onClose}
               aria-label={t('terms.closeAria')}
-              className="pointer-events-auto absolute top-4 right-4 z-[99] flex h-11 w-11 min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
+              className="pointer-events-auto absolute top-4 right-4 z-[9999] flex h-11 w-11 min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
             >
               <X className="h-5 w-5" strokeWidth={1.75} />
             </button>
