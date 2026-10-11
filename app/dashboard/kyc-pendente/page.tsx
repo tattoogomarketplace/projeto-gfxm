@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Calendar, ShieldCheck, Sparkles } from 'lucide-react';
 import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
-import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { dashboardPathForRole, isOnboardingComplete, normalizeAppRole } from '@/lib/utils/auth-redirect';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useI18n } from '@/hooks/use-i18n';
@@ -133,9 +133,68 @@ export default function KycPendentePage() {
 
   if (loading || !isLoaded || !isSignedIn || !user) {
     return (
-      <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background">
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch]">
-          <TattooMachineLoader label={t('kyc.verifying')} />
+      <div
+        className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-white"
+        aria-hidden
+        aria-busy="true"
+      >
+        <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
+          <div className="mx-auto w-full max-w-lg space-y-6 pb-8">
+            <section className="rounded-2xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
+              <Skeleton className="h-3 w-28 rounded-full" />
+              <Skeleton className="mt-3 h-8 w-3/4 max-w-[16rem] rounded-full" />
+              <Skeleton className="mt-3 h-4 w-full rounded-full" />
+              <Skeleton className="mt-2 h-4 w-4/5 rounded-full" />
+              <ul className="mt-6 space-y-3">
+                {[0, 1, 2].map((index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Skeleton className="h-8 w-8 min-h-8 min-w-8 shrink-0 rounded-lg" />
+                    <span className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-32 rounded-full" />
+                      <Skeleton className="h-3 w-full max-w-[18rem] rounded-full" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <div className="rounded-2xl border border-border/50 bg-white/5 p-6 backdrop-blur-md sm:p-8">
+              <Skeleton className="h-3 w-20 rounded-full" />
+              <Skeleton className="mt-3 h-7 w-2/3 max-w-[14rem] rounded-full" />
+              <Skeleton className="mt-3 h-4 w-full rounded-full" />
+              <Skeleton className="mt-2 h-4 w-5/6 rounded-full" />
+              <div className="mt-6 flex items-center gap-2">
+                <Skeleton className="h-2 w-2 rounded-full" />
+                <Skeleton className="h-3 w-40 rounded-full" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border/50 bg-white/5 p-5 backdrop-blur-md sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-3 w-24 rounded-full" />
+                  <Skeleton className="h-5 w-40 rounded-full" />
+                  <Skeleton className="h-3 w-full max-w-[20rem] rounded-full" />
+                </div>
+                <Skeleton className="h-8 w-24 shrink-0 rounded-full" />
+              </div>
+              <div className="mt-5 space-y-4">
+                {[0, 1].map((index) => (
+                  <div key={index} className="rounded-2xl border border-border/50 bg-white/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-4 w-40 rounded-full" />
+                        <Skeleton className="h-3 w-full max-w-[18rem] rounded-full" />
+                      </div>
+                    </div>
+                    <Skeleton className="mt-4 h-28 w-full rounded-2xl" />
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="mt-5 h-12 w-full rounded-xl" />
+            </div>
+          </div>
         </div>
       </div>
     );
