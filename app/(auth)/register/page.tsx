@@ -774,6 +774,17 @@ export default function RegisterPage() {
                 })}
                 onFocus={() => {
                   setIsDatePickerOpen(true);
+                  if (typeof window === 'undefined') return;
+                  // Phase 11.4: on touch devices the native calendar overlay can
+                  // cover the footer terms link in standalone PWA mode. Nudge the
+                  // nearest scroll container so the date field gets clear viewport
+                  // space; purely scroll-based, so no size/spacing is altered.
+                  if (!window.matchMedia('(pointer: coarse)').matches) return;
+                  const field = dateFieldRef.current;
+                  if (!field) return;
+                  requestAnimationFrame(() => {
+                    field.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                  });
                 }}
                 className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-12 [&::-webkit-calendar-picker-indicator]:max-w-full [&::-webkit-calendar-picker-indicator]:pointer-events-auto [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
