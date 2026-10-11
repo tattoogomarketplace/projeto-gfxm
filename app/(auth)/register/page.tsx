@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,6 +13,7 @@ import { Input } from '@/components/input';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
 import { WelcomeGate } from '@/components/features/welcome-gate';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { BirthDatePicker } from '@/components/ui/birth-date-picker';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { createPasswordSchema } from '@/lib/utils/password-strength';
@@ -124,27 +125,6 @@ function getFaixaEtaria(dataNascimento?: string): FaixaEtaria {
   return 'normal';
 }
 
-function releaseIosDateInputTouch(target: EventTarget | null) {
-  if (!(target instanceof HTMLInputElement)) return;
-  target.blur();
-  const previousPointerEvents = target.style.pointerEvents;
-  target.style.pointerEvents = 'none';
-  requestAnimationFrame(() => {
-    target.style.pointerEvents = previousPointerEvents;
-  });
-}
-
-function isIsoCalendarToday(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-  if (!match) return false;
-  const today = new Date();
-  return (
-    Number(match[1]) === today.getFullYear() &&
-    Number(match[2]) === today.getMonth() + 1 &&
-    Number(match[3]) === today.getDate()
-  );
-}
-
 const STALE_SESSION_ERROR_CODES = new Set([
   'session_exists',
   'session_exists_email',
@@ -212,7 +192,6 @@ export default function RegisterPage() {
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
   const [forceShow, setForceShow] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -220,7 +199,6 @@ export default function RegisterPage() {
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const nextPathRef = useRef<string | null>(null);
   const prevLocaleRef = useRef(locale);
-  const dateFieldRef = useRef<HTMLDivElement>(null);
 
   // Redirect-only guard: a transição de cadastro -> onboarding entrega direto
   // o App Shell/onboarding, sem overlay intermediário de "ENTRANDO".
@@ -253,32 +231,10 @@ export default function RegisterPage() {
     if (hasFieldErrors) void trigger();
   }, [locale, trigger, hasFieldErrors]);
 
-  // Phase 11.4: while the native date-of-birth picker is engaged, any pointer
-  // landing outside the bounded date field dismisses it on the capture phase.
-  // Capture runs before the click on the terms link/checkbox, so the calendar
-  // overlay is torn down first and never swallows that touch target.
-  useEffect(() => {
-    if (!isDatePickerOpen) return;
-
-    const dismissIfOutside = (event: Event) => {
-      const field = dateFieldRef.current;
-      if (field && event.target instanceof Node && field.contains(event.target)) return;
-      const active = document.activeElement;
-      if (active instanceof HTMLElement && field?.contains(active)) {
-        active.blur();
-      }
-      setIsDatePickerOpen(false);
-    };
-
-    document.addEventListener('pointerdown', dismissIfOutside, true);
-    document.addEventListener('touchstart', dismissIfOutside, true);
-    document.addEventListener('mousedown', dismissIfOutside, true);
-    return () => {
-      document.removeEventListener('pointerdown', dismissIfOutside, true);
-      document.removeEventListener('touchstart', dismissIfOutside, true);
-      document.removeEventListener('mousedown', dismissIfOutside, true);
-    };
-  }, [isDatePickerOpen]);
+  // Phase 11.4: the date-of-birth field is now a fully local popover component
+  // (components/ui/birth-date-picker). No global touch-capture guard is needed:
+  // the picker renders in a viewport-bounded portal, so the footer terms link
+  // can never be intercepted by an OS calendar overlay.
 
   const dataNascimento = useWatch({ control, name: 'dataNascimento' });
   const passwordValue = useWatch({ control, name: 'password' }) || '';
@@ -292,6 +248,20 @@ export default function RegisterPage() {
   const documentIsValid = isEstudio ? isValidCnpj(cnpjValue) : isValidCpf(cpfValue);
   const studioFieldsLocked = isEstudio && !isValidCnpj(cnpjValue);
   const fetchedCnpjRef = useRef('');
+
+  const handleBirthDateChange = useCallback(
+    (iso: string) => {
+      setValue('dataNascimento', iso, { shouldValidate: true, shouldDirty: true });
+      if (!iso) return;
+      const result = calculateExactAge(iso);
+      if (!result.isValid) {
+        toast.error(t('auth.invalidBirth'));
+      } else if (result.age < MIN_AGE) {
+        toast.error(t('auth.minAge'));
+      }
+    },
+    [setValue, t]
+  );
 
   // Aggressive stale-session wipe: terminate any orphaned Clerk session before
   // a fresh signUp so a deleted-then-recreated account never collides with a
@@ -733,63 +703,15 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <div
-              ref={dateFieldRef}
-              className="pwa-date-field-guard relative isolate z-0 pointer-events-none"
-              style={{ WebkitUserSelect: 'none' }}
-            >
-              <Input
+            <>
+              <input type="hidden" {...register('dataNascimento')} />
+              <BirthDatePicker
                 label={t('auth.birthDate')}
-                type="date"
-                {...register('dataNascimento', {
-                  onChange: (e) => {
-                    const raw = String(e.target.value || '');
-                    const previous = String(dataNascimento || '');
-                    if (!raw || (!previous && isIsoCalendarToday(raw))) {
-                      if (e.target instanceof HTMLInputElement) e.target.value = '';
-                      setValue('dataNascimento', '', {
-                        shouldValidate: false,
-                        shouldDirty: false,
-                        shouldTouch: false,
-                      });
-                    }
-                    // No validation, toasts or blur() here: those side effects
-                    // re-render and force-close the native iOS date picker
-                    // while the wheel is still being scrolled. Deferred onBlur.
-                  },
-                  onBlur: (e) => {
-                    const raw = String(e.target.value || '');
-                    const previous = String(dataNascimento || '');
-                    if (raw && !(!previous && isIsoCalendarToday(raw))) {
-                      const result = calculateExactAge(raw);
-                      if (!result.isValid) {
-                        toast.error(t('auth.invalidBirth'));
-                      } else if (result.age < MIN_AGE) {
-                        toast.error(t('auth.minAge'));
-                      }
-                    }
-                    setIsDatePickerOpen(false);
-                    releaseIosDateInputTouch(e.target);
-                  },
-                })}
-                onFocus={() => {
-                  setIsDatePickerOpen(true);
-                  if (typeof window === 'undefined') return;
-                  // Phase 11.4: on touch devices the native calendar overlay can
-                  // cover the footer terms link in standalone PWA mode. Nudge the
-                  // nearest scroll container so the date field gets clear viewport
-                  // space; purely scroll-based, so no size/spacing is altered.
-                  if (!window.matchMedia('(pointer: coarse)').matches) return;
-                  const field = dateFieldRef.current;
-                  if (!field) return;
-                  requestAnimationFrame(() => {
-                    field.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-                  });
-                }}
-                className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-12 [&::-webkit-calendar-picker-indicator]:max-w-full [&::-webkit-calendar-picker-indicator]:pointer-events-auto [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                value={dataNascimento || ''}
+                onChange={handleBirthDateChange}
                 error={errors.dataNascimento?.message}
               />
-            </div>
+            </>
           ) : null}
 
           {status === 'menor_18' && (
@@ -838,12 +760,6 @@ export default function RegisterPage() {
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  // Dismissa qualquer seletor de data nativo ainda aberto para
-                  // que o toque no link de termos nunca seja capturado pelo
-                  // overlay do calendário.
-                  if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
-                    document.activeElement.blur();
-                  }
                   setIsTermsModalOpen(true);
                 }}
                 className="pointer-events-auto relative z-20 font-semibold text-orange-500 underline underline-offset-2 transition-colors hover:text-orange-400"
