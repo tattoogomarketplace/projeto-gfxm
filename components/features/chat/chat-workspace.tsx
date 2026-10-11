@@ -9,6 +9,7 @@ import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SearchBar } from '@/components/ui/search-bar';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
@@ -291,6 +292,16 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
     router.push(dashboardPathForRole(role));
   }, [role, router, triggerHaptic]);
 
+  // Global discovery anchored at the inbox top: selecting a @username opens
+  // that professional's vitrine instantly, mirroring Instagram Explore.
+  const handleSearchSelect = useCallback(
+    (user: { id: string }) => {
+      triggerHaptic('light');
+      router.push(`/dashboard/artista/${encodeURIComponent(user.id)}`);
+    },
+    [router, triggerHaptic]
+  );
+
   return (
     <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <Suspense fallback={null}>
@@ -299,7 +310,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
 
       {/* Inbox chrome — glass header + segmented control. */}
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
-        <header className="glass-chrome sticky top-0 z-30 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
+        <header className="sticky top-0 z-50 shrink-0 border-b border-white/[0.06] bg-black/60 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
           <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
             <button
               type="button"
@@ -309,9 +320,9 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
             >
               <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
             </button>
-            <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight text-neutral-900 dark:text-white">
-              {t('chat.title')}
-            </h1>
+            {/* Search bar replaces the redundant "Chat & Orçamentos" title,
+                anchored at the absolute top with an Instagram-Explore glass. */}
+            <SearchBar onSelect={handleSearchSelect} className="min-w-0 flex-1" />
           </div>
         </header>
 
@@ -392,29 +403,38 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
               return (
                 <div
                   key={item.peer.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => selectConversation(item.peer)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      selectConversation(item.peer);
+                    }
+                  }}
                   className={cn(
-                    'mb-1 flex min-h-11 w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-all',
+                    'mb-1 flex min-h-11 w-full cursor-pointer touch-manipulation items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60',
+                    // Hover affordance is gated to hover-capable pointers so it can
+                    // never hijack the first tap on touch devices (double-tap bug).
+                    '[@media(hover:hover)]:hover:border-black/[0.04] [@media(hover:hover)]:hover:bg-neutral-50 dark:[@media(hover:hover)]:hover:border-white/[0.05] dark:[@media(hover:hover)]:hover:bg-white/5',
                     active
                       ? 'border-orange-500/50 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
-                      : 'border-transparent hover:border-black/[0.04] hover:bg-neutral-50 dark:hover:border-white/[0.05] dark:hover:bg-white/5'
+                      : 'border-transparent'
                   )}
                 >
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       triggerHaptic('light');
                       router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
                     }}
-                    className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400"
+                    className="flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400"
                     aria-label={t('chat.openVitrine', { name: item.peer.name })}
                   >
                     {item.peer.initial}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => selectConversation(item.peer)}
-                    className="min-w-0 flex-1 text-left active:scale-[0.99]"
-                  >
+                  <div className="min-w-0 flex-1 text-left">
                     <span className="flex items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-1.5">
                         <span className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{item.peer.name}</span>
@@ -443,7 +463,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
                       {item.lastMessage?.mensagem ||
                         (activeCategory === 'BUDGET' ? t('chat.newQuoteRequest') : t('chat.newConversation'))}
                     </span>
-                  </button>
+                  </div>
                 </div>
               );
             })}

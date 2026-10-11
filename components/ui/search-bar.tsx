@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
  * removido antes de consultar `/api/search`.
  */
 
-export const SEARCH_BAR_PLACEHOLDER = 'Pesquisar por @username...';
+export const SEARCH_BAR_PLACEHOLDER = 'Pesquise por @...';
 
 const DEBOUNCE_MS = 350;
 const MIN_QUERY_LENGTH = 2;
@@ -108,7 +108,7 @@ export function SearchBar({ className, placeholder = SEARCH_BAR_PLACEHOLDER, onS
           aria-label={placeholder}
           autoComplete="off"
           spellCheck={false}
-          className="h-12 w-full rounded-xl border border-black/[0.04] bg-white pl-10 pr-10 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-amber-500 dark:border-white/[0.05] dark:bg-neutral-900 dark:text-white dark:caret-white dark:placeholder:text-neutral-500"
+          className="h-12 w-full rounded-xl border border-white/10 bg-white/10 pl-10 pr-10 text-sm font-medium text-neutral-900 caret-neutral-900 outline-none backdrop-blur-md transition-colors placeholder:text-zinc-400 focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/40 dark:bg-zinc-900/80 dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
         />
         {loading ? (
           <Loader2
@@ -119,7 +119,7 @@ export function SearchBar({ className, placeholder = SEARCH_BAR_PLACEHOLDER, onS
       </div>
 
       {results.length > 0 ? (
-        <ul className="mt-2 max-h-80 overflow-y-auto rounded-xl border border-black/[0.04] bg-white p-1 dark:border-white/[0.05] dark:bg-neutral-900">
+        <ul className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900/95 p-1 shadow-2xl backdrop-blur-md">
           {results.map((user) => (
             <li key={user.id}>
               <UserSearchResult user={user} onSelect={handleSelect} />
@@ -129,7 +129,7 @@ export function SearchBar({ className, placeholder = SEARCH_BAR_PLACEHOLDER, onS
       ) : null}
 
       {showEmpty ? (
-        <p className="mt-2 px-1 text-xs text-zinc-500">
+        <p className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-white/[0.08] bg-zinc-900/95 px-3 py-2 text-xs text-zinc-400 shadow-2xl backdrop-blur-md">
           Nenhum @username encontrado.
         </p>
       ) : null}
