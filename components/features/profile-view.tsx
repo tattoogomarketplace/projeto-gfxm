@@ -215,7 +215,11 @@ export function ProfileView() {
   const handleShare = async () => {
     triggerHaptic('light');
     const url =
-      typeof window !== 'undefined' ? `${window.location.origin}/dashboard/perfil` : '';
+      typeof window !== 'undefined'
+        ? username
+          ? `${window.location.origin}/profile/${username}`
+          : `${window.location.origin}/dashboard/perfil`
+        : '';
     const displayName = nome || cachedUser?.fullName || '';
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {

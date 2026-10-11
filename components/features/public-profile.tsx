@@ -3,11 +3,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
-import { BadgeCheck, ImageOff, Share2 } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, ImageOff, Share2 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/segmented-control';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { cn } from '@/lib/utils';
 import type { MessageKey } from '@/lib/i18n/types';
 
 /**
@@ -80,6 +81,8 @@ export type PublicProfileProps = {
   highlights: ProfileHighlight[];
   media: ProfileMedia;
   owner?: boolean;
+  actions?: ReactNode;
+  onBack?: () => void;
   onEdit?: () => void;
   onShare?: () => void;
   footer?: ReactNode;
@@ -258,6 +261,8 @@ export function PublicProfile({
   highlights,
   media,
   owner = false,
+  actions,
+  onBack,
   onEdit,
   onShare,
   footer,
@@ -293,9 +298,27 @@ export function PublicProfile({
             aria-hidden
             className="absolute inset-0 bg-gradient-to-b from-transparent to-black/[0.04] dark:to-white/[0.02]"
           />
-          <p className="absolute left-5 top-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500 dark:text-zinc-400">
+          <p
+            className={cn(
+              'absolute top-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-neutral-500 dark:text-zinc-400',
+              onBack ? 'left-16' : 'left-5'
+            )}
+          >
             {handle ?? t('profile.title')}
           </p>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                onBack();
+              }}
+              aria-label={t('common.back')}
+              className="apple-press absolute left-4 top-4 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-2xl border border-black/[0.05] bg-white/70 text-neutral-600 backdrop-blur-md dark:border-white/[0.06] dark:bg-black/30 dark:text-zinc-300"
+            >
+              <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+          ) : null}
           {!owner && onShare ? (
             <button
               type="button"
@@ -399,6 +422,8 @@ export function PublicProfile({
                   {t('profile.share')}
                 </button>
               </>
+            ) : actions ? (
+              actions
             ) : null}
           </div>
         </div>
