@@ -99,7 +99,7 @@ export default function KycPendentePage() {
         }
         const kyc = (payload?.perfil?.kyc_status as KycStatus) || 'pendente';
         if (kyc === 'aprovado') {
-          router.push('/dashboard/tatuador');
+          router.push('/dashboard/onboarding/username?flow=tatuador');
           return;
         }
         setStatus(kyc);
@@ -117,7 +117,7 @@ export default function KycPendentePage() {
 
         const kyc = (metadata?.kyc_status as KycStatus) || 'pendente';
       if (kyc === 'aprovado') {
-        router.push('/dashboard/tatuador');
+        router.push('/dashboard/onboarding/username?flow=tatuador');
         return;
       }
 
@@ -189,7 +189,7 @@ export default function KycPendentePage() {
             onStatusChange={(next) => {
               setStatus(next);
               if (next === 'aprovado') {
-                router.push('/dashboard/tatuador');
+                router.push('/dashboard/onboarding/username?flow=tatuador');
               }
             }}
           />

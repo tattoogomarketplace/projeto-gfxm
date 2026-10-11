@@ -388,7 +388,13 @@ export default function SejaTatuadorPage() {
                     // Clerk metadata pode atrasar; o banco já está promovido.
                   }
                   toast.success(t('toast.artistUnlocked'));
-                  router.push('/dashboard/tatuador');
+                  // Fluxo do artista: a identidade (@username) é o passo
+                  // imediatamente posterior à verificação de documentos.
+                  router.push(
+                    result.role === 'estudio'
+                      ? '/dashboard/tatuador'
+                      : '/dashboard/onboarding/username?flow=tatuador'
+                  );
                 }}
               />
             </>

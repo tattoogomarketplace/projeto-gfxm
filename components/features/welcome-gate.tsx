@@ -35,7 +35,13 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
         disabled={leaving}
         onClick={() => {
           setLeaving(true);
-          assignAppPath('/dashboard');
+          // Fluxo do cliente: a identidade (@username) é o passo imediato após
+          // a promessa "Minha Jornada na Pele", antes de entrar no painel.
+          assignAppPath(
+            role === 'cliente'
+              ? '/dashboard/onboarding/username?flow=cliente'
+              : '/dashboard'
+          );
         }}
       >
         {t(content.cta)}

@@ -87,6 +87,22 @@ export function normalizeUsername(value: unknown): string {
     .toLowerCase();
 }
 
+/**
+ * Sanitiza o CORPO do handle enquanto o usuario digita. O `@` e um prefixo
+ * visual inline (fora do `<input>`), entao aqui tratamos apenas o corpo:
+ * remove prefixos `@` (evita `@@`), aplica minusculas e mantem somente
+ * `[a-z0-9_]` — espacos e simbolos sao removidos no mesmo tick.
+ *
+ * Compartilhado entre o `SearchBar` (descoberta) e a tela de onboarding para
+ * garantir mascaramento identico e inviolavel por qualquer porta de entrada.
+ */
+export function sanitizeUsernameBody(raw: unknown): string {
+  return String(raw ?? '')
+    .replace(/^@+/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+}
+
 export function isUsernameValid(value: unknown): boolean {
   return validateUsername(value).valid;
 }
