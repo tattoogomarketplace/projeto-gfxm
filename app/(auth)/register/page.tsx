@@ -704,7 +704,7 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <div className="relative isolate z-0 pointer-events-none">
+            <div className="relative z-10 w-full pointer-events-none">
               <Input
                 label={t('auth.birthDate')}
                 type="date"
@@ -738,7 +738,7 @@ export default function RegisterPage() {
                     releaseIosDateInputTouch(e.target);
                   },
                 })}
-                className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                className="relative z-10 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-x-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:z-0 [&::-webkit-calendar-picker-indicator]:h-12 [&::-webkit-calendar-picker-indicator]:max-h-12 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
             </div>
@@ -790,6 +790,12 @@ export default function RegisterPage() {
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
+                  // Dismissa qualquer seletor de data nativo ainda aberto para
+                  // que o toque no link de termos nunca seja capturado pelo
+                  // overlay do calendário.
+                  if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
                   setIsTermsModalOpen(true);
                 }}
                 className="pointer-events-auto relative z-20 font-semibold text-orange-500 underline underline-offset-2 transition-colors hover:text-orange-400"
