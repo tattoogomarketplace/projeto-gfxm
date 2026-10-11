@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import { TermsContent } from '@/components/shared/terms-content';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -11,7 +12,7 @@ interface TermsModalProps {
   onAccept: () => void | Promise<void>;
 }
 
-export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
+export function TermsModal({ isOpen, onClose, onAccept }: TermsModalProps) {
   const { t } = useI18n();
   const [canAccept, setCanAccept] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -33,14 +34,22 @@ export function TermsModal({ isOpen, onAccept }: TermsModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md sm:p-4"
+          className="fixed inset-0 z-[99] flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md sm:p-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:max-h-[80dvh] sm:p-8"
+            className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:max-h-[80dvh] sm:p-8"
           >
-            <h2 className="mb-4 shrink-0 text-xl font-bold text-amber-500 sm:text-2xl">{t('terms.requiredTitle')}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('terms.closeAria')}
+              className="pointer-events-auto absolute top-4 right-4 z-[99] flex h-11 w-11 min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-full p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white active:scale-95"
+            >
+              <X className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+            <h2 className="mb-4 shrink-0 pr-12 text-xl font-bold text-amber-500 sm:text-2xl">{t('terms.requiredTitle')}</h2>
             <div
             className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain border-b border-zinc-800 pb-[calc(env(safe-area-inset-bottom)+5rem)] text-sm text-zinc-400 [-webkit-overflow-scrolling:touch]"
             onScroll={(e) => {
