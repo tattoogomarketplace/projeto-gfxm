@@ -15,6 +15,7 @@ import { markOnboardingGrace } from '@/lib/utils/session';
 import {
   assignAppPath,
   destinationAfterProfileSync,
+  isOnboardingComplete,
   parseAppRole,
 } from '@/lib/utils/auth-redirect';
 import { formatAppError } from '@/lib/error-handler';
@@ -124,7 +125,21 @@ export default function DashboardOnboardingPage() {
       });
       setStoreRole(persistedRole);
 
-      assignAppPath(destinationAfterProfileSync(payload.perfil, payload.needsOnboarding));
+      // Fluxo do cliente: a identidade (@username) é o passo imediato após o
+      // CTA "Minha Jornada na Pele" (tela de boas-vindas). Estúdios não possuem
+      // handle e tatuadores passam antes pela verificação de documentos, então
+      // apenas o cliente entra neste degrau aqui.
+      const destination = destinationAfterProfileSync(payload.perfil, payload.needsOnboarding);
+      const startIdentityOnboarding =
+        persistedRole === 'cliente' &&
+        !payload.needsOnboarding &&
+        isOnboardingComplete(payload.perfil);
+
+      assignAppPath(
+        startIdentityOnboarding
+          ? '/dashboard/onboarding/username?flow=cliente'
+          : destination
+      );
     } catch (err) {
       const message = formatAppError(err, 'api');
       setSubmitError(message);
