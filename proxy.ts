@@ -21,12 +21,14 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL('/dashboard/onboarding', req.url));
   }
 
-  // Usuário já autenticado não deve ver login/cadastro: redireciona no servidor
-  // (antes do render) para o painel, que resolve o papel canônico.
+  // Usuário autenticado nunca renderiza a raiz pública ("Acessar Plataforma")
+  // nem login/cadastro: o edge decide antes do render do servidor e entrega o
+  // painel diretamente, erradicando o flash da CTA no boot do app.
+  const isRootPath = pathname === '/';
   const isAuthPage = AUTH_PAGES.some(
     (page) => pathname === page || pathname.startsWith(`${page}/`)
   );
-  if (isAuthPage) {
+  if (isRootPath || isAuthPage) {
     const { userId } = await auth();
     if (userId) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
