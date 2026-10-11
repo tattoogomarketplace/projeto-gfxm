@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
@@ -24,7 +24,7 @@ function AuthBootFallback() {
       role="status"
       aria-live="polite"
       aria-label={`${BRAND_WORDMARK.main} ${BRAND_WORDMARK.mark}`}
-      className="fixed inset-0 z-[80] flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden overscroll-none touch-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 z-[80] flex h-[100dvh] min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden overscroll-none touch-none bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       style={{
         backgroundColor: BOOT_FALLBACK_BG,
         backgroundImage: `radial-gradient(circle at 50% 42%, rgba(217,70,14,0.14) 0%, rgba(26,10,4,0.55) 16%, ${BOOT_FALLBACK_BG} 46%)`,
@@ -56,6 +56,9 @@ export default function Home() {
   // Trava de handoff: mantida alta a partir do aceite dos termos até o /login
   // montar. Impede que a landing (e qualquer casco sob ela) seja pintada.
   const [isHandoff, setIsHandoff] = useState(false);
+  // `null` = aceite ainda não avaliado; `false` = liberado para a landing.
+  // Qualquer outro valor mantém o AuthBootFallback como único frame possível.
+  const [termsAccepted, setTermsAccepted] = useState<boolean | null>(null);
   const router = useRouter();
 
   // Sessão ativa aterrissa direto no casco do painel; o middleware já cobre o
@@ -66,9 +69,54 @@ export default function Home() {
     }
   }, [isLoaded, isSignedIn, router]);
 
-  // Enquanto o Clerk inicializa — ou já com sessão ativa a caminho do painel —
-  // a CTA pública nunca é pintada, eliminando o flash de "Acessar Plataforma".
-  if (!isLoaded || isSignedIn) {
+  // Avaliação estrita do aceite legal. Se os termos já foram aceitos, a raiz
+  // não pertence mais ao histórico: troca imediata por /login (`replace`) e
+  // trava visual no AuthBootFallback até o novo frame montar.
+  const evaluateAcceptance = useCallback(() => {
+    let accepted = false;
+    try {
+      accepted = localStorage.getItem('termsAccepted') === 'true';
+    } catch {
+      accepted = false;
+    }
+
+    if (accepted) {
+      setTermsAccepted(true);
+      setIsHandoff(true);
+      router.replace('/login');
+      return;
+    }
+
+    setTermsAccepted(false);
+  }, [router]);
+
+  // Avaliação inicial na montagem.
+  useEffect(() => {
+    evaluateAcceptance();
+  }, [evaluateAcceptance]);
+
+  // Blindagem contra popstate (swipe-back nativo) e restauração do bfcache do
+  // iOS. `pageshow.persisted` sinaliza que a página voltou da memória cache com
+  // estado React possivelmente stale — reavaliar força o replace de volta.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) evaluateAcceptance();
+    };
+    const onPopState = () => evaluateAcceptance();
+
+    window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [evaluateAcceptance]);
+
+  // Enquanto o Clerk inicializa, o aceite não foi avaliado, a sessão está ativa
+  // ou já estamos deixando a rota: NUNCA renderiza a landing nem o casco
+  // interno. Apenas o AuthBootFallback (visual idêntico ao splash) é permitido.
+  if (!isLoaded || isSignedIn || isHandoff || termsAccepted !== false) {
     return <AuthBootFallback />;
   }
 
@@ -92,18 +140,15 @@ export default function Home() {
     // de modo que a landing nunca seja revelada entre o unmount dos termos e a
     // chegada do /login. `replace` troca o estado de histórico: o swipe-back do
     // iOS não retorna ao overlay de termos/landing.
+    setTermsAccepted(true);
     setIsHandoff(true);
     setShowTerms(false);
     router.replace('/login');
   };
 
   return (
-    <main className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-gray-900 select-none dark:text-white">
-      {/* Camada de bloqueio durante o aceite: cobre a landing com a Splash de
-          boot (z abaixo do overlay de termos, acima do conteúdo público) até o
-          /login assumir o frame — crossfade sem flash do casco interno. */}
-      {isHandoff && <AuthBootFallback />}
-
+    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-black">
+      <main className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-gray-900 select-none dark:text-white">
       <TermsModal
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}
@@ -142,6 +187,7 @@ export default function Home() {
           {t('auth.accessPlatform')}
         </button>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
