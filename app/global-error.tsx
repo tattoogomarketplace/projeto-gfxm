@@ -56,11 +56,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const [copy, setCopy] = useState<RecoveryCopy>(COPY['pt-BR']);
+  const [copy] = useState<RecoveryCopy>(resolveCopy);
 
   useEffect(() => {
     console.error('FATAL CRASH (global):', error);
-    setCopy(resolveCopy());
   }, [error]);
 
   const reload = () => {
@@ -168,6 +167,7 @@ export default function GlobalError({
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   reset();
+                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- global-error roda fora do root layout; o hard redirect é a única saída confiável após um crash fatal.
                   window.location.assign('/');
                 }
               }}

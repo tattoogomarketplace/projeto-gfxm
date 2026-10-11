@@ -103,7 +103,10 @@ export function MagicUsernameInput({
   const { t } = useI18n();
 
   const [focused, setFocused] = useState(false);
-  const [status, setStatus] = useState<UsernameAvailability>('idle');
+  const [remote, setRemote] = useState<{
+    username: string;
+    status: Extract<UsernameAvailability, 'available' | 'taken' | 'forbidden' | 'error'>;
+  } | null>(null);
 
   const statusCallbackRef = useRef(onAvailabilityChange);
   useEffect(() => {
@@ -120,32 +123,38 @@ export function MagicUsernameInput({
     []
   );
 
+  const validation = validateUsername(value.trim());
+  const status: UsernameAvailability = !value.trim()
+    ? 'idle'
+    : !validation.valid
+      ? validation.reason === 'reserved'
+        ? 'reserved'
+        : 'invalid'
+      : remote && remote.username === validation.username
+        ? remote.status
+        : 'checking';
+
+  // Repassa a disponibilidade ao consumidor somente quando o estado derivado
+  // muda — sem `setState` local dentro do efeito.
+  useEffect(() => {
+    statusCallbackRef.current?.(status);
+  }, [status]);
+
+  // Validação remota com debounce. Só agenda a chamada quando o formato é
+  // válido; o `setRemote` acontece no callback assíncrono (permitido).
   useEffect(() => {
     const trimmed = value.trim();
+    if (!trimmed) return;
 
-    if (!trimmed) {
-      setStatus('idle');
-      statusCallbackRef.current?.('idle');
-      return;
-    }
+    const parsed = validateUsername(trimmed);
+    if (!parsed.valid) return;
 
-    const validation = validateUsername(trimmed);
-    if (!validation.valid) {
-      const next: UsernameAvailability =
-        validation.reason === 'reserved' ? 'reserved' : 'invalid';
-      setStatus(next);
-      statusCallbackRef.current?.(next);
-      return;
-    }
-
-    setStatus('checking');
-    statusCallbackRef.current?.('checking');
-
+    const username = parsed.username;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       try {
         const res = await authedFetch(
-          `/api/user/username?username=${encodeURIComponent(validation.username)}`,
+          `/api/user/username?username=${encodeURIComponent(username)}`,
           { signal: controller.signal },
           tokenFn
         );
@@ -156,23 +165,18 @@ export function MagicUsernameInput({
         };
 
         if (json.allowed === false || json.reason === 'forbidden') {
-          setStatus('forbidden');
-          statusCallbackRef.current?.('forbidden');
+          setRemote({ username, status: 'forbidden' });
           return;
         }
         if (!res.ok) {
-          setStatus('error');
-          statusCallbackRef.current?.('error');
+          setRemote({ username, status: 'error' });
           return;
         }
 
-        const next: UsernameAvailability = json.available ? 'available' : 'taken';
-        setStatus(next);
-        statusCallbackRef.current?.(next);
+        setRemote({ username, status: json.available ? 'available' : 'taken' });
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') return;
-        setStatus('error');
-        statusCallbackRef.current?.('error');
+        setRemote({ username, status: 'error' });
       }
     }, DEBOUNCE_MS);
 

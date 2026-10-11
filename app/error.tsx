@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useI18n } from '@/hooks/use-i18n';
@@ -48,12 +49,12 @@ export default function GlobalRootError({
           <RotateCcw className="h-4 w-4" strokeWidth={2} />
           {t('common.retry')}
         </button>
-        <a
+        <Link
           href="/"
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/10 px-5 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/5"
         >
           {t('nav.home')}
-        </a>
+        </Link>
       </div>
       </div>
     </div>

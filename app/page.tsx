@@ -92,6 +92,7 @@ export default function Home() {
 
   // Avaliação inicial na montagem.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- o aceite legal vive no localStorage (sistema externo) e precisa ser sincronizado após a montagem para não quebrar a hidratação SSR.
     evaluateAcceptance();
   }, [evaluateAcceptance]);
 

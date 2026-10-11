@@ -122,7 +122,6 @@ function AmbientGlow() {
 }
 
 export function OnboardingUsername({
-  role = 'cliente',
   flow,
   onCompleted,
   className,

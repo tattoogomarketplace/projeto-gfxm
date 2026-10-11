@@ -292,11 +292,7 @@ export function FlashNoteCreatorSheet({
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
-  const storeRef = useRef<DraftStore | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = createDraftStore(initialContent);
-  }
-  const store = storeRef.current;
+  const [store] = useState<DraftStore>(() => createDraftStore(initialContent));
 
   const [backgroundId, setBackgroundId] = useState<FlashNoteBackgroundId>(
     () => getFlashNoteBackground(initialBackgroundId).id
@@ -331,7 +327,6 @@ export function FlashNoteCreatorSheet({
   // re-render of the sheet shell or its framer-motion drag layer.
   useEffect(() => {
     let previous = store.get().trim().length > 0;
-    setHasText(previous);
     return store.subscribe(() => {
       const next = store.get().trim().length > 0;
       if (next === previous) return;
@@ -345,6 +340,7 @@ export function FlashNoteCreatorSheet({
   useEffect(() => {
     if (!open) return;
     store.set(initialContent);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-seed síncrono intencional do rascunho ao abrir o composer; mudar para render/diff alteraria o timing da UI.
     setHasText(initialContent.trim().length > 0);
     setBackgroundId(getFlashNoteBackground(initialBackgroundId).id);
     setAlign(getFlashNoteAlignByClass(initialAlignClass).id);
