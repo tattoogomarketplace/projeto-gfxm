@@ -24,14 +24,16 @@ type PublicProfilePageProps = {
  */
 export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
   let viewerUsername: string | null = null;
+  let authenticated = false;
   try {
     const session = await requireDashboardSession();
-    if (!session) return <SessionHydrating />;
-    viewerUsername = session.perfil?.username ?? null;
+    authenticated = Boolean(session);
+    viewerUsername = session?.perfil?.username ?? null;
   } catch (error) {
     rethrowNextControlFlow(error);
-    return <SessionHydrating />;
+    authenticated = false;
   }
+  if (!authenticated) return <SessionHydrating />;
 
   const { username } = await params;
   let data = null;

@@ -20,7 +20,7 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  * Reads the verified inspiration feed and reshapes it into two
  * horizontally scrolling carousels (featured artists + trending styles).
  * Pure presentational layer: no data mutation, no routing logic changes —
- * taps open the artist's public profile (`/profile/[id]`).
+ * taps open the artist's public profile (`/profile/[username]`).
  */
 
 /**
