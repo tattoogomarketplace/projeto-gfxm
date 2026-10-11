@@ -38,15 +38,16 @@ function resolveActiveTab(pathname: string, storeTab: AppTab): AppTab {
   return 'portfolio';
 }
 
-function shouldHideNav(pathname: string): boolean {
+function shouldHideNav(pathname: string, chatThreadActive: boolean): boolean {
   if (!pathname.startsWith('/dashboard')) return true;
   return (
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
     pathname.startsWith('/dashboard/kyc-pendente') ||
-    // Chat imersivo: o composer é ancorado na base com safe-area; a dock
-    // flutuante colidiria com o campo de mensagem.
-    pathname.startsWith('/dashboard/chat')
+    // Apenas a THREAD de chat é imersiva: o composer é ancorado na base com
+    // safe-area e a dock flutuante colidiria com o campo de mensagem. O
+    // inbox/hub (`/dashboard/chat` sem thread) mantém a dock visível.
+    (pathname.startsWith('/dashboard/chat') && chatThreadActive)
   );
 }
 
@@ -57,13 +58,13 @@ function shouldHideNav(pathname: string): boolean {
  * montar a dock. Caso contrário o iOS mantém o visual viewport ampliado e o
  * container raiz fica distorcido (bug do fluxo "Quero ser Tatuador").
  */
-function isShellBypassedRoute(pathname: string): boolean {
+function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): boolean {
   return (
     pathname.startsWith('/dashboard/seja-tatuador') ||
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
     pathname.startsWith('/dashboard/kyc-pendente') ||
-    pathname.startsWith('/dashboard/chat')
+    (pathname.startsWith('/dashboard/chat') && chatThreadActive)
   );
 }
 
@@ -81,10 +82,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const role = useAuthStore((s) => s.role);
   const storeTab = useUiStore((s) => s.activeTab);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const chatThreadActive = useUiStore((s) => s.chatThreadActive);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
-  const conceal = hidden || shouldHideNav(pathname);
+  const conceal = hidden || shouldHideNav(pathname, chatThreadActive);
   const homePath = dashboardPathForRole(role);
   const activeTab = resolveActiveTab(pathname, storeTab);
 
@@ -120,7 +122,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       // transforms residuais imediatamente e agenda uma segunda passada após o
       // iOS restaurar a escala de forma assíncrona, evitando que o sub-route
       // estados vazem para o container raiz da aba de destino.
-      if (isShellBypassedRoute(pathname)) {
+      if (isShellBypassedRoute(pathname, chatThreadActive)) {
         resetViewportScale({ forceBlur: true });
         forceViewportRecalibration();
         window.requestAnimationFrame(() => {
@@ -134,7 +136,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         });
       }
     },
-    [pathname, router, setActiveTab, triggerHaptic]
+    [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
   );
 
   return (

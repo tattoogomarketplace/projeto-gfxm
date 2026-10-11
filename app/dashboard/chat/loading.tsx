@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export default function ChatLoading() {
   return (
-    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background">
+    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background">
       <div className="shrink-0">
         <div className="border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
           <div className="flex min-h-11 items-center gap-2 px-3 pb-3">

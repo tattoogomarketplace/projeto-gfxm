@@ -1,6 +1,15 @@
 'use client';
 
-import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, FileText, MessageCircle, ReceiptText } from 'lucide-react';
@@ -34,14 +43,6 @@ async function authHeaders(getToken: () => Promise<string | null>): Promise<Head
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-type ChatQuery = {
-  artistId: string | null;
-  artworkId: string | null;
-  bookingIntent: boolean;
-};
-
-const EMPTY_QUERY: ChatQuery = { artistId: null, artworkId: null, bookingIntent: false };
-
 type CategoryConversations = Record<ChatTab, ChatConversationDto[]>;
 
 const EMPTY_CATEGORY_DATA: CategoryConversations = { DIRECT: [], BUDGET: [] };
@@ -52,21 +53,33 @@ let conversationCache: {
 } | null = null;
 const categoryInflight: Partial<Record<ChatTab, Promise<void>>> = {};
 
-function ChatQuerySync({ onChange }: { onChange: (next: ChatQuery) => void }) {
-  const searchParams = useSearchParams();
-  const artistId = searchParams.get('artistId') || searchParams.get('tatuadorId');
-  const artworkId = searchParams.get('artworkId') || searchParams.get('portfolioId');
-  const bookingIntent = searchParams.get('intent') === 'agendar';
-
-  useEffect(() => {
-    onChange({ artistId, artworkId, bookingIntent });
-  }, [artistId, artworkId, bookingIntent, onChange]);
-
-  return null;
-}
+// `useLayoutEffect` roda antes do paint para sincronizar o estado imersivo do
+// casco no mesmo frame; no SSR cai para `useEffect` (padrão
+// "useIsomorphicLayoutEffect") para não emitir warn.
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export const ChatWorkspace = memo(function ChatWorkspace() {
+  // `useSearchParams` exige um boundary de Suspense. Isolamos a leitura da rota
+  // aqui para que o workspace derive "thread ativa" de forma SÍNCRONA no
+  // primeiro frame — exatamente como o AppShell/BottomNav — eliminando qualquer
+  // reconcilição pós-hidratação (que era a origem do "snap").
+  return (
+    <Suspense fallback={null}>
+      <ChatWorkspaceInner />
+    </Suspense>
+  );
+});
+
+const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Thread ativa = interlocutor presente na query. É o mesmo sinal canônico
+  // usado por todos os pontos de entrada (vitrine, galeria e seleção no inbox)
+  // e é lido de forma síncrona, sem nenhum efeito pós-hidratação.
+  const artistIdParam = searchParams.get('artistId') || searchParams.get('tatuadorId');
+  const artworkIdParam = searchParams.get('artworkId') || searchParams.get('portfolioId');
+  const bookingIntent = searchParams.get('intent') === 'agendar';
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
   const { triggerHaptic } = useHapticFeedback();
@@ -79,21 +92,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
-
-  const [query, setQuery] = useState<ChatQuery>(EMPTY_QUERY);
-  const handleQueryChange = useCallback((next: ChatQuery) => {
-    setQuery((current) =>
-      current.artistId === next.artistId &&
-      current.artworkId === next.artworkId &&
-      current.bookingIntent === next.bookingIntent
-        ? current
-        : next
-    );
-  }, []);
-
-  const artistIdParam = query.artistId;
-  const artworkIdParam = query.artworkId;
-  const bookingIntent = query.bookingIntent;
+  const setChatThreadActive = useUiStore((s) => s.setChatThreadActive);
 
   const [actorId, setActorId] = useState<string | null>(() => conversationCache?.actorId ?? null);
   const [activeCategory, setActiveCategory] = useState<ChatTab>('DIRECT');
@@ -108,13 +107,30 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   const loadingList = !loadedCategories[activeCategory];
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
-  const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
+  // A thread é DERIVADA da rota: quando há um `artistId` na query a thread
+  // está aberta. Assim o painel e o casco (AppShell/BottomNav) mudam de
+  // geometria no MESMO commit — inclusive no swipe-back do iOS, que apenas
+  // limpa a query (sem nenhum estado local a reconciliar).
+  const mobileThreadOpen = Boolean(artistIdParam);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
   const bookingIntentOpened = useRef(false);
 
   const selectedId = selectedPeer?.id ?? artistIdParam ?? pendingChatPeer;
   const artworkId = artwork?.id ?? artworkIdParam ?? pendingChatArtwork ?? undefined;
+
+  // Sincroniza o beacon imersivo do casco ANTES do paint (layout effect), para
+  // que a geometria da App Shell e a da dock já reflitam a thread ativa no
+  // primeiro frame. Limpa no unmount para não vazar estado entre rotas.
+  useIsomorphicLayoutEffect(() => {
+    setChatThreadActive(Boolean(artistIdParam));
+  }, [artistIdParam, setChatThreadActive]);
+  useIsomorphicLayoutEffect(
+    () => () => {
+      setChatThreadActive(false);
+    },
+    [setChatThreadActive]
+  );
 
   const loadCategory = useCallback(async (category: ChatTab) => {
     const inflight = categoryInflight[category];
@@ -173,7 +189,6 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
       if (json.actorId) setActorId(json.actorId);
       if (json.peer) setSelectedPeer(json.peer);
       setArtwork(json.artwork ?? null);
-      setMobileThreadOpen(true);
     } catch {
       return;
     }
@@ -233,9 +248,21 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
     triggerHaptic('light');
     setSelectedPeer(peer);
     setArtwork(null);
-    setMobileThreadOpen(true);
-    router.replace(`/dashboard/chat?artistId=${encodeURIComponent(peer.id)}`, { scroll: false });
+    // `push` (não `replace`) transforma a thread numa entrada de histórico:
+    // assim o gesto nativo de "swipe back" do iOS volta para o INBOX — e não
+    // para a aba anterior — restaurando o casco e a posição de scroll.
+    router.push(`/dashboard/chat?artistId=${encodeURIComponent(peer.id)}`, { scroll: false });
   };
+
+  // Sair da thread volta para o inbox limpando a query. Como o painel e o
+  // casco derivam do MESMO `artistId`, ambos restauram de forma síncrona e
+  // suave, sem medição via JS nem "snap" de geometria.
+  const closeThread = useCallback(() => {
+    triggerHaptic('light');
+    setSelectedPeer(null);
+    setArtwork(null);
+    router.replace('/dashboard/chat', { scroll: false });
+  }, [router, triggerHaptic]);
 
   const handleCategoryChange = useCallback(
     (category: ChatTab) => {
@@ -303,11 +330,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   );
 
   return (
-    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
-      <Suspense fallback={null}>
-        <ChatQuerySync onChange={handleQueryChange} />
-      </Suspense>
-
+    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
       {/* Inbox chrome — glass header + segmented control. */}
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
         <header className="sticky top-0 z-50 shrink-0 border-b border-white/[0.06] bg-black/60 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
@@ -480,13 +503,13 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
         >
           <ChatThread
             actorId={actorId}
-            destinatarioId={selectedPeer?.id}
+            destinatarioId={selectedId ?? undefined}
             peerName={selectedPeer?.name}
             peerRole={selectedPeer?.role}
             artworkId={artworkId}
             artwork={artwork}
             bookingIntent={bookingIntent}
-            onBack={() => setMobileThreadOpen(false)}
+            onBack={closeThread}
             onOpenProfile={(artistId) => {
               triggerHaptic('light');
               router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);

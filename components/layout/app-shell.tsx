@@ -39,6 +39,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const pending = useOfflineQueue((s) => s.queue.length);
   const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
   const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
+  const chatThreadActive = useUiStore((s) => s.chatThreadActive);
   const { t } = useI18n();
   const pathnameRef = useRef(pathname);
 
@@ -75,13 +76,22 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
     isOnboarding || isAiChat || isKycPendente || isArtistVerification;
-  // O chat é uma experiência imersiva (padrão iMessage): a própria thread
-  // gerencia header/scroll/composer e ocupa 100% do viewport dinâmico, então
-  // não pode ficar preso ao casco (que adiciona header e área de dock). Ele
-  // esconde o chrome, mas — diferente das rotas "sem casco" — ainda participa
-  // da sincronização de papel (o back e o copy dependem do role).
-  const isImmersiveChat = isDedicatedChat;
+  // O chat possui dois estados distintos:
+  //  - Inbox/Hub (`/dashboard/chat`): mantém o bottom navigation do casco
+  //    visível. NÃO é imersivo — o casco reserva o clearance da dock
+  //    (`nav-safe-pad`) para que a lista de conversas nunca fique sob a nav.
+  //  - Thread ativa (`/dashboard/chat?artistId=...`): experiência imersiva
+  //    (padrão iMessage). A própria thread gerencia header/scroll/composer e
+  //    ocupa 100% do viewport dinâmico, então esconde o chrome e a dock.
+  // O sinal de "thread ativa" vive no store (`useUiStore.chatThreadActive`),
+  // atualizado de forma síncrona pelo `ChatWorkspace`, garantindo que o casco
+  // e o workspace mudem de geometria no MESMO commit (zero layout shift).
+  const isImmersiveChat = isDedicatedChat && chatThreadActive;
   const hideShellChrome = isChromeLess || isImmersiveChat;
+  // Em ambos os estados do chat a barra superior é do próprio workspace (glass
+  // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
+  // no inbox, onde a dock permanece visível.
+  const hideShellHeader = hideShellChrome || isDedicatedChat;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 
@@ -248,13 +258,14 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <div
       className={cn(
         'luxury-canvas relative flex h-[100dvh] min-h-0 min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white',
-        // Rotas "sem casco" e o chat imersivo gerenciam o próprio safe-area
-        // (eram montadas fora do AppShell antes); não adicionamos clearance de
-        // dock a elas.
+        // Rotas "sem casco" e a thread de chat imersiva gerenciam o próprio
+        // safe-area (eram montadas fora do AppShell antes); não adicionamos
+        // clearance de dock a elas. O inbox do chat (`/dashboard/chat` sem
+        // thread) mantém a dock visível e, por isso, RECEBE o `nav-safe-pad`.
         hideShellChrome ? '' : 'nav-safe-pad'
       )}
     >
-      {hideShellChrome ? null : (
+      {hideShellHeader ? null : (
       <header
         className={cn(
             'glass-chrome z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]',
@@ -292,7 +303,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       <div
         className={cn(
           'relative flex min-h-0 min-w-0 w-full flex-1 flex-col',
-          hideShellChrome || isSettingsHub || isGaleria
+          hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria
             ? 'overflow-hidden'
             : 'min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch] sm:px-6'
         )}
