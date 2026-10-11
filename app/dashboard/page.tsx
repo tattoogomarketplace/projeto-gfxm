@@ -8,8 +8,7 @@ import {
   LOGIN_PATH,
   parseAppRole,
 } from '@/lib/utils/auth-redirect';
-import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
+import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingGrace } from '@/lib/utils/session';
 import {
@@ -144,11 +143,5 @@ export default function DashboardPage() {
     (typeof user?.unsafeMetadata?.role === 'string' ? user.unsafeMetadata.role : null) ||
     storedRole;
 
-  return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 pb-36 [-webkit-overflow-scrolling:touch]">
-        <TattooMachineLoader label={getOnboardingLoadingMessage(loadingRole)} />
-      </div>
-    </div>
-  );
+  return <DashboardHomeSkeleton role={loadingRole} />;
 }

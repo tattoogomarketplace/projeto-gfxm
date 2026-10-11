@@ -5,8 +5,9 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from '@/lib/toast';
 import { Sparkles } from 'lucide-react';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
-import { getOnboardingLoadingMessage, getRoleExperience } from '@/lib/content/role-experience';
+import { getRoleExperience } from '@/lib/content/role-experience';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { OnboardingSkeleton } from '@/components/features/onboarding-skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
@@ -137,13 +138,7 @@ export default function DashboardOnboardingPage() {
   const content = getRoleExperience(role).onboarding;
 
   if (!isLoaded) {
-    return (
-      <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background">
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-none px-4 py-6 [-webkit-overflow-scrolling:touch]">
-          <TattooMachineLoader label={getOnboardingLoadingMessage(role)} />
-        </div>
-      </div>
-    );
+    return <OnboardingSkeleton />;
   }
 
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
