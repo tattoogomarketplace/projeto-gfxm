@@ -272,14 +272,21 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
     void uploadFile(pendingFile);
   }, [busy, pendingFile, uploadFile]);
 
-  const phaseLabel =
+  // Strict, mutually exclusive status for the helper line below the CTA.
+  // Exactly one descriptor is produced per render, so a single status string is
+  // the only one that can ever reach the DOM (no overlapping phase labels).
+  const statusMessage =
     phase === 'presigning'
-      ? t('kyc.phasePresign')
+      ? { kind: 'phase' as const, text: t('kyc.phasePresign') }
       : phase === 'uploading'
-        ? t('kyc.phaseUpload')
+        ? { kind: 'phase' as const, text: t('kyc.phaseUpload') }
         : phase === 'validating'
-          ? t('kyc.phaseValidate')
-          : null;
+          ? { kind: 'phase' as const, text: t('kyc.phaseValidate') }
+          : error
+            ? { kind: 'error' as const, text: error }
+            : confidence !== null
+              ? { kind: 'confidence' as const, text: t('kyc.confidence', { confidence }) }
+              : null;
 
   return (
     <GlassContainer className="space-y-5 border-border/50 p-5 sm:p-6 dark:border-border/50">
@@ -410,10 +417,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
             ) : null}
             <span className="relative z-10 flex items-center gap-2">
               {busy ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                  {phaseLabel}
-                </>
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
               ) : pendingFile ? (
                 t('kyc.sendDocs')
               ) : (
@@ -424,16 +428,16 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         </>
       )}
 
-      {phaseLabel || error || confidence !== null ? (
-        <div className="mt-2 flex flex-col items-center gap-1">
-          {phaseLabel ? (
+      {statusMessage ? (
+        <div className="mt-2 flex flex-col items-center">
+          {statusMessage.kind === 'phase' ? (
             <p
               className={cn(
                 'flex flex-wrap items-center justify-center gap-2 text-center text-xs text-amber-400',
                 analyzing && 'animate-pulse'
               )}
             >
-              <span className="min-w-0 break-words">{phaseLabel}</span>
+              <span className="min-w-0 break-words">{statusMessage.text}</span>
               {analyzing ? (
                 <span className="inline-flex shrink-0 items-center gap-1" aria-hidden>
                   {[0, 1, 2].map((dot) => (
@@ -452,13 +456,11 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
                 </span>
               ) : null}
             </p>
-          ) : null}
-          {!phaseLabel && error ? (
-            <p className="text-center text-xs text-red-400">{error}</p>
-          ) : null}
-          {!phaseLabel && !error && confidence !== null ? (
-            <p className="text-center text-xs text-zinc-500">{t('kyc.confidence', { confidence })}</p>
-          ) : null}
+          ) : statusMessage.kind === 'error' ? (
+            <p className="text-center text-xs text-red-400">{statusMessage.text}</p>
+          ) : (
+            <p className="text-center text-xs text-zinc-500">{statusMessage.text}</p>
+          )}
         </div>
       ) : null}
     </GlassContainer>
