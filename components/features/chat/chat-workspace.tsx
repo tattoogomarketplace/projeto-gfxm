@@ -295,13 +295,25 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
   }, [role, router, triggerHaptic]);
 
   // Global discovery anchored at the inbox top: selecting a @username opens
-  // that professional's vitrine instantly, mirroring Instagram Explore.
-  const handleSearchSelect = useCallback(
-    (user: { id: string }) => {
+  // that professional's public profile instantly, mirroring Instagram Explore.
+  const openPublicProfile = useCallback(
+    (handle: string) => {
       triggerHaptic('light');
-      router.push(`/dashboard/artista/${encodeURIComponent(user.id)}`);
+      // Hard clean-up ao deixar o chat imersivo pela porta do perfil público:
+      // purga foco/transform/escala residual do viewport (mesmo fluxo de
+      // `handleBackToDashboard`) para que a rota de destino monte alinhada no iOS.
+      resetViewportScale({ forceBlur: true });
+      forceViewportRecalibration();
+      router.push(`/profile/${encodeURIComponent(handle)}`);
     },
     [router, triggerHaptic]
+  );
+
+  const handleSearchSelect = useCallback(
+    (user: { id: string; username?: string | null }) => {
+      openPublicProfile(user.username || user.id);
+    },
+    [openPublicProfile]
   );
 
   return (
@@ -424,8 +436,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      triggerHaptic('light');
-                      router.push(`/dashboard/artista/${encodeURIComponent(item.peer.id)}`);
+                      openPublicProfile(item.peer.id);
                     }}
                     className="flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400"
                     aria-label={t('chat.openVitrine', { name: item.peer.name })}
@@ -486,8 +497,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
             bookingIntent={bookingIntent}
             onBack={closeThread}
             onOpenProfile={(artistId) => {
-              triggerHaptic('light');
-              router.push(`/dashboard/artista/${encodeURIComponent(artistId)}`);
+              openPublicProfile(artistId);
             }}
             onOpenBooking={(artistId, nextArtworkId) => {
               void openBooking(artistId, nextArtworkId);

@@ -20,7 +20,7 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  * Reads the verified inspiration feed and reshapes it into two
  * horizontally scrolling carousels (featured artists + trending styles).
  * Pure presentational layer: no data mutation, no routing logic changes —
- * taps reuse the existing artist route (`/dashboard/artista/[id]`).
+ * taps open the artist's public profile (`/profile/[id]`).
  */
 
 /**
@@ -162,7 +162,7 @@ export function HomeDiscover() {
 
   const openArtist = (id: string) => {
     triggerHaptic('light');
-    router.push(`/dashboard/artista/${encodeURIComponent(id)}`);
+    router.push(`/profile/${encodeURIComponent(id)}`);
   };
 
   const openGallery = () => {

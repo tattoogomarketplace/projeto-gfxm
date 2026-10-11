@@ -28,7 +28,7 @@ export type PublicProfileMediaItem = {
 export type PublicProfileData = {
   id: string;
   name: string;
-  username: string;
+  username: string | null;
   role: PublicProfileRole;
   avatarUrl: string | null;
   cidade: string | null;
@@ -52,6 +52,9 @@ export class PublicProfileError extends Error {
   }
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function parseRole(value: unknown): PublicProfileRole {
   const normalized = normalizeUsername(value);
   if (normalized === 'tatuador') return 'tatuador';
@@ -59,17 +62,34 @@ function parseRole(value: unknown): PublicProfileRole {
   return 'cliente';
 }
 
-export async function getPublicProfileByUsername(
-  rawUsername: string
-): Promise<PublicProfileData> {
-  const username = normalizeUsername(rawUsername).slice(0, USERNAME_MAX_LENGTH);
-  if (!username || !USERNAME_PATTERN.test(username)) {
-    throw new PublicProfileError(400, 'Usuário inválido.');
+/**
+ * Resolve um perfil público a partir de um identificador: o `@username`
+ * canônico OU o `id` (UUID) do perfil. A porta por `id` existe para que as
+ * superfícies que só carregam o identificador (chat e feeds) possam abrir o
+ * perfil público sem expor nem duplicar dados sensíveis.
+ */
+export async function getPublicProfile(identifierRaw: string): Promise<PublicProfileData> {
+  const identifier = String(identifierRaw ?? '').trim();
+  const byId = UUID_RE.test(identifier);
+
+  if (!byId) {
+    const username = normalizeUsername(identifier).slice(0, USERNAME_MAX_LENGTH);
+    if (!username || !USERNAME_PATTERN.test(username)) {
+      throw new PublicProfileError(400, 'Usuário inválido.');
+    }
+    return loadPublicProfile({ username });
   }
 
+  return loadPublicProfile({ id: identifier });
+}
+
+async function loadPublicProfile(where: {
+  username?: string;
+  id?: string;
+}): Promise<PublicProfileData> {
   const perfil = await prisma.perfil.findFirst({
     where: {
-      username,
+      ...where,
       deleted_at: null,
       statusConta: 'ATIVO',
     },
@@ -84,7 +104,7 @@ export async function getPublicProfileByUsername(
     },
   });
 
-  if (!perfil || !perfil.username) {
+  if (!perfil) {
     throw new PublicProfileError(404, 'Perfil não encontrado.');
   }
 

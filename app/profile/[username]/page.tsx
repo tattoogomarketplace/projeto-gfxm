@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { PublicProfileScreen } from '@/components/features/public-profile-screen';
 import { SessionHydrating } from '@/components/features/session-hydrating';
-import { getPublicProfileByUsername, PublicProfileError } from '@/lib/services/public-profile';
+import { getPublicProfile, PublicProfileError } from '@/lib/services/public-profile';
 import { requireDashboardSession } from '@/lib/utils/dashboard-gate';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import { BRAND_NAME } from '@/lib/i18n/brands';
@@ -18,7 +18,7 @@ type PublicProfilePageProps = {
  *
  * Porta pública de leitura do perfil alheio, no mesmo padrão de sessão das
  * rotas autenticadas. O handle é resolvido de forma blindada no servidor
- * (`getPublicProfileByUsername`) — nenhum dado sensível cruza a fronteira.
+ * (`getPublicProfile`) — nenhum dado sensível cruza a fronteira.
  * A geometria global (100dvh, safe-area e dock inferior) é herdada do
  * `app/layout.tsx`, portanto não há container próprio a redefinir aqui.
  */
@@ -36,7 +36,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   const { username } = await params;
   let data = null;
   try {
-    data = await getPublicProfileByUsername(username);
+    data = await getPublicProfile(username);
   } catch (error) {
     if (error instanceof PublicProfileError && error.status === 404) {
       notFound();

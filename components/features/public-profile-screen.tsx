@@ -100,13 +100,18 @@ export function PublicProfileScreen({ data, viewerUsername }: PublicProfileScree
 
   const share = useCallback(async () => {
     triggerHaptic('light');
+    const handle = data.username
+      ? encodeURIComponent(data.username)
+      : encodeURIComponent(data.id);
     const url =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/profile/${data.username}`
-        : '';
+      typeof window !== 'undefined' ? `${window.location.origin}/profile/${handle}` : '';
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({ title: BRAND_NAME, text: data.name || `@${data.username}`, url });
+        await navigator.share({
+          title: BRAND_NAME,
+          text: data.name || (data.username ? `@${data.username}` : ''),
+          url,
+        });
         return;
       }
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -116,7 +121,7 @@ export function PublicProfileScreen({ data, viewerUsername }: PublicProfileScree
     } catch {
       // Compartilhamento cancelado pelo usuário: nenhum feedback necessário.
     }
-  }, [data.name, data.username, t, triggerHaptic]);
+  }, [data.id, data.name, data.username, t, triggerHaptic]);
 
   const openChat = useCallback(() => {
     triggerHaptic('medium');
