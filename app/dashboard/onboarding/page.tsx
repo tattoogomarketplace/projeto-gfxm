@@ -159,8 +159,8 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] w-full flex-col items-center justify-between overflow-y-auto bg-background px-4 py-6 text-white">
-      <div className="my-auto flex w-full max-w-md flex-col items-center">
+    <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-white">
+      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center overflow-hidden px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="flex w-full flex-col items-center space-y-2.5 text-center sm:space-y-3">
           <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
             <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
@@ -173,7 +173,7 @@ export default function DashboardOnboardingPage() {
           </p>
         </header>
 
-        <div className="w-full space-y-3 py-6 text-center">
+        <div className="w-full space-y-3 py-3 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
             {firstName ? t('onboarding.helloNamed', { name: firstName }) : t('onboarding.hello')}
           </h1>
@@ -184,16 +184,14 @@ export default function DashboardOnboardingPage() {
         </div>
 
         <section className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
-          <div className="max-h-[26vh] overflow-y-auto overscroll-contain pr-1">
-            <RoleSelector
-              value={role}
-              onChange={(nextRole) => {
-                setSubmitError(null);
-                setSelectedRole(nextRole);
-              }}
-              lockedRole={lockedRole}
-            />
-          </div>
+          <RoleSelector
+            value={role}
+            onChange={(nextRole) => {
+              setSubmitError(null);
+              setSelectedRole(nextRole);
+            }}
+            lockedRole={lockedRole}
+          />
         </section>
 
         {submitError ? (
@@ -206,12 +204,12 @@ export default function DashboardOnboardingPage() {
         ) : null}
       </div>
 
-      <div className="mt-auto w-full max-w-md pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <button
           type="button"
           onClick={handleAdvance}
           disabled={saving}
-          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
+          className="mx-auto flex h-14 w-full max-w-md items-center justify-center rounded-2xl bg-orange-500 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
           {saving ? <TattooMachineLoader compact label={t(content.activating)} /> : t(content.cta)}
         </button>
