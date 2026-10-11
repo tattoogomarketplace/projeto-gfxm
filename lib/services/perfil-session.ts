@@ -307,6 +307,7 @@ export function perfilResponse(perfil: LocalPerfil) {
     id: perfil.id,
     email: perfil.email,
     nome: perfil.nome,
+    username: perfil.username,
     role: perfil.role,
     kyc_status: perfil.kyc_status,
     has_seen_welcome_notice: onboardingCompleted,

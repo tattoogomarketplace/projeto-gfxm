@@ -14,6 +14,8 @@ import {
   isOnboardingComplete,
   ONBOARDING_PATH,
   parseAppRole,
+  requiresUsernameSetup,
+  USERNAME_SETUP_PATH,
   type AppRole,
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
@@ -158,6 +160,24 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           if (!currentPath.startsWith(ONBOARDING_PATH)) {
             router.replace(ONBOARDING_PATH);
           }
+          return;
+        }
+
+        // Gatekeeper persistente do @username (Fase 12 — Etapa 1): espelha, no
+        // cliente, a barreira do servidor (`UsernameGate`). Sem handle, o
+        // usuário é devolvido ao degrau de identidade — sem piscar o painel.
+        // A ordem documentos → @username é preservada: tatuador sem KYC segue
+        // para os documentos, que já é o próximo degrau obrigatório.
+        const perfilPayload = payload?.perfil as
+          | { role?: string | null; username?: string | null; kyc_status?: string | null }
+          | undefined;
+        if (
+          perfilPayload &&
+          requiresUsernameSetup(parsedRole ?? perfilPayload.role, perfilPayload.username) &&
+          !(parsedRole === 'tatuador' && !isKycApproved(perfilPayload.kyc_status)) &&
+          !currentPath.startsWith(USERNAME_SETUP_PATH)
+        ) {
+          router.replace(USERNAME_SETUP_PATH);
           return;
         }
 

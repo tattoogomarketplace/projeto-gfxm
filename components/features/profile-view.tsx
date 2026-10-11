@@ -9,7 +9,13 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAgendamentos } from '@/hooks/use-agendamentos';
 import { useAuthStore } from '@/hooks/use-auth-store';
-import { isOnboardingComplete, ONBOARDING_PATH, parseAppRole } from '@/lib/utils/auth-redirect';
+import {
+  isOnboardingComplete,
+  nextRequiredOnboardingStep,
+  ONBOARDING_PATH,
+  parseAppRole,
+  USERNAME_SETUP_PATH,
+} from '@/lib/utils/auth-redirect';
 import { resolveFullName } from '@/lib/utils/display-name';
 import { maskEmail } from '@/lib/utils/security';
 import { clearClientSession } from '@/lib/utils/session';
@@ -130,6 +136,12 @@ export function ProfileView() {
         const payload = await response.json().catch(() => ({}));
         if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
           router.push(ONBOARDING_PATH);
+          return;
+        }
+        // Gatekeeper persistente do @username: espelha o guardião do servidor,
+        // cobrindo a navegação cliente para o perfil sem piscar conteúdo.
+        if (nextRequiredOnboardingStep(payload.perfil) === USERNAME_SETUP_PATH) {
+          router.push(USERNAME_SETUP_PATH);
           return;
         }
         const parsedRole = parseAppRole(payload?.perfil?.role);

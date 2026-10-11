@@ -9,8 +9,10 @@ import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import {
   dashboardPathForRole,
   isOnboardingComplete,
+  nextRequiredOnboardingStep,
   ONBOARDING_PATH,
   parseAppRole,
+  USERNAME_SETUP_PATH,
   type AppRole,
 } from '@/lib/utils/auth-redirect';
 
@@ -43,6 +45,7 @@ function fallbackPerfil(clerkId?: string | null, expectedRole?: AppRole): LocalP
     clerk_id: clerkId || null,
     email: `${id}@tattoogo.local`,
     nome: null,
+    username: null,
     role: expectedRole ?? 'cliente',
     kyc_status: expectedRole === 'cliente' || !expectedRole ? 'nao_aplicavel' : 'pendente',
     has_seen_welcome_notice: true,
@@ -116,6 +119,14 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
 
     if (!role || !isOnboardingComplete(perfil)) {
       redirect(ONBOARDING_PATH);
+    }
+
+    // Gatekeeper persistente do @username (Fase 12 — Etapa 1): nenhum acesso
+    // às áreas autenticadas sem handle. A ordem canônica (documentos →
+    // @username) é garantida por `nextRequiredOnboardingStep`, que só devolve o
+    // degrau do username quando o usuário já passou dos pré-requisitos.
+    if (nextRequiredOnboardingStep(perfil) === USERNAME_SETUP_PATH) {
+      redirect(USERNAME_SETUP_PATH);
     }
 
     if (expectedRole && role !== expectedRole) {

@@ -7,6 +7,7 @@ export type LocalPerfil = {
   clerk_id: string | null;
   email: string;
   nome: string | null;
+  username: string | null;
   role: AppRole;
   kyc_status: string;
   has_seen_welcome_notice: boolean;
@@ -46,6 +47,7 @@ const PERFIL_SELECT = {
   clerk_id: true,
   email: true,
   nome: true,
+  username: true,
   role: true,
   kyc_status: true,
   has_seen_welcome_notice: true,

@@ -13,6 +13,7 @@ export type EnsurePerfilPayload = {
   onboarding_completed?: boolean;
   perfil?: {
     role?: string | null;
+    username?: string | null;
     kyc_status?: string | null;
     has_seen_welcome_notice?: boolean | null;
     onboarding_completed?: boolean | null;
