@@ -756,9 +756,6 @@ export default function RegisterPage() {
                     // re-render and force-close the native iOS date picker
                     // while the wheel is still being scrolled. Deferred onBlur.
                   },
-                  onFocus: () => {
-                    setIsDatePickerOpen(true);
-                  },
                   onBlur: (e) => {
                     const raw = String(e.target.value || '');
                     const previous = String(dataNascimento || '');
@@ -774,6 +771,9 @@ export default function RegisterPage() {
                     releaseIosDateInputTouch(e.target);
                   },
                 })}
+                onFocus={() => {
+                  setIsDatePickerOpen(true);
+                }}
                 className="relative z-10 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
