@@ -53,6 +53,9 @@ export default function Home() {
   const { t } = useI18n();
   const { isLoaded, isSignedIn } = useAuth();
   const [showTerms, setShowTerms] = useState(false);
+  // Trava de handoff: mantida alta a partir do aceite dos termos até o /login
+  // montar. Impede que a landing (e qualquer casco sob ela) seja pintada.
+  const [isHandoff, setIsHandoff] = useState(false);
   const router = useRouter();
 
   // Sessão ativa aterrissa direto no casco do painel; o middleware já cobre o
@@ -73,24 +76,34 @@ export default function Home() {
     // Verifica se já aceitou (pode ser via localStorage)
     const hasAccepted = localStorage.getItem('termsAccepted');
     if (hasAccepted) {
-      router.push('/login');
+      router.replace('/login');
     } else {
       setShowTerms(true);
     }
   };
 
-  const handleAcceptTerms = async () => {
+  const handleAcceptTerms = () => {
     try {
       localStorage.setItem('termsAccepted', 'true');
-      setShowTerms(false);
-      router.push('/login');
     } catch (error) {
       console.error('Falha ao aceitar termos:', error);
     }
+    // Fecha o overlay e sobe o AuthBootFallback no MESMO commit (estado batch),
+    // de modo que a landing nunca seja revelada entre o unmount dos termos e a
+    // chegada do /login. `replace` troca o estado de histórico: o swipe-back do
+    // iOS não retorna ao overlay de termos/landing.
+    setIsHandoff(true);
+    setShowTerms(false);
+    router.replace('/login');
   };
 
   return (
     <main className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-gray-900 select-none dark:text-white">
+      {/* Camada de bloqueio durante o aceite: cobre a landing com a Splash de
+          boot (z abaixo do overlay de termos, acima do conteúdo público) até o
+          /login assumir o frame — crossfade sem flash do casco interno. */}
+      {isHandoff && <AuthBootFallback />}
+
       <TermsModal
         isOpen={showTerms}
         onClose={() => setShowTerms(false)}
