@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useClerk } from '@clerk/nextjs';
+import { useAuth, useClerk } from '@clerk/nextjs';
 import { useSignUp } from '@clerk/nextjs/legacy';
 import { Input } from '@/components/input';
 import { TattooOTPVerification } from '@/components/features/tattoo-otp';
@@ -145,9 +145,36 @@ function isIsoCalendarToday(value: string): boolean {
   );
 }
 
+const STALE_SESSION_ERROR_CODES = new Set([
+  'session_exists',
+  'session_exists_email',
+  'already_signed_in',
+  'identifier_already_signed_in',
+]);
+
+/**
+ * Phase 11.3: a re-registration right after the account was deleted can leave
+ * an orphaned session in the Clerk client cache. Those errors otherwise stall
+ * the OTP pipeline until the app is hard-restarted.
+ */
+function isStaleSessionError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const errors = (err as { errors?: unknown }).errors;
+  if (Array.isArray(errors)) {
+    for (const item of errors) {
+      if (!item || typeof item !== 'object') continue;
+      const code = (item as { code?: unknown }).code;
+      if (typeof code === 'string' && STALE_SESSION_ERROR_CODES.has(code)) return true;
+    }
+  }
+  const code = (err as { code?: unknown }).code;
+  return typeof code === 'string' && STALE_SESSION_ERROR_CODES.has(code);
+}
+
 export default function RegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const clerk = useClerk();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
   const { t, locale } = useI18n();
   const setUser = useAuthStore((s) => s.setUser);
@@ -211,6 +238,32 @@ export default function RegisterPage() {
   const studioFieldsLocked = isEstudio && !isValidCnpj(cnpjValue);
   const fetchedCnpjRef = useRef('');
 
+  // Aggressive stale-session wipe: terminate any orphaned Clerk session before
+  // a fresh signUp so a deleted-then-recreated account never collides with a
+  // cached token (source of the re-registration OTP delay).
+  const wipeStaleSession = async () => {
+    const staleSessions = clerk.client?.sessions ?? [];
+    if (!isSignedIn && !clerk.session && staleSessions.length === 0) return;
+    try {
+      await clerk.signOut();
+    } catch (err) {
+      console.warn('Stale session wipe skipped:', err);
+    }
+  };
+
+  // OTP velocity: if Clerk still reports a lingering session, wipe it and retry
+  // the verification preparation immediately instead of waiting on the SDK retry.
+  const prepareEmailVerification = async () => {
+    if (!signUp) throw new Error('clerk not ready');
+    try {
+      await signUp.prepareVerification({ strategy: 'email_code' });
+    } catch (err) {
+      if (!isStaleSessionError(err)) throw err;
+      await wipeStaleSession();
+      await signUp.prepareVerification({ strategy: 'email_code' });
+    }
+  };
+
   const onSubmit = async (data: RegisterFormValues) => {
     if (!acceptedTerms) {
       toast.error(t('auth.acceptTerms'));
@@ -265,6 +318,7 @@ export default function RegisterPage() {
        }
 
       setLoadingText(t('auth.preparingProfile'));
+      await wipeStaleSession();
       await signUp.create({
         emailAddress: emailNorm,
         password: data.password,
@@ -283,9 +337,7 @@ export default function RegisterPage() {
       });
 
       setLoadingText(t('auth.generatingSecurity'));
-      await signUp.prepareVerification({
-        strategy: 'email_code',
-      });
+      await prepareEmailVerification();
 
       setLoadingText(t('auth.sendingCode'));
       setEmailForVerification(emailNorm);
@@ -356,10 +408,7 @@ export default function RegisterPage() {
   };
 
   const handleResendOtp = async () => {
-    if (!signUp) {
-      throw new Error('clerk not ready');
-    }
-    await signUp.prepareVerification({ strategy: 'email_code' });
+    await prepareEmailVerification();
   };
 
   useEffect(() => {
