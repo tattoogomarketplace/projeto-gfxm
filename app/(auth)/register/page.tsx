@@ -735,7 +735,7 @@ export default function RegisterPage() {
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
             <div
               ref={dateFieldRef}
-              className="relative isolate z-10 w-full overflow-visible pointer-events-none"
+              className="relative isolate z-0 pointer-events-none"
             >
               <Input
                 label={t('auth.birthDate')}
@@ -774,7 +774,7 @@ export default function RegisterPage() {
                 onFocus={() => {
                   setIsDatePickerOpen(true);
                 }}
-                className="relative z-10 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
             </div>
