@@ -212,6 +212,7 @@ export default function RegisterPage() {
   const [emailForVerification, setEmailForVerification] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [userRole, setUserRole] = useState<RegisterRole>('cliente');
   const [forceShow, setForceShow] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -219,6 +220,7 @@ export default function RegisterPage() {
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const nextPathRef = useRef<string | null>(null);
   const prevLocaleRef = useRef(locale);
+  const dateFieldRef = useRef<HTMLDivElement>(null);
 
   // Redirect-only guard: a transição de cadastro -> onboarding entrega direto
   // o App Shell/onboarding, sem overlay intermediário de "ENTRANDO".
@@ -250,6 +252,33 @@ export default function RegisterPage() {
     prevLocaleRef.current = locale;
     if (hasFieldErrors) void trigger();
   }, [locale, trigger, hasFieldErrors]);
+
+  // Phase 11.4: while the native date-of-birth picker is engaged, any pointer
+  // landing outside the bounded date field dismisses it on the capture phase.
+  // Capture runs before the click on the terms link/checkbox, so the calendar
+  // overlay is torn down first and never swallows that touch target.
+  useEffect(() => {
+    if (!isDatePickerOpen) return;
+
+    const dismissIfOutside = (event: Event) => {
+      const field = dateFieldRef.current;
+      if (field && event.target instanceof Node && field.contains(event.target)) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && field?.contains(active)) {
+        active.blur();
+      }
+      setIsDatePickerOpen(false);
+    };
+
+    document.addEventListener('pointerdown', dismissIfOutside, true);
+    document.addEventListener('touchstart', dismissIfOutside, true);
+    document.addEventListener('mousedown', dismissIfOutside, true);
+    return () => {
+      document.removeEventListener('pointerdown', dismissIfOutside, true);
+      document.removeEventListener('touchstart', dismissIfOutside, true);
+      document.removeEventListener('mousedown', dismissIfOutside, true);
+    };
+  }, [isDatePickerOpen]);
 
   const dataNascimento = useWatch({ control, name: 'dataNascimento' });
   const passwordValue = useWatch({ control, name: 'password' }) || '';
@@ -704,7 +733,10 @@ export default function RegisterPage() {
             />
           ) : null}
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
-            <div className="relative z-10 w-full pointer-events-none">
+            <div
+              ref={dateFieldRef}
+              className="relative isolate z-10 w-full overflow-visible pointer-events-none"
+            >
               <Input
                 label={t('auth.birthDate')}
                 type="date"
@@ -724,6 +756,9 @@ export default function RegisterPage() {
                     // re-render and force-close the native iOS date picker
                     // while the wheel is still being scrolled. Deferred onBlur.
                   },
+                  onFocus: () => {
+                    setIsDatePickerOpen(true);
+                  },
                   onBlur: (e) => {
                     const raw = String(e.target.value || '');
                     const previous = String(dataNascimento || '');
@@ -735,10 +770,11 @@ export default function RegisterPage() {
                         toast.error(t('auth.minAge'));
                       }
                     }
+                    setIsDatePickerOpen(false);
                     releaseIosDateInputTouch(e.target);
                   },
                 })}
-                className="relative z-10 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-x-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:z-0 [&::-webkit-calendar-picker-indicator]:h-12 [&::-webkit-calendar-picker-indicator]:max-h-12 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                className="relative z-10 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
             </div>
