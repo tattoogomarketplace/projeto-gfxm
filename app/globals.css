@@ -1,0 +1,821 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: #F97316;
+  --color-primary-strong: #EA580C;
+  /* Copper extracted from the app icon artwork (roses + 3D machine). */
+  --color-brand-copper: #D9460E;
+  --color-brand-copper-strong: #B8430F;
+  --color-brand-copper-soft: #F05000;
+  --color-success: #10B981;
+  --color-success-strong: #059669;
+  --color-success-neon: #34D399;
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --spacing-safe: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  --animate-float: float 3.5s ease-in-out infinite;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    /* Deep obsidian canvas — TattooGo MK dark equilibrium. */
+    --background: #0a0a0a;
+    --foreground: #F5F5F5;
+    --muted: #8a8a8a;
+    --muted-foreground: #a1a1aa;
+    --border: rgba(255, 255, 255, 0.05);
+    --card: rgba(255, 255, 255, 0.03);
+    --input: rgba(255, 255, 255, 0.04);
+    --primary: #F97316;
+    --primary-strong: #EA580C;
+    --success: #10B981;
+    --success-strong: #059669;
+    --success-neon: #34D399;
+    --amber-gold: #FFBF00;
+    --neon-orange: #F97316;
+    --font-inter: Inter, system-ui, -apple-system, sans-serif;
+    --touch-min: 44px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --dock-height: 3.5rem;
+    --dock-offset: max(1rem, env(safe-area-inset-bottom, 0px));
+    --dock-clearance: calc(var(--dock-height) + var(--dock-offset) + 0.75rem);
+  }
+
+  :root.light {
+    color-scheme: light;
+    /* Crisp titanium-white canvas — same vibrant accents. */
+    --background: #FAFAFA;
+    --foreground: #0A0A0A;
+    --muted: #737373;
+    --muted-foreground: #525252;
+    --border: rgba(0, 0, 0, 0.04);
+    --card: #FFFFFF;
+    --input: #FFFFFF;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: #0a0a0a;
+    --foreground: #F5F5F5;
+    --muted: #8a8a8a;
+    --muted-foreground: #a1a1aa;
+    --border: rgba(255, 255, 255, 0.05);
+    --card: rgba(255, 255, 255, 0.03);
+    --input: rgba(255, 255, 255, 0.04);
+    --color-background: #0a0a0a;
+    --color-foreground: #F5F5F5;
+    --color-border: rgba(255, 255, 255, 0.05);
+    --color-card: rgba(255, 255, 255, 0.03);
+  }
+
+  .light {
+    color-scheme: light;
+    --background: #FAFAFA;
+    --foreground: #0A0A0A;
+    --muted: #737373;
+    --muted-foreground: #525252;
+    --border: rgba(0, 0, 0, 0.04);
+    --card: #FFFFFF;
+    --input: #FFFFFF;
+    --color-background: #FAFAFA;
+    --color-foreground: #0A0A0A;
+    --color-border: rgba(0, 0, 0, 0.04);
+    --color-card: #FFFFFF;
+  }
+
+  html {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+    color-scheme: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  html.light {
+    background-color: #FAFAFA;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+    color: var(--foreground);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  html.light body {
+    background-color: #FAFAFA;
+  }
+
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: var(--touch-min);
+  }
+
+  /*
+   * TOUCH RESPONSE HARDENING (Apple-tier)
+   *
+   * `touch-action: manipulation` remove o atraso de ~300ms de duplo-toque e
+   * mantém pan/pinch fluidos; `-webkit-tap-highlight-color` zera o flash cinza
+   * do WebView. Aplicado a todos os alvos interativos para resposta instantânea
+   * e consistente entre iOS e Android, sem custo de layout.
+   */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  label,
+  summary,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  /*
+   * APPLE-TIER TOUCH PHYSICS (global baseline)
+   *
+   * Todos os alvos interativos respondem ao toque com um scale sutil de 0.97
+   * em 100ms ease-out — a mesma sensação do "press" nativo do iOS. A transição
+   * é limitada a `transform` para nunca disparar layout/reflow (60fps+).
+   */
+  button:active:not(:disabled),
+  [role="button"]:active:not([aria-disabled="true"]) {
+    transform: scale(0.97);
+  }
+
+  a:active,
+  [role="tab"]:active,
+  [role="menuitem"]:active,
+  summary:active {
+    transform: scale(0.97);
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+  select,
+  textarea {
+    color: var(--foreground);
+    caret-color: var(--foreground);
+    background-color: var(--input);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
+    opacity: 1;
+  }
+
+  .light input[type="date"],
+  .light input[type="datetime-local"],
+  .light input[type="time"],
+  .light input[type="month"],
+  .light input[type="week"] {
+    color-scheme: light;
+    color: #171717;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="datetime-local"],
+  .dark input[type="time"],
+  .dark input[type="month"],
+  .dark input[type="week"] {
+    color-scheme: dark;
+    color: #ffffff;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    box-shadow: 0 0 0 1000px var(--input) inset;
+    transition: background-color 9999s ease-out 0s;
+  }
+}
+
+@layer utilities {
+  .env-safe-area {
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  .app-frame {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .glass-panel {
+    background: rgba(10, 10, 10, 0.72);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .light .glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  /*
+   * True glassmorphism for global chrome (headers + bottom nav).
+   * Uses the theme background at 70% opacity plus a saturating blur, with the
+   * explicit `-webkit-backdrop-filter` fallback for iOS WebView/Safari.
+   */
+  .glass-chrome {
+    background-color: color-mix(in srgb, var(--background) 70%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* Apple native touch physics for any interactive element. */
+  .apple-press {
+    transition: transform 100ms ease-out;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+  }
+
+  .apple-press:active {
+    transform: translateZ(0) scale(0.97);
+  }
+
+  .surface-card {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .light .surface-card {
+    background-color: #FFFFFF;
+    border-color: rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  .screen-page {
+    display: flex;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  .page-dvh {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--background);
+  }
+
+  .page-body {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 9rem;
+  }
+
+  .nav-safe-pad {
+    padding-bottom: var(--dock-clearance);
+  }
+
+  .app-scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /*
+   * SUB-PIXEL SCROLLBAR SHIFT ERADICATION
+   *
+   * O casco decide a camada de rolagem por rota (`overflow-hidden` para telas
+   * auto-roláveis vs. `overflow-y-auto` para páginas longas). Quando o browser
+   * reserva gutter para a barra de rolagem apenas nas rotas roláveis, a largura
+   * útil oscila ~15px na transição e o conteúdo "desliza" no eixo X.
+   *
+   * Suprimimos a barra em TODO o viewport de conteúdo (`scrollbar-width` +
+   * `::-webkit-scrollbar`). Sem gutter, a largura é matematicamente constante
+   * entre uma página rolável e uma não-rolável e o shift desaparece — além de
+   * entregar a sensação de scroll nativo (iOS/Android) sem chrome visível.
+   */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /*
+   * Aplicação GLOBAL e definitiva dentro do casco: qualquer superfície rolável
+   * descendente de `[data-viewport-root]` (listas, feed, thread de chat, agenda)
+   * fica sem gutter. Isso trava a largura útil em todo o app — não apenas na
+   * fronteira de conteúdo — de forma que nenhuma transição possa deslocar o eixo
+   * X por causa da barra de rolagem.
+   */
+  [data-viewport-root],
+  [data-viewport-root] * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  [data-viewport-root]::-webkit-scrollbar,
+  [data-viewport-root] *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .form-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /*
+   * Neutral canvas. Earlier revisions layered warm orange/emerald radial
+   * gradients over the app background, which produced a harsh, muddy wash in
+   * Light Mode and an uneven orange glow in Dark Mode. The canvas is now a flat
+   * studio-neutral surface in both themes; color is reserved for interactive
+   * accents (orange) and success states (emerald).
+   */
+  .luxury-canvas {
+    background-color: #FAFAFA;
+    background-image: none;
+  }
+
+  .dark .luxury-canvas {
+    background-color: #0a0a0a;
+    background-image: none;
+  }
+
+  /*
+   * Decorative wallpaper for the AI Atelier. Kept strictly neutral: a subtle
+   * ink texture over the theme canvas with no colored radial bloom, so it never
+   * competes with the interface or breaks Light Mode contrast.
+   */
+  .tattoo-wallpaper {
+    background-color: #0a0a0a;
+    background-image: url("/tattoo-wallpaper.svg");
+    background-repeat: repeat;
+    background-position: 0 0;
+    background-size: 200px 200px;
+  }
+
+  .light .tattoo-wallpaper {
+    background-color: #FAFAFA;
+    opacity: 0.4;
+  }
+
+  .tattoo-machine-buzz {
+    animation: tattoo-buzz 0.12s linear infinite;
+  }
+
+  .tattoo-machine-fill {
+    animation: tattoo-fill 1.4s ease-in-out infinite;
+  }
+
+  .tattoo-machine-fill-failed {
+    animation: tattoo-fill-failed 0.9s ease-in-out infinite;
+  }
+
+  .tattoo-machine-shake {
+    animation: tattoo-shake 0.22s ease-in-out infinite;
+  }
+
+  .gpu-layer {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform, opacity;
+    contain: paint;
+  }
+
+  /*
+   * Isola um elemento em uma camada composta pela GPU apenas durante a
+   * animação/transição de entrada. Deve ser usado em containeres de rota e
+   * bottom sheets em movimento — não de forma permanente — para evitar
+   * inchaço de memória de GPU.
+   */
+  .composite-layer {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .composite-animating {
+    will-change: opacity, transform;
+  }
+
+  .screen-fade-in {
+    animation: screen-fade-in 300ms ease-in-out both;
+    transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: opacity, transform;
+  }
+
+  .luxury-skeleton {
+    background-color: rgb(229 229 229 / 0.8);
+  }
+
+  .dark .luxury-skeleton {
+    background-color: rgb(38 38 38 / 0.4);
+  }
+
+  .luxury-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 38%,
+      rgb(249 115 22 / 0.08) 50%,
+      transparent 62%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
+    animation: luxury-shimmer 1.6s ease-in-out infinite;
+  }
+
+  .dark .luxury-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 38%,
+      rgb(249 115 22 / 0.12) 50%,
+      rgb(255 255 255 / 0.04) 58%,
+      transparent 70%,
+      transparent 100%
+    );
+    background-size: 220% 100%;
+  }
+
+  .ai-fab-pulse {
+    animation: ai-fab-pulse 2.6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-fade-in,
+  .ai-fab-pulse,
+  .luxury-shimmer {
+    animation: none;
+  }
+
+  .screen-fade-in,
+  .gpu-layer {
+    will-change: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .settings-drawer-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .settings-drawer-scrim [class*='backdrop-blur'] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes luxury-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -40% 0;
+  }
+}
+
+@keyframes tattoo-buzz {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(0.6px, -0.6px) rotate(-1.4deg);
+  }
+  75% {
+    transform: translate(-0.6px, 0.6px) rotate(1.4deg);
+  }
+}
+
+@keyframes tattoo-fill {
+  0% {
+    transform: scaleY(0.12);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.12);
+    opacity: 0.55;
+  }
+}
+
+@keyframes tattoo-fill-failed {
+  0% {
+    transform: scaleY(0.2);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(0.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes tattoo-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2px, 1px);
+  }
+  75% {
+    transform: translate(2px, -1px);
+  }
+}
+
+@keyframes ai-fab-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.35), 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(249, 115, 22, 0.6), 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/*
+ * TattooGo Pass — anti-screenshot sweep.
+ *
+ * Faixa de luz em cobre varrendo o cartão do token para que capturas de tela
+ * pareçam mortas/estáticas. Puro `transform`/`opacity` (GPU) para não custar
+ * layout ao rolar.
+ */
+@keyframes pass-sweep {
+  0% {
+    transform: translate3d(-120%, 0, 0);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(120%, 0, 0);
+    opacity: 0;
+  }
+}
+
+.pass-sweep {
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(249, 115, 22, 0.1) 50%,
+    transparent 65%
+  );
+  animation: pass-sweep 4.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/*
+ * Sessão de hoje — pulso sutil no CTA de validação do TattooGo Pass.
+ * Apenas `box-shadow` (composta em GPU) para sinalizar urgência sem custo de
+ * layout. Nunca é aplicado fora do dia corrente.
+ */
+@keyframes today-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0), 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.14), 0 0 20px rgba(249, 115, 22, 0.28);
+  }
+}
+
+.today-pulse {
+  animation: today-pulse 2.6s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+.splash-gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: opacity, transform;
+  isolation: isolate;
+  contain: layout paint style;
+}
+
+.splash-enter {
+  animation: splash-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-icon-enter {
+  animation: splash-icon-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash-glow {
+  animation: splash-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes splash-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes splash-icon-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes splash-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+html.splash-seen .splash-root {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-enter,
+  .splash-icon-enter,
+  .splash-glow,
+  .pass-sweep,
+  .today-pulse,
+  .animate-float {
+    animation: none;
+  }
+}
+
+/*
+ * Fluxo "Quero ser Tatuador" (/dashboard/seja-tatuador).
+ *
+ * O Safari do iOS aplica auto-zoom no visual viewport quando um input recebe
+ * foco com font-size computado abaixo de 16px. Os campos de e-mail e CPF da
+ * verificação usam `text-sm` (14px), o que deixava a escala presa ao voltar
+ * para as abas principais. Forçamos 16px apenas em telas de toque para
+ * eliminar o zoom na origem, sem alterar o layout de desktop.
+ */
+.artist-verification-screen {
+  touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  .artist-verification-screen input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']) {
+    font-size: 16px;
+  }
+}
+

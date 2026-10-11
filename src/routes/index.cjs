@@ -1,0 +1,32 @@
+const { Router } = require("express");
+const catalogoRoutes = require("./catalogo.routes.cjs");
+const authRoutes = require("./auth.routes.cjs");
+const chatRoutes = require("./chat.routes.cjs");
+const portfolioRoutes = require("./portfolio.routes.cjs");
+const pagamentoRoutes = require("./pagamento.routes.cjs");
+const agendamentoRoutes = require("./agendamento.routes.cjs");
+const estudioRoutes = require("./estudio.routes.cjs");
+const studiosRoutes = require("./studios.routes.cjs");
+const perfilRoutes = require("./perfil.routes.cjs");
+const artistScheduleRoutes = require("./artist-schedule.routes.cjs");
+const artistPortfolioRoutes = require("./artist-portfolio.routes.cjs");
+const galeriaRoutes = require("./galeria.routes.cjs");
+const artistasRoutes = require("./artistas.routes.cjs");
+
+const router = Router();
+
+router.use("/catalogo", catalogoRoutes);
+router.use("/galeria", galeriaRoutes);
+router.use("/artistas", artistasRoutes);
+router.use("/auth", authRoutes);
+router.use("/chat", chatRoutes);
+router.use("/portfolio", portfolioRoutes);
+router.use("/pagamentos", pagamentoRoutes);
+router.use("/agendamentos", agendamentoRoutes);
+router.use("/estudio", estudioRoutes);
+router.use("/studios", studiosRoutes);
+router.use("/perfil", perfilRoutes);
+router.use("/tatuador/schedule", artistScheduleRoutes);
+router.use("/tatuador/portfolio", artistPortfolioRoutes);
+
+module.exports = router;

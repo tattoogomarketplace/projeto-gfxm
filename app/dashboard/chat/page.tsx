@@ -1,0 +1,17 @@
+import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
+import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
+import ChatClient from './chat-client';
+import ChatLoading from './loading';
+
+export default async function DashboardChatPage() {
+  let perfil = null;
+  try {
+    perfil = await requireDashboardPerfil();
+  } catch (error) {
+    rethrowNextControlFlow(error);
+    console.error('[dashboard/chat] sessão indisponível', error);
+    return <ChatLoading />;
+  }
+  if (!perfil) return <ChatLoading />;
+  return <ChatClient />;
+}

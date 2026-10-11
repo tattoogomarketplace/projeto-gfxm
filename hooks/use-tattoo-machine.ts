@@ -1,0 +1,106 @@
+/**
+ * TATTOOGO MK - HOOK DE SINTETIZAÇÃO DE MÁQUINA DE TATUAR (CPU-GENERATED)
+ * Unifica a experiência imersiva para Cadastro (OTP) e Cancelamento (Seguro).
+ * 
+ * ATENÇÃO: Atende ao Requisito 1 do Protocolo Mestre (Sincronia Sensorial).
+ */
+import { useState, useCallback, useRef } from 'react';
+import { useHapticFeedback } from './use-haptic-feedback';
+
+export const useTattooMachine = () => {
+  const [isTattooing, setIsTattooing] = useState(false);
+  const audioCtx = useRef<AudioContext | null>(null);
+  const oscillator = useRef<OscillatorNode | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
+
+  const startTattooing = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Inicializa o contexto de áudio (se não existir)
+    if (!audioCtx.current) {
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      audioCtx.current = new AudioContextCtor();
+    }
+    
+    if (oscillator.current) {
+      try {
+        oscillator.current.stop();
+        oscillator.current.disconnect();
+      } catch {
+        void 0;
+      }
+      oscillator.current = null;
+    }
+
+    setIsTattooing(true);
+    
+    // Sintetiza o som de "bater" da máquina (frequência baixa/pulsante)
+    oscillator.current = audioCtx.current.createOscillator();
+    const gainNode = audioCtx.current.createGain();
+    
+    oscillator.current.type = 'square';
+    oscillator.current.frequency.setValueAtTime(60, audioCtx.current.currentTime);
+    gainNode.gain.setValueAtTime(0.05, audioCtx.current.currentTime); // Volume controlado
+    
+    oscillator.current.connect(gainNode);
+    gainNode.connect(audioCtx.current.destination);
+    
+    oscillator.current.start();
+  }, []);
+
+  const stopTattooing = useCallback((success: boolean = false) => {
+    setIsTattooing(false);
+
+    if (oscillator.current) {
+      try {
+        oscillator.current.stop();
+      } catch {
+        void 0;
+      }
+      try {
+        oscillator.current.disconnect();
+      } catch {
+        void 0;
+      }
+      oscillator.current = null;
+    }
+    
+    if (success && audioCtx.current) {
+      triggerHaptic('success');
+      // Pequeno "beep" de conclusão sintetizado
+      const osc = audioCtx.current.createOscillator();
+      const gain = audioCtx.current.createGain();
+      
+      osc.frequency.setValueAtTime(880, audioCtx.current.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.current.currentTime);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.current.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.current.currentTime + 0.2);
+    }
+  }, [triggerHaptic]);
+
+  const triggerError = useCallback(() => {
+    stopTattooing(false);
+    if (typeof window === 'undefined' || !audioCtx.current) return;
+    const osc = audioCtx.current.createOscillator();
+    const gain = audioCtx.current.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(40, audioCtx.current.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.current.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.2, audioCtx.current.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.current.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.current.destination);
+    osc.start();
+    osc.stop(audioCtx.current.currentTime + 0.3);
+    triggerHaptic('heavy');
+  }, [stopTattooing, triggerHaptic]);
+  return { isTattooing, startTattooing, stopTattooing, triggerError };
+};
+
