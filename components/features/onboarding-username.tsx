@@ -369,7 +369,7 @@ export function OnboardingUsername({
                 aria-label="Escolha seu @username"
                 aria-invalid={tone === 'bad'}
                 placeholder="seu_username"
-                className="min-w-0 flex-1 bg-transparent text-[17px] font-semibold tracking-tight text-white caret-orange-500 outline-none placeholder:font-normal placeholder:text-zinc-600"
+                className="h-full min-w-0 flex-1 bg-transparent p-0 text-[17px] font-semibold tracking-tight text-white caret-orange-500 outline-none placeholder:font-normal placeholder:text-zinc-600"
               />
 
               {/* Slot fixo de status — largura imutável (CLS = 0). */}

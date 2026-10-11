@@ -267,7 +267,7 @@ export function MagicUsernameInput({
           }}
           onBlur={() => setFocused(false)}
           className={cn(
-            'min-w-0 flex-1 bg-transparent text-[15px] font-medium text-neutral-900 outline-none',
+            'h-full min-w-0 flex-1 bg-transparent p-0 text-[15px] font-medium text-neutral-900 outline-none',
             'placeholder:font-normal placeholder:text-neutral-400',
             'dark:text-white dark:placeholder:text-zinc-500'
           )}
