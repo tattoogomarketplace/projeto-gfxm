@@ -153,6 +153,32 @@ const STALE_SESSION_ERROR_CODES = new Set([
 ]);
 
 /**
+ * Phase 11.3: hard ceiling for stale-session teardown. When the account was
+ * deleted server-side, `clerk.signOut()` can wait ~30s for a response that
+ * never arrives. We never block the OTP pipeline longer than this.
+ */
+const SESSION_WIPE_TIMEOUT_MS = 500;
+
+/**
+ * Resolves as soon as `promise` settles OR the budget elapses, swallowing both
+ * rejection and timeout so a dead session can never stall the main thread.
+ */
+function raceWithTimeout(promise: Promise<unknown>, ms: number): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise.then(
+      () => undefined,
+      () => undefined
+    ),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, ms);
+    }),
+  ]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+/**
  * Phase 11.3: a re-registration right after the account was deleted can leave
  * an orphaned session in the Clerk client cache. Those errors otherwise stall
  * the OTP pipeline until the app is hard-restarted.
@@ -240,15 +266,27 @@ export default function RegisterPage() {
 
   // Aggressive stale-session wipe: terminate any orphaned Clerk session before
   // a fresh signUp so a deleted-then-recreated account never collides with a
-  // cached token (source of the re-registration OTP delay).
+  // cached token (source of the re-registration OTP delay). The remote sign-out
+  // is fire-and-forget and the local session is killed synchronously, then the
+  // whole teardown is capped at SESSION_WIPE_TIMEOUT_MS so a dead server can
+  // never reintroduce the 30-second hang.
   const wipeStaleSession = async () => {
     const staleSessions = clerk.client?.sessions ?? [];
     if (!isSignedIn && !clerk.session && staleSessions.length === 0) return;
-    try {
-      await clerk.signOut();
-    } catch (err) {
-      console.warn('Stale session wipe skipped:', err);
-    }
+
+    const signOutAttempt = clerk.signOut().catch((err) => {
+      console.warn('Stale session sign-out ignored:', err);
+    });
+    const localReset = setActive
+      ? setActive({ session: null }).catch((err) => {
+          console.warn('Local Clerk session reset skipped:', err);
+        })
+      : Promise.resolve();
+
+    await raceWithTimeout(
+      Promise.allSettled([signOutAttempt, localReset]),
+      SESSION_WIPE_TIMEOUT_MS
+    );
   };
 
   // OTP velocity: if Clerk still reports a lingering session, wipe it and retry
@@ -259,6 +297,8 @@ export default function RegisterPage() {
       await signUp.prepareVerification({ strategy: 'email_code' });
     } catch (err) {
       if (!isStaleSessionError(err)) throw err;
+      // Instant hard wipe of the cached local session, then retry once with no
+      // exponential backoff.
       await wipeStaleSession();
       await signUp.prepareVerification({ strategy: 'email_code' });
     }
