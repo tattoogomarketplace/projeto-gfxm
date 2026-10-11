@@ -735,7 +735,8 @@ export default function RegisterPage() {
           {roleValue === 'cliente' || roleValue === 'tatuador' ? (
             <div
               ref={dateFieldRef}
-              className="relative isolate z-0 pointer-events-none"
+              className="pwa-date-field-guard relative isolate z-0 pointer-events-none"
+              style={{ WebkitUserSelect: 'none' }}
             >
               <Input
                 label={t('auth.birthDate')}
@@ -808,7 +809,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="relative z-30 mt-4 flex items-start gap-3 pointer-events-auto touch-manipulation">
+          <div className="relative z-40 mt-4 flex items-start gap-3 pointer-events-auto touch-manipulation">
             <input
               type="checkbox"
               id="register-terms"

@@ -270,6 +270,37 @@
     min-width: 44px;
   }
 
+  /*
+   * Phase 11.4: isolates a native <input type="date"> in installed (standalone)
+   * PWAs. Mobile WebViews can stretch the native picker's touch target below
+   * the input and swallow taps meant for footer elements. This guard clamps the
+   * container's paint/touch box and scopes pointer events to the real input, so
+   * nothing bleeds over the terms link. It never alters sizing or spacing.
+   */
+  .pwa-date-field-guard {
+    position: relative;
+    isolation: isolate;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: clip;
+    /* Allow the 1px focus ring to render while clamping any oversized
+       WebView touch/paint bleed far above the footer terms row. */
+    overflow-clip-margin: 4px;
+  }
+
+  .pwa-date-field-guard input,
+  .pwa-date-field-guard button,
+  .pwa-date-field-guard [role='button'] {
+    pointer-events: auto;
+  }
+
+  @media (display-mode: standalone) {
+    .pwa-date-field-guard {
+      contain: layout;
+    }
+  }
+
   .glass-panel {
     background: rgba(10, 10, 10, 0.72);
     backdrop-filter: blur(12px) saturate(180%);
