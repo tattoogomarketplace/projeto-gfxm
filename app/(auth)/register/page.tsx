@@ -774,7 +774,7 @@ export default function RegisterPage() {
                 onFocus={() => {
                   setIsDatePickerOpen(true);
                 }}
-                className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                className="relative z-20 w-full cursor-pointer pointer-events-auto touch-manipulation focus:ring-orange-500 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:z-30 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:max-h-full [&::-webkit-calendar-picker-indicator]:w-12 [&::-webkit-calendar-picker-indicator]:max-w-full [&::-webkit-calendar-picker-indicator]:pointer-events-auto [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
                 error={errors.dataNascimento?.message}
               />
             </div>
