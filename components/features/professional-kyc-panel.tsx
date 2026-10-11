@@ -428,41 +428,20 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         </>
       )}
 
-      {statusMessage ? (
-        <div className="mt-2 flex flex-col items-center">
-          {statusMessage.kind === 'phase' ? (
-            <p
-              className={cn(
-                'flex flex-wrap items-center justify-center gap-2 text-center text-xs text-amber-400',
-                analyzing && 'animate-pulse'
-              )}
-            >
-              <span className="min-w-0 break-words">{statusMessage.text}</span>
-              {analyzing ? (
-                <span className="inline-flex shrink-0 items-center gap-1" aria-hidden>
-                  {[0, 1, 2].map((dot) => (
-                    <motion.span
-                      key={dot}
-                      className="h-1 w-1 rounded-full bg-amber-400"
-                      animate={{ opacity: [0.25, 1, 0.25] }}
-                      transition={{
-                        duration: 1.2,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                        delay: dot * 0.18,
-                      }}
-                    />
-                  ))}
-                </span>
-              ) : null}
-            </p>
-          ) : statusMessage.kind === 'error' ? (
-            <p className="text-center text-xs text-red-400">{statusMessage.text}</p>
-          ) : (
-            <p className="text-center text-xs text-zinc-500">{statusMessage.text}</p>
+      <div className="mt-2 flex h-6 w-full items-center justify-center overflow-hidden">
+        <span
+          className={cn(
+            'min-w-0 max-w-full truncate text-sm',
+            statusMessage?.kind === 'error'
+              ? 'text-red-400'
+              : statusMessage?.kind === 'confidence'
+                ? 'text-zinc-500'
+                : 'text-amber-400'
           )}
-        </div>
-      ) : null}
+        >
+          {statusMessage?.text ?? ''}
+        </span>
+      </div>
     </GlassContainer>
   );
 }
