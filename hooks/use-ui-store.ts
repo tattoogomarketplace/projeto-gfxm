@@ -31,9 +31,7 @@ export const useUiStore = create<UiState>((set) => ({
   openSettingsDrawer: () =>
     set((s) => (s.settingsDrawerBusy ? s : { settingsDrawerOpen: true, settingsDrawerBusy: true })),
   closeSettingsDrawer: () =>
-    set((s) =>
-      s.settingsDrawerBusy && s.settingsDrawerOpen ? s : { settingsDrawerOpen: false, settingsDrawerBusy: true }
-    ),
+    set((s) => (s.settingsDrawerOpen ? { settingsDrawerOpen: false, settingsDrawerBusy: true } : s)),
   toggleSettingsDrawer: () =>
     set((s) =>
       s.settingsDrawerBusy ? s : { settingsDrawerOpen: !s.settingsDrawerOpen, settingsDrawerBusy: true }

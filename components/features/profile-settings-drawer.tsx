@@ -145,7 +145,7 @@ export function ProfileSettingsDrawer() {
   if (!mounted) return null;
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={releaseSettingsDrawer}>
       {open ? (
         <motion.div
           key="settings-drawer"
