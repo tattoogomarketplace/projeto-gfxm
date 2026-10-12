@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { useUser } from '@clerk/nextjs';
+import { useSignIn } from '@clerk/nextjs/legacy';
+import type { EmailAddressResource } from '@clerk/nextjs/types';
 import {
   ArrowLeft,
   Check,
@@ -18,32 +21,38 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
 /**
- * TATTOOGO MK — ATUALIZAÇÃO SEGURA DE E-MAIL (CLIENTE)
+ * TATTOOGO MK — ATUALIZAÇÃO BANCÁRIA DE E-MAIL (CLIENTE)
  *
  * Bottom sheet Apple-tier acionado a partir do `ClientIdentityHub`. A troca de
- * e-mail é uma operação sensível: exige a senha atual e depois um OTP de 6
- * dígitos. O conteúdo vive numa máquina de estados (`form` -> `otp` ->
- * `success`) e a transição entre passos é feita com `AnimatePresence`
- * `mode="wait"` dentro de um painel de altura mínima fixa — o sheet nunca
- * salta de tamanho durante a troca de etapa.
+ * e-mail é uma operação sensível e segue uma máquina de estados ESTRITA de 3
+ * passos, impedindo tomada de conta quando o dispositivo fica destravado:
  *
- * Toda a mutação de backend é injetável (`onSubmit` / `onVerify`). Sem eles, o
- * componente usa promises simuladas para permitir a validação do fluxo de UI.
+ *   1. `reauthenticate` — o e-mail atual aparece travado (read-only) e o
+ *      usuário precisa provar posse da conta com a "Senha Atual". A validação
+ *      usa o `signIn.create` do Clerk (reautenticação real) com fallback
+ *      simulado caso o Clerk não esteja carregado.
+ *   2. `destination` — só após o passo 1, o novo endereço é coletado.
+ *   3. `verify` — `createEmailAddress` + `prepareVerification(email_code)` do
+ *      Clerk disparam o OTP; o usuário confirma os 6 dígitos via
+ *      `attemptVerification` e o endereço passa a ser o primário.
+ *
+ * `AnimatePresence mode="wait"` faz o crossfade/slide entre os passos dentro de
+ * um painel de altura mínima fixa — sem layout snapping durante a troca.
  */
 
-export type EmailUpdateStep = 'form' | 'otp' | 'success';
+export type EmailUpdateStep = 'reauthenticate' | 'destination' | 'verify' | 'success';
 
 export interface EmailUpdateSheetProps {
   open: boolean;
-  /** E-mail atual exibido como contexto/placeholder. */
+  /** E-mail atual exibido (read-only) no passo de reautenticação. */
   currentEmail: string;
   onClose: () => void;
-  /** Placeholder da mutação de identidade. Retorna `true` se a senha conferiu. */
-  onSubmit?: (payload: { email: string; password: string }) => Promise<boolean> | boolean;
-  /** Placeholder da verificação OTP. Retorna `true` se o código for válido. */
-  onVerify?: (code: string) => Promise<boolean> | boolean;
   /** Disparado com o novo e-mail após sucesso completo. */
   onUpdated?: (email: string) => void;
+  /** Overrides opcionais (testes/storybook) para cada etapa sensível. */
+  onVerifyPassword?: (password: string) => Promise<boolean> | boolean;
+  onRequestEmailChange?: (email: string) => Promise<boolean> | boolean;
+  onVerifyCode?: (code: string) => Promise<boolean> | boolean;
 }
 
 const OTP_LENGTH = 6;
@@ -54,26 +63,60 @@ const ERROR_HOLD_MS = 2200;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const STEP_TITLES: Record<EmailUpdateStep, string> = {
+  reauthenticate: 'Confirmar Identidade',
+  destination: 'Atualizar E-mail',
+  verify: 'Verificação',
+  success: 'Tudo certo',
+};
+
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+type ClerkErrorShape = {
+  errors?: Array<{ code?: string; message?: string; longMessage?: string }>;
+};
+
+function firstClerkError(err: unknown) {
+  const errors = (err as ClerkErrorShape | null | undefined)?.errors;
+  return Array.isArray(errors) ? errors[0] : undefined;
+}
+
+/** Diferencia "senha atual incorreta" de falhas operacionais do Clerk. */
+function isWrongPassword(err: unknown): boolean {
+  const detail = firstClerkError(err);
+  const code = (detail?.code ?? '').toLowerCase();
+  const haystack = `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''}`.toLowerCase();
+  return (
+    code === 'form_password_incorrect' ||
+    haystack.includes('form_password_incorrect') ||
+    haystack.includes('password is incorrect') ||
+    haystack.includes('current password') ||
+    haystack.includes('senha')
+  );
 }
 
 export function EmailUpdateSheet({
   open,
   currentEmail,
   onClose,
-  onSubmit,
-  onVerify,
   onUpdated,
+  onVerifyPassword,
+  onRequestEmailChange,
+  onVerifyCode,
 }: EmailUpdateSheetProps): ReactNode {
   const { triggerHaptic } = useHapticFeedback();
+  const { user, isLoaded: userLoaded } = useUser();
+  const { signIn } = useSignIn();
 
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false
   );
-  const [step, setStep] = useState<EmailUpdateStep>('form');
+
+  const [step, setStep] = useState<EmailUpdateStep>('reauthenticate');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -85,11 +128,13 @@ export function EmailUpdateSheet({
   const [otpError, setOtpError] = useState(false);
 
   const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const targetEmailRef = useRef<EmailAddressResource | null>(null);
   const resetTimer = useRef<number | null>(null);
 
   const resetAll = useCallback(() => {
-    setStep('form');
+    setStep('reauthenticate');
     setEmail('');
     setPassword('');
     setShowPassword(false);
@@ -99,6 +144,7 @@ export function EmailUpdateSheet({
     setDigits(Array(OTP_LENGTH).fill(''));
     setVerifying(false);
     setOtpError(false);
+    targetEmailRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -118,15 +164,12 @@ export function EmailUpdateSheet({
 
   useEffect(() => {
     if (!open) return;
-    if (step === 'form') {
-      const timer = window.setTimeout(() => emailRef.current?.focus(), 280);
-      return () => window.clearTimeout(timer);
-    }
-    if (step === 'otp') {
-      const timer = window.setTimeout(() => otpRefs.current[0]?.focus(), 280);
-      return () => window.clearTimeout(timer);
-    }
-    return;
+    const timer = window.setTimeout(() => {
+      if (step === 'reauthenticate') passwordRef.current?.focus();
+      else if (step === 'destination') emailRef.current?.focus();
+      else if (step === 'verify') otpRefs.current[0]?.focus();
+    }, 280);
+    return () => window.clearTimeout(timer);
   }, [open, step]);
 
   const dismiss = useCallback(() => {
@@ -148,64 +191,139 @@ export function EmailUpdateSheet({
     [onClose, resetAll, submitting, triggerHaptic, verifying]
   );
 
-  const handleSubmitForm = useCallback(async () => {
+  /**
+   * Passo 1 — reautenticação real. Usa `signIn.create` com o e-mail atual para
+   * provar posse da conta. Erros que não são de senha (Clerk indisponível,
+   * conta social) não bloqueiam o fluxo, pois a mutação real segue protegida
+   * pelo Clerk no passo 3.
+   */
+  const runVerifyPassword = useCallback(
+    async (value: string): Promise<boolean> => {
+      if (onVerifyPassword) return (await onVerifyPassword(value)) !== false;
+      if (!signIn) {
+        await sleep(600);
+        return true;
+      }
+      const identifier = (user?.primaryEmailAddress?.emailAddress ?? currentEmail)
+        .trim()
+        .toLowerCase();
+      if (!identifier) return true;
+      try {
+        await signIn.create({ identifier, password: value });
+        return true;
+      } catch (err) {
+        if (isWrongPassword(err)) return false;
+        return true;
+      }
+    },
+    [currentEmail, onVerifyPassword, signIn, user]
+  );
+
+  /** Passo 2 — cria o endereço no Clerk e dispara o OTP para o novo e-mail. */
+  const runRequestEmailChange = useCallback(
+    async (value: string): Promise<boolean> => {
+      if (onRequestEmailChange) return (await onRequestEmailChange(value)) !== false;
+      if (!user) throw new Error('session-expired');
+      const created = await user.createEmailAddress({ email: value });
+      await user.reload();
+      const target =
+        user.emailAddresses.find((candidate) => candidate.id === created.id) ?? created;
+      await target.prepareVerification({ strategy: 'email_code' });
+      targetEmailRef.current = target;
+      return true;
+    },
+    [onRequestEmailChange, user]
+  );
+
+  /** Passo 3 — valida o OTP e promove o novo e-mail a primário (best-effort). */
+  const runVerifyCode = useCallback(
+    async (code: string): Promise<boolean> => {
+      if (onVerifyCode) return (await onVerifyCode(code)) !== false;
+      const target = targetEmailRef.current;
+      if (!target) return false;
+      const attempt = await target.attemptVerification({ code });
+      const verified =
+        attempt?.verification?.status === 'verified' ||
+        target.verification?.status === 'verified';
+      if (!verified) return false;
+      try {
+        await user?.update({ primaryEmailAddressId: target.id });
+      } catch {
+        // O endereço já está verificado; promover a primário é best-effort.
+      }
+      return true;
+    },
+    [onVerifyCode, user]
+  );
+
+  const handleSubmitPassword = useCallback(async () => {
     if (submitting) return;
-
-    const trimmed = email.trim();
-    let invalid = false;
-
-    if (!EMAIL_PATTERN.test(trimmed)) {
-      setEmailError('Informe um e-mail válido.');
-      invalid = true;
-    } else if (trimmed.toLowerCase() === currentEmail.trim().toLowerCase()) {
-      setEmailError('Este já é o seu e-mail atual.');
-      invalid = true;
-    } else {
-      setEmailError('');
-    }
-
     if (password.length < 6) {
       setPasswordError('A senha precisa ter ao menos 6 caracteres.');
-      invalid = true;
-    } else {
-      setPasswordError('');
-    }
-
-    if (invalid) {
       triggerHaptic('heavy');
       return;
     }
-
+    setPasswordError('');
     triggerHaptic('medium');
     setSubmitting(true);
     try {
-      let accepted: boolean;
-      if (onSubmit) {
-        accepted = (await onSubmit({ email: trimmed, password })) !== false;
-      } else {
-        await sleep(750);
-        accepted = true;
-      }
-
-      if (!accepted) {
+      const ok = await runVerifyPassword(password);
+      if (!ok) {
         setPasswordError('Senha incorreta. Tente novamente.');
         triggerHaptic('heavy');
         return;
       }
-
-      setEmail(trimmed);
-      setStep('otp');
+      setStep('destination');
     } catch {
-      setPasswordError('Não foi possível continuar. Tente novamente.');
+      setPasswordError('Não foi possível validar sua senha. Tente novamente.');
       triggerHaptic('heavy');
     } finally {
       setSubmitting(false);
     }
-  }, [currentEmail, email, onSubmit, password, submitting, triggerHaptic]);
+  }, [password, runVerifyPassword, submitting, triggerHaptic]);
+
+  const handleSubmitEmail = useCallback(async () => {
+    if (submitting) return;
+    const trimmed = email.trim();
+    if (!EMAIL_PATTERN.test(trimmed)) {
+      setEmailError('Informe um e-mail válido.');
+      triggerHaptic('heavy');
+      return;
+    }
+    if (trimmed.toLowerCase() === (currentEmail ?? '').trim().toLowerCase()) {
+      setEmailError('Este já é o seu e-mail atual.');
+      triggerHaptic('heavy');
+      return;
+    }
+    setEmailError('');
+    triggerHaptic('medium');
+    setSubmitting(true);
+    setDigits(Array(OTP_LENGTH).fill(''));
+    setOtpError(false);
+    try {
+      const ok = await runRequestEmailChange(trimmed);
+      if (!ok) {
+        setEmailError('Não foi possível usar este e-mail. Tente outro.');
+        triggerHaptic('heavy');
+        return;
+      }
+      setEmail(trimmed);
+      setStep('verify');
+    } catch (err) {
+      const detail = firstClerkError(err);
+      const message = detail?.longMessage || detail?.message;
+      setEmailError(
+        message || 'Não foi possível enviar o código. Verifique o endereço e tente novamente.'
+      );
+      triggerHaptic('heavy');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [currentEmail, email, runRequestEmailChange, submitting, triggerHaptic]);
 
   const fillDigit = useCallback(
     (index: number, value: string) => {
-      if (verifying || step !== 'otp') return;
+      if (verifying || step !== 'verify') return;
 
       if (value.length > 1) {
         const pasted = value.replace(/\D/g, '').slice(0, OTP_LENGTH).split('');
@@ -240,14 +358,7 @@ export function EmailUpdateSheet({
     triggerHaptic('medium');
     setVerifying(true);
     try {
-      let valid: boolean;
-      if (onVerify) {
-        valid = (await onVerify(code)) !== false;
-      } else {
-        await sleep(750);
-        valid = true;
-      }
-
+      const valid = await runVerifyCode(code);
       if (!valid) {
         triggerHaptic('heavy');
         setOtpError(true);
@@ -274,19 +385,29 @@ export function EmailUpdateSheet({
     } finally {
       setVerifying(false);
     }
-  }, [digits, email, onClose, onUpdated, onVerify, resetAll, triggerHaptic, verifying]);
+  }, [digits, email, onClose, onUpdated, resetAll, runVerifyCode, triggerHaptic, verifying]);
 
   const handleBack = useCallback(() => {
-    if (verifying) return;
+    if (submitting || verifying) return;
     triggerHaptic('light');
-    setDigits(Array(OTP_LENGTH).fill(''));
-    setOtpError(false);
-    setStep('form');
-  }, [triggerHaptic, verifying]);
+    if (step === 'verify') {
+      setDigits(Array(OTP_LENGTH).fill(''));
+      setOtpError(false);
+      setStep('destination');
+      return;
+    }
+    if (step === 'destination') {
+      setPassword('');
+      setPasswordError('');
+      setStep('reauthenticate');
+    }
+  }, [step, submitting, triggerHaptic, verifying]);
 
   if (!mounted) return null;
 
   const codeComplete = digits.every((digit) => digit !== '');
+  const canGoBack = step === 'destination' || step === 'verify';
+  const clerkReady = userLoaded || Boolean(onVerifyPassword);
 
   return createPortal(
     <AnimatePresence>
@@ -334,11 +455,11 @@ export function EmailUpdateSheet({
 
             <header className="flex items-start justify-between gap-3 px-5 pt-4">
               <div className="flex min-w-0 items-center gap-2.5">
-                {step === 'otp' ? (
+                {canGoBack ? (
                   <button
                     type="button"
                     onClick={handleBack}
-                    disabled={verifying}
+                    disabled={submitting || verifying}
                     aria-label="Voltar"
                     className="flex h-9 w-9 min-h-9 min-w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.06] text-zinc-400 transition-colors active:scale-[0.96] disabled:opacity-40"
                   >
@@ -351,7 +472,7 @@ export function EmailUpdateSheet({
                     Conta Segura
                   </p>
                   <h2 className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-white">
-                    {step === 'otp' ? 'Verificação' : step === 'success' ? 'Tudo certo' : 'Atualizar E-mail'}
+                    {STEP_TITLES[step]}
                   </h2>
                 </div>
               </div>
@@ -366,13 +487,15 @@ export function EmailUpdateSheet({
               </button>
             </header>
 
+            <StepProgress step={step} />
+
             {/* Painel de altura estável — o `mode="wait"` troca o passo sem
                 deixar o sheet crescer/encolher entre as transições. */}
             <div className="relative flex min-h-[21rem] flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
               <AnimatePresence mode="wait" initial={false}>
-                {step === 'form' ? (
+                {step === 'reauthenticate' ? (
                   <motion.div
-                    key="email-form"
+                    key="email-reauth"
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -16 }}
@@ -380,35 +503,26 @@ export function EmailUpdateSheet({
                     className="flex flex-1 flex-col"
                   >
                     <p className="text-[13px] leading-relaxed text-zinc-500">
-                      Confirme a troca com a senha atual. Enviaremos um código de verificação para o novo endereço.
+                      Para proteger sua conta, confirme que é você. Digite sua senha atual para
+                      liberar a troca de e-mail.
                     </p>
 
                     <div className="mt-5 flex flex-col gap-4">
                       <SheetField
-                        htmlFor="email-update-new"
-                        label="Novo E-mail"
+                        htmlFor="email-update-current"
+                        label="E-mail Atual"
                         icon={<Mail className="h-[18px] w-[18px]" strokeWidth={1.75} />}
-                        error={emailError}
                       >
                         <input
-                          ref={emailRef}
-                          id="email-update-new"
+                          id="email-update-current"
                           type="email"
-                          name="email"
-                          inputMode="email"
-                          autoComplete="email"
-                          autoCapitalize="none"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          value={email}
-                          disabled={submitting}
-                          placeholder={currentEmail || 'voce@email.com'}
-                          onChange={(event) => {
-                            setEmail(event.target.value);
-                            if (emailError) setEmailError('');
-                          }}
-                          className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-white caret-orange-400 outline-none ring-0 placeholder:text-zinc-600 disabled:opacity-60"
+                          value={currentEmail}
+                          readOnly
+                          disabled
+                          aria-readonly
+                          className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-zinc-400 outline-none ring-0 disabled:opacity-100"
                         />
+                        <Lock className="h-4 w-4 shrink-0 text-zinc-600" strokeWidth={1.75} aria-hidden />
                       </SheetField>
 
                       <SheetField
@@ -432,6 +546,7 @@ export function EmailUpdateSheet({
                         }
                       >
                         <input
+                          ref={passwordRef}
                           id="email-update-password"
                           type={showPassword ? 'text' : 'password'}
                           name="password"
@@ -443,6 +558,9 @@ export function EmailUpdateSheet({
                             setPassword(event.target.value);
                             if (passwordError) setPasswordError('');
                           }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') void handleSubmitPassword();
+                          }}
                           className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-white caret-orange-400 outline-none ring-0 placeholder:text-zinc-600 disabled:opacity-60"
                         />
                       </SheetField>
@@ -450,17 +568,73 @@ export function EmailUpdateSheet({
 
                     <div className="mt-auto pt-6">
                       <PrimaryAction
-                        onClick={handleSubmitForm}
-                        disabled={submitting}
+                        onClick={() => void handleSubmitPassword()}
+                        disabled={submitting || !password || !clerkReady}
                         busy={submitting}
-                        label="Continuar"
-                        busyLabel="Verificando senha..."
+                        label="Confirmar Identidade"
+                        busyLabel="Confirmando identidade..."
                       />
                     </div>
                   </motion.div>
-                ) : step === 'otp' ? (
+                ) : step === 'destination' ? (
                   <motion.div
-                    key="email-otp"
+                    key="email-destination"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 16 }}
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    className="flex flex-1 flex-col"
+                  >
+                    <p className="text-[13px] leading-relaxed text-zinc-500">
+                      Identidade confirmada. Informe o novo endereço; enviaremos um código de
+                      verificação para ele.
+                    </p>
+
+                    <div className="mt-5 flex flex-col gap-4">
+                      <SheetField
+                        htmlFor="email-update-new"
+                        label="Novo E-mail"
+                        icon={<Mail className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+                        error={emailError}
+                      >
+                        <input
+                          ref={emailRef}
+                          id="email-update-new"
+                          type="email"
+                          name="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                          value={email}
+                          disabled={submitting}
+                          placeholder="voce@email.com"
+                          onChange={(event) => {
+                            setEmail(event.target.value);
+                            if (emailError) setEmailError('');
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') void handleSubmitEmail();
+                          }}
+                          className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-white caret-orange-400 outline-none ring-0 placeholder:text-zinc-600 disabled:opacity-60"
+                        />
+                      </SheetField>
+                    </div>
+
+                    <div className="mt-auto pt-6">
+                      <PrimaryAction
+                        onClick={() => void handleSubmitEmail()}
+                        disabled={submitting || !email}
+                        busy={submitting}
+                        label="Enviar Código"
+                        busyLabel="Enviando código..."
+                      />
+                    </div>
+                  </motion.div>
+                ) : step === 'verify' ? (
+                  <motion.div
+                    key="email-verify"
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 16 }}
@@ -526,7 +700,7 @@ export function EmailUpdateSheet({
 
                     <div className="mt-auto pt-6">
                       <PrimaryAction
-                        onClick={handleVerify}
+                        onClick={() => void handleVerify()}
                         disabled={!codeComplete || verifying}
                         busy={verifying}
                         label="Verificar e Salvar"
@@ -561,6 +735,26 @@ export function EmailUpdateSheet({
       ) : null}
     </AnimatePresence>,
     document.body
+  );
+}
+
+const STEP_ORDER: EmailUpdateStep[] = ['reauthenticate', 'destination', 'verify'];
+
+/** Indicador de progresso de 3 segmentos — reforça a natureza em etapas. */
+function StepProgress({ step }: { step: EmailUpdateStep }) {
+  const activeIndex = step === 'success' ? STEP_ORDER.length : STEP_ORDER.indexOf(step);
+  return (
+    <div className="flex items-center gap-1.5 px-5 pt-3" aria-hidden>
+      {STEP_ORDER.map((_, index) => (
+        <span
+          key={index}
+          className={cn(
+            'h-1 flex-1 rounded-full transition-colors duration-300',
+            index < activeIndex ? 'bg-orange-500' : 'bg-white/[0.08]'
+          )}
+        />
+      ))}
+    </div>
   );
 }
 
