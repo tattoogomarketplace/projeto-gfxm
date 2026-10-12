@@ -395,7 +395,9 @@ export function ForgotPasswordFlow({
           validateRes.ok === true && result.success === true && result.valid === true;
         if (!documentApproved) {
           throw new Error(
-            result.erro || result.error || 'Documento inválido ou ilegível. Tente novamente.'
+            result.erro ||
+              result.error ||
+              'Documento inválido ou ilegível. Envie um documento oficial válido.'
           );
         }
 

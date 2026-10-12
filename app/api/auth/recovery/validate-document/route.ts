@@ -25,7 +25,7 @@ const MAX_OBJECT_BYTES = 10 * 1024 * 1024;
 const MAX_FILE_KEY_LENGTH = 512;
 const DELIMITER = '/';
 const MIN_CONFIDENCE = 60;
-const GENERIC_REJECTION = 'Documento inválido ou ilegível. Tente novamente.';
+const GENERIC_REJECTION = 'Documento inválido ou ilegível. Envie um documento oficial válido.';
 
 type RecoveryDocumentBody = {
   fileKey?: unknown;
