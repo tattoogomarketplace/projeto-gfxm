@@ -16,7 +16,6 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
-import { useUiStore } from '@/hooks/use-ui-store';
 import { cn } from '@/lib/utils';
 
 /**
@@ -153,7 +152,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 }: ClientIdentityHubProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
-  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
 
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
@@ -214,7 +212,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
             label="Configurações"
             hint="Tema, notificações, senha e privacidade"
-            onClick={openSettingsDrawer}
+            href="/dashboard/perfil/configuracoes"
             chevron
           />
         </HubSection>
