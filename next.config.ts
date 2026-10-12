@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     allowedDevOrigins: ['*.monkeycode-ai.live', '**.monkeycode-ai.live'],
     images: {
       minimumCacheTTL: 86400,
+      remotePatterns: [
+        { protocol: 'https', hostname: 'images.unsplash.com' },
+        { protocol: 'https', hostname: 'plus.unsplash.com' },
+      ],
     },
   async rewrites() {
     return {
