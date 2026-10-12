@@ -11,7 +11,8 @@ import {
   type ChangeEvent,
 } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
-import { Camera, User } from 'lucide-react';
+import { Camera } from 'lucide-react';
+import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
 import { cn } from '@/lib/utils';
 
 /**
@@ -29,12 +30,12 @@ const SPRING: Transition = { type: 'spring', stiffness: 420, damping: 30, mass: 
 const SIZE_MAP = {
   md: {
     box: 'h-20 w-20 min-h-20 min-w-20',
-    text: 'text-2xl',
+    glyph: 'h-11 w-11 min-h-11 min-w-11',
     icon: 'h-5 w-5 min-h-5 min-w-5',
   },
   lg: {
     box: 'h-28 w-28 min-h-28 min-w-28',
-    text: 'text-3xl',
+    glyph: 'h-16 w-16 min-h-16 min-w-16',
     icon: 'h-6 w-6 min-h-6 min-w-6',
   },
 } as const;
@@ -165,7 +166,6 @@ export type AvatarUploadHandle = {
 export type AvatarUploadProps = {
   src?: string | null;
   name?: string | null;
-  initials?: string;
   size?: keyof typeof SIZE_MAP;
   accept?: string;
   disabled?: boolean;
@@ -185,7 +185,6 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
     {
       src,
       name,
-      initials,
       size = 'lg',
       accept = 'image/*',
       disabled = false,
@@ -235,7 +234,6 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
 
   const resolvedSrc = previewUrl ?? src ?? null;
   const isPreview = Boolean(previewUrl);
-  const resolvedInitial = (initials || name || 'A').trim().charAt(0).toUpperCase() || 'A';
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -328,22 +326,17 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
           ) : (
             <>
               <FineLineTattooBackdrop glowId={glowId} />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-[14%] rounded-full bg-orange-500/10 blur-xl"
+              />
               <span className="relative z-10 flex h-full w-full items-center justify-center">
-                {initials ? (
-                  <span
-                    className={cn(
-                      dims.text,
-                      'font-semibold uppercase tracking-tight text-zinc-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
-                    )}
-                  >
-                    {resolvedInitial}
-                  </span>
-                ) : (
-                  <User
-                    className={cn(dims.icon, 'text-zinc-400')}
-                    strokeWidth={1.75}
-                  />
-                )}
+                <TattooMachineGlyph
+                  className={cn(
+                    dims.glyph,
+                    'drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]'
+                  )}
+                />
               </span>
             </>
           )}

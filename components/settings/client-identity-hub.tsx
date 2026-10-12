@@ -280,7 +280,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const [avatarSheetOpen, setAvatarSheetOpen] = useState(false);
 
   const displayName = name.trim();
-  const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
   const displayEmail = emailOverride ?? email;
   const currentAvatar = avatarOverride === undefined ? avatarUrl ?? null : avatarOverride;
   const hasPhoto = Boolean(currentAvatar);
@@ -328,7 +327,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             ref={avatarRef}
             src={currentAvatar}
             name={displayName || username || 'Avatar'}
-            initials={displayName || username ? initials : undefined}
             size="lg"
             ariaLabel="Gerenciar foto de perfil"
             onPress={handleAvatarPress}

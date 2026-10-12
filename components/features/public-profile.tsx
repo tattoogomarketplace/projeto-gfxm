@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, BadgeCheck, ImageOff, Share2 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/segmented-control';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -271,7 +272,6 @@ export function PublicProfile({
   const { triggerHaptic } = useHapticFeedback();
   const [tab, setTab] = useState<ProfileTab>('posts');
 
-  const initials = (name || username || 'A').trim().charAt(0).toUpperCase() || 'A';
   const handle = username ? `@${username}` : null;
   const roleLabel = t(`role.${role}.label` as MessageKey);
 
@@ -337,11 +337,17 @@ export function PublicProfile({
         <div className="relative px-5 pb-5">
           <div className="flex items-end gap-4">
             <span className="relative -mt-12 flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px] shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
-              <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-neutral-900 text-2xl font-semibold uppercase text-orange-400 dark:border-[#0a0a0a]">
+              <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-zinc-950 dark:border-[#0a0a0a]">
                 {avatarUrl ? (
                   <OptimizedImage src={avatarUrl} alt={name} className="h-full w-full rounded-full" />
                 ) : (
-                  initials
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-[14%] rounded-full bg-orange-500/10 blur-xl"
+                    />
+                    <TattooMachineGlyph className="relative z-10 h-10 w-10 min-h-10 min-w-10 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                  </>
                 )}
               </span>
               {verified ? (
