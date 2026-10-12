@@ -9,15 +9,12 @@ import {
   KeyRound,
   Lock,
   LogOut,
-  Mail,
   Palette,
-  Phone,
   ShieldCheck,
   User,
 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { EmailUpdateSheet } from '@/components/settings/email-update-sheet';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -142,7 +139,6 @@ export type ClientIdentityHubProps = {
   name: string;
   username: string | null;
   email: string;
-  phone?: string | null;
   avatarUrl?: string | null;
   loggingOut: boolean;
   onLogout: () => void;
@@ -152,7 +148,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   name,
   username,
   email,
-  phone,
   avatarUrl,
   loggingOut,
   onLogout,
@@ -160,13 +155,11 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
-  const [emailSheetOpen, setEmailSheetOpen] = useState(false);
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
 
   const displayName = name.trim();
   const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
-  const phoneValue = phone?.trim() || 'Não informado';
   const displayEmail = emailOverride ?? email;
 
   const handleLogout = () => {
@@ -213,18 +206,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             icon={<User className="h-5 w-5" strokeWidth={1.75} />}
             label="Nome"
             value={displayName || '—'}
-          />
-          <HubRow
-            icon={<Mail className="h-5 w-5" strokeWidth={1.75} />}
-            label="Email"
-            value={displayEmail || '—'}
-            onClick={() => setEmailSheetOpen(true)}
-            chevron
-          />
-          <HubRow
-            icon={<Phone className="h-5 w-5" strokeWidth={1.75} />}
-            label="Telefone"
-            value={phoneValue}
           />
         </HubSection>
 
@@ -286,13 +267,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
         </HubSection>
       </div>
       </div>
-
-      <EmailUpdateSheet
-        open={emailSheetOpen}
-        currentEmail={displayEmail}
-        onClose={() => setEmailSheetOpen(false)}
-        onUpdated={setEmailOverride}
-      />
 
       <RecoveryHubSheet
         open={recoverySheetOpen}

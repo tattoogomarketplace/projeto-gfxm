@@ -316,7 +316,6 @@ export function ProfileView() {
   }
 
   const displayNome = nome || cachedUser?.fullName || '';
-  const displayPhone = user?.primaryPhoneNumber?.phoneNumber ?? null;
   const avatarUrl = user?.imageUrl ?? null;
 
   if (role === 'cliente') {
@@ -325,7 +324,6 @@ export function ProfileView() {
         name={displayNome}
         username={username}
         email={email}
-        phone={displayPhone}
         avatarUrl={avatarUrl}
         loggingOut={loggingOut}
         onLogout={() => {
