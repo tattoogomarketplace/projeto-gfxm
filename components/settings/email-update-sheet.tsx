@@ -225,18 +225,26 @@ export function EmailUpdateSheet({
       if (!targetEmail) return false;
       const verification = await targetEmail.attemptVerification({ code });
       if (verification.verification.status !== 'verified') return false;
-      const previousPrimary = user.primaryEmailAddress;
+      const previousPrimaryId = user.primaryEmailAddress?.id;
       await user.update({ primaryEmailAddressId: targetEmail.id });
-      if (previousPrimary && previousPrimary.id !== targetEmail.id) {
-        try {
-          await previousPrimary.destroy();
-        } catch {
-          // Promoção já concluída; a limpeza do e-mail legado é best-effort.
+      if (previousPrimaryId && previousPrimaryId !== targetEmail.id) {
+        const staleEmail = user.emailAddresses.find(
+          (candidate) => candidate.id === previousPrimaryId
+        );
+        if (staleEmail) {
+          try {
+            await staleEmail.destroy();
+          } catch {
+            // Já desanexado do perfil — nada a fazer.
+          }
         }
       }
+      // Re-sincroniza a sessão: força o JWT a descartar o identificador antigo
+      // imediatamente, impedindo logins legados com o e-mail anterior.
+      await session?.reload();
       return true;
     },
-    [email, onVerifyCode, user]
+    [email, onVerifyCode, session, user]
   );
 
   const handleSubmitPassword = useCallback(async () => {
