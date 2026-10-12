@@ -4,12 +4,10 @@ import { memo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   AtSign,
-  Bell,
   ChevronRight,
   KeyRound,
   Lock,
   LogOut,
-  Palette,
   ShieldCheck,
   User,
 } from 'lucide-react';
@@ -170,7 +168,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   return (
     <>
       <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-6 px-4">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
         <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
           <span className="relative flex h-28 w-28 min-h-28 min-w-28 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px] shadow-[0_8px_28px_rgba(249,115,22,0.22)]">
             <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[3px] border-zinc-950 bg-zinc-900 text-3xl font-semibold uppercase text-orange-400">
@@ -227,23 +225,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             label="Recuperações Digitais"
             hint="Senha ou e-mail: recupere o acesso com segurança"
             onClick={() => setRecoverySheetOpen(true)}
-            chevron
-          />
-        </HubSection>
-
-        <HubSection title="Preferências">
-          <HubRow
-            icon={<Bell className="h-5 w-5" strokeWidth={1.75} />}
-            label="Notificações"
-            hint="Lembretes, propostas e mensagens"
-            href="/dashboard/perfil/configuracoes?section=notifications"
-            chevron
-          />
-          <HubRow
-            icon={<Palette className="h-5 w-5" strokeWidth={1.75} />}
-            label="Tema"
-            hint={t('settings.appearanceSubtitle')}
-            href="/dashboard/perfil/configuracoes?section=appearance"
             chevron
           />
         </HubSection>

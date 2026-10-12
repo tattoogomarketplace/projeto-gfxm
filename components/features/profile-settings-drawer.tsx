@@ -181,6 +181,9 @@ export function ProfileSettingsDrawer() {
             className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-zinc-800 bg-zinc-950 contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
           >
             <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
+              <span className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
+                <Settings className="h-5 w-5" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   {BRAND_NAME}
