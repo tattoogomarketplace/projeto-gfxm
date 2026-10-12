@@ -18,6 +18,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 /**
@@ -162,13 +163,37 @@ function MagneticUsernameBadge({ username }: { username: string }) {
       // Haptics são best-effort: nunca bloqueiam a cópia.
     }
 
+    const handle = `@${username}`;
+    let didCopy = false;
+
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`@${username}`);
+        await navigator.clipboard.writeText(handle);
+        didCopy = true;
+      } else if (typeof document !== 'undefined') {
+        // Fallback para contextos não-seguros onde a Clipboard API não existe.
+        const scratch = document.createElement('textarea');
+        scratch.value = handle;
+        scratch.setAttribute('readonly', '');
+        scratch.style.position = 'fixed';
+        scratch.style.opacity = '0';
+        document.body.appendChild(scratch);
+        scratch.select();
+        didCopy = document.execCommand('copy');
+        document.body.removeChild(scratch);
       }
     } catch {
-      // Clipboard bloqueado/negado: o morph comunica a tentativa sem quebrar.
+      didCopy = false;
     }
+
+    if (!didCopy) return;
+
+    // Feedback explícito e simultâneo: vibração nativa + toast global, no mesmo
+    // instante em que o ícone sofre o morph inline para o check esmeralda.
+    if (typeof window !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    toast.success('Nome de usuário copiado!');
 
     setCopied(true);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
