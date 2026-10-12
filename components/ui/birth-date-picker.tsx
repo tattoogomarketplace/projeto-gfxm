@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
@@ -59,6 +60,9 @@ const FALLBACK_WEEK_START: Record<string, number> = {
 const POPOVER_MARGIN = 12;
 const POPOVER_GAP = 8;
 const ESTIMATED_POPOVER_HEIGHT = 372;
+
+/** Assinatura vazia: o flag de montagem não depende de nenhum evento externo. */
+const subscribeNoop = () => () => {};
 
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
@@ -124,7 +128,10 @@ export function BirthDatePicker({
   const { locale } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
-  const [mounted, setMounted] = useState(false);
+  // Detecção de cliente SEM `setState` dentro de efeito (evita cascading render
+  // e satisfaz `react-hooks/set-state-in-effect`): o SSR resolve `false` e a
+  // primeira renderização no cliente resolve `true`, liberando o portal.
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<CalendarView>('days');
   const [cursor, setCursor] = useState<{ year: number; month: number }>(() => {
@@ -137,10 +144,6 @@ export function BirthDatePicker({
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const weekStartsOn = useMemo(() => getWeekStartsOn(locale), [locale]);
 
