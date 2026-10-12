@@ -18,8 +18,7 @@ import {
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { EmailUpdateSheet } from '@/components/settings/email-update-sheet';
-import { ForgotPasswordFlow } from '@/components/settings/forgot-password-flow';
-import { RecoveryHubSheet, type RecoveryPath } from '@/components/settings/recovery-hub-sheet';
+import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -164,7 +163,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const [emailSheetOpen, setEmailSheetOpen] = useState(false);
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
-  const [recoveryFlowOpen, setRecoveryFlowOpen] = useState(false);
 
   const displayName = name.trim();
   const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
@@ -174,20 +172,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const handleLogout = () => {
     triggerHaptic('medium');
     onLogout();
-  };
-
-  // Roteamento determinístico da central de recuperação: senha abre o sub-fluxo
-  // bancário (CPF → documento → OTP → nova senha); e-mail reabre a troca
-  // autenticada (senha atual + novo e-mail + OTP) já disponível neste hub.
-  const handleRecoveryPath = (path: RecoveryPath) => {
-    setRecoverySheetOpen(false);
-    window.setTimeout(() => {
-      if (path === 'email') {
-        setEmailSheetOpen(true);
-        return;
-      }
-      setRecoveryFlowOpen(true);
-    }, 240);
   };
 
   return (
@@ -313,13 +297,9 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       <RecoveryHubSheet
         open={recoverySheetOpen}
         onClose={() => setRecoverySheetOpen(false)}
-        onSelectPath={handleRecoveryPath}
-      />
-
-      <ForgotPasswordFlow
-        open={recoveryFlowOpen}
-        onClose={() => setRecoveryFlowOpen(false)}
         recoveryEmail={displayEmail}
+        currentEmail={displayEmail}
+        onEmailUpdated={setEmailOverride}
       />
     </>
   );
