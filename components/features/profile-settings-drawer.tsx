@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Building2,
   ChevronRight,
@@ -144,32 +144,32 @@ export function ProfileSettingsDrawer() {
   if (!mounted) return null;
 
   return createPortal(
-        <div
-          className={cn(
-            'settings-drawer-scrim gpu-layer fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none contain-paint transform-gpu backface-hidden will-change-transform',
-            open ? 'pointer-events-auto' : 'pointer-events-none'
-          )}
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="settings-drawer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="settings-drawer-scrim gpu-layer fixed inset-0 z-[90] flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden overscroll-none contain-paint transform-gpu backface-hidden will-change-[opacity,transform]"
           style={{ overscrollBehavior: 'none' }}
           role="dialog"
-          aria-modal={open}
-          aria-hidden={!open}
+          aria-modal="true"
           aria-labelledby="profile-menu-title"
-          inert={!open ? true : undefined}
         >
-          <motion.button
+          <button
             type="button"
-            initial={false}
-            animate={{ opacity: open ? 1 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-zinc-950/95 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
+            className="absolute inset-0 bg-zinc-950/95 backdrop-blur-none contain-paint transform-gpu backface-hidden md:backdrop-blur-sm"
             aria-label={t('common.close')}
             onClick={closeSettingsDrawer}
-            tabIndex={open ? 0 : -1}
           />
           <motion.aside
-            initial={false}
-            animate={{ x: open ? 0 : '100%' }}
-            transition={{ type: 'spring', stiffness: 460, damping: 44, mass: 0.9 }}
+            key="settings-panel"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
             drag="x"
             dragDirectionLock
             dragConstraints={{ left: 0, right: 0 }}
@@ -178,7 +178,7 @@ export function ProfileSettingsDrawer() {
             onDragEnd={(_, info) => {
               if (info.offset.x > 120 || info.velocity.x > 720) dismiss();
             }}
-            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-zinc-800 bg-zinc-950 contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
+            className="gpu-layer absolute inset-y-0 right-0 z-10 flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-zinc-800 bg-zinc-950 contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
           >
             <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
               <span className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
@@ -258,7 +258,9 @@ export function ProfileSettingsDrawer() {
               <AccountManagement fallbackRole={role} variant="rows" />
             </div>
           </motion.aside>
-        </div>,
+        </motion.div>
+      ) : null}
+    </AnimatePresence>,
     document.body
   );
 }
