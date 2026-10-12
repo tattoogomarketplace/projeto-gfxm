@@ -27,7 +27,7 @@ function DrawerSection({ title, children }: { title: string; children: ReactNode
       <h3 className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
         {title}
       </h3>
-      <div className="gpu-layer overflow-hidden rounded-2xl border border-white/10 bg-[#161616] contain-paint transform-gpu backface-hidden will-change-transform">{children}</div>
+      <div className="gpu-layer overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 contain-paint transform-gpu backface-hidden will-change-transform">{children}</div>
     </section>
   );
 }
@@ -85,7 +85,7 @@ function DrawerRow({
   );
 
   const classes = cn(
-    'group flex min-h-[44px] w-full items-center gap-3 border-b border-white/5 px-3 py-3 text-left last:border-b-0',
+    'group flex min-h-[44px] w-full items-center gap-3 border-b border-zinc-800/70 px-3 py-3 text-left last:border-b-0',
     'transform-gpu backface-hidden transition-colors duration-200 hover:bg-white/[0.04]',
     (href || onClick) && 'active:scale-[0.99]',
     disabled && 'pointer-events-none opacity-50'
@@ -161,7 +161,7 @@ export function ProfileSettingsDrawer() {
             initial={false}
             animate={{ opacity: open ? 1 : 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-[#0a0a0a]/96 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
+            className="absolute inset-0 bg-zinc-950/95 backdrop-blur-none contain-paint transform-gpu backface-hidden will-change-[opacity] md:backdrop-blur-sm"
             aria-label={t('common.close')}
             onClick={closeSettingsDrawer}
             tabIndex={open ? 0 : -1}
@@ -169,10 +169,18 @@ export function ProfileSettingsDrawer() {
           <motion.aside
             initial={false}
             animate={{ x: open ? 0 : '100%' }}
-            transition={{ type: 'tween', duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-white/10 bg-[#0a0a0a] contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
+            transition={{ type: 'spring', stiffness: 460, damping: 44, mass: 0.9 }}
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.4 }}
+            dragMomentum={false}
+            onDragEnd={(_, info) => {
+              if (info.offset.x > 120 || info.velocity.x > 720) dismiss();
+            }}
+            className="gpu-layer relative z-10 ml-auto flex h-full max-h-full min-h-0 w-[min(100%,24.5rem)] transform-gpu flex-col overflow-hidden overscroll-none border-l border-zinc-800 bg-zinc-950 contain-paint backface-hidden will-change-transform md:shadow-[-16px_0_32px_rgba(0,0,0,0.35)]"
           >
-            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#0a0a0a] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
+            <div className="gpu-layer z-20 flex shrink-0 items-center gap-3 border-b border-zinc-800 bg-zinc-950 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] contain-paint transform-gpu backface-hidden will-change-transform">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
                   {BRAND_NAME}
