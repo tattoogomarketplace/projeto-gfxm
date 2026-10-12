@@ -225,22 +225,26 @@ export function EmailUpdateSheet({
       if (!targetEmail) return false;
       const verification = await targetEmail.attemptVerification({ code });
       if (verification.verification.status !== 'verified') return false;
-      const previousPrimaryId = user.primaryEmailAddress?.id;
+
+      // 1. Promove o novo e-mail a primário (binding explícito e estrito).
       await user.update({ primaryEmailAddressId: targetEmail.id });
-      if (previousPrimaryId && previousPrimaryId !== targetEmail.id) {
-        const staleEmail = user.emailAddresses.find(
-          (candidate) => candidate.id === previousPrimaryId
-        );
-        if (staleEmail) {
-          try {
-            await staleEmail.destroy();
-          } catch {
-            // Já desanexado do perfil — nada a fazer.
-          }
+      await user.reload();
+
+      // 2. Remove TODOS os demais identificadores de e-mail do perfil, para
+      //    que nenhum alias legado permaneça permitindo login pela conta.
+      const legacyAddresses = user.emailAddresses.filter(
+        (address) => address.id !== targetEmail.id
+      );
+      for (const address of legacyAddresses) {
+        try {
+          await address.destroy();
+        } catch {
+          // Alias bloqueado/restrito pelo Clerk — segue o fluxo.
         }
       }
-      // Re-sincroniza a sessão: força o JWT a descartar o identificador antigo
-      // imediatamente, impedindo logins legados com o e-mail anterior.
+
+      // 3. Re-sincroniza a sessão: força o JWT a descartar o identificador
+      //    antigo imediatamente, impedindo logins legados com o e-mail anterior.
       await session?.reload();
       return true;
     },
