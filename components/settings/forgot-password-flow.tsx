@@ -196,6 +196,11 @@ export function ForgotPasswordFlow({
   const uploading = phase !== 'idle';
   const busy = cpfSubmitting || uploading || resetting;
 
+  const cpfDigits = onlyCpfDigits(cpf);
+  const cpfValid = isValidCpf(cpfDigits);
+  const cpfFieldError =
+    cpfError || (cpfDigits.length > 0 && !cpfValid ? 'Digite um CPF válido.' : '');
+
   const resetAll = useCallback(() => {
     setStep('cpf');
     setCpf('');
@@ -664,7 +669,7 @@ export function ForgotPasswordFlow({
                         htmlFor="fp-cpf"
                         label="CPF Cadastrado"
                         icon={<User className="h-[18px] w-[18px]" strokeWidth={1.75} />}
-                        error={cpfError}
+                        error={cpfFieldError}
                       >
                         <input
                           ref={cpfRef}
@@ -674,12 +679,15 @@ export function ForgotPasswordFlow({
                           placeholder="000.000.000-00"
                           value={cpf}
                           disabled={cpfSubmitting}
+                          aria-invalid={cpfFieldError ? true : undefined}
                           onChange={(event) => {
-                            setCpf(formatCpf(event.target.value));
+                            const next = formatCpf(event.target.value);
+                            setCpf(next);
                             if (cpfError) setCpfError('');
+                            if (isValidCpf(onlyCpfDigits(next))) triggerHaptic('light');
                           }}
                           onKeyDown={(event) => {
-                            if (event.key === 'Enter') void handleSubmitCpf();
+                            if (event.key === 'Enter' && cpfValid) void handleSubmitCpf();
                           }}
                           className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-white caret-orange-400 outline-none ring-0 placeholder:text-zinc-600 disabled:opacity-60"
                         />
@@ -692,13 +700,18 @@ export function ForgotPasswordFlow({
                     </p>
 
                     <div className="mt-auto pt-6">
-                      <PrimaryAction
-                        onClick={() => void handleSubmitCpf()}
-                        disabled={cpfSubmitting || onlyCpfDigits(cpf).length !== 11}
-                        busy={cpfSubmitting}
-                        label="Validar CPF"
-                        busyLabel="Validando..."
-                      />
+                      <motion.div
+                        animate={{ scale: cpfValid && !cpfSubmitting ? 1 : 0.985 }}
+                        transition={{ type: 'spring', stiffness: 520, damping: 26 }}
+                      >
+                        <PrimaryAction
+                          onClick={() => void handleSubmitCpf()}
+                          disabled={cpfSubmitting || !cpfValid}
+                          busy={cpfSubmitting}
+                          label="Validar CPF"
+                          busyLabel="Validando..."
+                        />
+                      </motion.div>
                     </div>
                   </motion.div>
                 ) : step === 'document' ? (
