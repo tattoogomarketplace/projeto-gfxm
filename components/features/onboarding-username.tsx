@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { Check, Loader2, ShieldCheck, X } from 'lucide-react';
@@ -26,6 +34,11 @@ import type { MessageKey } from '@/lib/i18n/types';
  * O `@` é um prefixo visual INLINE (a mesma "Inline Prefix Illusion" do
  * SearchBar): fora do `<input>`, ele se metamorfoseia na máquina de tatuagem 3D
  * ao focar, sem deslocar texto nem caret.
+ *
+ * Performance (60fps): o estado de digitação (`body`) vive ISOLADO no
+ * `UsernameField` (memoizado). O componente-pai só é notificado em transições
+ * de disponibilidade — nunca a cada tecla — então o fundo animado, o card de
+ * vidro e a bottom sheet não voltam a renderizar enquanto o usuário digita.
  */
 
 const DEBOUNCE_MS = 500;
@@ -85,8 +98,10 @@ export interface OnboardingUsernameProps {
  * Glow ambiente (radial) em movimento contínuo — brand orange + zinc. Fica
  * atrás do conteúdo com `pointer-events-none`, então nunca intercepta toques
  * nem interfere no layout (posicionamento absoluto, sem influência de fluxo).
+ *
+ * `memo` sem props: nunca re-renderiza, nem quando o pai reconcilia.
  */
-function AmbientGlow() {
+const AmbientGlow = memo(function AmbientGlow() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.div
@@ -119,138 +134,330 @@ function AmbientGlow() {
       />
     </div>
   );
+});
+
+/** Estado de disponibilidade estabilizado que o pai realmente precisa. */
+type FieldState = { status: Availability; username: string | null };
+
+export interface UsernameFieldHandle {
+  /** Dispara o shake imperativamente (ex.: erro no submit). */
+  shake: () => void;
 }
+
+interface UsernameFieldProps {
+  onStateChange: (state: FieldState) => void;
+  submitError: string | null;
+}
+
+/**
+ * Campo de @username auto-contido. É o ÚNICO componente que re-renderiza a cada
+ * tecla; o `onStateChange` só emite em transições reais de disponibilidade, de
+ * modo que digitar nunca repinta a página inteira.
+ */
+const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
+  function UsernameField({ onStateChange, submitError }, ref) {
+    const { getToken } = useAuth();
+    const { triggerHaptic } = useHapticFeedback();
+    const { t } = useI18n();
+
+    const [body, setBody] = useState('');
+    const [focused, setFocused] = useState(false);
+    const [remote, setRemote] = useState<{
+      username: string;
+      status: Extract<Availability, 'checking' | 'available' | 'taken' | 'forbidden' | 'error'>;
+    } | null>(null);
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    const pendingCaret = useRef<number | null>(null);
+    const shakeControls = useAnimationControls();
+
+    const validation = validateUsername(body);
+    const trimmed = validation.valid ? validation.username : '';
+
+    // Estado derivado: evita qualquer `setState` síncrono dentro de efeitos.
+    const status: Availability = !body
+      ? 'idle'
+      : !validation.valid
+        ? validation.reason === 'reserved'
+          ? 'reserved'
+          : 'invalid'
+        : remote && remote.username === validation.username
+          ? remote.status
+          : 'checking';
+
+    const getTokenRef = useRef(getToken);
+    useEffect(() => {
+      getTokenRef.current = getToken;
+    }, [getToken]);
+    const tokenFn = useCallback(() => getTokenRef.current({ skipCache: true }).catch(() => null), []);
+
+    // Reafirma o caret após o mascaramento remover caracteres inválidos no mesmo
+    // tick — mantém a digitação fluindo sem o cursor saltar para o fim.
+    useEffect(() => {
+      const pos = pendingCaret.current;
+      if (pos === null || !inputRef.current) return;
+      inputRef.current.setSelectionRange(pos, pos);
+      pendingCaret.current = null;
+    }, [body]);
+
+    // Validação remota com debounce de 500ms. Só agenda a chamada quando o
+    // formato é válido; o `setRemote` acontece no callback assíncrono (permitido).
+    useEffect(() => {
+      if (!validation.valid || !trimmed) return;
+      const username = trimmed;
+      const controller = new AbortController();
+      const timer = window.setTimeout(async () => {
+        try {
+          const res = await authedFetch(
+            `/api/user/username?username=${encodeURIComponent(username)}`,
+            { signal: controller.signal },
+            tokenFn
+          );
+          const json = (await res.json().catch(() => ({}))) as {
+            allowed?: boolean;
+            available?: boolean;
+            reason?: string;
+          };
+          if (controller.signal.aborted) return;
+          const next: 'available' | 'taken' | 'forbidden' | 'error' =
+            json.allowed === false || json.reason === 'forbidden'
+              ? 'forbidden'
+              : !res.ok
+                ? 'error'
+                : json.available
+                  ? 'available'
+                  : 'taken';
+          setRemote({ username, status: next });
+        } catch (err) {
+          if ((err as Error)?.name === 'AbortError') return;
+          setRemote({ username, status: 'error' });
+        }
+      }, DEBOUNCE_MS);
+      return () => {
+        window.clearTimeout(timer);
+        controller.abort();
+      };
+    }, [validation.valid, trimmed, tokenFn]);
+
+    // Haptics + shake reativos à transição de estado (sem setState no efeito).
+    const prevStatus = useRef<Availability>('idle');
+    useEffect(() => {
+      if (status === prevStatus.current) return;
+      prevStatus.current = status;
+      if (status === 'available') {
+        triggerHaptic('light');
+      } else if (status === 'taken' || status === 'error' || status === 'forbidden') {
+        triggerHaptic('heavy');
+        void shakeControls.start(SHAKE);
+      } else if (status === 'invalid' || status === 'reserved') {
+        void shakeControls.start(SHAKE);
+      }
+    }, [status, triggerHaptic, shakeControls]);
+
+    // Reporta ao pai APENAS transições relevantes: o handle só sobe quando está
+    // efetivamente disponível, então o pai não re-renderiza a cada tecla.
+    const onStateChangeRef = useRef(onStateChange);
+    useEffect(() => {
+      onStateChangeRef.current = onStateChange;
+    }, [onStateChange]);
+
+    const reportedRef = useRef<FieldState | null>(null);
+    useEffect(() => {
+      const next: FieldState = {
+        status,
+        username: status === 'available' ? trimmed : null,
+      };
+      const prev = reportedRef.current;
+      if (prev && prev.status === next.status && prev.username === next.username) return;
+      reportedRef.current = next;
+      onStateChangeRef.current(next);
+    }, [status, trimmed]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        shake: () => {
+          void shakeControls.start(SHAKE);
+        },
+      }),
+      [shakeControls]
+    );
+
+    const handleChange = (raw: string) => {
+      const next = sanitizeUsernameBody(raw);
+      if (next !== raw) {
+        const caretRaw = inputRef.current?.selectionStart ?? raw.length;
+        pendingCaret.current = sanitizeUsernameBody(raw.slice(0, caretRaw)).length;
+      }
+      setBody(next);
+    };
+
+    const handleGlyphActivate = (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(0, 0);
+    };
+
+    const handleGlyphLocked = useCallback(() => triggerHaptic('medium'), [triggerHaptic]);
+
+    const tone: Tone = status === 'idle' ? 'neutral' : TONE[status];
+    const message = status === 'idle' ? null : t(MESSAGE_KEY[status], { username: trimmed });
+
+    return (
+      <>
+        <motion.div animate={shakeControls} className="transform-gpu">
+          <div
+            onMouseDown={(event) => {
+              const el = inputRef.current;
+              if (!el || event.target === el) return;
+              event.preventDefault();
+              el.focus();
+              const end = el.value.length;
+              el.setSelectionRange(end, end);
+            }}
+            style={{ WebkitBackdropFilter: 'blur(12px) saturate(180%)', backdropFilter: 'blur(12px) saturate(180%)' }}
+            className={cn(
+              'relative flex h-14 w-full cursor-text items-center gap-2 rounded-2xl border px-3.5 transform-gpu',
+              'bg-white/[0.05] transition-[border-color,box-shadow] duration-200 ease-out',
+              tone === 'pending' && 'border-orange-500/45 shadow-[0_0_20px_rgba(249,115,22,0.18)]',
+              tone === 'ok' && 'border-emerald-500/45 shadow-[0_0_22px_rgba(16,185,129,0.2)]',
+              tone === 'bad' && 'border-red-500/45 shadow-[0_0_22px_rgba(239,68,68,0.18)]',
+              tone === 'neutral' && 'border-white/[0.1]',
+              focused && 'border-orange-500/70 shadow-[0_0_26px_rgba(249,115,22,0.32)]'
+            )}
+          >
+            <UsernameMorphGlyph
+              focused={focused}
+              onLocked={handleGlyphLocked}
+              onActivate={handleGlyphActivate}
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              autoComplete="off"
+              enterKeyHint="done"
+              maxLength={20}
+              value={body}
+              onChange={(event) => handleChange(event.target.value)}
+              onFocus={() => {
+                setFocused(true);
+                triggerHaptic('light');
+              }}
+              onBlur={() => setFocused(false)}
+              aria-label="Escolha seu @username"
+              aria-invalid={tone === 'bad'}
+              placeholder="seu_username"
+              className="h-full min-w-0 flex-1 bg-transparent p-0 text-[17px] font-semibold tracking-tight text-white caret-orange-500 outline-none placeholder:font-normal placeholder:text-zinc-600"
+            />
+
+            {/* Slot fixo de status — largura imutável (CLS = 0). */}
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+              <AnimatePresence mode="wait" initial={false}>
+                {status === 'checking' ? (
+                  <motion.span
+                    key="checking"
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-orange-400" strokeWidth={2.6} />
+                  </motion.span>
+                ) : status === 'available' ? (
+                  <motion.span
+                    key="available"
+                    className="text-emerald-400"
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.4 }}
+                    transition={{ type: 'spring', stiffness: 440, damping: 18 }}
+                  >
+                    <Check className="h-5 w-5" strokeWidth={3} />
+                  </motion.span>
+                ) : status === 'taken' || status === 'forbidden' || status === 'error' ? (
+                  <motion.span
+                    key="bad"
+                    className="text-red-400"
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.4 }}
+                    transition={{ type: 'spring', stiffness: 440, damping: 18 }}
+                  >
+                    <X className="h-5 w-5" strokeWidth={3} />
+                  </motion.span>
+                ) : status === 'invalid' || status === 'reserved' ? (
+                  <motion.span
+                    key="warn"
+                    className="text-amber-400"
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.4 }}
+                    transition={{ type: 'spring', stiffness: 440, damping: 18 }}
+                  >
+                    <X className="h-5 w-5" strokeWidth={3} />
+                  </motion.span>
+                ) : null}
+              </AnimatePresence>
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Mensagem com altura reservada — zero layout shifting. */}
+        <div className="mt-2 min-h-[20px] px-1">
+          <AnimatePresence initial={false} mode="wait">
+            <motion.p
+              key={submitError ? 'submit-error' : status}
+              initial={{ opacity: 0, y: -2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
+              transition={{ duration: 0.16 }}
+              className={cn(
+                'text-[12px] leading-tight',
+                submitError ? 'text-red-400' : status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE[tone]
+              )}
+            >
+              {submitError ?? message ?? '3–20 caracteres. Letras minúsculas, números e underline.'}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+      </>
+    );
+  }
+);
 
 export function OnboardingUsername({
   flow,
   onCompleted,
   className,
 }: OnboardingUsernameProps) {
-  const { getToken } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
-  const { t } = useI18n();
 
-  const [body, setBody] = useState('');
-  const [focused, setFocused] = useState(false);
-  const [remote, setRemote] = useState<{
-    username: string;
-    status: Extract<Availability, 'checking' | 'available' | 'taken' | 'forbidden' | 'error'>;
-  } | null>(null);
+  const [fieldState, setFieldState] = useState<FieldState>({ status: 'idle', username: null });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const pendingCaret = useRef<number | null>(null);
-  const shakeControls = useAnimationControls();
+  const fieldRef = useRef<UsernameFieldHandle>(null);
 
-  const validation = validateUsername(body);
-  const trimmed = validation.valid ? validation.username : '';
-
-  // Estado derivado: evita qualquer `setState` síncrono dentro de efeitos.
-  const status: Availability = !body
-    ? 'idle'
-    : !validation.valid
-      ? validation.reason === 'reserved'
-        ? 'reserved'
-        : 'invalid'
-      : remote && remote.username === validation.username
-        ? remote.status
-        : 'checking';
-
-  const getTokenRef = useRef(getToken);
-  useEffect(() => {
-    getTokenRef.current = getToken;
-  }, [getToken]);
-  const tokenFn = useCallback(() => getTokenRef.current({ skipCache: true }).catch(() => null), []);
-
-  // Reafirma o caret após o mascaramento remover caracteres inválidos no mesmo
-  // tick — mantém a digitação fluindo sem o cursor saltar para o fim.
-  useEffect(() => {
-    const pos = pendingCaret.current;
-    if (pos === null || !inputRef.current) return;
-    inputRef.current.setSelectionRange(pos, pos);
-    pendingCaret.current = null;
-  }, [body]);
-
-  // Validação remota com debounce de 500ms. Só agenda a chamada quando o
-  // formato é válido; o `setRemote` acontece no callback assíncrono (permitido).
-  useEffect(() => {
-    if (!validation.valid || !trimmed) return;
-    const username = trimmed;
-    const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      try {
-        const res = await authedFetch(
-          `/api/user/username?username=${encodeURIComponent(username)}`,
-          { signal: controller.signal },
-          tokenFn
-        );
-        const json = (await res.json().catch(() => ({}))) as {
-          allowed?: boolean;
-          available?: boolean;
-          reason?: string;
-        };
-        if (controller.signal.aborted) return;
-        const next: 'available' | 'taken' | 'forbidden' | 'error' =
-          json.allowed === false || json.reason === 'forbidden'
-            ? 'forbidden'
-            : !res.ok
-              ? 'error'
-              : json.available
-                ? 'available'
-                : 'taken';
-        setRemote({ username, status: next });
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-        setRemote({ username, status: 'error' });
-      }
-    }, DEBOUNCE_MS);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [validation.valid, trimmed, tokenFn]);
-
-  // Haptics + shake reativos à transição de estado (sem setState no efeito).
-  const prevStatus = useRef<Availability>('idle');
-  useEffect(() => {
-    if (status === prevStatus.current) return;
-    prevStatus.current = status;
-    if (status === 'available') {
-      triggerHaptic('light');
-    } else if (status === 'taken' || status === 'error' || status === 'forbidden') {
-      triggerHaptic('heavy');
-      void shakeControls.start(SHAKE);
-    } else if (status === 'invalid' || status === 'reserved') {
-      void shakeControls.start(SHAKE);
-    }
-  }, [status, triggerHaptic, shakeControls]);
-
-  const handleChange = (raw: string) => {
-    const next = sanitizeUsernameBody(raw);
-    if (next !== raw) {
-      const caretRaw = inputRef.current?.selectionStart ?? raw.length;
-      pendingCaret.current = sanitizeUsernameBody(raw.slice(0, caretRaw)).length;
-    }
+  // Estável por design: o campo memoizado nunca re-renderiza por causa do pai.
+  // Só atualiza quando a disponibilidade muda de fato (não a cada tecla).
+  const handleStateChange = useCallback((next: FieldState) => {
+    // Ao editar o handle, qualquer erro de submit anterior deixa de valer.
     setSubmitError(null);
-    setBody(next);
-  };
+    setFieldState((prev) =>
+      prev.status === next.status && prev.username === next.username ? prev : next
+    );
+  }, []);
 
-  const handleGlyphActivate = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const el = inputRef.current;
-    if (!el) return;
-    el.focus();
-    el.setSelectionRange(0, 0);
-  };
-
-  const handleGlyphLocked = useCallback(() => triggerHaptic('medium'), [triggerHaptic]);
-
-  const tone: Tone = status === 'idle' ? 'neutral' : TONE[status];
-  const message = status === 'idle' ? null : t(MESSAGE_KEY[status], { username: trimmed });
-  const canSubmit = status === 'available' && !!trimmed && !submitting;
+  const status = fieldState.status;
+  const trimmed = fieldState.username ?? '';
+  const canSubmit = status === 'available' && !!fieldState.username && !submitting;
 
   const handleContinue = () => {
     if (!canSubmit) return;
@@ -259,11 +466,11 @@ export function OnboardingUsername({
   };
 
   const confirm = async () => {
-    if (submitting || !trimmed) return;
+    if (submitting || !fieldState.username) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await updateUsername({ username: trimmed });
+      const result = await updateUsername({ username: fieldState.username });
       if (result.ok) {
         triggerHaptic('success');
         setSheetOpen(false);
@@ -272,13 +479,13 @@ export function OnboardingUsername({
         setSubmitError(result.error);
         setSheetOpen(false);
         triggerHaptic('heavy');
-        void shakeControls.start(SHAKE);
+        fieldRef.current?.shake();
       }
     } catch {
       setSubmitError('Falha ao salvar o @username. Tente novamente.');
       setSheetOpen(false);
       triggerHaptic('heavy');
-      void shakeControls.start(SHAKE);
+      fieldRef.current?.shake();
     } finally {
       setSubmitting(false);
     }
@@ -323,124 +530,11 @@ export function OnboardingUsername({
             </p>
           </header>
 
-          <motion.div animate={shakeControls} className="transform-gpu">
-            <div
-              onMouseDown={(event) => {
-                const el = inputRef.current;
-                if (!el || event.target === el) return;
-                event.preventDefault();
-                el.focus();
-                const end = el.value.length;
-                el.setSelectionRange(end, end);
-              }}
-              style={{ WebkitBackdropFilter: 'blur(12px) saturate(180%)', backdropFilter: 'blur(12px) saturate(180%)' }}
-              className={cn(
-                'relative flex h-14 w-full cursor-text items-center gap-2 rounded-2xl border px-3.5 transform-gpu',
-                'bg-white/[0.05] transition-[border-color,box-shadow] duration-200 ease-out',
-                tone === 'pending' && 'border-orange-500/45 shadow-[0_0_20px_rgba(249,115,22,0.18)]',
-                tone === 'ok' && 'border-emerald-500/45 shadow-[0_0_22px_rgba(16,185,129,0.2)]',
-                tone === 'bad' && 'border-red-500/45 shadow-[0_0_22px_rgba(239,68,68,0.18)]',
-                tone === 'neutral' && 'border-white/[0.1]',
-                focused && 'border-orange-500/70 shadow-[0_0_26px_rgba(249,115,22,0.32)]'
-              )}
-            >
-              <UsernameMorphGlyph
-                focused={focused}
-                onLocked={handleGlyphLocked}
-                onActivate={handleGlyphActivate}
-              />
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="text"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                autoComplete="off"
-                enterKeyHint="done"
-                maxLength={20}
-                value={body}
-                onChange={(event) => handleChange(event.target.value)}
-                onFocus={() => {
-                  setFocused(true);
-                  triggerHaptic('light');
-                }}
-                onBlur={() => setFocused(false)}
-                aria-label="Escolha seu @username"
-                aria-invalid={tone === 'bad'}
-                placeholder="seu_username"
-                className="h-full min-w-0 flex-1 bg-transparent p-0 text-[17px] font-semibold tracking-tight text-white caret-orange-500 outline-none placeholder:font-normal placeholder:text-zinc-600"
-              />
-
-              {/* Slot fixo de status — largura imutável (CLS = 0). */}
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                <AnimatePresence mode="wait" initial={false}>
-                  {status === 'checking' ? (
-                    <motion.span
-                      key="checking"
-                      initial={{ opacity: 0, scale: 0.6 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.6 }}
-                    >
-                      <Loader2 className="h-4 w-4 animate-spin text-orange-400" strokeWidth={2.6} />
-                    </motion.span>
-                  ) : status === 'available' ? (
-                    <motion.span
-                      key="available"
-                      className="text-emerald-400"
-                      initial={{ opacity: 0, scale: 0.4 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.4 }}
-                      transition={{ type: 'spring', stiffness: 440, damping: 18 }}
-                    >
-                      <Check className="h-5 w-5" strokeWidth={3} />
-                    </motion.span>
-                  ) : status === 'taken' || status === 'forbidden' || status === 'error' ? (
-                    <motion.span
-                      key="bad"
-                      className="text-red-400"
-                      initial={{ opacity: 0, scale: 0.4 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.4 }}
-                      transition={{ type: 'spring', stiffness: 440, damping: 18 }}
-                    >
-                      <X className="h-5 w-5" strokeWidth={3} />
-                    </motion.span>
-                  ) : status === 'invalid' || status === 'reserved' ? (
-                    <motion.span
-                      key="warn"
-                      className="text-amber-400"
-                      initial={{ opacity: 0, scale: 0.4 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.4 }}
-                      transition={{ type: 'spring', stiffness: 440, damping: 18 }}
-                    >
-                      <X className="h-5 w-5" strokeWidth={3} />
-                    </motion.span>
-                  ) : null}
-                </AnimatePresence>
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Mensagem com altura reservada — zero layout shifting. */}
-          <div className="mt-2 min-h-[20px] px-1">
-            <AnimatePresence initial={false} mode="wait">
-              <motion.p
-                key={submitError ? 'submit-error' : status}
-                initial={{ opacity: 0, y: -2 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -2 }}
-                transition={{ duration: 0.16 }}
-                className={cn(
-                  'text-[12px] leading-tight',
-                  submitError ? 'text-red-400' : status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE[tone]
-                )}
-              >
-                {submitError ?? message ?? '3–20 caracteres. Letras minúsculas, números e underline.'}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+          <UsernameField
+            ref={fieldRef}
+            onStateChange={handleStateChange}
+            submitError={submitError}
+          />
 
           <button
             type="button"
