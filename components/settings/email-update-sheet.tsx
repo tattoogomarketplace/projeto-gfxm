@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
-import { useUser } from '@clerk/nextjs';
-import { useSignIn } from '@clerk/nextjs/legacy';
+import { useSession, useUser } from '@clerk/nextjs';
 import {
   ArrowLeft,
   Check,
@@ -28,8 +27,9 @@ import { cn } from '@/lib/utils';
  *
  *   1. `reauthenticate` — o e-mail atual aparece travado (read-only) e o
  *      usuário precisa provar posse da conta com a "Senha Atual". A validação
- *      usa o `signIn.create` do Clerk (reautenticação real) com fallback
- *      simulado caso o Clerk não esteja carregado.
+ *      usa a reverificação nativa DE SESSÃO do Clerk
+ *      (`session.startVerification` + `session.attemptFirstFactorVerification`),
+ *      que autentica contra a sessão ativa — não uma nova tentativa de login.
  *   2. `destination` — só após o passo 1, o novo endereço é coletado.
  *   3. `verify` — `createEmailAddress` + `prepareVerification(email_code)` do
  *      Clerk disparam o OTP; o usuário confirma os 6 dígitos via
@@ -77,21 +77,6 @@ function firstClerkError(err: unknown) {
   return Array.isArray(errors) ? errors[0] : undefined;
 }
 
-/** Diferencia "senha atual incorreta" de falhas operacionais do Clerk. */
-function isWrongPassword(err: unknown): boolean {
-  const detail = firstClerkError(err);
-  const code = (detail?.code ?? '').toLowerCase();
-  const message = err instanceof Error ? err.message : '';
-  const haystack = `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''} ${message}`.toLowerCase();
-  return (
-    code === 'form_password_incorrect' ||
-    haystack.includes('form_password_incorrect') ||
-    haystack.includes('password is incorrect') ||
-    haystack.includes('current password') ||
-    haystack.includes('senha')
-  );
-}
-
 export function EmailUpdateSheet({
   open,
   currentEmail,
@@ -102,7 +87,7 @@ export function EmailUpdateSheet({
 }: EmailUpdateSheetProps): ReactNode {
   const { triggerHaptic } = useHapticFeedback();
   const { user, isLoaded: userLoaded } = useUser();
-  const { signIn } = useSignIn();
+  const { session, isLoaded: sessionLoaded } = useSession();
 
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -184,26 +169,37 @@ export function EmailUpdateSheet({
   );
 
   /**
-   * Passo 1 — reautenticação REAL e obrigatória. O Clerk precisa confirmar a
-   * senha via `signIn.create` (estratégia de senha) antes de qualquer avanço.
-   * Não existe mock/fallback: se o Clerk falhar, o fluxo NÃO avança.
+   * Passo 1 — reverificação de sessão REAL e obrigatória. Usamos a verificação
+   * nativa da sessão ativa do Clerk (`session.startVerification` +
+   * `session.attemptFirstFactorVerification`), que autentica a senha contra a
+   * sessão corrente em vez de criar uma nova tentativa de login (o que falha
+   * quando já existe sessão). Não existe mock/fallback: se falhar, NÃO avança.
    */
   const runVerifyPassword = useCallback(
     async (value: string): Promise<void> => {
-      const identifier = (user?.primaryEmailAddress?.emailAddress ?? currentEmail)
-        .trim()
-        .toLowerCase();
-      if (!signIn || !identifier) {
+      if (!session) {
         throw new Error('clerk-not-ready');
       }
-      const result = await signIn.create({ strategy: 'password', identifier, password: value });
-      // A resolução do promise não garante 1º fator aprovado: exigimos que o
-      // Clerk confirme a senha (`complete`) ou peça o 2º fator (`needs_second_factor`).
-      if (result.status !== 'complete' && result.status !== 'needs_second_factor') {
+
+      const resource = await session.startVerification({ level: 'first_factor' });
+      if (resource.status === 'complete') return;
+
+      const passwordFactor = resource.supportedFirstFactors?.find(
+        (candidate) => candidate.strategy === 'password'
+      );
+      if (!passwordFactor) {
+        throw new Error('clerk-not-ready');
+      }
+
+      const attempt = await session.attemptFirstFactorVerification({
+        strategy: 'password',
+        password: value,
+      });
+      if (attempt.status !== 'complete') {
         throw new Error('A senha atual está incorreta.');
       }
     },
-    [currentEmail, signIn, user]
+    [session]
   );
 
   /** Passo 2 — cria o endereço no Clerk e dispara o OTP para o novo e-mail. */
@@ -247,12 +243,8 @@ export function EmailUpdateSheet({
     setSubmitting(true);
     try {
       await runVerifyPassword(password);
-    } catch (err) {
-      setPasswordError(
-        isWrongPassword(err)
-          ? 'A senha atual está incorreta.'
-          : 'Não foi possível validar sua senha. Tente novamente.'
-      );
+    } catch {
+      setPasswordError('A senha atual está incorreta.');
       triggerHaptic('heavy');
       setSubmitting(false);
       return;
@@ -388,7 +380,7 @@ export function EmailUpdateSheet({
 
   const codeComplete = digits.every((digit) => digit !== '');
   const canGoBack = step === 'destination' || step === 'verify';
-  const clerkReady = userLoaded;
+  const clerkReady = userLoaded && sessionLoaded;
 
   return createPortal(
     <AnimatePresence>
