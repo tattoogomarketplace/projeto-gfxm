@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { Camera, User } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
 
 /**
@@ -31,6 +30,122 @@ const SIZE_MAP = {
   },
 } as const;
 
+const TAU = Math.PI * 2;
+const CENTER = 60;
+
+// Raios finos (sunburst) do stencil — comprimento alternado para ritmo visual.
+const MANDALA_TICKS = Array.from({ length: 36 }, (_, index) => {
+  const angle = (index / 36) * TAU;
+  const inner = index % 3 === 0 ? 36 : 41;
+  return {
+    x1: CENTER + Math.cos(angle) * inner,
+    y1: CENTER + Math.sin(angle) * inner,
+    x2: CENTER + Math.cos(angle) * 46,
+    y2: CENTER + Math.sin(angle) * 46,
+  };
+});
+
+// Pétalas de lótus sobrepostas — projeção circular clássica do fine-line.
+const MANDALA_PETALS = Array.from({ length: 8 }, (_, index) => {
+  const angle = (index / 8) * TAU;
+  return {
+    cx: CENTER + Math.cos(angle) * 21,
+    cy: CENTER + Math.sin(angle) * 21,
+  };
+});
+
+// Pontos rúnicos entre as pétalas, reforçando o caráter de estêncil.
+const MANDALA_DOTS = Array.from({ length: 18 }, (_, index) => {
+  const angle = (index / 18) * TAU + TAU / 36;
+  return {
+    cx: CENTER + Math.cos(angle) * 27,
+    cy: CENTER + Math.sin(angle) * 27,
+  };
+});
+
+/**
+ * FUNDO FINE-LINE TATTOO
+ *
+ * Estêncil geométrico/mandala desenhado em SVG inline: linhas ultrafinas
+ * (`strokeWidth 1`) em `zinc-800` sobre núcleo `zinc-950`, com um brilho radial
+ * laranja quase imperceptível para o toque "Dark Luxury".
+ */
+function FineLineTattooBackdrop({ glowId }: { glowId: string }) {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+      className="absolute inset-0 h-full w-full text-zinc-800"
+      fill="none"
+    >
+      <defs>
+        <radialGradient id={glowId} cx="50%" cy="40%" r="66%">
+          <stop offset="0%" stopColor="#f97316" stopOpacity="0.12" />
+          <stop offset="52%" stopColor="#f97316" stopOpacity="0.035" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect width="120" height="120" fill={`url(#${glowId})`} />
+
+      <g stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+        {/* Anéis concêntricos */}
+        <circle cx={CENTER} cy={CENTER} r="52" strokeOpacity="0.9" />
+        <circle cx={CENTER} cy={CENTER} r="46" strokeOpacity="0.65" />
+        <circle cx={CENTER} cy={CENTER} r="34" strokeOpacity="0.45" />
+        <circle cx={CENTER} cy={CENTER} r="12" strokeOpacity="0.7" />
+        <circle cx={CENTER} cy={CENTER} r="5" strokeOpacity="0.9" />
+
+        {/* Sunburst de linhas finas */}
+        {MANDALA_TICKS.map((tick, index) => (
+          <line key={`tick-${index}`} x1={tick.x1} y1={tick.y1} x2={tick.x2} y2={tick.y2} />
+        ))}
+
+        {/* Losangos rotacionais centrais */}
+        <rect
+          x="43"
+          y="43"
+          width="34"
+          height="34"
+          strokeOpacity="0.5"
+          transform="rotate(45 60 60)"
+        />
+        <rect
+          x="48"
+          y="48"
+          width="24"
+          height="24"
+          strokeOpacity="0.3"
+          transform="rotate(45 60 60)"
+        />
+
+        {/* Lótus de pétalas sobrepostas */}
+        {MANDALA_PETALS.map((petal, index) => (
+          <circle
+            key={`petal-${index}`}
+            cx={petal.cx}
+            cy={petal.cy}
+            r="16"
+            strokeOpacity="0.35"
+          />
+        ))}
+
+        {/* Pontos rúnicos */}
+        {MANDALA_DOTS.map((dot, index) => (
+          <circle
+            key={`dot-${index}`}
+            cx={dot.cx}
+            cy={dot.cy}
+            r="0.9"
+            fill="currentColor"
+            stroke="none"
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 export type AvatarUploadProps = {
   src?: string | null;
   name?: string | null;
@@ -55,7 +170,8 @@ export function AvatarUpload({
   onSelect,
 }: AvatarUploadProps) {
   const reactId = useId();
-  const inputId = `avatar-input-${reactId}`;
+  const uid = reactId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const glowId = `avatar-glow-${uid}`;
   const inputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
 
@@ -72,10 +188,11 @@ export function AvatarUpload({
     setPreviewUrl(next);
   }, []);
 
-  // A fonte de verdade do servidor (Clerk/R2) sobrescreve o blob local assim que
-  // chega uma nova `src`, evitando previews órfãos.
+  // A fonte de verdade do servidor (Clerk/R2) sobrescreve o blob local apenas
+  // quando um novo avatar remoto realmente chega. `src` nulo (sem foto) nunca
+  // apaga o preview recém-selecionado pelo usuário.
   useEffect(() => {
-    commitPreview(null);
+    if (src) commitPreview(null);
   }, [src, commitPreview]);
 
   // Higiene de memória: todo blob URL criado é revogado no unmount.
@@ -90,16 +207,21 @@ export function AvatarUpload({
   );
 
   const resolvedSrc = previewUrl ?? src ?? null;
+  const isPreview = Boolean(previewUrl);
   const resolvedInitial = (initials || name || 'A').trim().charAt(0).toUpperCase() || 'A';
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    // Permite re-selecionar o mesmo arquivo disparando `change` novamente.
-    event.target.value = '';
-    if (!file || disabled) return;
-    if (!file.type.startsWith('image/')) return;
+    if (!file || disabled || !file.type.startsWith('image/')) {
+      event.target.value = '';
+      return;
+    }
 
+    // O blob URL é materializado ANTES de resetar o input: garante que o objeto
+    // File ainda esteja vinculado ao input em navegadores móveis restritivos.
     const objectUrl = URL.createObjectURL(file);
+    event.target.value = '';
+
     commitPreview(objectUrl);
     setEngaged(false);
     void onSelect?.(file, objectUrl);
@@ -114,7 +236,7 @@ export function AvatarUpload({
     <span className={cn('relative inline-flex', className)}>
       <input
         ref={inputRef}
-        id={inputId}
+        id={`avatar-input-${uid}`}
         type="file"
         accept={accept}
         className="sr-only"
@@ -147,26 +269,40 @@ export function AvatarUpload({
         onBlur={() => setEngaged(false)}
       >
         {/* Camada de mídia — absoluta, nunca altera a caixa do contêiner. */}
-        <span className="absolute inset-0 flex items-center justify-center">
+        <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full bg-zinc-950">
           {resolvedSrc ? (
-            <OptimizedImage
+            // `<img>` nativo: determinístico para blob:/data:/remoto, sem depender
+            // do otimizador/remotePatterns do next/image. O blob local SEMPRE
+            // vence o `src` remoto/nulo enquanto estiver presente.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={resolvedSrc}
               alt={name?.trim() || 'Avatar'}
-              className="h-full w-full rounded-full"
+              draggable={false}
+              className="h-full w-full rounded-full object-cover"
+              {...(isPreview ? {} : { loading: 'lazy' as const, decoding: 'async' as const })}
             />
           ) : (
-            <span
-              className={cn(
-                'flex h-full w-full items-center justify-center rounded-full',
-                'bg-gradient-to-tr from-zinc-900 to-zinc-800 font-semibold uppercase tracking-tight text-zinc-300'
-              )}
-            >
-              {initials ? (
-                <span className={dims.text}>{resolvedInitial}</span>
-              ) : (
-                <User className={cn(dims.icon, 'text-zinc-400')} strokeWidth={1.75} />
-              )}
-            </span>
+            <>
+              <FineLineTattooBackdrop glowId={glowId} />
+              <span className="relative z-10 flex h-full w-full items-center justify-center">
+                {initials ? (
+                  <span
+                    className={cn(
+                      dims.text,
+                      'font-semibold uppercase tracking-tight text-zinc-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
+                    )}
+                  >
+                    {resolvedInitial}
+                  </span>
+                ) : (
+                  <User
+                    className={cn(dims.icon, 'text-zinc-400')}
+                    strokeWidth={1.75}
+                  />
+                )}
+              </span>
+            </>
           )}
         </span>
 
