@@ -6,21 +6,26 @@ import { NextResponse } from 'next/server';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { fetchR2Object } from '@/lib/storage/r2';
 import { inspectDocumentBuffer } from '@/lib/ai/document-forensics';
+import { analyzeKycDocument } from '@/lib/ai/kyc-validator';
 
 /**
  * RECUPERAÇÃO DE ACESSO — ANÁLISE DE DOCUMENTO DE IDENTIDADE
  *
  * Etapa 2 do fluxo "Esqueci a Senha". Reutiliza o mesmo motor seguro de upload
- * do módulo de verificação profissional (presign no R2), mas a análise de
- * segurança aqui é determinística e LOCAL (`inspectDocumentBuffer`): valida
- * assinatura, integridade e formato do documento sem depender de provedores de
- * IA externos nem exigir papel profissional — permitindo que CLIENTES também
- * comprovem identidade na recuperação.
+ * do módulo de verificação profissional (presign no R2) e aplica uma guarda
+ * ESTRITA em duas camadas: (1) forense determinística local
+ * (`inspectDocumentBuffer`) valida assinatura, integridade e formato; (2) visão
+ * computacional (`analyzeKycDocument`) confirma que a imagem é de fato um
+ * documento de identificação legível. A rota FALHA FECHADO: qualquer resposta
+ * ambígua, ausência de provedor de visão ou baixa confiança resulta em
+ * `success: false`, impedindo a máquina de estados de avançar.
  */
 
 const MAX_OBJECT_BYTES = 10 * 1024 * 1024;
 const MAX_FILE_KEY_LENGTH = 512;
 const DELIMITER = '/';
+const MIN_CONFIDENCE = 60;
+const GENERIC_REJECTION = 'Documento inválido ou ilegível. Tente novamente.';
 
 type RecoveryDocumentBody = {
   fileKey?: unknown;
@@ -68,20 +73,30 @@ export async function POST(request: Request) {
   try {
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
-      return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, valid: false, erro: 'Não autenticado.' },
+        { status: 401 }
+      );
     }
 
     let body: RecoveryDocumentBody = {};
     try {
       body = (await request.json()) as RecoveryDocumentBody;
     } catch {
-      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, valid: false, erro: 'Payload inválido.' },
+        { status: 400 }
+      );
     }
 
     const fileKey = resolveFileKey(body);
     if (!fileKey) {
       return NextResponse.json(
-        { sucesso: false, erro: 'Informe um fileKey ou publicUrl válido do R2.' },
+        {
+          success: false,
+          valid: false,
+          erro: 'Informe um fileKey ou publicUrl válido do R2.',
+        },
         { status: 400 }
       );
     }
@@ -92,7 +107,7 @@ export async function POST(request: Request) {
     } catch (error) {
       if (isNotFoundError(error)) {
         return NextResponse.json(
-          { sucesso: false, erro: 'Documento não encontrado no storage.' },
+          { success: false, valid: false, erro: 'Documento não encontrado no storage.' },
           { status: 404 }
         );
       }
@@ -101,7 +116,7 @@ export async function POST(request: Request) {
 
     if (object.contentLength > MAX_OBJECT_BYTES) {
       return NextResponse.json(
-        { sucesso: false, erro: 'Documento excede o tamanho máximo permitido.' },
+        { success: false, valid: false, erro: 'Documento excede o tamanho máximo permitido.' },
         { status: 413 }
       );
     }
@@ -119,21 +134,71 @@ export async function POST(request: Request) {
 
     if (!inspection.ok) {
       return NextResponse.json(
-        { sucesso: false, status: 'rejeitado', erro: inspection.reason ?? 'Documento inválido.' },
+        {
+          success: false,
+          valid: false,
+          status: 'rejeitado',
+          erro: inspection.reason ?? GENERIC_REJECTION,
+        },
+        { status: 422 }
+      );
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('[auth/recovery/validate-document] provedor de visão indisponível');
+      return NextResponse.json(
+        {
+          success: false,
+          valid: false,
+          status: 'indisponivel',
+          erro: 'Validação de segurança indisponível. Tente novamente mais tarde.',
+        },
+        { status: 503 }
+      );
+    }
+
+    let analysis;
+    try {
+      analysis = await analyzeKycDocument({
+        base64: Buffer.from(object.body).toString('base64'),
+        mimeType: inspection.mimeType,
+        kind: 'pessoal',
+      });
+    } catch (error) {
+      console.error('[auth/recovery/validate-document] falha na análise de visão', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json(
+        { success: false, valid: false, status: 'rejeitado', erro: GENERIC_REJECTION },
+        { status: 422 }
+      );
+    }
+
+    if (analysis.isValid !== true || analysis.confidenceScore < MIN_CONFIDENCE) {
+      return NextResponse.json(
+        {
+          success: false,
+          valid: false,
+          status: 'rejeitado',
+          erro: analysis.rejectionReason || GENERIC_REJECTION,
+        },
         { status: 422 }
       );
     }
 
     return NextResponse.json({
-      sucesso: true,
+      success: true,
+      valid: true,
       status: 'aprovado',
       mimeType: inspection.mimeType,
       size: inspection.size,
+      documentType: analysis.documentType ?? null,
+      confidenceScore: analysis.confidenceScore,
     });
   } catch (error) {
     console.error('[auth/recovery/validate-document] falha', error);
     return NextResponse.json(
-      { sucesso: false, erro: 'Não foi possível analisar o documento.' },
+      { success: false, valid: false, erro: 'Não foi possível analisar o documento.' },
       { status: 500 }
     );
   }

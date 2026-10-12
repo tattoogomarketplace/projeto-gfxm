@@ -386,11 +386,17 @@ export function ForgotPasswordFlow({
           tokenFn
         );
         const result = (await validateRes.json().catch(() => ({}))) as {
-          sucesso?: boolean;
+          success?: boolean;
+          valid?: boolean;
           erro?: string;
+          error?: string;
         };
-        if (!validateRes.ok || !result.sucesso) {
-          throw new Error(result.erro || 'Não foi possível validar o documento.');
+        const documentApproved =
+          validateRes.ok === true && result.success === true && result.valid === true;
+        if (!documentApproved) {
+          throw new Error(
+            result.erro || result.error || 'Documento inválido ou ilegível. Tente novamente.'
+          );
         }
 
         triggerHaptic('success');
