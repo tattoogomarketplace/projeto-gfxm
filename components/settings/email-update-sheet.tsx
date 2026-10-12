@@ -49,8 +49,7 @@ export interface EmailUpdateSheetProps {
   onClose: () => void;
   /** Disparado com o novo e-mail após sucesso completo. */
   onUpdated?: (email: string) => void;
-  /** Overrides opcionais (testes/storybook) para cada etapa sensível. */
-  onVerifyPassword?: (password: string) => Promise<boolean> | boolean;
+  /** Overrides opcionais (testes/storybook) para as etapas de destino/OTP. */
   onRequestEmailChange?: (email: string) => Promise<boolean> | boolean;
   onVerifyCode?: (code: string) => Promise<boolean> | boolean;
 }
@@ -69,10 +68,6 @@ const STEP_TITLES: Record<EmailUpdateStep, string> = {
   verify: 'Verificação',
   success: 'Tudo certo',
 };
-
-function sleep(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
 
 type ClerkErrorShape = {
   errors?: Array<{ code?: string; message?: string; longMessage?: string }>;
@@ -102,7 +97,6 @@ export function EmailUpdateSheet({
   currentEmail,
   onClose,
   onUpdated,
-  onVerifyPassword,
   onRequestEmailChange,
   onVerifyCode,
 }: EmailUpdateSheetProps): ReactNode {
@@ -192,31 +186,21 @@ export function EmailUpdateSheet({
   );
 
   /**
-   * Passo 1 — reautenticação real. Usa `signIn.create` com o e-mail atual para
-   * provar posse da conta. Erros que não são de senha (Clerk indisponível,
-   * conta social) não bloqueiam o fluxo, pois a mutação real segue protegida
-   * pelo Clerk no passo 3.
+   * Passo 1 — reautenticação REAL e obrigatória. O Clerk precisa confirmar a
+   * senha via `signIn.create` (estratégia de senha) antes de qualquer avanço.
+   * Não existe mock/fallback: se o Clerk falhar, o fluxo NÃO avança.
    */
   const runVerifyPassword = useCallback(
-    async (value: string): Promise<boolean> => {
-      if (onVerifyPassword) return (await onVerifyPassword(value)) !== false;
-      if (!signIn) {
-        await sleep(600);
-        return true;
-      }
+    async (value: string): Promise<void> => {
       const identifier = (user?.primaryEmailAddress?.emailAddress ?? currentEmail)
         .trim()
         .toLowerCase();
-      if (!identifier) return true;
-      try {
-        await signIn.create({ identifier, password: value });
-        return true;
-      } catch (err) {
-        if (isWrongPassword(err)) return false;
-        return true;
+      if (!signIn || !identifier) {
+        throw new Error('clerk-not-ready');
       }
+      await signIn.create({ strategy: 'password', identifier, password: value });
     },
-    [currentEmail, onVerifyPassword, signIn, user]
+    [currentEmail, signIn, user]
   );
 
   /** Passo 2 — cria o endereço no Clerk e dispara o OTP para o novo e-mail. */
@@ -267,15 +251,14 @@ export function EmailUpdateSheet({
     triggerHaptic('medium');
     setSubmitting(true);
     try {
-      const ok = await runVerifyPassword(password);
-      if (!ok) {
-        setPasswordError('Senha incorreta. Tente novamente.');
-        triggerHaptic('heavy');
-        return;
-      }
+      await runVerifyPassword(password);
       setStep('destination');
-    } catch {
-      setPasswordError('Não foi possível validar sua senha. Tente novamente.');
+    } catch (err) {
+      setPasswordError(
+        isWrongPassword(err)
+          ? 'A senha atual está incorreta.'
+          : 'Não foi possível validar sua senha. Tente novamente.'
+      );
       triggerHaptic('heavy');
     } finally {
       setSubmitting(false);
@@ -407,7 +390,7 @@ export function EmailUpdateSheet({
 
   const codeComplete = digits.every((digit) => digit !== '');
   const canGoBack = step === 'destination' || step === 'verify';
-  const clerkReady = userLoaded || Boolean(onVerifyPassword);
+  const clerkReady = userLoaded;
 
   return createPortal(
     <AnimatePresence>
