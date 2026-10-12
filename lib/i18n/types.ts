@@ -586,6 +586,7 @@ export type MessageKey =
   | 'auth.minAge'
   | 'auth.invalidCnpj'
   | 'auth.invalidCpf'
+  | 'auth.cpfNotRegistered'
   | 'auth.cnpjNotFound'
   | 'auth.cnpjLookupFailed'
   | 'auth.checkingData'

@@ -171,6 +171,9 @@ export function ForgotPasswordFlow({
   const [cpf, setCpf] = useState('');
   const [cpfError, setCpfError] = useState('');
   const [cpfSubmitting, setCpfSubmitting] = useState(false);
+  const [cpfStatus, setCpfStatus] = useState<
+    'idle' | 'checking' | 'verified' | 'unregistered' | 'error'
+  >('idle');
 
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
@@ -188,6 +191,7 @@ export function ForgotPasswordFlow({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cpfRef = useRef<HTMLInputElement | null>(null);
+  const cpfCheckSeq = useRef(0);
   const otpRequestedRef = useRef(false);
   const successTimer = useRef<number | null>(null);
 
@@ -198,14 +202,18 @@ export function ForgotPasswordFlow({
 
   const cpfDigits = onlyCpfDigits(cpf);
   const cpfValid = isValidCpf(cpfDigits);
+  const cpfChecking = cpfStatus === 'checking';
+  const cpfButtonEnabled = cpfValid && (cpfStatus === 'verified' || cpfStatus === 'error');
   const cpfFieldError =
-    cpfError || (cpfDigits.length > 0 && !cpfValid ? 'Digite um CPF válido.' : '');
+    cpfError || (cpfDigits.length > 0 && !cpfValid ? t('auth.invalidCpf') : '');
 
   const resetAll = useCallback(() => {
     setStep('cpf');
     setCpf('');
     setCpfError('');
     setCpfSubmitting(false);
+    setCpfStatus('idle');
+    cpfCheckSeq.current = 0;
     setFile(null);
     setFileError('');
     setPhase('idle');
@@ -260,6 +268,43 @@ export function ForgotPasswordFlow({
   }, [open, step]);
 
   useEffect(() => {
+    if (!open || step !== 'cpf') return;
+    const digits = onlyCpfDigits(cpf);
+    const email = recoveryEmail.trim().toLowerCase();
+    if (!isValidCpf(digits) || !email) {
+      cpfCheckSeq.current += 1;
+      setCpfStatus('idle');
+      return;
+    }
+    const seq = cpfCheckSeq.current + 1;
+    cpfCheckSeq.current = seq;
+    setCpfStatus('checking');
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch('/api/auth/verify-reset-credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, cpf: digits }),
+        });
+        const payload = (await response.json().catch(() => ({}))) as { ok?: boolean };
+        if (cpfCheckSeq.current !== seq) return;
+        if (response.ok && payload.ok === true) {
+          setCpfStatus('verified');
+          setCpfError('');
+        } else {
+          setCpfStatus('unregistered');
+          setCpfError(t('auth.cpfNotRegistered'));
+        }
+      } catch {
+        if (cpfCheckSeq.current !== seq) return;
+        setCpfStatus('error');
+        setCpfError(t('errors.network'));
+      }
+    }, 420);
+    return () => window.clearTimeout(timer);
+  }, [open, step, cpf, recoveryEmail, t]);
+
+  useEffect(() => {
     if (step !== 'otp' || resendSeconds <= 0) return;
     const timer = window.setInterval(() => {
       setResendSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
@@ -284,13 +329,15 @@ export function ForgotPasswordFlow({
     if (cpfSubmitting) return;
     const digits = onlyCpfDigits(cpf);
     if (!isValidCpf(digits)) {
-      setCpfError('Informe um CPF válido.');
+      setCpfStatus('idle');
+      setCpfError(t('auth.invalidCpf'));
       triggerHaptic('heavy');
       return;
     }
     setCpfError('');
     triggerHaptic('medium');
     setCpfSubmitting(true);
+    setCpfStatus('checking');
     try {
       const response = await fetch('/api/auth/verify-reset-credentials', {
         method: 'POST',
@@ -302,19 +349,22 @@ export function ForgotPasswordFlow({
         error?: string;
       };
       if (!response.ok || payload.ok !== true) {
-        setCpfError(payload.error || 'CPF não confere com os dados cadastrados.');
+        setCpfStatus('unregistered');
+        setCpfError(t('auth.cpfNotRegistered'));
         triggerHaptic('heavy');
         return;
       }
+      setCpfStatus('verified');
       triggerHaptic('success');
       setStep('document');
     } catch {
-      setCpfError('Não foi possível validar o CPF agora. Tente novamente.');
+      setCpfStatus('error');
+      setCpfError(t('errors.network'));
       triggerHaptic('heavy');
     } finally {
       setCpfSubmitting(false);
     }
-  }, [cpf, cpfSubmitting, recoveryEmail, triggerHaptic]);
+  }, [cpf, cpfSubmitting, recoveryEmail, triggerHaptic, t]);
 
   const handleSelectFile = useCallback(
     (next: File) => {
@@ -687,7 +737,7 @@ export function ForgotPasswordFlow({
                             if (isValidCpf(onlyCpfDigits(next))) triggerHaptic('light');
                           }}
                           onKeyDown={(event) => {
-                            if (event.key === 'Enter' && cpfValid) void handleSubmitCpf();
+                            if (event.key === 'Enter' && cpfButtonEnabled) void handleSubmitCpf();
                           }}
                           className="peer !m-0 !h-auto !min-h-0 w-full flex-1 border-0 bg-transparent px-4 py-3.5 text-[15px] font-medium tracking-tight text-white caret-orange-400 outline-none ring-0 placeholder:text-zinc-600 disabled:opacity-60"
                         />
@@ -701,15 +751,15 @@ export function ForgotPasswordFlow({
 
                     <div className="mt-auto pt-6">
                       <motion.div
-                        animate={{ scale: cpfValid && !cpfSubmitting ? 1 : 0.985 }}
+                        animate={{ scale: cpfButtonEnabled && !cpfSubmitting ? 1 : 0.985 }}
                         transition={{ type: 'spring', stiffness: 520, damping: 26 }}
                       >
                         <PrimaryAction
                           onClick={() => void handleSubmitCpf()}
-                          disabled={cpfSubmitting || !cpfValid}
-                          busy={cpfSubmitting}
-                          label="Validar CPF"
-                          busyLabel="Validando..."
+                          disabled={cpfSubmitting || cpfChecking || !cpfButtonEnabled}
+                          busy={cpfSubmitting || cpfChecking}
+                          label={cpfStatus === 'error' ? t('common.retry') : 'Validar CPF'}
+                          busyLabel={cpfChecking ? 'Verificando CPF...' : 'Validando...'}
                         />
                       </motion.div>
                     </div>

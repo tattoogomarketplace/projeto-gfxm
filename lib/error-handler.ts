@@ -177,6 +177,15 @@ function matchByText(haystack: string): MessageKey | null {
     return 'auth.invalidCnpj';
   }
   if (
+    haystack.includes('não está cadastrado em nenhuma conta') ||
+    haystack.includes('nao esta cadastrado em nenhuma conta') ||
+    haystack.includes('não está registado em nenhuma conta') ||
+    haystack.includes('nao esta registado em nenhuma conta') ||
+    haystack.includes('not registered to any active account')
+  ) {
+    return 'auth.cpfNotRegistered';
+  }
+  if (
     (haystack.includes('e-mail ou cpf') ||
       haystack.includes('email ou cpf') ||
       haystack.includes('não conferem') ||

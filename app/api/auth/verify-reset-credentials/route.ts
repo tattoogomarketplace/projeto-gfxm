@@ -7,7 +7,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 
-const MISMATCH_MESSAGE = 'E-mail ou CPF não conferem.';
+const CPF_NOT_REGISTERED_MESSAGE = 'Este CPF não está cadastrado em nenhuma conta ativa.';
 
 type MetadataRecord = Record<string, unknown>;
 
@@ -22,7 +22,7 @@ function cpfMatches(stored: string, provided: string): boolean {
 }
 
 function mismatchResponse(status: 400 | 404) {
-  return NextResponse.json({ ok: false, error: MISMATCH_MESSAGE }, { status });
+  return NextResponse.json({ ok: false, error: CPF_NOT_REGISTERED_MESSAGE }, { status });
 }
 
 export async function POST(request: Request) {
@@ -39,11 +39,11 @@ export async function POST(request: Request) {
   const cpf = onlyCpfDigits(typeof body.cpf === 'string' ? body.cpf : '');
 
   if (!email || !email.includes('@') || !email.includes('.')) {
-    return NextResponse.json({ ok: false, error: 'E-mail inválido.' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Dados inválidos.' }, { status: 400 });
   }
 
   if (!isValidCpf(cpf)) {
-    return NextResponse.json({ ok: false, error: 'CPF inválido.' }, { status: 400 });
+    return mismatchResponse(400);
   }
 
   try {
