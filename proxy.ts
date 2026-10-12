@@ -1,8 +1,20 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { USERNAME_SETUP_PATH } from '@/lib/utils/auth-redirect';
 
 const CLERK_WEBHOOK_PATH = '/api/webhooks/clerk';
 const AUTH_PAGES = ['/login', '/register', '/forgot-password'];
+
+/**
+ * Superfícies de ESCRITA do @username (Fase 12 — Etapa 1).
+ *
+ * O degrau de identidade é circular por natureza: o gatilho do handle exige um
+ * `@username` para liberar a navegação, mas a própria tela que o grava ainda
+ * não o possui. Estas rotas precisam permanecer acessíveis a um usuário
+ * AUTENTICADO nesse estado — o Server Action (POST para a rota de setup) e a
+ * Route Handler de identidade (`GET/POST/PUT /api/user/username`).
+ */
+const USERNAME_WRITE_PATHS = [USERNAME_SETUP_PATH, '/api/user/username'] as const;
 
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
@@ -10,6 +22,18 @@ export default clerkMiddleware(async (auth, req) => {
   // O webhook do Clerk é autenticado por assinatura Svix na própria Route
   // Handler, portanto não participa do fluxo de sessão do middleware.
   if (pathname === CLERK_WEBHOOK_PATH) return;
+
+  // Bypass explícito do gatekeeper para a escrita do @username. Reafirma o
+  // `x-pathname` (consumido pelo `UsernameGate` do layout) e segue sem
+  // qualquer proteção/redirect que intercepte a gravação antes do handler.
+  const isUsernameWritePath = USERNAME_WRITE_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+  if (isUsernameWritePath) {
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-pathname', pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
 
   // Clerk hosted paths flash during post-OTP limbo; catch-all to app routes.
   const isSignInPath = pathname === '/sign-in' || pathname.startsWith('/sign-in/');

@@ -1,7 +1,7 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
 import { changeUsername } from '@/lib/services/username-change';
 import type { UsernameValidationReason } from '@/lib/username';
 
@@ -66,7 +66,12 @@ function formatUnlockDate(date: Date): string {
 export async function updateUsername(input: { username: unknown }): Promise<UpdateUsernameResult> {
   let userId: string | null = null;
   try {
-    ({ userId } = await auth());
+    // Mesma resolução resiliente das Route Handlers (`/api/perfil/*`,
+    // `/api/user/username`): Bearer renovado + verificação criptográfica dos
+    // candidatos de cookie, sem depender do heurístico de cookie sufixado do
+    // `auth()`. Sem isso, o Server Action perdia o contexto da sessão na
+    // borda (mobile/proxy) e devolvia "Nao autenticado." mesmo logado.
+    ({ userId } = await resolvePerfilSessionFromIncomingRequest());
   } catch {
     userId = null;
   }
