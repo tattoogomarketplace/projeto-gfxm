@@ -133,7 +133,13 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
             exit={{ opacity: 0, rotate: -90, scale: 0.55 }}
             transition={ICON_SPRING}
           >
-            <TattooMachineGlyph />
+            <span className="relative flex h-8 w-8 min-h-8 min-w-8 items-center justify-center overflow-hidden rounded-[10px] border border-white/[0.06] bg-zinc-950">
+              <span className="pointer-events-none absolute -left-1.5 -top-1.5 h-5 w-5 rounded-full bg-orange-500/30 blur-md" />
+              <span className="pointer-events-none absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-emerald-400/30 blur-md" />
+              <span className="relative z-10 flex items-center justify-center">
+                <TattooMachineGlyph />
+              </span>
+            </span>
           </motion.span>
         )}
       </AnimatePresence>
