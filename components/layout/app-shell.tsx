@@ -43,7 +43,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
   const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
-  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
+  const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
   const { t } = useI18n();
   const pathnameRef = useRef(pathname);
 
@@ -315,7 +315,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               </span>
             ) : null}
             {showMachineTrigger ? (
-              <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={openSettingsDrawer} />
+              <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={toggleSettingsDrawer} />
             ) : null}
           </div>
         </div>
