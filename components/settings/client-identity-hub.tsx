@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   AtSign,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { EmailUpdateSheet } from '@/components/settings/email-update-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -146,9 +147,13 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
+  const [emailSheetOpen, setEmailSheetOpen] = useState(false);
+  const [emailOverride, setEmailOverride] = useState<string | null>(null);
+
   const displayName = name.trim();
   const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
   const phoneValue = phone?.trim() || 'Não informado';
+  const displayEmail = emailOverride ?? email;
 
   const handleLogout = () => {
     triggerHaptic('medium');
@@ -197,7 +202,9 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
           <HubRow
             icon={<Mail className="h-5 w-5" strokeWidth={1.75} />}
             label="Email"
-            value={email || '—'}
+            value={displayEmail || '—'}
+            onClick={() => setEmailSheetOpen(true)}
+            chevron
           />
           <HubRow
             icon={<Phone className="h-5 w-5" strokeWidth={1.75} />}
@@ -256,6 +263,13 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
           </button>
         </HubSection>
       </div>
+
+      <EmailUpdateSheet
+        open={emailSheetOpen}
+        currentEmail={displayEmail}
+        onClose={() => setEmailSheetOpen(false)}
+        onUpdated={setEmailOverride}
+      />
     </div>
   );
 });
