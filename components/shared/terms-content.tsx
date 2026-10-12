@@ -1,6 +1,7 @@
 'use client';
 
-import { TERMS_SECTIONS, TERMS_TITLE, TERMS_UPDATED_AT } from '@/lib/terms';
+import { useMemo } from 'react';
+import { getTermsDocument } from '@/lib/terms';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 
@@ -11,10 +12,13 @@ interface TermsContentProps {
 /**
  * Renderizador único dos Termos de Uso e Política de Privacidade. Usado no
  * primeiro acesso (onboarding) e na visualização dentro das Configurações do
- * Perfil, garantindo consistência total do conteúdo.
+ * Perfil, garantindo consistência total do conteúdo. O idioma do documento é
+ * resolvido dinamicamente a partir da preferência ativa do usuário.
  */
 export function TermsContent({ className }: TermsContentProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const termsDoc = useMemo(() => getTermsDocument(locale), [locale]);
+
   return (
     <div className={cn('space-y-6', className)}>
       <header className="space-y-1">
@@ -22,19 +26,19 @@ export function TermsContent({ className }: TermsContentProps) {
           {t('terms.documentBadge')}
         </p>
         <h3 className="bg-gradient-to-r from-white via-orange-100 to-orange-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
-          {TERMS_TITLE}
+          {termsDoc.title}
         </h3>
         <p className="text-xs text-zinc-500">
-          {t('terms.updatedAt', { date: TERMS_UPDATED_AT })}
+          {t('terms.updatedAt', { date: termsDoc.updatedAt })}
         </p>
       </header>
 
-      {TERMS_SECTIONS.map((section) => (
+      {termsDoc.sections.map((section) => (
         <section key={section.id} className="space-y-2">
           <h4 className="text-sm font-semibold text-orange-400">{section.title}</h4>
           <div className="space-y-2">
             {section.paragraphs.map((paragraph, index) => (
-              <p key={index} className="text-sm leading-relaxed text-zinc-400">
+              <p key={index} className="text-sm leading-relaxed text-zinc-300">
                 {paragraph}
               </p>
             ))}
@@ -44,7 +48,7 @@ export function TermsContent({ className }: TermsContentProps) {
               {section.bullets.map((bullet, index) => (
                 <li
                   key={index}
-                  className="relative text-sm leading-relaxed text-zinc-400 before:absolute before:-left-4 before:top-2 before:h-1 before:w-1 before:rounded-full before:bg-orange-400"
+                  className="relative text-sm leading-relaxed text-zinc-300 before:absolute before:-left-4 before:top-2 before:h-1 before:w-1 before:rounded-full before:bg-orange-400"
                 >
                   {bullet}
                 </li>
