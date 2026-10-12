@@ -259,8 +259,8 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
           />
           <HubRow
             icon={<ShieldCheck className="h-5 w-5" strokeWidth={1.75} />}
-            label="Esqueci meus dados (Senha ou E-mail)"
-            hint="Iniciar recuperação segura de acesso"
+            label="Recuperações Digitais"
+            hint="Senha ou e-mail: recupere o acesso com segurança"
             onClick={() => setRecoverySheetOpen(true)}
             chevron
           />

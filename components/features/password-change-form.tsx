@@ -53,6 +53,19 @@ function parseClerkPasswordError(err: unknown): ParsedPasswordError | null {
     return { field: 'current', message: CURRENT_PASSWORD_ERROR };
   }
 
+  // Reautenticação de sessão (Clerk reverification) nunca abre um modal
+  // intermediário: ela é absorvida como erro inline no campo de senha atual,
+  // mantendo a troca de senha 100% direta e sem uma segunda etapa de UI.
+  if (
+    code === 'session_reverification_required' ||
+    code === 'requires_verification' ||
+    haystack.includes('reverification') ||
+    haystack.includes('verification required') ||
+    haystack.includes('requires_verification')
+  ) {
+    return { field: 'current', message: CURRENT_PASSWORD_ERROR };
+  }
+
   if (
     code === 'form_password_pwned' ||
     haystack.includes('pwned') ||
@@ -108,26 +121,26 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       toast.error(t('errors.sessionExpired'));
       return;
     }
+    setCurrentPasswordError('');
+    setNewPasswordError('');
     if (!currentPassword.trim()) {
-      toast.error(t('errors.password.currentRequired'));
+      setCurrentPasswordError(t('errors.password.currentRequired'));
       return;
     }
     if (!strength.isComplete) {
-      toast.error(t('errors.clerk.passwordWeak'));
+      setNewPasswordError(t('errors.clerk.passwordWeak'));
       return;
     }
     if (!passwordsMatch) {
-      toast.error(t('errors.password.mismatch'));
+      setNewPasswordError(t('errors.password.mismatch'));
       return;
     }
     if (newPassword === currentPassword) {
-      toast.error(t('errors.password.sameAsCurrent'));
+      setNewPasswordError(t('errors.password.sameAsCurrent'));
       return;
     }
 
     setIsUpdating(true);
-    setCurrentPasswordError('');
-    setNewPasswordError('');
     try {
       await user.updatePassword({
         currentPassword: currentPassword.trim(),
@@ -232,14 +245,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
           />
           <button
             type="submit"
-            disabled={
-              isUpdating ||
-              !strength.isComplete ||
-              !passwordsMatch ||
-              !currentPassword ||
-              Boolean(newPasswordError) ||
-              Boolean(currentPasswordError)
-            }
+            disabled={isUpdating}
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
           >
             {isUpdating ? (
