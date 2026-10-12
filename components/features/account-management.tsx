@@ -60,7 +60,17 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
 
   const leaveToLogin = async () => {
     clearClientSession({ intentional: true });
-    await signOut({ redirectUrl: '/login' });
+    try {
+      await Promise.race([
+        signOut({ redirectUrl: '/login' }),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 400);
+        }),
+      ]);
+    } catch {
+      // Conta já removida no Clerk: o token local ainda precisa ser descartado.
+    }
+    window.location.replace('/login');
   };
 
   const handleDeactivate = async () => {
@@ -71,7 +81,6 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       if (!result.ok) {
         throw new Error(result.error || t('toast.accountDeactivateFailed'));
       }
-      toast.success(t('toast.accountDeactivated'));
       await leaveToLogin();
     } catch (err) {
       toast.error(formatAppError(err, 'api'));
@@ -87,7 +96,6 @@ export function AccountManagement({ fallbackRole = null, variant = 'cards' }: Ac
       if (!result.ok) {
         throw new Error(result.error || t('toast.deletionScheduleFailed'));
       }
-      toast.success(t('toast.deletionScheduled'));
       await leaveToLogin();
     } catch (err) {
       toast.error(formatAppError(err, 'api'));
