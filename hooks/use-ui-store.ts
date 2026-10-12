@@ -12,9 +12,11 @@ interface UiState {
   pendingChatArtwork: string | null;
   setPendingChatArtwork: (id: string | null) => void;
   settingsDrawerOpen: boolean;
+  settingsDrawerBusy: boolean;
   openSettingsDrawer: () => void;
   closeSettingsDrawer: () => void;
   toggleSettingsDrawer: () => void;
+  releaseSettingsDrawer: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -25,7 +27,16 @@ export const useUiStore = create<UiState>((set) => ({
   pendingChatArtwork: null,
   setPendingChatArtwork: (id) => set({ pendingChatArtwork: id }),
   settingsDrawerOpen: false,
-  openSettingsDrawer: () => set({ settingsDrawerOpen: true }),
-  closeSettingsDrawer: () => set({ settingsDrawerOpen: false }),
-  toggleSettingsDrawer: () => set((s) => ({ settingsDrawerOpen: !s.settingsDrawerOpen })),
+  settingsDrawerBusy: false,
+  openSettingsDrawer: () =>
+    set((s) => (s.settingsDrawerBusy ? s : { settingsDrawerOpen: true, settingsDrawerBusy: true })),
+  closeSettingsDrawer: () =>
+    set((s) =>
+      s.settingsDrawerBusy && s.settingsDrawerOpen ? s : { settingsDrawerOpen: false, settingsDrawerBusy: true }
+    ),
+  toggleSettingsDrawer: () =>
+    set((s) =>
+      s.settingsDrawerBusy ? s : { settingsDrawerOpen: !s.settingsDrawerOpen, settingsDrawerBusy: true }
+    ),
+  releaseSettingsDrawer: () => set({ settingsDrawerBusy: false }),
 }));

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useId } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useUiStore } from '@/hooks/use-ui-store';
 
 const ICON_SPRING = { type: 'spring' as const, stiffness: 460, damping: 30, mass: 0.8 };
 
@@ -91,23 +92,10 @@ type TattooMachineMenuTriggerProps = {
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
-  const isTransitioning = useRef(false);
-  const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (releaseTimer.current) clearTimeout(releaseTimer.current);
-      isTransitioning.current = false;
-    };
-  }, []);
+  const locked = useUiStore((s) => s.settingsDrawerBusy);
 
   const handleClick = () => {
-    if (isTransitioning.current) return;
-    isTransitioning.current = true;
-    if (releaseTimer.current) clearTimeout(releaseTimer.current);
-    releaseTimer.current = setTimeout(() => {
-      isTransitioning.current = false;
-    }, 300);
+    if (locked) return;
     triggerHaptic('light');
     onClick();
   };
@@ -116,6 +104,8 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
     <motion.button
       type="button"
       onClick={handleClick}
+      aria-disabled={locked}
+      style={locked ? { pointerEvents: 'none' } : undefined}
       aria-label={t('profile.settingsAndActivity')}
       aria-expanded={open}
       aria-haspopup="dialog"
@@ -124,7 +114,8 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
         'text-zinc-400 transition-colors duration-200 ease-out',
         'hover:bg-white/[0.05] hover:text-zinc-100',
         'active:bg-orange-500/10 active:text-orange-400',
-        open && 'bg-orange-500/15 text-orange-400'
+        open && 'bg-orange-500/15 text-orange-400',
+        locked && 'pointer-events-none'
       )}
       whileTap={{ scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 520, damping: 32 }}
