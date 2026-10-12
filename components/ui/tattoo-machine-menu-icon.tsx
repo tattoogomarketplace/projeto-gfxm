@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,58 +10,75 @@ import { useI18n } from '@/hooks/use-i18n';
 const ICON_SPRING = { type: 'spring' as const, stiffness: 460, damping: 30, mass: 0.8 };
 
 function TattooMachineGlyph() {
+  const uid = useId().replace(/:/g, '');
+  const chassis = `tm-chassis-${uid}`;
+  const coil = `tm-coil-${uid}`;
+  const needle = `tm-needle-${uid}`;
+
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-      <rect x="3" y="8" width="7.5" height="9" rx="1.8" fill="#1A1A1A" />
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
+      <defs>
+        <linearGradient id={chassis} x1="4" y1="2" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#3f3f46" />
+          <stop offset="42%" stopColor="#27272a" />
+          <stop offset="100%" stopColor="#18181b" />
+        </linearGradient>
+        <linearGradient id={coil} x1="0" y1="7.5" x2="0" y2="14" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#fb923c" />
+          <stop offset="48%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#ea580c" />
+        </linearGradient>
+        <linearGradient id={needle} x1="0" y1="13.7" x2="0" y2="23" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#6ee7b7" />
+          <stop offset="100%" stopColor="#34d399" />
+        </linearGradient>
+      </defs>
+
+      <rect x="8.9" y="1.5" width="6.2" height="2.4" rx="0.9" fill={`url(#${chassis})`} />
+      <rect x="10.9" y="0.6" width="2.2" height="1.4" rx="0.5" fill={`url(#${chassis})`} />
+
+      <rect x="8.2" y="3.5" width="1.9" height="2.3" rx="0.6" fill={`url(#${chassis})`} />
+      <rect x="13.9" y="3.5" width="1.9" height="2.3" rx="0.6" fill={`url(#${chassis})`} />
+
+      <rect x="3.5" y="8.5" width="2.5" height="4.7" rx="0.9" fill={`url(#${chassis})`} />
+      <rect x="4.4" y="9.6" width="0.6" height="2.6" rx="0.3" fill="#18181b" opacity="0.7" />
+
+      <circle cx="9.7" cy="10.7" r="3.15" fill={`url(#${coil})`} />
+      <circle cx="14.3" cy="10.7" r="3.15" fill={`url(#${coil})`} />
+      <circle cx="9.7" cy="10.7" r="1.55" fill="#18181b" opacity="0.55" />
+      <circle cx="14.3" cy="10.7" r="1.55" fill="#18181b" opacity="0.55" />
+      <circle cx="9.15" cy="9.85" r="0.7" fill="#fb923c" opacity="0.7" />
+      <circle cx="13.75" cy="9.85" r="0.7" fill="#fb923c" opacity="0.7" />
+
       <path
-        d="M4.2 9.1c0-.4.3-.7.7-.7h.6c.3 0 .5.3.4.6l-.5 2.2c-.1.3-.4.5-.7.5H4.4c-.4 0-.6-.4-.5-.7Z"
-        fill="#FF6600"
-        opacity="0.92"
-      />
-      <rect
-        x="5.6"
-        y="9"
-        width="4"
-        height="3.2"
-        rx="0.7"
-        fill="#262626"
-        stroke="#1F9C67"
-        strokeWidth="0.85"
-      />
-      <rect
-        x="5.6"
-        y="12.8"
-        width="4"
-        height="3.2"
-        rx="0.7"
-        fill="#262626"
-        stroke="#1F9C67"
-        strokeWidth="0.85"
-      />
-      <path
-        d="M4.4 8.2c2.2-2.6 6.2-3.2 8.6-1.1l2.6 2.3"
-        stroke="#1F9C67"
-        strokeWidth="1.35"
-        strokeLinecap="round"
+        d="M7 9.3c1.4-.9 3-.9 4.4 0M6.7 11.5c1.5-.9 3.2-.9 4.7 0"
+        stroke="#ea580c"
+        strokeWidth="0.5"
         fill="none"
+        strokeLinecap="round"
       />
-      <circle cx="13.2" cy="9.6" r="1.05" fill="#FF6600" />
-      <circle cx="13.2" cy="9.6" r="0.4" fill="#1A1A1A" />
-      <path d="M10.4 11.2h5.2" stroke="#1F9C67" strokeWidth="1.3" strokeLinecap="round" />
-      <rect
-        x="14.6"
-        y="10"
-        width="5"
-        height="3.2"
-        rx="1.4"
-        fill="#1A1A1A"
-        stroke="#1F9C67"
-        strokeWidth="0.7"
+      <path
+        d="M11.9 9.3c1.4-.9 3-.9 4.4 0M12.2 11.5c1.5-.9 3.2-.9 4.7 0"
+        stroke="#ea580c"
+        strokeWidth="0.5"
+        fill="none"
+        strokeLinecap="round"
       />
-      <path d="M19.4 11.6h3.2" stroke="#1F9C67" strokeWidth="1.15" strokeLinecap="round" />
-      <circle cx="22.5" cy="11.6" r="0.7" fill="#FF6600" />
-      <path d="M7.6 17.8v2.2" stroke="#1F9C67" strokeWidth="1.1" strokeLinecap="round" />
-      <circle cx="7.6" cy="20.4" r="0.7" fill="#FF6600" />
+
+      <rect x="11.15" y="7.4" width="1.7" height="6.8" rx="0.5" fill={`url(#${chassis})`} />
+
+      <path
+        d="M6 10.7h1.2M16.8 10.7H18"
+        stroke={`url(#${chassis})`}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+
+      <rect x="10.1" y="13.7" width="3.8" height="1" rx="0.5" fill={`url(#${needle})`} />
+      <rect x="10.45" y="14" width="3.1" height="5.5" rx="1.1" fill={`url(#${needle})`} />
+      <rect x="11.25" y="14.7" width="0.55" height="4.1" rx="0.28" fill="#a7f3d0" opacity="0.45" />
+
+      <path d="M12 19.35 12.75 22.9h-1.5z" fill={`url(#${needle})`} />
     </svg>
   );
 }
