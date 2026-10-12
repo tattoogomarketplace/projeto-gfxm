@@ -354,11 +354,11 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
               aria-label="Escolha seu @username"
               aria-invalid={tone === 'bad'}
               placeholder="seu_username"
-              className="flex-1 h-full !min-h-0 !p-0 !m-0 appearance-none bg-transparent outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-[56px]"
+              className="absolute left-[46px] right-4 top-1/2 h-6 -translate-y-1/2 appearance-none bg-transparent !p-0 !m-0 outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-6"
             />
 
             {/* Slot fixo de status — largura imutável (CLS = 0). */}
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+            <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center">
               <AnimatePresence mode="wait" initial={false}>
                 {status === 'checking' ? (
                   <motion.span
