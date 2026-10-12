@@ -588,7 +588,26 @@ export async function ensurePerfilFromClerk(
       });
 
       if (!byEmail) return findPerfilByClerkId(clerkId);
-      if (byEmail.clerk_id && byEmail.clerk_id !== clerkId) return null;
+
+      // O índice `perfis_email_unique_idx` NÃO filtra `deleted_at`, então uma
+      // conta soft-deleted (recém-excluída) ainda detém o e-mail e bloqueia o
+      // INSERT. Reciclamos (restauramos) esse registro em vez de devolver null:
+      // sem isso a recriação entra em P2002 e a UI cai no retry longo (~30s).
+      const reclaimable =
+        byEmail.deleted_at !== null ||
+        !byEmail.clerk_id ||
+        byEmail.clerk_id === clerkId;
+      if (!reclaimable) return null;
+
+      // Libera um possível stub já criado para o novo `clerk_id` (webhook/ensure
+      // concorrentes) para não estourar P2002 em `clerk_id` no UPDATE abaixo.
+      if (byEmail.clerk_id !== clerkId) {
+        const stub = await findPerfilByClerkId(clerkId);
+        if (stub && stub.id !== byEmail.id) {
+          const released = await releaseClerkIdStub(clerkId, byEmail.id);
+          if (!released) return null;
+        }
+      }
 
       return prisma.perfil.update({
         where: { id: byEmail.id },
