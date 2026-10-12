@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
-import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
+import { ensurePerfilFromClerk, findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 type ClerkEmailAddress = {
@@ -111,6 +111,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, perfilId: perfil.id }, { status: 200 });
   } catch (error) {
+    try {
+      const existing = await findPerfilByClerkId(clerkId);
+      if (existing) {
+        return NextResponse.json(
+          { received: true, perfilId: existing.id, concurrent: true },
+          { status: 200 }
+        );
+      }
+    } catch {
+      // Leitura de reconciliação também falhou; segue o 500 abaixo.
+    }
+
     console.error('[clerk-webhook] falha ao sincronizar perfil', {
       clerkId,
       email,

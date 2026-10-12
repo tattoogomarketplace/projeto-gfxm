@@ -1,6 +1,10 @@
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
 import { UsernameGate } from '@/components/layout/username-gate';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
+import { buildProfileSource } from '@/lib/services/perfil-session';
+import { parseAppRole } from '@/lib/utils/auth-redirect';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -54,10 +58,27 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function DashboardLayout({
+async function syncAuthenticatedPerfil() {
+  try {
+    const { userId } = await auth();
+    if (!userId) return;
+
+    const user = await currentUser();
+    const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
+    await ensurePerfilFromClerk(
+      buildProfileSource(userId, user),
+      parseAppRole(metadata.role as string | undefined)
+    );
+  } catch {
+    // Upsert concorrente com o webhook é idempotente; o casco nunca bloqueia.
+  }
+}
+
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await syncAuthenticatedPerfil();
   return <DashboardShell>{children}</DashboardShell>;
 }
