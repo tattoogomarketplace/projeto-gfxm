@@ -110,6 +110,11 @@ export function EmailUpdateSheet({
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const resetTimer = useRef<number | null>(null);
+  // Guardas síncronas anti-duplicação: impedem que um duplo toque/Enter dispare
+  // múltiplos `createEmailAddress`/`prepareVerification` (o 2º envio entra no
+  // cooldown do Clerk e o SDK recua por ~30s antes de responder).
+  const otpDispatchRef = useRef(false);
+  const promotionRef = useRef(false);
 
   const resetAll = useCallback(() => {
     setStep('reauthenticate');
@@ -122,6 +127,8 @@ export function EmailUpdateSheet({
     setDigits(Array(OTP_LENGTH).fill(''));
     setVerifying(false);
     setOtpError(false);
+    otpDispatchRef.current = false;
+    promotionRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -226,22 +233,24 @@ export function EmailUpdateSheet({
       const verification = await targetEmail.attemptVerification({ code });
       if (verification.verification.status !== 'verified') return false;
 
-      // 1. Promove o novo e-mail a primário (binding explícito e estrito).
-      await user.update({ primaryEmailAddressId: targetEmail.id });
-      await user.reload();
+      // 1. Promove o novo e-mail a primário (binding explícito e estrito). O
+      //    retorno já é o UserResource atualizado — sem re-fetch redundante.
+      const updatedUser = await user.update({ primaryEmailAddressId: targetEmail.id });
 
-      // 2. Remove TODOS os demais identificadores de e-mail do perfil, para
-      //    que nenhum alias legado permaneça permitindo login pela conta.
-      const legacyAddresses = user.emailAddresses.filter(
+      // 2. Remove TODOS os demais identificadores em paralelo (sem await
+      //    sequencial) para que nenhum alias legado permita login pela conta.
+      const legacyAddresses = updatedUser.emailAddresses.filter(
         (address) => address.id !== targetEmail.id
       );
-      for (const address of legacyAddresses) {
-        try {
-          await address.destroy();
-        } catch {
-          // Alias bloqueado/restrito pelo Clerk — segue o fluxo.
-        }
-      }
+      await Promise.all(
+        legacyAddresses.map(async (address) => {
+          try {
+            await address.destroy();
+          } catch {
+            // Alias bloqueado/restrito pelo Clerk — segue o fluxo.
+          }
+        })
+      );
 
       // 3. Re-sincroniza a sessão: força o JWT a descartar o identificador
       //    antigo imediatamente, impedindo logins legados com o e-mail anterior.
@@ -276,7 +285,7 @@ export function EmailUpdateSheet({
   }, [password, runVerifyPassword, submitting, triggerHaptic]);
 
   const handleSubmitEmail = useCallback(async () => {
-    if (submitting) return;
+    if (submitting || otpDispatchRef.current) return;
     const trimmed = email.trim();
     if (!EMAIL_PATTERN.test(trimmed)) {
       setEmailError('Informe um e-mail válido.');
@@ -288,6 +297,7 @@ export function EmailUpdateSheet({
       triggerHaptic('heavy');
       return;
     }
+    otpDispatchRef.current = true;
     setEmailError('');
     triggerHaptic('medium');
     setSubmitting(true);
@@ -310,6 +320,7 @@ export function EmailUpdateSheet({
       );
       triggerHaptic('heavy');
     } finally {
+      otpDispatchRef.current = false;
       setSubmitting(false);
     }
   }, [currentEmail, email, runRequestEmailChange, submitting, triggerHaptic]);
@@ -346,8 +357,9 @@ export function EmailUpdateSheet({
 
   const handleVerify = useCallback(async () => {
     const code = digits.join('');
-    if (verifying || code.length !== OTP_LENGTH) return;
+    if (verifying || promotionRef.current || code.length !== OTP_LENGTH) return;
 
+    promotionRef.current = true;
     triggerHaptic('medium');
     setVerifying(true);
     try {
@@ -376,6 +388,7 @@ export function EmailUpdateSheet({
       triggerHaptic('heavy');
       setOtpError(true);
     } finally {
+      promotionRef.current = false;
       setVerifying(false);
     }
   }, [digits, email, onClose, onUpdated, resetAll, runVerifyCode, triggerHaptic, verifying]);
