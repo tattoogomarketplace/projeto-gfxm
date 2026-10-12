@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
 import { useSignIn } from '@clerk/nextjs/legacy';
-import type { EmailAddressResource } from '@clerk/nextjs/types';
 import {
   ArrowLeft,
   Check,
@@ -82,7 +81,8 @@ function firstClerkError(err: unknown) {
 function isWrongPassword(err: unknown): boolean {
   const detail = firstClerkError(err);
   const code = (detail?.code ?? '').toLowerCase();
-  const haystack = `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''}`.toLowerCase();
+  const message = err instanceof Error ? err.message : '';
+  const haystack = `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''} ${message}`.toLowerCase();
   return (
     code === 'form_password_incorrect' ||
     haystack.includes('form_password_incorrect') ||
@@ -124,7 +124,6 @@ export function EmailUpdateSheet({
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const targetEmailRef = useRef<EmailAddressResource | null>(null);
   const resetTimer = useRef<number | null>(null);
 
   const resetAll = useCallback(() => {
@@ -138,7 +137,6 @@ export function EmailUpdateSheet({
     setDigits(Array(OTP_LENGTH).fill(''));
     setVerifying(false);
     setOtpError(false);
-    targetEmailRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -198,7 +196,12 @@ export function EmailUpdateSheet({
       if (!signIn || !identifier) {
         throw new Error('clerk-not-ready');
       }
-      await signIn.create({ strategy: 'password', identifier, password: value });
+      const result = await signIn.create({ strategy: 'password', identifier, password: value });
+      // A resolução do promise não garante 1º fator aprovado: exigimos que o
+      // Clerk confirme a senha (`complete`) ou peça o 2º fator (`needs_second_factor`).
+      if (result.status !== 'complete' && result.status !== 'needs_second_factor') {
+        throw new Error('A senha atual está incorreta.');
+      }
     },
     [currentEmail, signIn, user]
   );
@@ -208,36 +211,28 @@ export function EmailUpdateSheet({
     async (value: string): Promise<boolean> => {
       if (onRequestEmailChange) return (await onRequestEmailChange(value)) !== false;
       if (!user) throw new Error('session-expired');
-      const created = await user.createEmailAddress({ email: value });
-      await user.reload();
-      const target =
-        user.emailAddresses.find((candidate) => candidate.id === created.id) ?? created;
-      await target.prepareVerification({ strategy: 'email_code' });
-      targetEmailRef.current = target;
+      const emailObj = await user.createEmailAddress({ email: value });
+      await emailObj.prepareVerification({ strategy: 'email_code' });
       return true;
     },
     [onRequestEmailChange, user]
   );
 
-  /** Passo 3 — valida o OTP e promove o novo e-mail a primário (best-effort). */
+  /** Passo 3 — localiza o endereço, valida o OTP e o promove a primário. */
   const runVerifyCode = useCallback(
     async (code: string): Promise<boolean> => {
       if (onVerifyCode) return (await onVerifyCode(code)) !== false;
-      const target = targetEmailRef.current;
-      if (!target) return false;
-      const attempt = await target.attemptVerification({ code });
-      const verified =
-        attempt?.verification?.status === 'verified' ||
-        target.verification?.status === 'verified';
-      if (!verified) return false;
-      try {
-        await user?.update({ primaryEmailAddressId: target.id });
-      } catch {
-        // O endereço já está verificado; promover a primário é best-effort.
-      }
+      if (!user) return false;
+      const targetEmail = user.emailAddresses.find(
+        (candidate) => candidate.emailAddress === email
+      );
+      if (!targetEmail) return false;
+      const verification = await targetEmail.attemptVerification({ code });
+      if (verification.verification.status !== 'verified') return false;
+      await user.update({ primaryEmailAddressId: targetEmail.id });
       return true;
     },
-    [onVerifyCode, user]
+    [email, onVerifyCode, user]
   );
 
   const handleSubmitPassword = useCallback(async () => {
@@ -252,7 +247,6 @@ export function EmailUpdateSheet({
     setSubmitting(true);
     try {
       await runVerifyPassword(password);
-      setStep('destination');
     } catch (err) {
       setPasswordError(
         isWrongPassword(err)
@@ -260,9 +254,13 @@ export function EmailUpdateSheet({
           : 'Não foi possível validar sua senha. Tente novamente.'
       );
       triggerHaptic('heavy');
-    } finally {
       setSubmitting(false);
+      return;
     }
+    // Só alcançado quando o Clerk confirmou a senha com sucesso.
+    triggerHaptic('success');
+    setSubmitting(false);
+    setStep('destination');
   }, [password, runVerifyPassword, submitting, triggerHaptic]);
 
   const handleSubmitEmail = useCallback(async () => {
