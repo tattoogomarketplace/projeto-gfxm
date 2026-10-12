@@ -2,6 +2,7 @@
 
 import { memo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   AtSign,
   Bell,
@@ -12,11 +13,13 @@ import {
   Mail,
   Palette,
   Phone,
+  ShieldCheck,
   User,
 } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { EmailUpdateSheet } from '@/components/settings/email-update-sheet';
+import { RecoveryHubSheet, type RecoveryPath } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { cn } from '@/lib/utils';
@@ -157,9 +160,11 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 }: ClientIdentityHubProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+  const router = useRouter();
 
   const [emailSheetOpen, setEmailSheetOpen] = useState(false);
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
+  const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
 
   const displayName = name.trim();
   const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
@@ -169,6 +174,18 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   const handleLogout = () => {
     triggerHaptic('medium');
     onLogout();
+  };
+
+  // Roteamento determinístico da central de recuperação: senha vai para o fluxo
+  // público de CPF + OTP; e-mail reabre a troca bancária autenticada (senha
+  // atual + novo e-mail + OTP) já disponível neste hub de identidade.
+  const handleRecoveryPath = (path: RecoveryPath) => {
+    setRecoverySheetOpen(false);
+    if (path === 'email') {
+      window.setTimeout(() => setEmailSheetOpen(true), 240);
+      return;
+    }
+    router.push('/forgot-password');
   };
 
   return (
@@ -238,6 +255,13 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             label="Regras do Username"
             hint="O @username pode ser alterado a cada 30 dias"
           />
+          <HubRow
+            icon={<ShieldCheck className="h-5 w-5" strokeWidth={1.75} />}
+            label="Esqueci meus dados (Senha ou E-mail)"
+            hint="Iniciar recuperação segura de acesso"
+            onClick={() => setRecoverySheetOpen(true)}
+            chevron
+          />
         </HubSection>
 
         <HubSection title="Preferências">
@@ -282,6 +306,12 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
         currentEmail={displayEmail}
         onClose={() => setEmailSheetOpen(false)}
         onUpdated={setEmailOverride}
+      />
+
+      <RecoveryHubSheet
+        open={recoverySheetOpen}
+        onClose={() => setRecoverySheetOpen(false)}
+        onSelectPath={handleRecoveryPath}
       />
     </>
   );
