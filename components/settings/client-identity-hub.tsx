@@ -76,16 +76,20 @@ function HubRow({
   const { triggerHaptic } = useHapticFeedback();
 
   const handleClick = () => {
-    triggerHaptic('light');
     onClick?.();
+    try {
+      triggerHaptic('light');
+    } catch {
+      // Haptics são best-effort: nunca bloqueiam a ação principal.
+    }
   };
 
   const inner = (
     <>
-      <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
+      <span className="pointer-events-none flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
         {icon}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col">
+      <span className="pointer-events-none flex min-w-0 flex-1 flex-col">
         <span className="text-sm font-semibold tracking-tight text-zinc-100">{label}</span>
         {value ? (
           <span className="mt-0.5 truncate text-[13px] leading-relaxed text-zinc-400">{value}</span>
@@ -96,7 +100,7 @@ function HubRow({
       </span>
       {chevron ? (
         <ChevronRight
-          className="h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-600 transition-colors duration-200 group-hover:text-orange-400"
+          className="pointer-events-none h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-600 transition-colors duration-200 group-hover:text-orange-400"
           strokeWidth={1.75}
         />
       ) : null}
@@ -106,9 +110,16 @@ function HubRow({
   const classes =
     'group flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 hover:bg-white/[0.03] active:bg-white/[0.05]';
 
+  // Linhas interativas precisam de alvo de toque explícito e acima de qualquer
+  // camada decorativa (ícones/gradientes) para nunca "engolir" o clique.
+  const interactiveClasses = cn(
+    classes,
+    'relative z-10 cursor-pointer touch-manipulation select-none'
+  );
+
   if (href) {
     return (
-      <Link href={href} className={classes} onClick={handleClick}>
+      <Link href={href} className={interactiveClasses} onClick={handleClick}>
         {inner}
       </Link>
     );
@@ -116,7 +127,7 @@ function HubRow({
 
   if (onClick) {
     return (
-      <button type="button" className={classes} onClick={handleClick}>
+      <button type="button" className={interactiveClasses} onClick={handleClick}>
         {inner}
       </button>
     );
@@ -161,7 +172,8 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   };
 
   return (
-    <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
+    <>
+      <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-6 px-4">
         <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
           <span className="relative flex h-28 w-28 min-h-28 min-w-28 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px] shadow-[0_8px_28px_rgba(249,115,22,0.22)]">
@@ -263,6 +275,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
           </button>
         </HubSection>
       </div>
+      </div>
 
       <EmailUpdateSheet
         open={emailSheetOpen}
@@ -270,6 +283,6 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
         onClose={() => setEmailSheetOpen(false)}
         onUpdated={setEmailOverride}
       />
-    </div>
+    </>
   );
 });

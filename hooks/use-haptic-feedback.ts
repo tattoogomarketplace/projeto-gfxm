@@ -15,8 +15,12 @@ const PATTERNS: Record<'light' | 'medium' | 'heavy' | 'success', number | number
 
 export const useHapticFeedback = () => {
   const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success' = 'light') => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+    try {
       navigator.vibrate(PATTERNS[type]);
+    } catch {
+      // Alguns WebViews bloqueiam `vibrate` fora de um gesto de usuário.
+      // Haptics são best-effort e nunca devem abortar o handler de clique.
     }
   }, []);
 
