@@ -725,6 +725,7 @@ export type MessageKey =
   | 'errors.clerk.codeInvalid'
   | 'errors.clerk.codeExpired'
   | 'errors.clerk.emailExists'
+  | 'errors.clerk.emailInvalid'
   | 'errors.clerk.cpfExists'
   | 'errors.clerk.identifierNotFound'
   | 'errors.clerk.notReady'

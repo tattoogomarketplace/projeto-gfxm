@@ -77,6 +77,21 @@ function firstClerkError(err: unknown) {
   return Array.isArray(errors) ? errors[0] : undefined;
 }
 
+/** Detecta erros de formato de e-mail do Clerk para não vazar texto em inglês. */
+function isEmailFormatError(err: unknown): boolean {
+  const detail = firstClerkError(err);
+  const haystack =
+    `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''}`.toLowerCase();
+  return (
+    haystack.includes('form_identifier_format_invalid') ||
+    haystack.includes('form_param_format_invalid') ||
+    haystack.includes('valid email address') ||
+    haystack.includes('must be a valid email') ||
+    haystack.includes('email address must be') ||
+    haystack.includes('invalid email address')
+  );
+}
+
 export function EmailUpdateSheet({
   open,
   currentEmail,
@@ -288,7 +303,7 @@ export function EmailUpdateSheet({
     if (submitting || otpDispatchRef.current) return;
     const trimmed = email.trim();
     if (!EMAIL_PATTERN.test(trimmed)) {
-      setEmailError('Informe um e-mail válido.');
+      setEmailError('Insira um endereço de e-mail válido.');
       triggerHaptic('heavy');
       return;
     }
@@ -314,7 +329,9 @@ export function EmailUpdateSheet({
       setStep('verify');
     } catch (err) {
       const detail = firstClerkError(err);
-      const message = detail?.longMessage || detail?.message;
+      const message = isEmailFormatError(err)
+        ? 'Insira um endereço de e-mail válido.'
+        : detail?.longMessage || detail?.message;
       setEmailError(
         message || 'Não foi possível enviar o código. Verifique o endereço e tente novamente.'
       );

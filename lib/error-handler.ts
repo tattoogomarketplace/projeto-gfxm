@@ -54,7 +54,8 @@ const CLERK_CODE_KEYS: Record<string, MessageKey> = {
   form_identifier_not_found: 'errors.clerk.identifierNotFound',
   form_identifier_exists: 'errors.clerk.emailExists',
   form_identifier_exists_email: 'errors.clerk.emailExists',
-  form_param_format_invalid: 'errors.generic',
+  form_identifier_format_invalid: 'errors.clerk.emailInvalid',
+  form_param_format_invalid: 'errors.clerk.emailInvalid',
   session_exists: 'errors.generic',
   requires_verification: 'errors.clerk.requiresVerification',
   session_reverification_required: 'errors.clerk.requiresVerification',
@@ -149,6 +150,17 @@ function matchByText(haystack: string): MessageKey | null {
   }
   if (haystack.includes('clerk not ready') || haystack.includes('clerk is not') || haystack.includes('clerk não') || haystack.includes('clerk nao') || haystack.includes('not_ready') || haystack.includes('not ready')) {
     return 'errors.clerk.notReady';
+  }
+  if (
+    haystack.includes('form_identifier_format_invalid') ||
+    haystack.includes('form_param_format_invalid') ||
+    haystack.includes('valid email address') ||
+    haystack.includes('must be a valid email') ||
+    haystack.includes('email address must be') ||
+    haystack.includes('invalid email address') ||
+    haystack.includes('is not a valid email')
+  ) {
+    return 'errors.clerk.emailInvalid';
   }
   if (
     haystack.includes('email code unavailable') ||
