@@ -1,14 +1,11 @@
 'use client';
 
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';
-import { useReverification, useUser } from '@clerk/nextjs';
-import { isReverificationCancelledError } from '@clerk/nextjs/errors';
-import type { SessionVerificationLevel, UpdateUserPasswordParams } from '@clerk/nextjs/types';
+import { useUser } from '@clerk/nextjs';
 import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
-import { ClerkSessionReverification } from '@/components/features/clerk-session-reverification';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
@@ -24,12 +21,6 @@ const COPPER_FOCUS =
 
 type ClerkErrorShape = {
   errors?: Array<{ code?: string; longMessage?: string; message?: string }>;
-};
-
-type PendingReverification = {
-  level: SessionVerificationLevel | undefined;
-  complete: () => void;
-  cancel: () => void;
 };
 
 function firstError(err: unknown) {
@@ -80,14 +71,13 @@ function parseClerkPasswordError(err: unknown): ParsedPasswordError | null {
 }
 
 /**
- * Alteração de senha 100% customizada.
+ * Alteração de senha direta.
  *
- * `user.updatePassword` é embrulhado por `useReverification`: o Clerk tenta a
- * mutação primeiro e, quando a sessão exige step-up, dispara
- * `onNeedsReverification` (desligando a modal nativa). Conduzimos então a
- * reverificação pelo `ClerkSessionReverification` reutilizando a "Senha Atual"
- * já digitada; ao concluir, o SDK reexecuta a atualização automaticamente.
- * Nenhuma UI do Clerk é renderizada.
+ * `user.updatePassword` é chamado sem intermediários: o submit dispara a
+ * mutação real do Clerk e os erros retornados são traduzidos por
+ * `parseClerkPasswordError` e exibidos estritamente inline (senha atual
+ * incorreta no primeiro campo, senha vazada/fraca via `PasswordStrengthBar`).
+ * Nenhum passo de confirmação de segurança é renderizado.
  */
 export const PasswordChangeForm = memo(function PasswordChangeForm({
   embedded = false,
@@ -98,9 +88,6 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [currentPasswordError, setCurrentPasswordError] = useState('');
   const [newPasswordError, setNewPasswordError] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [pendingReverification, setPendingReverification] =
-    useState<PendingReverification | null>(null);
-  const pendingRef = useRef<PendingReverification | null>(null);
   const { isLoaded, user } = useUser();
   const { t } = useI18n();
 
@@ -115,31 +102,6 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     setCurrentPasswordError('');
     setNewPasswordError('');
   }, []);
-
-  const clearPendingReverification = useCallback(() => {
-    pendingRef.current = null;
-    setPendingReverification(null);
-  }, []);
-
-  const updatePassword = useReverification(
-    useCallback(
-      async (params: UpdateUserPasswordParams) => {
-        if (!user) throw new Error('session-expired');
-        return user.updatePassword(params);
-      },
-      [user]
-    ),
-    {
-      onNeedsReverification: useCallback(
-        ({ level, complete, cancel }: PendingReverification) => {
-          const pending: PendingReverification = { level, complete, cancel };
-          pendingRef.current = pending;
-          setPendingReverification(pending);
-        },
-        []
-      ),
-    }
-  );
 
   const handleSubmit = useCallback(async () => {
     if (!user) {
@@ -166,36 +128,25 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     setIsUpdating(true);
     setCurrentPasswordError('');
     setNewPasswordError('');
-    clearPendingReverification();
     try {
-      const result = await updatePassword({
+      await user.updatePassword({
         currentPassword: currentPassword.trim(),
         newPassword,
         signOutOfOtherSessions: true,
       });
-
-      // Defesa: se o retry ainda devolver um hint de reverificação, não
-      // reportamos sucesso — sinalizamos o erro para o usuário tentar de novo.
-      if (result && typeof result === 'object' && 'clerk_error' in result) {
-        throw new Error('reverification-incomplete');
-      }
-
       toast.success(t('password.updated'));
       resetFields();
     } catch (err) {
-      if (!isReverificationCancelledError(err)) {
-        const parsed = parseClerkPasswordError(err);
-        if (parsed?.field === 'current') {
-          setCurrentPasswordError(parsed.message);
-        } else if (parsed?.field === 'new') {
-          setNewPasswordError(parsed.message);
-        } else {
-          toast.error(passwordErrorMessage(err));
-        }
+      const parsed = parseClerkPasswordError(err);
+      if (parsed?.field === 'current') {
+        setCurrentPasswordError(parsed.message);
+      } else if (parsed?.field === 'new') {
+        setNewPasswordError(parsed.message);
+      } else {
+        toast.error(passwordErrorMessage(err));
       }
     } finally {
       setIsUpdating(false);
-      clearPendingReverification();
     }
   }, [
     user,
@@ -205,36 +156,7 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     strength.isComplete,
     t,
     resetFields,
-    updatePassword,
-    clearPendingReverification,
   ]);
-
-  const handleReverificationComplete = useCallback(() => {
-    const pending = pendingRef.current;
-    clearPendingReverification();
-    pending?.complete();
-  }, [clearPendingReverification]);
-
-  const handleReverificationCancel = useCallback(() => {
-    const pending = pendingRef.current;
-    clearPendingReverification();
-    pending?.cancel();
-  }, [clearPendingReverification]);
-
-  const handleReverificationError = useCallback(
-    (err: unknown) => {
-      const parsed = parseClerkPasswordError(err);
-      if (parsed?.field === 'current') {
-        setCurrentPasswordError(parsed.message);
-      } else if (parsed?.field === 'new') {
-        setNewPasswordError(parsed.message);
-      } else {
-        toast.error(passwordErrorMessage(err));
-      }
-      handleReverificationCancel();
-    },
-    [handleReverificationCancel]
-  );
 
   if (!isLoaded) return null;
 
@@ -261,82 +183,72 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       </div>
 
       {passwordEnabled ? (
-        pendingReverification ? (
-          <ClerkSessionReverification
-            level={pendingReverification.level}
-            password={currentPassword.trim()}
-            onComplete={handleReverificationComplete}
-            onCancel={handleReverificationCancel}
-            onError={handleReverificationError}
-          />
-        ) : (
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleSubmit();
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit();
+          }}
+        >
+          <Input
+            type="password"
+            label={t('password.current')}
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => {
+              setCurrentPassword(e.target.value);
+              if (currentPasswordError) setCurrentPasswordError('');
             }}
-          >
+            disabled={isUpdating}
+            className={COPPER_FOCUS}
+            error={currentPasswordError || undefined}
+          />
+          <div className="space-y-2">
             <Input
               type="password"
-              label={t('password.current')}
-              autoComplete="current-password"
-              value={currentPassword}
+              label={t('password.new')}
+              autoComplete="new-password"
+              value={newPassword}
               onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                if (currentPasswordError) setCurrentPasswordError('');
+                setNewPassword(e.target.value);
+                if (newPasswordError) setNewPasswordError('');
               }}
               disabled={isUpdating}
               className={COPPER_FOCUS}
-              error={currentPasswordError || undefined}
             />
-            <div className="space-y-2">
-              <Input
-                type="password"
-                label={t('password.new')}
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  if (newPasswordError) setNewPasswordError('');
-                }}
-                disabled={isUpdating}
-                className={COPPER_FOCUS}
-              />
-              <PasswordStrengthBar password={newPassword} error={newPasswordError || undefined} />
-            </div>
-            <Input
-              type="password"
-              label={t('password.confirmNew')}
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isUpdating}
-              className={COPPER_FOCUS}
-              error={
-                confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
-              }
-            />
-            <button
-              type="submit"
-              disabled={
-                isUpdating ||
-                !strength.isComplete ||
-                !passwordsMatch ||
-                !currentPassword ||
-                Boolean(newPasswordError) ||
-                Boolean(currentPasswordError)
-              }
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
-            >
-              {isUpdating ? (
-                <TattooMachineLoader compact label={t('password.updating')} />
-              ) : (
-                t('password.update')
-              )}
-            </button>
-          </form>
-        )
+            <PasswordStrengthBar password={newPassword} error={newPasswordError || undefined} />
+          </div>
+          <Input
+            type="password"
+            label={t('password.confirmNew')}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isUpdating}
+            className={COPPER_FOCUS}
+            error={
+              confirmPassword && !passwordsMatch ? t('errors.password.mismatch') : undefined
+            }
+          />
+          <button
+            type="submit"
+            disabled={
+              isUpdating ||
+              !strength.isComplete ||
+              !passwordsMatch ||
+              !currentPassword ||
+              Boolean(newPasswordError) ||
+              Boolean(currentPasswordError)
+            }
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
+          >
+            {isUpdating ? (
+              <TattooMachineLoader compact label={t('password.updating')} />
+            ) : (
+              t('password.update')
+            )}
+          </button>
+        </form>
       ) : (
         <p className="text-sm text-zinc-400">
           {t('password.socialOnly')}
