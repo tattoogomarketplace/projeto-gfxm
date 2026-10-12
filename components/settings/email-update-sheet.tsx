@@ -225,7 +225,15 @@ export function EmailUpdateSheet({
       if (!targetEmail) return false;
       const verification = await targetEmail.attemptVerification({ code });
       if (verification.verification.status !== 'verified') return false;
+      const previousPrimary = user.primaryEmailAddress;
       await user.update({ primaryEmailAddressId: targetEmail.id });
+      if (previousPrimary && previousPrimary.id !== targetEmail.id) {
+        try {
+          await previousPrimary.destroy();
+        } catch {
+          // Promoção já concluída; a limpeza do e-mail legado é best-effort.
+        }
+      }
       return true;
     },
     [email, onVerifyCode, user]
