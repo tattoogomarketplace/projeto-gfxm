@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   ensurePerfilFromClerk,
@@ -9,6 +10,7 @@ import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import {
   dashboardPathForRole,
   isOnboardingComplete,
+  isOnboardingPath,
   nextRequiredOnboardingStep,
   ONBOARDING_PATH,
   parseAppRole,
@@ -51,6 +53,14 @@ function fallbackPerfil(clerkId?: string | null, expectedRole?: AppRole): LocalP
     has_seen_welcome_notice: true,
     deleted_at: null,
   };
+}
+
+async function currentPathname(): Promise<string | null> {
+  try {
+    return (await headers()).get('x-pathname');
+  } catch {
+    return null;
+  }
 }
 
 export async function requireDashboardSession(): Promise<GateResult | null> {
@@ -125,7 +135,14 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
     // às áreas autenticadas sem handle. A ordem canônica (documentos →
     // @username) é garantida por `nextRequiredOnboardingStep`, que só devolve o
     // degrau do username quando o usuário já passou dos pré-requisitos.
-    if (nextRequiredOnboardingStep(perfil) === USERNAME_SETUP_PATH) {
+    //
+    // Fase 13.5: exclusão ESTRITA por caminho. O redirect só dispara quando NÃO
+    // estamos em nenhuma rota de onboarding — se já estivermos no próprio degrau
+    // de captura do handle, o guardião é inerte (evita loop de `replaceState`).
+    if (
+      nextRequiredOnboardingStep(perfil) === USERNAME_SETUP_PATH &&
+      !isOnboardingPath(await currentPathname())
+    ) {
       redirect(USERNAME_SETUP_PATH);
     }
 

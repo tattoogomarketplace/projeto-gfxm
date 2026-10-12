@@ -14,6 +14,7 @@ export const LOGIN_PATH = '/login';
  */
 const USERNAME_GATE_EXEMPT_PATHS = [
   ONBOARDING_PATH,
+  USERNAME_SETUP_PATH,
   '/dashboard/kyc-pendente',
   '/dashboard/seja-tatuador',
 ] as const;
@@ -38,6 +39,22 @@ export function isOnboardingComplete(perfil: OnboardingFlagSource): boolean {
 export function isOnboardingPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   return pathname === ONBOARDING_PATH || pathname.startsWith(`${ONBOARDING_PATH}/`);
+}
+
+/**
+ * Rotas servidas pelo framework/plataforma (bundles, dados RSC e API) que NUNCA
+ * devem disparar um redirecionamento de navegação client-side. Um `router.replace`
+ * sobre estas rotas — comum durante uma revalidação — gera um ciclo de
+ * `history.replaceState` (o loop da Fase 13.5). O guardião do @username ignora-as
+ * por completo, do mesmo modo que o matcher do middleware já as exclui.
+ */
+export function isNonNavigablePath(pathname: string | null | undefined): boolean {
+  if (!pathname) return true;
+  if (pathname === '/api' || pathname.startsWith('/api/')) return true;
+  if (pathname === '/_next' || pathname.startsWith('/_next/')) return true;
+  return /\.(?:css|js|mjs|cjs|map|json|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|csv|zip|webmanifest|mp3)$/i.test(
+    pathname
+  );
 }
 
 /**

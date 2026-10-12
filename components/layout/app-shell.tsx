@@ -11,7 +11,9 @@ import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import {
   dashboardPathForRole,
   isKycApproved,
+  isNonNavigablePath,
   isOnboardingComplete,
+  isOnboardingPath,
   ONBOARDING_PATH,
   parseAppRole,
   requiresUsernameSetup,
@@ -153,11 +155,18 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         if (parsedRole) setRole(parsedRole);
 
         const currentPath = pathnameRef.current;
+
+        // Blindagem anti-loop (Fase 13.5): nunca navegamos a partir de rotas de
+        // plataforma (bundles/RSC/API) nem quando já estamos no degrau de
+        // onboarding. Um `router.replace` sobre estas rotas reescreveria o
+        // histórico em ciclo (`history.replaceState` > 100x/10s).
+        if (isNonNavigablePath(currentPath)) return;
+
         if (
           payload?.needsOnboarding ||
           (payload?.perfil && !isOnboardingComplete(payload.perfil))
         ) {
-          if (!currentPath.startsWith(ONBOARDING_PATH)) {
+          if (!isOnboardingPath(currentPath)) {
             router.replace(ONBOARDING_PATH);
           }
           return;
@@ -168,6 +177,10 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         // usuário é devolvido ao degrau de identidade — sem piscar o painel.
         // A ordem documentos → @username é preservada: tatuador sem KYC segue
         // para os documentos, que já é o próximo degrau obrigatório.
+        //
+        // Fase 13.5: a exclusão é ESTRITA por caminho — o redirect só acontece
+        // quando NÃO estamos em nenhuma rota de onboarding. Já estando no próprio
+        // degrau (ex.: `/dashboard/onboarding/username`), o efeito é inerte.
         const perfilPayload = payload?.perfil as
           | { role?: string | null; username?: string | null; kyc_status?: string | null }
           | undefined;
@@ -175,7 +188,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           perfilPayload &&
           requiresUsernameSetup(parsedRole ?? perfilPayload.role, perfilPayload.username) &&
           !(parsedRole === 'tatuador' && !isKycApproved(perfilPayload.kyc_status)) &&
-          !currentPath.startsWith(USERNAME_SETUP_PATH)
+          !isOnboardingPath(currentPath)
         ) {
           router.replace(USERNAME_SETUP_PATH);
           return;
@@ -184,6 +197,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         if (
           parsedRole === 'tatuador' &&
           !isKycApproved(payload?.perfil?.kyc_status) &&
+          !isOnboardingPath(currentPath) &&
           !currentPath.startsWith('/dashboard/kyc-pendente')
         ) {
           router.replace('/dashboard/kyc-pendente');
