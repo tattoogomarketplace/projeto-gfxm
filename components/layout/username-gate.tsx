@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
 import {
+  isOnboardingPath,
   isUsernameGateExemptPath,
   nextRequiredOnboardingStep,
   USERNAME_SETUP_PATH,
@@ -30,7 +31,14 @@ export async function UsernameGate({ children }: { children: React.ReactNode }) 
   // Sem pathname resolvido (fora do fluxo normal do middleware) ou em rota
   // pré-identidade, o guardião é inerte: fail-open evita qualquer possibilidade
   // de auto-redirect; as demais camadas (AppShell/Server Actions) revalidam.
-  if (!pathname || isUsernameGateExemptPath(pathname)) {
+  //
+  // Fase 13.5: a exclusão do próprio degrau de onboarding é REAFIRMADA de forma
+  // explícita (`isOnboardingPath`). Regra soberana anti-loop: se o usuário ainda
+  // não possui handle MAS já está numa rota de onboarding, NADA acontece — a
+  // rota renderiza. Sem esta trava, redirecionar para `/dashboard/onboarding/
+  // username` estando já nela reescreve o histórico em ciclo
+  // (`history.replaceState` > 100x/10s).
+  if (!pathname || isOnboardingPath(pathname) || isUsernameGateExemptPath(pathname)) {
     return children;
   }
 

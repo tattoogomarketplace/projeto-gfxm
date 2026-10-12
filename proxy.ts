@@ -1,8 +1,7 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { USERNAME_SETUP_PATH } from '@/lib/utils/auth-redirect';
+import { isNonNavigablePath, USERNAME_SETUP_PATH } from '@/lib/utils/auth-redirect';
 
-const CLERK_WEBHOOK_PATH = '/api/webhooks/clerk';
 const AUTH_PAGES = ['/login', '/register', '/forgot-password'];
 
 /**
@@ -19,9 +18,19 @@ const USERNAME_WRITE_PATHS = [USERNAME_SETUP_PATH, '/api/user/username'] as cons
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
 
-  // O webhook do Clerk é autenticado por assinatura Svix na própria Route
-  // Handler, portanto não participa do fluxo de sessão do middleware.
-  if (pathname === CLERK_WEBHOOK_PATH) return;
+  // BYPASS ESTRITO DE PLATAFORMA (Fase 13.5).
+  //
+  // Bundles do framework (`/_next`), Route Handlers/API (`/api`, `/trpc`) e
+  // assets estáticos (imagens, fontes, manifests, JSON, etc.) NUNCA participam
+  // dos gatekeepers de sessão deste middleware. Interceptá-los — e, pior,
+  // redirecioná-los — faz o cliente tratar a resposta como uma navegação e
+  // reescrever o histórico em ciclo, originando o erro fatal
+  // `SecurityError: Attempt to use history.replaceState() more than 100 times
+  // per 10 seconds`. O webhook do Clerk (`/api/webhooks/clerk`) também é
+  // autenticado por assinatura Svix na própria Route Handler, logo cai aqui.
+  if (isNonNavigablePath(pathname)) {
+    return NextResponse.next();
+  }
 
   // Bypass explícito do gatekeeper para a escrita do @username. Reafirma o
   // `x-pathname` (consumido pelo `UsernameGate` do layout) e segue sem
@@ -55,6 +64,8 @@ export default clerkMiddleware(async (auth, req) => {
   if (isRootPath || isAuthPage) {
     const { userId } = await auth();
     if (userId) {
+      // O cliente deve navegar para o próximo degrau obrigatório (onboarding,
+      // documentos ou @username) a partir do `/dashboard`, nunca daqui.
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   }
@@ -69,7 +80,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json)).*)',
+    // Exclui TODO o namespace `/_next` (bundles, HMR, dados RSC) e arquivos
+    // estáticos por extensão — nenhum deles deve disparar redirect de sessão.
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json)).*)',
     '/(api|trpc)(.*)',
   ],
 };
