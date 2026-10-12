@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
@@ -213,6 +213,18 @@ export function ProfileView() {
     }
   };
 
+  const handleAvatarFile = useCallback(
+    async (file: File) => {
+      if (!user) return;
+      try {
+        await user.setProfileImage({ file });
+      } catch (err) {
+        toast.error(formatAppError(err, 'api'));
+      }
+    },
+    [user]
+  );
+
   const handleShare = async () => {
     triggerHaptic('light');
     const url =
@@ -329,6 +341,7 @@ export function ProfileView() {
         onLogout={() => {
           void handleLogout();
         }}
+        onAvatarFile={handleAvatarFile}
       />
     );
   }

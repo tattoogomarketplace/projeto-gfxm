@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   User,
 } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -140,6 +140,7 @@ export type ClientIdentityHubProps = {
   avatarUrl?: string | null;
   loggingOut: boolean;
   onLogout: () => void;
+  onAvatarFile?: (file: File, previewUrl: string) => void | Promise<void>;
 };
 
 export const ClientIdentityHub = memo(function ClientIdentityHub({
@@ -149,6 +150,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   avatarUrl,
   loggingOut,
   onLogout,
+  onAvatarFile,
 }: ClientIdentityHubProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
@@ -170,19 +172,14 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
         <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
-          <span className="relative flex h-28 w-28 min-h-28 min-w-28 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px] shadow-[0_8px_28px_rgba(249,115,22,0.22)]">
-            <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[3px] border-zinc-950 bg-zinc-900 text-3xl font-semibold uppercase text-orange-400">
-              {avatarUrl ? (
-                <OptimizedImage
-                  src={avatarUrl}
-                  alt={displayName || username || 'Avatar'}
-                  className="h-full w-full rounded-full"
-                />
-              ) : (
-                initials
-              )}
-            </span>
-          </span>
+          <AvatarUpload
+            src={avatarUrl}
+            name={displayName || username || 'Avatar'}
+            initials={displayName || username ? initials : undefined}
+            size="lg"
+            ariaLabel="Alterar foto de perfil"
+            onSelect={onAvatarFile}
+          />
 
           <div className="flex flex-col items-center gap-y-1">
             <h1 className="max-w-full truncate text-[22px] font-semibold tracking-tight text-zinc-50">
