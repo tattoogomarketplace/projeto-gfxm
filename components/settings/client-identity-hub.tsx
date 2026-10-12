@@ -1,9 +1,11 @@
 'use client';
 
-import { memo, useState, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   AtSign,
+  Check,
   ChevronRight,
   Lock,
   LogOut,
@@ -133,6 +135,89 @@ function HubRow({
   return <div className={classes}>{inner}</div>;
 }
 
+/**
+ * MAGNETIC USERNAME BADGE
+ *
+ * Pílula de identidade com física de mola nativa. O toque copia o handle para a
+ * área de transferência e o ícone `@` sofre um morph inline para um `Check`
+ * esmeralda por 2s — sem toasts externos. O slot do ícone é travado em `w-4 h-4`
+ * com camadas absolutas, então a largura da pílula jamais oscila (zero CLS).
+ */
+function MagneticUsernameBadge({ username }: { username: string }) {
+  const { triggerHaptic } = useHapticFeedback();
+  const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    },
+    []
+  );
+
+  const handleCopy = async () => {
+    try {
+      triggerHaptic('light');
+    } catch {
+      // Haptics são best-effort: nunca bloqueiam a cópia.
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`@${username}`);
+      }
+    } catch {
+      // Clipboard bloqueado/negado: o morph comunica a tentativa sem quebrar.
+    }
+
+    setCopied(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const iconMotion = {
+    initial: { scale: 0.6, opacity: 0 },
+    animate: { scale: 1, opacity: 1 },
+    exit: { scale: 0.6, opacity: 0 },
+    transition: { duration: 0.16, ease: 'easeOut' as const },
+  };
+
+  return (
+    <motion.button
+      type="button"
+      onClick={handleCopy}
+      aria-label={`Copiar @${username}`}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.7 }}
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-800/80 bg-zinc-900/50 px-3 py-1 text-sm font-medium text-orange-500 backdrop-blur-sm transition-colors duration-200 hover:border-orange-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+    >
+      <span className="relative flex h-4 w-4 min-h-4 min-w-4 items-center justify-center">
+        <AnimatePresence mode="wait" initial={false}>
+          {copied ? (
+            <motion.span
+              key="copied"
+              {...iconMotion}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Check className="h-4 w-4 text-emerald-400" strokeWidth={2.25} />
+            </motion.span>
+          ) : (
+            <motion.span
+              key="copy"
+              {...iconMotion}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <AtSign className="h-4 w-4" strokeWidth={2} />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </span>
+      <span className="leading-none">{username}</span>
+    </motion.button>
+  );
+}
+
 export type ClientIdentityHubProps = {
   name: string;
   username: string | null;
@@ -186,7 +271,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
               {displayName || t('profile.title')}
             </h1>
             {username ? (
-              <p className="text-sm font-medium text-orange-400">@{username}</p>
+              <MagneticUsernameBadge username={username} />
             ) : null}
           </div>
 
