@@ -7,6 +7,7 @@ import { useClerk, useUser } from '@clerk/nextjs';
 import { Images, LogOut, PenTool, Route, ShieldCheck } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ClientIdentityHub } from '@/components/settings/client-identity-hub';
 import {
   PublicProfile,
   type ProfileActivity,
@@ -315,6 +316,24 @@ export function ProfileView() {
   }
 
   const displayNome = nome || cachedUser?.fullName || '';
+  const displayPhone = user?.primaryPhoneNumber?.phoneNumber ?? null;
+  const avatarUrl = user?.imageUrl ?? null;
+
+  if (role === 'cliente') {
+    return (
+      <ClientIdentityHub
+        name={displayNome}
+        username={username}
+        email={email}
+        phone={displayPhone}
+        avatarUrl={avatarUrl}
+        loggingOut={loggingOut}
+        onLogout={() => {
+          void handleLogout();
+        }}
+      />
+    );
+  }
 
   return (
     <PublicProfile
