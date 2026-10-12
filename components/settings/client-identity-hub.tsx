@@ -5,19 +5,23 @@ import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AtSign,
+  Camera,
   Check,
   ChevronRight,
   Lock,
   LogOut,
   Settings,
   ShieldCheck,
+  Trash2,
   User,
 } from 'lucide-react';
-import { AvatarUpload } from '@/components/ui/avatar-upload';
+import { ActionSheet } from '@/components/ui/action-sheet';
+import { AvatarUpload, type AvatarUploadHandle } from '@/components/ui/avatar-upload';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
@@ -251,6 +255,7 @@ export type ClientIdentityHubProps = {
   loggingOut: boolean;
   onLogout: () => void;
   onAvatarFile?: (file: File, previewUrl: string) => void | Promise<void>;
+  onAvatarRemove?: () => void | Promise<void>;
 };
 
 export const ClientIdentityHub = memo(function ClientIdentityHub({
@@ -261,20 +266,57 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   loggingOut,
   onLogout,
   onAvatarFile,
+  onAvatarRemove,
 }: ClientIdentityHubProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
 
+  const avatarRef = useRef<AvatarUploadHandle>(null);
+
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
+  // `undefined` = segue a prop `avatarUrl`; `null` = foto removida pelo usuário.
+  const [avatarOverride, setAvatarOverride] = useState<string | null | undefined>(undefined);
+  const [avatarSheetOpen, setAvatarSheetOpen] = useState(false);
 
   const displayName = name.trim();
   const initials = (displayName || username || 'A').trim().charAt(0).toUpperCase() || 'A';
   const displayEmail = emailOverride ?? email;
+  const currentAvatar = avatarOverride === undefined ? avatarUrl ?? null : avatarOverride;
+  const hasPhoto = Boolean(currentAvatar);
 
   const handleLogout = () => {
     triggerHaptic('medium');
     onLogout();
+  };
+
+  const handleAvatarPress = () => {
+    triggerHaptic('light');
+    setAvatarSheetOpen(true);
+  };
+
+  const handleChangePhoto = () => {
+    setAvatarSheetOpen(false);
+    // Volta a seguir a prop remota antes de abrir o seletor: se o usuário
+    // cancelar, a foto anterior (ou o fallback) é restaurada sem estados órfãos.
+    setAvatarOverride(undefined);
+    avatarRef.current?.openPicker();
+  };
+
+  const handleRemovePhoto = async () => {
+    triggerHaptic('medium');
+    setAvatarSheetOpen(false);
+    // Reverte imediatamente para o stencil fine-line (UI otimista e zero-shift).
+    setAvatarOverride(null);
+    avatarRef.current?.clearPreview();
+
+    try {
+      await onAvatarRemove?.();
+      toast.success('Foto removida com sucesso');
+    } catch (err) {
+      setAvatarOverride(undefined);
+      toast.error(formatAppError(err, 'api'));
+    }
   };
 
   return (
@@ -283,11 +325,13 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
         <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
           <AvatarUpload
-            src={avatarUrl}
+            ref={avatarRef}
+            src={currentAvatar}
             name={displayName || username || 'Avatar'}
             initials={displayName || username ? initials : undefined}
             size="lg"
-            ariaLabel="Alterar foto de perfil"
+            ariaLabel="Gerenciar foto de perfil"
+            onPress={handleAvatarPress}
             onSelect={onAvatarFile}
           />
 
@@ -358,6 +402,34 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
         </HubSection>
       </div>
       </div>
+
+      <ActionSheet
+        open={avatarSheetOpen}
+        onClose={() => setAvatarSheetOpen(false)}
+        title="Foto de perfil"
+        description="Gerencie como você aparece para a rede"
+        actions={[
+          {
+            id: 'change',
+            label: 'Alterar foto de perfil',
+            onSelect: handleChangePhoto,
+            icon: <Camera className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+          },
+          ...(hasPhoto
+            ? [
+                {
+                  id: 'remove',
+                  label: 'Remover foto atual',
+                  onSelect: () => {
+                    void handleRemovePhoto();
+                  },
+                  destructive: true,
+                  icon: <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.75} />,
+                },
+              ]
+            : []),
+        ]}
+      />
 
       <RecoveryHubSheet
         open={recoverySheetOpen}

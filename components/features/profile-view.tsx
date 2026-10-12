@@ -225,6 +225,11 @@ export function ProfileView() {
     [user]
   );
 
+  const handleAvatarRemove = useCallback(async () => {
+    if (!user) return;
+    await user.setProfileImage({ file: null });
+  }, [user]);
+
   const handleShare = async () => {
     triggerHaptic('light');
     const url =
@@ -342,6 +347,7 @@ export function ProfileView() {
           void handleLogout();
         }}
         onAvatarFile={handleAvatarFile}
+        onAvatarRemove={handleAvatarRemove}
       />
     );
   }

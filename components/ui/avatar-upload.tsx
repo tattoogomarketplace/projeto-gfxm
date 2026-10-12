@@ -1,6 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { Camera, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -146,6 +155,13 @@ function FineLineTattooBackdrop({ glowId }: { glowId: string }) {
   );
 }
 
+export type AvatarUploadHandle = {
+  /** Dispara o seletor nativo de arquivos (usado pelo Action Sheet). */
+  openPicker: () => void;
+  /** Limpa o preview local (blob) revertendo para a `src` do servidor/fallback. */
+  clearPreview: () => void;
+};
+
 export type AvatarUploadProps = {
   src?: string | null;
   name?: string | null;
@@ -155,20 +171,31 @@ export type AvatarUploadProps = {
   disabled?: boolean;
   ariaLabel?: string;
   className?: string;
+  /**
+   * Intercepta o toque no avatar. Quando fornecido, o clique NÃO abre o arquivo
+   * diretamente — delega a decisão (ex.: Action Sheet). `openPicker` continua
+   * acessível via ref.
+   */
+  onPress?: () => void;
   onSelect?: (file: File, previewUrl: string) => void | Promise<void>;
 };
 
-export function AvatarUpload({
-  src,
-  name,
-  initials,
-  size = 'lg',
-  accept = 'image/*',
-  disabled = false,
-  ariaLabel = 'Alterar foto de perfil',
-  className,
-  onSelect,
-}: AvatarUploadProps) {
+export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
+  function AvatarUpload(
+    {
+      src,
+      name,
+      initials,
+      size = 'lg',
+      accept = 'image/*',
+      disabled = false,
+      ariaLabel = 'Alterar foto de perfil',
+      className,
+      onPress,
+      onSelect,
+    }: AvatarUploadProps,
+    ref
+  ) {
   const reactId = useId();
   const uid = reactId.replace(/[^a-zA-Z0-9_-]/g, '');
   const glowId = `avatar-glow-${uid}`;
@@ -227,10 +254,19 @@ export function AvatarUpload({
     void onSelect?.(file, objectUrl);
   };
 
-  const openPicker = () => {
+  const openPicker = useCallback(() => {
     if (disabled) return;
     inputRef.current?.click();
-  };
+  }, [disabled]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openPicker,
+      clearPreview: () => commitPreview(null),
+    }),
+    [openPicker, commitPreview]
+  );
 
   return (
     <span className={cn('relative inline-flex', className)}>
@@ -248,7 +284,14 @@ export function AvatarUpload({
 
       <motion.button
         type="button"
-        onClick={openPicker}
+        onClick={() => {
+          if (disabled) return;
+          if (onPress) {
+            onPress();
+            return;
+          }
+          openPicker();
+        }}
         disabled={disabled}
         aria-label={ariaLabel}
         className={cn(
@@ -333,4 +376,7 @@ export function AvatarUpload({
       </motion.button>
     </span>
   );
-}
+  }
+);
+
+AvatarUpload.displayName = 'AvatarUpload';
