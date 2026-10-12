@@ -5,9 +5,9 @@ import Link from 'next/link';
 import {
   AtSign,
   ChevronRight,
-  KeyRound,
   Lock,
   LogOut,
+  Settings,
   ShieldCheck,
   User,
 } from 'lucide-react';
@@ -16,6 +16,7 @@ import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
 import { RecoveryHubSheet } from '@/components/settings/recovery-hub-sheet';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useUiStore } from '@/hooks/use-ui-store';
 import { cn } from '@/lib/utils';
 
 /**
@@ -152,6 +153,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 }: ClientIdentityHubProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+  const openSettingsDrawer = useUiStore((s) => s.openSettingsDrawer);
 
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const [recoverySheetOpen, setRecoverySheetOpen] = useState(false);
@@ -207,14 +209,17 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
           />
         </HubSection>
 
-        <HubSection title="Segurança">
+        <HubSection title="Sistema">
           <HubRow
-            icon={<KeyRound className="h-5 w-5" strokeWidth={1.75} />}
-            label="Senha"
-            hint="Alterar a senha de acesso à sua conta"
-            href="/dashboard/perfil/configuracoes?section=security"
+            icon={<Settings className="h-5 w-5" strokeWidth={1.75} />}
+            label="Configurações"
+            hint="Tema, notificações, senha e privacidade"
+            onClick={openSettingsDrawer}
             chevron
           />
+        </HubSection>
+
+        <HubSection title="Segurança">
           <HubRow
             icon={<AtSign className="h-5 w-5" strokeWidth={1.75} />}
             label="Regras do Username"
