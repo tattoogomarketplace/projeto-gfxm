@@ -37,6 +37,48 @@ function firstError(err: unknown) {
   return Array.isArray(errors) ? errors[0] : undefined;
 }
 
+type ParsedPasswordError = { field: 'current' | 'new'; message: string };
+
+const CURRENT_PASSWORD_ERROR = 'A senha atual está incorreta.';
+const PWNED_PASSWORD_ERROR = 'Esta senha já vazou na internet. Escolha uma mais segura.';
+
+/**
+ * Traduz o array de erros do Clerk em um estado de UI preciso. Diferencia a
+ * senha ATUAL incorreta (culpa do primeiro campo) de uma rejeição da NOVA senha
+ * (vazada/fraca), para que o usuário receba uma mensagem acionável e o medidor
+ * possa reagir sem ambiguidade.
+ */
+function parseClerkPasswordError(err: unknown): ParsedPasswordError | null {
+  const detail = firstError(err);
+  const code = (detail?.code ?? '').toLowerCase();
+  const haystack = `${detail?.code ?? ''} ${detail?.message ?? ''} ${detail?.longMessage ?? ''}`.toLowerCase();
+
+  if (
+    code === 'form_password_incorrect' ||
+    haystack.includes('form_password_incorrect') ||
+    haystack.includes('senha atual') ||
+    (haystack.includes('current password') && haystack.includes('incorrect'))
+  ) {
+    return { field: 'current', message: CURRENT_PASSWORD_ERROR };
+  }
+
+  if (
+    code === 'form_password_pwned' ||
+    haystack.includes('pwned') ||
+    haystack.includes('leaked') ||
+    haystack.includes('data breach') ||
+    haystack.includes('vaz')
+  ) {
+    return { field: 'new', message: PWNED_PASSWORD_ERROR };
+  }
+
+  if (code.startsWith('form_password_') || haystack.includes('password')) {
+    return { field: 'new', message: passwordErrorMessage(err) };
+  }
+
+  return null;
+}
+
 /**
  * Alteração de senha 100% customizada.
  *
@@ -53,6 +95,8 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPasswordError, setCurrentPasswordError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [pendingReverification, setPendingReverification] =
     useState<PendingReverification | null>(null);
@@ -68,6 +112,8 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setCurrentPasswordError('');
+    setNewPasswordError('');
   }, []);
 
   const clearPendingReverification = useCallback(() => {
@@ -118,6 +164,8 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     }
 
     setIsUpdating(true);
+    setCurrentPasswordError('');
+    setNewPasswordError('');
     clearPendingReverification();
     try {
       const result = await updatePassword({
@@ -135,12 +183,15 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
       toast.success(t('password.updated'));
       resetFields();
     } catch (err) {
-      if (isReverificationCancelledError(err)) {
-        // Fluxo abortado (cancelamento do usuário ou erro já notificado na UI).
-      } else if (firstError(err)?.code === 'form_password_incorrect') {
-        toast.error(t('errors.clerk.passwordIncorrect'));
-      } else {
-        toast.error(passwordErrorMessage(err));
+      if (!isReverificationCancelledError(err)) {
+        const parsed = parseClerkPasswordError(err);
+        if (parsed?.field === 'current') {
+          setCurrentPasswordError(parsed.message);
+        } else if (parsed?.field === 'new') {
+          setNewPasswordError(parsed.message);
+        } else {
+          toast.error(passwordErrorMessage(err));
+        }
       }
     } finally {
       setIsUpdating(false);
@@ -172,14 +223,17 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
 
   const handleReverificationError = useCallback(
     (err: unknown) => {
-      if (firstError(err)?.code === 'form_password_incorrect') {
-        toast.error(t('errors.clerk.passwordIncorrect'));
+      const parsed = parseClerkPasswordError(err);
+      if (parsed?.field === 'current') {
+        setCurrentPasswordError(parsed.message);
+      } else if (parsed?.field === 'new') {
+        setNewPasswordError(parsed.message);
       } else {
         toast.error(passwordErrorMessage(err));
       }
       handleReverificationCancel();
     },
-    [t, handleReverificationCancel]
+    [handleReverificationCancel]
   );
 
   if (!isLoaded) return null;
@@ -228,9 +282,13 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
               label={t('password.current')}
               autoComplete="current-password"
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                if (currentPasswordError) setCurrentPasswordError('');
+              }}
               disabled={isUpdating}
               className={COPPER_FOCUS}
+              error={currentPasswordError || undefined}
             />
             <div className="space-y-2">
               <Input
@@ -238,11 +296,14 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
                 label={t('password.new')}
                 autoComplete="new-password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (newPasswordError) setNewPasswordError('');
+                }}
                 disabled={isUpdating}
                 className={COPPER_FOCUS}
               />
-              <PasswordStrengthBar password={newPassword} />
+              <PasswordStrengthBar password={newPassword} error={newPasswordError || undefined} />
             </div>
             <Input
               type="password"
@@ -258,7 +319,14 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
             />
             <button
               type="submit"
-              disabled={isUpdating || !strength.isComplete || !passwordsMatch || !currentPassword}
+              disabled={
+                isUpdating ||
+                !strength.isComplete ||
+                !passwordsMatch ||
+                !currentPassword ||
+                Boolean(newPasswordError) ||
+                Boolean(currentPasswordError)
+              }
               className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-copper px-6 py-2 font-bold text-black shadow-[0_0_18px_rgba(217,70,14,0.35)] transition-all hover:bg-brand-copper-strong active:scale-[0.98] disabled:opacity-50"
             >
               {isUpdating ? (

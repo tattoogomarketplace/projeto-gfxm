@@ -7,6 +7,12 @@ import { cn } from '@/lib/utils';
 
 type PasswordStrengthBarProps = {
   password: string;
+  /**
+   * Motivo de rejeição devolvido pelo Clerk (ex.: senha vazada/rejeitada).
+   * Quando presente, o medidor reflete a falha na hora (vermelho + mensagem)
+   * sem alterar a geometria do componente.
+   */
+  error?: string;
 };
 
 function TattooMachineGlyph({ active }: { active: boolean }) {
@@ -39,17 +45,20 @@ const TONE_INK = {
   green: 'bg-orange-500 shadow-[0_0_14px_rgba(249,115,22,0.55)]',
 };
 
-export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
+export function PasswordStrengthBar({ password, error }: PasswordStrengthBarProps) {
   const { t } = useI18n();
   const strength = getPasswordStrength(password, t);
+  const rejected = Boolean(error);
+  const tone = rejected ? 'red' : strength.tone;
+  const label = rejected ? (error as string) : strength.label;
   const active = strength.score > 0;
 
   return (
-    <div className="space-y-2" aria-live="polite">
+    <div className="space-y-2" aria-live="polite" aria-invalid={rejected}>
       <div className="relative h-10">
         <div className="absolute inset-x-1 top-[22px] h-[3px] overflow-hidden rounded-full bg-zinc-800">
           <motion.div
-            className={cn('h-full rounded-full', TONE_INK[strength.tone])}
+            className={cn('h-full rounded-full', TONE_INK[tone])}
             initial={false}
             animate={{ width: `${strength.percent}%` }}
             transition={{ type: 'spring', stiffness: 260, damping: 28 }}
@@ -67,17 +76,18 @@ export function PasswordStrengthBar({ password }: PasswordStrengthBarProps) {
           <TattooMachineGlyph active={active} />
         </motion.div>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex min-h-[16px] items-center justify-between gap-2">
         <p
           className={cn(
-            'text-[11px] font-bold uppercase tracking-[0.16em]',
-            TONE_TEXT[strength.tone],
-            strength.isComplete && 'text-orange-400'
+            'text-[11px] font-bold leading-tight',
+            TONE_TEXT[tone],
+            rejected ? 'normal-case tracking-wide' : 'uppercase tracking-[0.16em]',
+            !rejected && strength.isComplete && 'text-orange-400'
           )}
         >
-          {strength.label}
+          {label}
         </p>
-        <p className="text-[10px] text-zinc-600">{strength.score}/5</p>
+        <p className="shrink-0 text-[10px] text-zinc-600">{strength.score}/5</p>
       </div>
       <ul className="grid grid-cols-2 gap-1">
         {strength.checks.map((check) => (
