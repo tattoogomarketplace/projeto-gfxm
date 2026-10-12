@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -91,14 +91,31 @@ type TattooMachineMenuTriggerProps = {
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
+  const isTransitioning = useRef(false);
+  const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (releaseTimer.current) clearTimeout(releaseTimer.current);
+      isTransitioning.current = false;
+    };
+  }, []);
+
+  const handleClick = () => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
+    if (releaseTimer.current) clearTimeout(releaseTimer.current);
+    releaseTimer.current = setTimeout(() => {
+      isTransitioning.current = false;
+    }, 300);
+    triggerHaptic('light');
+    onClick();
+  };
 
   return (
     <motion.button
       type="button"
-      onClick={() => {
-        triggerHaptic('light');
-        onClick();
-      }}
+      onClick={handleClick}
       aria-label={t('profile.settingsAndActivity')}
       aria-expanded={open}
       aria-haspopup="dialog"
