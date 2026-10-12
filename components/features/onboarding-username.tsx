@@ -354,7 +354,7 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
               aria-label="Escolha seu @username"
               aria-invalid={tone === 'bad'}
               placeholder="seu_username"
-              className="flex-1 !h-auto !min-h-0 !p-0 !m-0 appearance-none bg-transparent outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-normal"
+              className="flex-1 h-full !min-h-0 !p-0 !m-0 appearance-none bg-transparent outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-[56px]"
             />
 
             {/* Slot fixo de status — largura imutável (CLS = 0). */}
