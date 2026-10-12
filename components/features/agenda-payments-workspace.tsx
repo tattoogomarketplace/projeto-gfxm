@@ -50,7 +50,7 @@ export function AgendaPaymentsWorkspace({
   const ariaLabel = isClient ? t('agenda.tabClient') : t('agenda.tabStudio');
 
   return (
-    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-transparent text-gray-900 transform-gpu transition-opacity duration-200 dark:text-white">
+    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <div className="w-full shrink-0">
         <SegmentedControl
           options={options}
@@ -59,7 +59,7 @@ export function AgendaPaymentsWorkspace({
           ariaLabel={ariaLabel}
         />
       </div>
-      <div className="relative mt-4 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-y-auto overscroll-none pb-2 [-webkit-overflow-scrolling:touch]">
+      <div className="relative mt-4 flex min-w-0 w-full flex-col pb-2">
         {view === 'agenda' ? (
           isClient ? (
             <AgendaTimeline agendamentos={agendamentos} isLoading={isLoading} />

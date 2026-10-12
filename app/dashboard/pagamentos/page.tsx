@@ -16,7 +16,7 @@ export default async function PagamentosPage() {
   if (!perfil) return <SessionHydrating />;
   const role = parseAppRole(perfil.role) ?? 'cliente';
   return (
-    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden pt-5">
+    <div className="relative flex min-w-0 w-full flex-1 flex-col pt-5">
       <AgendaPaymentsWorkspace role={role} initialView="payments" />
     </div>
   );

@@ -21,9 +21,9 @@ export default function ClienteDashboard({
 
   return (
     <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6">
+      <div className="relative flex min-w-0 w-full flex-1 flex-col gap-6">
         {activeTab === 'agendar' && (
-          <section key="agendar" className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+          <section key="agendar" className="flex min-w-0 w-full flex-1 flex-col">
             <AgendaPaymentsWorkspace role={role} />
           </section>
         )}
