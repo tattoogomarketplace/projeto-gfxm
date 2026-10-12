@@ -571,8 +571,8 @@ export function EmailUpdateSheet({
                         onClick={() => void handleSubmitPassword()}
                         disabled={submitting || !password || !clerkReady}
                         busy={submitting}
-                        label="Confirmar Identidade"
-                        busyLabel="Confirmando identidade..."
+                        label="Autenticar"
+                        busyLabel="Autenticando..."
                       />
                     </div>
                   </motion.div>
