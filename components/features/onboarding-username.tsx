@@ -320,7 +320,7 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
             }}
             style={{ WebkitBackdropFilter: 'blur(12px) saturate(180%)', backdropFilter: 'blur(12px) saturate(180%)' }}
             className={cn(
-              'relative flex h-14 w-full cursor-text items-center gap-2 rounded-2xl border px-3.5 transform-gpu',
+              'relative flex flex-row h-14 w-full cursor-text items-center gap-2 rounded-2xl border px-3.5 transform-gpu',
               'bg-white/[0.05] transition-[border-color,box-shadow] duration-200 ease-out',
               tone === 'pending' && 'border-orange-500/45 shadow-[0_0_20px_rgba(249,115,22,0.18)]',
               tone === 'ok' && 'border-emerald-500/45 shadow-[0_0_22px_rgba(16,185,129,0.2)]',
@@ -354,7 +354,7 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
               aria-label="Escolha seu @username"
               aria-invalid={tone === 'bad'}
               placeholder="seu_username"
-              className="h-6 min-h-0 w-full min-w-0 flex-1 bg-transparent py-0 my-0 text-[17px] font-semibold leading-6 tracking-tight text-white caret-orange-500 outline-none placeholder:font-normal placeholder:text-zinc-600"
+              className="flex-1 !h-auto !min-h-0 !p-0 !m-0 appearance-none bg-transparent outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-normal"
             />
 
             {/* Slot fixo de status — largura imutável (CLS = 0). */}
