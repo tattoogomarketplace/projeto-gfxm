@@ -1,14 +1,19 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
-import { useUiStore } from '@/hooks/use-ui-store';
 import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
 
 const ICON_SPRING = { type: 'spring' as const, stiffness: 460, damping: 30, mass: 0.8 };
+
+// Janela de debounce exclusiva do gatilho: casa com a duração do spring de
+// abertura. Bloqueia somente o toque duplo rápido neste botão — o drawer, o
+// backdrop e o "X" permanecem 100% interativos o tempo todo.
+const OPEN_DEBOUNCE_MS = 400;
 
 type TattooMachineMenuTriggerProps = {
   open?: boolean;
@@ -18,20 +23,31 @@ type TattooMachineMenuTriggerProps = {
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
-  const locked = useUiStore((s) => s.settingsDrawerBusy);
+  const [isOpening, setIsOpening] = useState(false);
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+    },
+    []
+  );
 
   const handleClick = () => {
-    if (locked) return;
+    if (isOpening) return;
     triggerHaptic('light');
+    setIsOpening(true);
     onClick();
+    if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
+    unlockTimerRef.current = setTimeout(() => setIsOpening(false), OPEN_DEBOUNCE_MS);
   };
 
   return (
     <motion.button
       type="button"
       onClick={handleClick}
-      aria-disabled={locked}
-      style={locked ? { pointerEvents: 'none' } : undefined}
+      disabled={isOpening}
+      aria-disabled={isOpening}
       aria-label={t('profile.settingsAndActivity')}
       aria-expanded={open}
       aria-haspopup="dialog"
@@ -41,7 +57,7 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
         'hover:bg-white/[0.05] hover:text-zinc-100',
         'active:bg-orange-500/10 active:text-orange-400',
         open && 'bg-orange-500/15 text-orange-400',
-        locked && 'pointer-events-none'
+        isOpening && 'cursor-default'
       )}
       whileTap={{ scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 520, damping: 32 }}

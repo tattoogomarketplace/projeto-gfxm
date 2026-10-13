@@ -109,7 +109,6 @@ function DrawerRow({
 export function ProfileSettingsDrawer() {
   const open = useUiStore((s) => s.settingsDrawerOpen);
   const closeSettingsDrawer = useUiStore((s) => s.closeSettingsDrawer);
-  const releaseSettingsDrawer = useUiStore((s) => s.releaseSettingsDrawer);
   const role = useAuthStore((s) => s.role);
   const { becomeTatuador, busy: upgrading } = useBecomeTatuador();
   const { triggerHaptic } = useHapticFeedback();
@@ -145,7 +144,7 @@ export function ProfileSettingsDrawer() {
   if (!mounted) return null;
 
   return createPortal(
-    <AnimatePresence onExitComplete={releaseSettingsDrawer}>
+    <AnimatePresence>
       {open ? (
         <motion.div
           key="settings-drawer"
@@ -171,7 +170,6 @@ export function ProfileSettingsDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-            onAnimationComplete={releaseSettingsDrawer}
             drag="x"
             dragDirectionLock
             dragConstraints={{ left: 0, right: 0 }}
