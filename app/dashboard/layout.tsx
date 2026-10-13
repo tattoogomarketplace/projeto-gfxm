@@ -1,4 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { after } from 'next/server';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
 import { UsernameGate } from '@/components/layout/username-gate';
 import { BRAND_NAME } from '@/lib/i18n/brands';
@@ -79,6 +80,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await syncAuthenticatedPerfil();
+  // A sincronização do perfil (rede Clerk `currentUser()` + upsert Prisma) é um
+  // efeito colateral idempotente do boot: NÃO deve bloquear a resposta. Agendar
+  // via `after()` remove a chamada de rede e as escritas do caminho crítico,
+  // permitindo que o casco (header + dock + skeletons de rota) faça streaming na
+  // hora. O conteúdo é revalidado pelo `AppShell`/guards no cliente.
+  after(syncAuthenticatedPerfil);
   return <DashboardShell>{children}</DashboardShell>;
 }

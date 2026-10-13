@@ -5,7 +5,7 @@ import {
   findPerfilByClerkId,
   type LocalPerfil,
 } from '@/lib/services/ensure-perfil';
-import { buildProfileSource, resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
+import { buildProfileSource, resolvePerfilSessionFromIncomingRequestCached } from '@/lib/services/perfil-session';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import {
   dashboardPathForRole,
@@ -69,7 +69,7 @@ export async function requireDashboardSession(): Promise<GateResult | null> {
   let metadataRole = null;
 
   try {
-    const session = await withTimeout(resolvePerfilSessionFromIncomingRequest());
+    const session = await withTimeout(resolvePerfilSessionFromIncomingRequestCached());
     userId = session.userId;
     user = session.user;
     metadataRole = session.metadataRole;

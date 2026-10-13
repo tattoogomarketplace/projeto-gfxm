@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { findPerfilByClerkId } from '@/lib/services/ensure-perfil';
-import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
+import { resolvePerfilSessionFromIncomingRequestCached } from '@/lib/services/perfil-session';
 import {
   isOnboardingPath,
   isUsernameGateExemptPath,
@@ -44,7 +44,7 @@ export async function UsernameGate({ children }: { children: React.ReactNode }) 
 
   let perfil = null;
   try {
-    const { userId } = await resolvePerfilSessionFromIncomingRequest();
+    const { userId } = await resolvePerfilSessionFromIncomingRequestCached();
     if (userId) {
       perfil = await findPerfilByClerkId(userId);
     }

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { cache } from 'react';
 import { headers } from 'next/headers';
 import { verifyToken } from '@clerk/backend';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
@@ -272,6 +273,20 @@ export async function resolvePerfilSessionFromIncomingRequest(): Promise<PerfilS
   const request = new Request('http://localhost', { headers: incoming });
   return resolvePerfilSession(request);
 }
+
+/**
+ * Versão memoizada por requisição (`react/cache`).
+ *
+ * O layout autenticado (`UsernameGate`) e a página (`requireDashboardPerfil`)
+ * resolvem a MESMA sessão no mesmo render. Sem memoização, cada camada dispara
+ * sua própria ida à Backend API do Clerk (`currentUser()`) + verificação de
+ * token — um waterfall sequencial de rede que atrasava o primeiro byte em
+ * vários segundos no boot frio. `cache()` colapsa tudo numa única resolução por
+ * request; o valor é imutável dentro daquele render.
+ */
+export const resolvePerfilSessionFromIncomingRequestCached = cache(
+  resolvePerfilSessionFromIncomingRequest
+);
 
 /**
  * Monta uma fonte de perfil a partir SEMPRE do `userId` autenticado (auth()),
