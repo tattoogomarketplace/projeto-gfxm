@@ -171,9 +171,12 @@ export function ForgotPasswordFlow({
   const [cpf, setCpf] = useState('');
   const [cpfError, setCpfError] = useState('');
   const [cpfSubmitting, setCpfSubmitting] = useState(false);
-  const [cpfStatus, setCpfStatus] = useState<
-    'idle' | 'checking' | 'verified' | 'unregistered' | 'error'
-  >('idle');
+  // Resultado assíncrono da checagem do CPF, ancorado aos dígitos conferidos.
+  // O status exibido é derivado abaixo — nunca sincronizado por dentro do efeito.
+  const [cpfCheck, setCpfCheck] = useState<{
+    digits: string;
+    status: 'checking' | 'verified' | 'unregistered' | 'error';
+  } | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
@@ -202,6 +205,14 @@ export function ForgotPasswordFlow({
 
   const cpfDigits = onlyCpfDigits(cpf);
   const cpfValid = isValidCpf(cpfDigits);
+  // Enquanto o CPF for válido mas a checagem ainda não retornou para esses
+  // dígitos, o estado é "checking" — derivado, sem setState no efeito.
+  const cpfStatus =
+    !cpfValid || !recoveryEmail.trim()
+      ? 'idle'
+      : cpfCheck && cpfCheck.digits === cpfDigits
+        ? cpfCheck.status
+        : 'checking';
   const cpfChecking = cpfStatus === 'checking';
   const cpfButtonEnabled = cpfValid && (cpfStatus === 'verified' || cpfStatus === 'error');
   const cpfFieldError =
@@ -212,7 +223,7 @@ export function ForgotPasswordFlow({
     setCpf('');
     setCpfError('');
     setCpfSubmitting(false);
-    setCpfStatus('idle');
+    setCpfCheck(null);
     cpfCheckSeq.current = 0;
     setFile(null);
     setFileError('');
@@ -273,12 +284,10 @@ export function ForgotPasswordFlow({
     const email = recoveryEmail.trim().toLowerCase();
     if (!isValidCpf(digits) || !email) {
       cpfCheckSeq.current += 1;
-      setCpfStatus('idle');
       return;
     }
     const seq = cpfCheckSeq.current + 1;
     cpfCheckSeq.current = seq;
-    setCpfStatus('checking');
     const timer = window.setTimeout(async () => {
       try {
         const response = await fetch('/api/auth/verify-reset-credentials', {
@@ -289,15 +298,15 @@ export function ForgotPasswordFlow({
         const payload = (await response.json().catch(() => ({}))) as { ok?: boolean };
         if (cpfCheckSeq.current !== seq) return;
         if (response.ok && payload.ok === true) {
-          setCpfStatus('verified');
+          setCpfCheck({ digits, status: 'verified' });
           setCpfError('');
         } else {
-          setCpfStatus('unregistered');
+          setCpfCheck({ digits, status: 'unregistered' });
           setCpfError(t('auth.cpfNotRegistered'));
         }
       } catch {
         if (cpfCheckSeq.current !== seq) return;
-        setCpfStatus('error');
+        setCpfCheck({ digits, status: 'error' });
         setCpfError(t('errors.network'));
       }
     }, 420);
@@ -329,7 +338,7 @@ export function ForgotPasswordFlow({
     if (cpfSubmitting) return;
     const digits = onlyCpfDigits(cpf);
     if (!isValidCpf(digits)) {
-      setCpfStatus('idle');
+      setCpfCheck(null);
       setCpfError(t('auth.invalidCpf'));
       triggerHaptic('heavy');
       return;
@@ -337,7 +346,7 @@ export function ForgotPasswordFlow({
     setCpfError('');
     triggerHaptic('medium');
     setCpfSubmitting(true);
-    setCpfStatus('checking');
+    setCpfCheck({ digits, status: 'checking' });
     try {
       const response = await fetch('/api/auth/verify-reset-credentials', {
         method: 'POST',
@@ -349,16 +358,16 @@ export function ForgotPasswordFlow({
         error?: string;
       };
       if (!response.ok || payload.ok !== true) {
-        setCpfStatus('unregistered');
+        setCpfCheck({ digits, status: 'unregistered' });
         setCpfError(t('auth.cpfNotRegistered'));
         triggerHaptic('heavy');
         return;
       }
-      setCpfStatus('verified');
+      setCpfCheck({ digits, status: 'verified' });
       triggerHaptic('success');
       setStep('document');
     } catch {
-      setCpfStatus('error');
+      setCpfCheck({ digits, status: 'error' });
       setCpfError(t('errors.network'));
       triggerHaptic('heavy');
     } finally {

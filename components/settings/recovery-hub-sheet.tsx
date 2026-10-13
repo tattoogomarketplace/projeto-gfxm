@@ -386,7 +386,7 @@ export function RecoveryHubSheet({
       onClose();
       window.setTimeout(resetAll, 220);
     }, SUCCESS_HOLD_MS);
-  }, [email, onClose, onEmailUpdated, resetAll]);
+  }, [email, onClose, onEmailUpdated, resetAll, triggerHaptic]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Navegação

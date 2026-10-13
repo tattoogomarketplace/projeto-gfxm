@@ -202,6 +202,9 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
   const previewRef = useRef<string | null>(null);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // `src` vigente no momento em que o blob local foi criado. Quando o servidor
+  // publica um novo avatar, a derivação abaixo invalida o preview — sem efeito.
+  const [previewForSrc, setPreviewForSrc] = useState<string | null>(null);
   const [engaged, setEngaged] = useState(false);
   // Guarda a `src` que falhou ao carregar (ex.: avatar remoto apagado/404). Ao
   // falhar, caímos instantaneamente no Fine-Line Tattoo — nunca no ícone cinza
@@ -210,20 +213,14 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
 
   const dims = SIZE_MAP[size];
 
-  const commitPreview = useCallback((next: string | null) => {
+  const commitPreview = useCallback((next: string | null, forSrc: string | null = null) => {
     if (previewRef.current && previewRef.current !== next) {
       URL.revokeObjectURL(previewRef.current);
     }
     previewRef.current = next;
     setPreviewUrl(next);
+    setPreviewForSrc(next ? forSrc : null);
   }, []);
-
-  // A fonte de verdade do servidor (Clerk/R2) sobrescreve o blob local apenas
-  // quando um novo avatar remoto realmente chega. `src` nulo (sem foto) nunca
-  // apaga o preview recém-selecionado pelo usuário.
-  useEffect(() => {
-    if (src) commitPreview(null);
-  }, [src, commitPreview]);
 
   // Higiene de memória: todo blob URL criado é revogado no unmount.
   useEffect(
@@ -236,8 +233,14 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
     []
   );
 
-  const resolvedSrc = (previewUrl ?? src ?? '').trim() || null;
-  const isPreview = Boolean(previewUrl);
+  // A fonte de verdade do servidor (Clerk/R2) invalida o blob local assim que um
+  // novo avatar remoto realmente chega; `src` nulo (sem foto) nunca apaga o
+  // preview recém-selecionado. Isso é derivado no render, não sincronizado por
+  // efeito — evita cascata de renders e mantém o `<img>` determinístico.
+  const remoteSuperseded = Boolean(src) && (src ?? null) !== previewForSrc;
+  const activePreview = remoteSuperseded ? null : previewUrl;
+  const resolvedSrc = (activePreview ?? src ?? '').trim() || null;
+  const isPreview = Boolean(activePreview);
   // Uma `src` ausente, vazia ou que falhou resolve para o fallback fine-line.
   const showImage = Boolean(resolvedSrc) && brokenSrc !== resolvedSrc;
 
@@ -253,7 +256,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
     const objectUrl = URL.createObjectURL(file);
     event.target.value = '';
 
-    commitPreview(objectUrl);
+    commitPreview(objectUrl, src ?? null);
     setEngaged(false);
     void onSelect?.(file, objectUrl);
   };
