@@ -36,6 +36,21 @@ import { BRAND_NAME, BRAND_PASS } from '@/lib/i18n/brands';
 import { formatAppError } from '@/lib/error-handler';
 
 /**
+ * Identifica falhas idempotentes de remoção de avatar no Clerk ("resource not
+ * found" / HTTP 404). Nesses casos a foto já não existe: tratamos como sucesso.
+ */
+function isProfileImageMissingError(err: unknown): boolean {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+        ? err
+        : '';
+  return /not[_\s-]?found|resource[_\s-]?not|404|não encontrado/i.test(message);
+}
+
+
+/**
  * Skeleton de geometria idêntica ao layout real (header + destaques + grade em
  * abas + "Sair da Conta"). Evita salto de layout (CLS) e, principalmente,
  * impede que a transição de re-hidratação deixe a área de conteúdo em branco.
@@ -227,7 +242,14 @@ export function ProfileView() {
 
   const handleAvatarRemove = useCallback(async () => {
     if (!user) return;
-    await user.setProfileImage({ file: null });
+    try {
+      await user.setProfileImage({ file: null });
+    } catch (err) {
+      // O Clerk pode lançar "Recurso não encontrado" quando o avatar já não
+      // existe (ex.: duplo toque ou estado já limpo). Isso é um sucesso
+      // idempotente — nunca deve quebrar a UI nem reexibir o fallback genérico.
+      if (!isProfileImageMissingError(err)) throw err;
+    }
   }, [user]);
 
   const handleShare = async () => {
@@ -333,7 +355,12 @@ export function ProfileView() {
   }
 
   const displayNome = nome || cachedUser?.fullName || '';
-  const avatarUrl = user?.imageUrl ?? null;
+  // O Clerk SEMPRE devolve uma `imageUrl` — quando o usuário não subiu foto, ela
+  // aponta para um avatar gerado (silhueta/initials). Só repassamos a imagem
+  // quando existe uma foto REAL (`hasImage`), garantindo que o fallback seja
+  // sempre o nosso Fine-Line Tattoo e nunca o ícone cinza genérico.
+  const hasCustomAvatar = Boolean((user as { hasImage?: boolean } | null)?.hasImage);
+  const avatarUrl = hasCustomAvatar ? user?.imageUrl ?? null : null;
 
   if (role === 'cliente') {
     return (

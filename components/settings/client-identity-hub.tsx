@@ -313,7 +313,8 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       await onAvatarRemove?.();
       toast.success('Foto removida com sucesso');
     } catch (err) {
-      setAvatarOverride(undefined);
+      // NUNCA revertemos para `undefined`: isso ressuscitaria o avatar gerado
+      // do Clerk (silhueta/initials) num flash. Mantemos o stencil fine-line.
       toast.error(formatAppError(err, 'api'));
     }
   };

@@ -203,6 +203,10 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [engaged, setEngaged] = useState(false);
+  // Guarda a `src` que falhou ao carregar (ex.: avatar remoto apagado/404). Ao
+  // falhar, caímos instantaneamente no Fine-Line Tattoo — nunca no ícone cinza
+  // genérico ou numa imagem quebrada — sem deslocar a caixa (zero CLS).
+  const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
 
   const dims = SIZE_MAP[size];
 
@@ -232,8 +236,10 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
     []
   );
 
-  const resolvedSrc = previewUrl ?? src ?? null;
+  const resolvedSrc = (previewUrl ?? src ?? '').trim() || null;
   const isPreview = Boolean(previewUrl);
+  // Uma `src` ausente, vazia ou que falhou resolve para o fallback fine-line.
+  const showImage = Boolean(resolvedSrc) && brokenSrc !== resolvedSrc;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -311,16 +317,19 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
       >
         {/* Camada de mídia — absoluta, nunca altera a caixa do contêiner. */}
         <span className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full bg-zinc-950">
-          {resolvedSrc ? (
+          {showImage ? (
             // `<img>` nativo: determinístico para blob:/data:/remoto, sem depender
             // do otimizador/remotePatterns do next/image. O blob local SEMPRE
             // vence o `src` remoto/nulo enquanto estiver presente.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={resolvedSrc}
+              src={resolvedSrc as string}
               alt={name?.trim() || 'Avatar'}
               draggable={false}
               className="h-full w-full rounded-full object-cover"
+              onError={() => {
+                if (resolvedSrc) setBrokenSrc(resolvedSrc);
+              }}
               {...(isPreview ? {} : { loading: 'lazy' as const, decoding: 'async' as const })}
             />
           ) : (
