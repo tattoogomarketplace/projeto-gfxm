@@ -8,12 +8,11 @@ import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
-import { BootContinuation } from "@/components/layout/boot-continuation";
+import { SilentAppSkeleton } from "@/components/layout/silent-app-skeleton";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { SplashGate } from "@/components/ui/splash-gate";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 
 const BRAND_ASSET_VERSION = "20261005";
@@ -139,7 +138,6 @@ export default function RootLayout({
         </head>
         <body className="luxury-canvas app-frame fixed inset-0 mb-0 flex h-[100dvh] min-h-[100dvh] w-full flex-col overflow-hidden bg-background pb-0 font-sans antialiased text-neutral-900 select-none dark:text-white">
           <LocalizedClerkProvider>
-          <SplashGate />
           <Providers>
             <ThemeProvider>
               <I18nProvider>
@@ -149,12 +147,14 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Ponte de boot Seamless: enquanto o Clerk hidrata, mantemos
-                    apenas a continuacao estatica do splash (Deep Graphite +
-                    bloom de cobre). Nenhum layout deslogado/rota e pintado ate
-                    a sessao resolver, eliminando o login-flash no boot frio. */}
+                {/* Boot seamless: enquanto o Clerk hidrata, pintamos o mesmo
+                    skeleton estrutural silencioso de `app/loading.tsx` (canvas
+                    Deep Graphite + dock inferior). Nenhuma splash React, nenhum
+                    layout deslogado e nenhum flash intermediario ate a sessao
+                    resolver. Sequencia: splash nativa iOS -> skeleton invisivel
+                    -> UI autenticada. */}
                 <ClerkLoading>
-                  <BootContinuation />
+                  <SilentAppSkeleton />
                 </ClerkLoading>
                 <ClerkLoaded>
                   <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
