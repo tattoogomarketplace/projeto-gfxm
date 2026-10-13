@@ -18,13 +18,14 @@ type TattooMachineMenuTriggerProps = {
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
-  // Trava atômica de ciclo de vida: lida de forma síncrona no handler, nunca
-  // depende do commit de render. Liberada exclusivamente pelo
-  // `onAnimationComplete` do drawer — nunca por timer arbitrário.
-  const isAnimatingRef = useUiStore((s) => s.settingsDrawerAnimatingRef);
+  // A fonte de verdade da trava vive no store como máquina de fases. O gatilho
+  // apenas evita disparar haptic/estado em fases de animação em curso; a
+  // rejeição definitiva acontece de forma síncrona dentro de `onClick`.
+  const phase = useUiStore((s) => s.settingsDrawerPhase);
+  const isTransitioning = phase === 'entering' || phase === 'exiting';
 
   const handleClick = () => {
-    if (isAnimatingRef.current) return;
+    if (isTransitioning) return;
     triggerHaptic('light');
     onClick();
   };

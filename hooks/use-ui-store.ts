@@ -4,9 +4,29 @@ import { create } from 'zustand';
 
 export type AppTab = 'portfolio' | 'agendar' | 'chat' | 'perfil';
 
-export interface AnimationLock {
-  current: boolean;
-}
+/**
+ * Ciclo de vida explícito do drawer de configurações.
+ *
+ * O bug de "aborto em pleno voo" nasce de um booleano único (`open`) que é
+ * revertido enquanto a mola de entrada ainda está interpolando. Aqui o estado
+ * é uma MÁQUINA com fases discretas e transições sancionadas:
+ *
+ *   closed ──toggle/open──> entering ──enter complete──> open
+ *      ^                         │                            │
+ *      │                         └────────close───────┐       │
+ *      │                                              v       │
+ *      └──────────── exit complete ────────────────  exiting <─┘ toggle/close
+ *
+ * Regras:
+ *  - `entering` e `exiting` são estados BLOQUEADOS: nenhum toggle do gatilho
+ *    pode inverter a direção da animação corrente (a trava é síncrona, lida
+ *    de `get()`, então vale até para dois cliques no mesmo tick).
+ *  - `close` (X, backdrop, Escape, swipe) é SEMPRE honrado a partir de
+ *    `entering`/`open` — dispensa integral preservada.
+ *  - A fase só avança quando a própria animação confirma a conclusão
+ *    (`onAnimationComplete` na entrada, `onExitComplete` na saída).
+ */
+export type SettingsDrawerPhase = 'closed' | 'entering' | 'open' | 'exiting';
 
 interface UiState {
   activeTab: AppTab;
@@ -15,13 +35,16 @@ interface UiState {
   setPendingChatPeer: (id: string | null) => void;
   pendingChatArtwork: string | null;
   setPendingChatArtwork: (id: string | null) => void;
-  settingsDrawerOpen: boolean;
-  settingsDrawerAnimatingRef: AnimationLock;
+  settingsDrawerPhase: SettingsDrawerPhase;
   openSettingsDrawer: () => void;
   closeSettingsDrawer: () => void;
   toggleSettingsDrawer: () => void;
-  releaseSettingsDrawer: () => void;
+  completeSettingsDrawerEnter: () => void;
+  completeSettingsDrawerExit: () => void;
 }
+
+export const selectSettingsDrawerOpen = (state: UiState): boolean =>
+  state.settingsDrawerPhase === 'entering' || state.settingsDrawerPhase === 'open';
 
 export const useUiStore = create<UiState>((set, get) => ({
   activeTab: 'portfolio',
@@ -30,32 +53,40 @@ export const useUiStore = create<UiState>((set, get) => ({
   setPendingChatPeer: (id) => set({ pendingChatPeer: id }),
   pendingChatArtwork: null,
   setPendingChatArtwork: (id) => set({ pendingChatArtwork: id }),
-  settingsDrawerOpen: false,
-  settingsDrawerAnimatingRef: { current: false },
+  settingsDrawerPhase: 'closed',
   openSettingsDrawer: () => {
-    const animating = get().settingsDrawerAnimatingRef;
-    if (animating.current) return;
-    animating.current = true;
-    set({ settingsDrawerOpen: true });
+    if (get().settingsDrawerPhase !== 'closed') return;
+    set({ settingsDrawerPhase: 'entering' });
   },
   closeSettingsDrawer: () => {
-    const state = get();
-    const animating = state.settingsDrawerAnimatingRef;
-    // O "X"/backdrop/Escape sempre fecham: ignoram a trava de entrada e só
-    // travam o ciclo de SAÍDA, liberado no `onAnimationComplete` do drawer.
-    animating.current = false;
-    if (!state.settingsDrawerOpen) return;
-    animating.current = true;
-    set({ settingsDrawerOpen: false });
+    const phase = get().settingsDrawerPhase;
+    // `closed`/`exiting` são terminais para o fechamento. A partir de
+    // `entering` ou `open` o fechamento é sempre acatado.
+    if (phase === 'closed' || phase === 'exiting') return;
+    set({ settingsDrawerPhase: 'exiting' });
   },
   toggleSettingsDrawer: () => {
-    const state = get();
-    const animating = state.settingsDrawerAnimatingRef;
-    if (animating.current) return;
-    animating.current = true;
-    set({ settingsDrawerOpen: !state.settingsDrawerOpen });
+    const phase = get().settingsDrawerPhase;
+    if (phase === 'closed') {
+      set({ settingsDrawerPhase: 'entering' });
+      return;
+    }
+    if (phase === 'open') {
+      set({ settingsDrawerPhase: 'exiting' });
+      return;
+    }
+    // `entering` | `exiting`: trava atômica. A direção da animação em curso
+    // não pode ser revertida até a conclusão reportada pelo motion.
   },
-  releaseSettingsDrawer: () => {
-    get().settingsDrawerAnimatingRef.current = false;
+  completeSettingsDrawerEnter: () => {
+    if (get().settingsDrawerPhase !== 'entering') return;
+    set({ settingsDrawerPhase: 'open' });
+  },
+  completeSettingsDrawerExit: () => {
+    if (get().settingsDrawerPhase !== 'exiting') return;
+    set({ settingsDrawerPhase: 'closed' });
   },
 }));
+
+export const useSettingsDrawerOpen = (): boolean =>
+  useUiStore(selectSettingsDrawerOpen);

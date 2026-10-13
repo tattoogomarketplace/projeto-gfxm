@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
-import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
+import { useUiStore, useSettingsDrawerOpen, type AppTab } from '@/hooks/use-ui-store';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import {
@@ -42,7 +42,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
-  const settingsDrawerOpen = useUiStore((s) => s.settingsDrawerOpen);
+  const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
   const { t } = useI18n();
   const pathnameRef = useRef(pathname);
