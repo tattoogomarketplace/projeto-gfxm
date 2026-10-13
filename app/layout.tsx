@@ -4,9 +4,11 @@ import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
+import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
+import { BootContinuation } from "@/components/layout/boot-continuation";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
@@ -98,10 +100,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAFAFA" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  // Deep Graphite hardcoded (canvas da marca, `--background` dark e splash):
+  // o boot e SEMPRE escuro, entao o WebKit nunca pinta um frame branco antes
+  // do CSS — inclusive em aparelhos configurados em Light Mode.
+  themeColor: "#0a0a0a",
   colorScheme: "dark light",
 };
 
@@ -147,9 +149,18 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-                  {children}
-                </div>
+                {/* Ponte de boot Seamless: enquanto o Clerk hidrata, mantemos
+                    apenas a continuacao estatica do splash (Deep Graphite +
+                    bloom de cobre). Nenhum layout deslogado/rota e pintado ate
+                    a sessao resolver, eliminando o login-flash no boot frio. */}
+                <ClerkLoading>
+                  <BootContinuation />
+                </ClerkLoading>
+                <ClerkLoaded>
+                  <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+                    {children}
+                  </div>
+                </ClerkLoaded>
               </main>
               <Suspense fallback={null}>
                 <BottomNav />

@@ -16,7 +16,7 @@ import { BRAND_WORDMARK } from '@/lib/i18n/brands';
  * Splash nativa -> Auth Loading -> Skeletons do painel. Não usa a classe
  * `splash-root` porque `html.splash-seen` a oculta após o primeiro boot.
  */
-const BOOT_FALLBACK_BG = '#121212';
+const BOOT_FALLBACK_BG = '#000000';
 
 function AuthBootFallback() {
   return (
