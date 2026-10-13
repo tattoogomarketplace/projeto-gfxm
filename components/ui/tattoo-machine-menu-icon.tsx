@@ -1,19 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useUiStore } from '@/hooks/use-ui-store';
 import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
 
 const ICON_SPRING = { type: 'spring' as const, stiffness: 460, damping: 30, mass: 0.8 };
-
-// Janela de debounce exclusiva do gatilho: casa com a duração do spring de
-// abertura. Bloqueia somente o toque duplo rápido neste botão — o drawer, o
-// backdrop e o "X" permanecem 100% interativos o tempo todo.
-const OPEN_DEBOUNCE_MS = 400;
 
 type TattooMachineMenuTriggerProps = {
   open?: boolean;
@@ -23,31 +18,21 @@ type TattooMachineMenuTriggerProps = {
 export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachineMenuTriggerProps) {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
-  const [isOpening, setIsOpening] = useState(false);
-  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
-    },
-    []
-  );
+  // Trava atômica de ciclo de vida: lida de forma síncrona no handler, nunca
+  // depende do commit de render. Liberada exclusivamente pelo
+  // `onAnimationComplete` do drawer — nunca por timer arbitrário.
+  const isAnimatingRef = useUiStore((s) => s.settingsDrawerAnimatingRef);
 
   const handleClick = () => {
-    if (isOpening) return;
+    if (isAnimatingRef.current) return;
     triggerHaptic('light');
-    setIsOpening(true);
     onClick();
-    if (unlockTimerRef.current) clearTimeout(unlockTimerRef.current);
-    unlockTimerRef.current = setTimeout(() => setIsOpening(false), OPEN_DEBOUNCE_MS);
   };
 
   return (
     <motion.button
       type="button"
       onClick={handleClick}
-      disabled={isOpening}
-      aria-disabled={isOpening}
       aria-label={t('profile.settingsAndActivity')}
       aria-expanded={open}
       aria-haspopup="dialog"
@@ -56,8 +41,7 @@ export function TattooMachineMenuTrigger({ open = false, onClick }: TattooMachin
         'text-zinc-400 transition-colors duration-200 ease-out',
         'hover:bg-white/[0.05] hover:text-zinc-100',
         'active:bg-orange-500/10 active:text-orange-400',
-        open && 'bg-orange-500/15 text-orange-400',
-        isOpening && 'cursor-default'
+        open && 'bg-orange-500/15 text-orange-400'
       )}
       whileTap={{ scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 520, damping: 32 }}
