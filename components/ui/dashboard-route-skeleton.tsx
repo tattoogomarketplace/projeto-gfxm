@@ -1,15 +1,14 @@
 import { memo } from 'react';
-import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
+import { BootContinuation } from '@/components/layout/boot-continuation';
 
 /**
- * Route-level Suspense fallback for `/dashboard/*`.
+ * Route-level fallback de `/dashboard/*` (Fase 25.2).
  *
- * Delegates to the role-aware `DashboardHomeSkeleton` so every transition into a
- * painel paints the exact geometry of its destination (Flash Notes, Quick
- * Access, activity feed, Discover carousels) — never a spinner or a text loader.
+ * Unificado ao canvas único de boot: qualquer transição de segmento sob o
+ * painel pinta a MESMA tela escura do splash — nunca um skeleton de geometria.
  */
 function DashboardRouteSkeletonBase() {
-  return <DashboardHomeSkeleton />;
+  return <BootContinuation />;
 }
 
 export const DashboardRouteSkeleton = memo(DashboardRouteSkeletonBase);

@@ -1,14 +1,13 @@
 import { BootContinuation } from '@/components/layout/boot-continuation';
 
 /**
- * Root route-level loading boundary.
+ * Root route-level loading boundary (Fase 25.2).
  *
- * Consolidado com a camada `<ClerkLoading>`: em vez de um skeleton distinto que
- * aparecia como um degrau visual entre o splash e o app, pinta exatamente a
- * MESMA continuacao de boot (Deep Graphite + bloom de cobre). Assim o fluxo
- * nativo -> servidor -> hidratacao do Clerk -> UI autenticada e um unico canvas
- * continuo, sem multiplos flashes. Este fallback so aparece quando o segmento
- * raiz suspende; as rotas internas mantem seus skeletons de geometria.
+ * Renderiza o MESMO canvas único de boot consumido por `<ClerkLoading>`, pelos
+ * `loading.tsx` de rota, `DashboardHomeSkeleton` e `SessionHydrating`. Assim o
+ * fluxo nativo -> servidor -> hidratação do Clerk -> UI autenticada é um único
+ * canvas contínuo (Deep Graphite + bloom de cobre), sem skeletons paralelos e
+ * sem layout thrashing.
  */
 export default function Loading() {
   return <BootContinuation />;

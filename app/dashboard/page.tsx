@@ -138,10 +138,5 @@ export default function DashboardPage() {
     };
   }, [leave, releaseToDashboard]);
 
-  const loadingRole =
-    (typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role : null) ||
-    (typeof user?.unsafeMetadata?.role === 'string' ? user.unsafeMetadata.role : null) ||
-    storedRole;
-
-  return <DashboardHomeSkeleton role={loadingRole} />;
+  return <DashboardHomeSkeleton />;
 }

@@ -11,6 +11,7 @@ import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { useRouteTab } from '@/hooks/use-route-tab';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
+import { useBootCanvasActive } from '@/components/layout/boot-continuation';
 import { cn } from '@/lib/utils';
 import type { MessageKey } from '@/lib/i18n/types';
 
@@ -76,6 +77,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+  // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
+  // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
+  // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
+  // é `fixed`, ocultá-la não desloca o layout do conteúdo.
+  const bootCanvasActive = useBootCanvasActive();
 
   // HYDRATION-SAFE: a thread imersiva é derivada de forma síncrona da própria
   // URL — idêntica no SSR e no primeiro frame do cliente. A dock some no mesmo
@@ -83,7 +89,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const chatThreadActive =
     pathname.startsWith('/dashboard/chat') &&
     Boolean(searchParams.get('artistId') || searchParams.get('tatuadorId'));
-  const conceal = hidden || shouldHideNav(pathname, chatThreadActive);
+  const conceal = hidden || bootCanvasActive || shouldHideNav(pathname, chatThreadActive);
   const homePath = dashboardPathForRole(role);
   // Aba ativa derivada da ROTA via hook SSR-safe (pathname → query → store como
   // piso). Idêntica no servidor e no 1º frame do cliente, sem store no caminho

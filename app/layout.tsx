@@ -149,10 +149,12 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Ponte de boot Seamless: enquanto o Clerk hidrata, mantemos
-                    apenas a continuacao estatica do splash (Deep Graphite +
-                    bloom de cobre). Nenhum layout deslogado/rota e pintado ate
-                    a sessao resolver, eliminando o login-flash no boot frio. */}
+                {/* Ponte de boot Seamless (Fase 25.2): enquanto o Clerk hidrata,
+                    mantemos apenas o canvas único de boot (Deep Graphite + bloom
+                    de cobre) — o MESMO componente consumido por `app/loading.tsx`,
+                    pelos fallbacks de rota e pela hidratação de sessão. Nenhum
+                    layout deslogado/rota/skeleton é pintado até a sessão resolver,
+                    eliminando o login-flash e o thrash pós-splash. */}
                 <ClerkLoading>
                   <BootContinuation />
                 </ClerkLoading>
