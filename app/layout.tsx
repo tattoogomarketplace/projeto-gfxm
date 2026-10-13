@@ -8,7 +8,7 @@ import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
-import { BootContinuation } from "@/components/layout/boot-continuation";
+import { BootContinuation, BootCanvasOverlay } from "@/components/layout/boot-continuation";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
@@ -167,6 +167,15 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <BottomNav />
               </Suspense>
+              {/* BLINDAGEM DE BOOT (Fase 25.3): camada opaca de tela cheia no
+                  nível raiz do <body> — FORA do stacking context do <main>
+                  (relative z-0). Enquanto qualquer canvas de boot estiver ativo
+                  (ClerkLoading, loading.tsx raiz, loading.tsx de rota ou a
+                  hidratação de sessão), esta camada cobre TODO o chrome
+                  persistente do casco (header, gatilho de menu, FAB e dock).
+                  Fica logo abaixo do splash (z-[9999]): nenhum ícone flutuante
+                  é visível entre a saída da splash e o app totalmente pintado. */}
+              <BootCanvasOverlay />
               </I18nProvider>
             </ThemeProvider>
           </Providers>

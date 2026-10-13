@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useSyncExternalStore } from 'react';
+import { cn } from '@/lib/utils';
 
 /**
  * PONTE DE BOOT "SEAMLESS" — ÚNICA FONTE DE VERDADE DO CANVAS DE TRANSIÇÃO.
@@ -17,10 +18,19 @@ import { useEffect, useSyncExternalStore } from 'react';
  * fronteira é trocada. O handoff Splash -> hidratação -> app é um único frame
  * contínuo.
  *
- * Além de pintar, o componente registra a própria presença no store global.
- * A `BottomNav` lê esse store e se oculta enquanto QUALQUER canvas de boot
- * estiver ativo — a revelação pós-splash nunca expõe a dock (nem um skeleton de
- * navegação) sobre o canvas.
+ * Fase 25.3 — BLINDAGEM DE CAMADAS (o "leak" pós-splash):
+ *
+ * O `<main>` do Root Layout é `relative z-0`, ou seja, É um stacking context.
+ * Um canvas `fixed z-[70]` renderizado DENTRO dele nunca consegue cobrir irmãos
+ * do `<main>` (ex.: a `BottomNav`, `z-[60]`), e o header/FAB do casco podiam
+ * surgir por um frame antes da fronteira de Suspense assumir. Para eliminar
+ * definitivamente qualquer ícone flutuando no vazio, o `BootCanvasOverlay` é
+ * montado na RAIZ (irmão do `<main>`, no contexto de empilhamento do `<body>`),
+ * ACIMA de todo o chrome do casco e logo abaixo do splash (`z-[9999]`).
+ *
+ * Além de pintar, o `BootContinuation` registra a própria presença no store
+ * global. A `BottomNav` e o overlay raiz leem esse store: enquanto QUALQUER
+ * canvas de boot estiver ativo, nenhuma camada de aplicação é revelada.
  *
  * Não usa a classe `splash-root` porque `html.splash-seen` a ocultaria após o
  * primeiro boot; queremos a camada ativa em TODA inicialização fria.
@@ -29,6 +39,26 @@ import { useEffect, useSyncExternalStore } from 'react';
 export const BOOT_CANVAS_BG = '#000000';
 export const BOOT_CANVAS_GRADIENT =
   'radial-gradient(circle at 50% 42%, rgba(217,70,14,0.14) 0%, rgba(26,10,4,0.55) 16%, #000000 46%)';
+
+/**
+ * Camada de pintura pura — sem store, sem efeitos. Fica `fixed inset-0` e
+ * opaca; o `className` decide o nível de empilhamento.
+ */
+function BootCanvas({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        'fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none touch-none',
+        className
+      )}
+      style={{
+        backgroundColor: BOOT_CANVAS_BG,
+        backgroundImage: BOOT_CANVAS_GRADIENT,
+      }}
+    />
+  );
+}
 
 let activeBootCanvases = 0;
 const bootCanvasListeners = new Set<() => void>();
@@ -65,7 +95,11 @@ export function useBootCanvasActive() {
   );
 }
 
-export function BootContinuation() {
+/**
+ * Fallback de conteúdo (fronteiras de Suspense / hidratação de sessão). Publica
+ * a própria presença no store e pinta o canvas no seu contexto de empilhamento.
+ */
+export function BootContinuation({ className = 'z-[70]' }: { className?: string }) {
   useEffect(() => {
     activeBootCanvases += 1;
     notifyBootCanvasListeners();
@@ -75,14 +109,18 @@ export function BootContinuation() {
     };
   }, []);
 
-  return (
-    <div
-      aria-hidden
-      className="fixed inset-0 z-[70] h-[100dvh] w-full overflow-hidden overscroll-none touch-none"
-      style={{
-        backgroundColor: BOOT_CANVAS_BG,
-        backgroundImage: BOOT_CANVAS_GRADIENT,
-      }}
-    />
-  );
+  return <BootCanvas className={className} />;
+}
+
+/**
+ * Overlay de boot montado na raiz do `<body>` (fora do stacking context do
+ * `<main>`). Cobre TODO o chrome persistente do casco — header, gatilho de
+ * menu, FAB e dock — enquanto qualquer canvas de boot estiver ativo. Como o
+ * splash é `z-[9999]`, este overlay fica imediatamente abaixo dele: a saída do
+ * splash revela o mesmo canvas até o conteúdo real estar pronto.
+ */
+export function BootCanvasOverlay() {
+  const active = useBootCanvasActive();
+  if (!active) return null;
+  return <BootCanvas className="z-[9000]" />;
 }
