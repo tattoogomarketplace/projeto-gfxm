@@ -28,6 +28,7 @@ import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { AuthScreen } from '@/components/layout/auth-screen';
+import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
 import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
@@ -197,7 +198,9 @@ export default function RegisterPage() {
   const [isActivating, setIsActivating] = useState(false);
   const [razaoSocial, setRazaoSocial] = useState('');
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const nextPathRef = useRef<string | null>(null);
+  const turnstileRef = useRef<TurnstileGuardHandle>(null);
   const prevLocaleRef = useRef(locale);
 
   // Redirect-only guard: a transição de cadastro -> onboarding entrega direto
@@ -304,6 +307,10 @@ export default function RegisterPage() {
   };
 
   const onSubmit = async (data: RegisterFormValues) => {
+    if (!turnstileToken) {
+      toast.error(t('errors.clerk.requiresVerification'));
+      return;
+    }
     if (!acceptedTerms) {
       toast.error(t('auth.acceptTerms'));
       return;
@@ -386,6 +393,8 @@ export default function RegisterPage() {
        console.error(err);
         const clerkMsg = formatAppError(err, 'signup');
        toast.error(clerkMsg);
+       setTurnstileToken('');
+       turnstileRef.current?.reset();
      } finally {
       setLoading(false);
       setLoadingText('');
@@ -769,9 +778,17 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          <TurnstileGuard
+            ref={turnstileRef}
+            action="register"
+            onSuccess={setTurnstileToken}
+            onExpire={() => setTurnstileToken('')}
+            onError={() => setTurnstileToken('')}
+          />
+
           <button
             type="submit"
-            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !documentIsValid}
+            disabled={status === 'menor_14' || loading || !passwordsMatch || !isValid || !acceptedTerms || !documentIsValid || !turnstileToken}
             className="flex min-h-[44px] w-full items-center justify-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all active:scale-95 disabled:bg-zinc-700 disabled:text-zinc-500 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
           >
             {loading ? (

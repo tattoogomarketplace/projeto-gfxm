@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, X, XCircle } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
+import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';

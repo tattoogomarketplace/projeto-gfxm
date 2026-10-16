@@ -18,6 +18,7 @@ import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticate
 import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthScreen } from '@/components/layout/auth-screen';
+import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
 import { formatAppError } from '@/lib/error-handler';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
@@ -40,7 +41,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
   const [bridging, setBridging] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const nextPathRef = useRef<string | null>(null);
+  const turnstileRef = useRef<TurnstileGuardHandle>(null);
   const resetToastShown = useRef(false);
   const prevLocaleRef = useRef(locale);
 
@@ -105,6 +108,10 @@ export default function LoginPage() {
   };
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (!turnstileToken) {
+      toast.error(t('errors.clerk.requiresVerification'));
+      return;
+    }
     setIsLoading(true);
     try {
       if (!signIn || !setActive) {
@@ -151,6 +158,8 @@ export default function LoginPage() {
     } catch (err) {
       console.error('CLERK ERROR:', err);
       toast.error(formatAppError(err, 'auth'));
+      setTurnstileToken('');
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -350,9 +359,17 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <TurnstileGuard
+            ref={turnstileRef}
+            action="login"
+            onSuccess={setTurnstileToken}
+            onExpire={() => setTurnstileToken('')}
+            onError={() => setTurnstileToken('')}
+          />
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !turnstileToken}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
