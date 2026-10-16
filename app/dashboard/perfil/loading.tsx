@@ -13,7 +13,11 @@ import { useAuthStore } from '@/hooks/use-auth-store';
  * (no role cached yet) stays on `ProfileSkeleton`, then every in-session
  * navigation resolves to the exact geometry — zero layout shift.
  */
-export default function PerfilSegmentLoading() {
+export function PerfilSegmentSkeleton() {
   const role = useAuthStore((s) => s.role);
   return role === 'cliente' ? <ClientIdentitySkeleton /> : <ProfileSkeleton />;
+}
+
+export default function PerfilSegmentLoading() {
+  return <PerfilSegmentSkeleton />;
 }
