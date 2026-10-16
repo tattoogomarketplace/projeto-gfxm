@@ -1,11 +1,19 @@
-import { ProfileSkeleton } from '@/components/ui/route-skeletons';
+'use client';
+
+import { ClientIdentitySkeleton, ProfileSkeleton } from '@/components/ui/route-skeletons';
+import { useAuthStore } from '@/hooks/use-auth-store';
 
 /**
  * Route-level fallback of `/dashboard/perfil`.
  *
- * Reserves the full profile geometry (cover header, metrics, highlights rail,
- * media tab bar, grid and footer action) with the premium Dark Luxury shimmer.
+ * Smart hydration: reads the cached role from the auth store so the segment
+ * fallback matches the surface that will replace it. Standard users
+ * (`cliente`) get the `ClientIdentitySkeleton` (Avatar + identity sections),
+ * while artists/studios keep the `PublicProfile` geometry. The first render
+ * (no role cached yet) stays on `ProfileSkeleton`, then every in-session
+ * navigation resolves to the exact geometry — zero layout shift.
  */
 export default function PerfilSegmentLoading() {
-  return <ProfileSkeleton />;
+  const role = useAuthStore((s) => s.role);
+  return role === 'cliente' ? <ClientIdentitySkeleton /> : <ProfileSkeleton />;
 }

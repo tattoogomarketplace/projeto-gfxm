@@ -194,6 +194,89 @@ export function ProfileSkeleton({
   );
 }
 
+const CLIENT_HUB_CARD_CLASS =
+  'flex flex-col overflow-hidden rounded-2xl border border-zinc-800/50 bg-zinc-900/40';
+
+function ClientHubSectionSkeleton({
+  children,
+  subtitle = false,
+}: {
+  children: ReactNode;
+  subtitle?: boolean;
+}) {
+  return (
+    <section className="flex flex-col gap-y-2">
+      <div className="flex flex-col gap-y-0.5 px-1">
+        <Skeleton className="h-[13px] w-16 rounded-md" />
+        {subtitle ? <Skeleton className="h-[13px] w-28 rounded-md" /> : null}
+      </div>
+      <div className={cn(CLIENT_HUB_CARD_CLASS, 'divide-y divide-zinc-800/50')}>{children}</div>
+    </section>
+  );
+}
+
+function ClientHubRowSkeleton({
+  lines = 1,
+  chevron = false,
+}: {
+  lines?: 1 | 2;
+  chevron?: boolean;
+}) {
+  return (
+    <div className="flex min-h-14 w-full items-center gap-3 px-4 py-3">
+      <Skeleton className="h-10 w-10 min-h-10 min-w-10 shrink-0 rounded-xl" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <Skeleton className="h-5 w-28 rounded-md" />
+        {lines === 2 ? <Skeleton className="mt-0.5 h-4 w-44 rounded-md" /> : null}
+      </span>
+      {chevron ? <Skeleton className="h-5 w-5 min-h-5 min-w-5 shrink-0 rounded-md" /> : null}
+    </div>
+  );
+}
+
+export function ClientIdentitySkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+        className
+      )}
+      aria-hidden
+      aria-busy="true"
+    >
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
+        <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
+          <Skeleton className="h-28 w-28 min-h-28 min-w-28 rounded-full" />
+          <div className="flex flex-col items-center gap-y-1">
+            <Skeleton className="h-[26px] w-40 rounded-md" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </div>
+          <Skeleton className="h-7 w-44 rounded-full" />
+        </header>
+
+        <ClientHubSectionSkeleton subtitle>
+          <ClientHubRowSkeleton lines={2} />
+        </ClientHubSectionSkeleton>
+
+        <ClientHubSectionSkeleton>
+          <ClientHubRowSkeleton lines={2} chevron />
+        </ClientHubSectionSkeleton>
+
+        <ClientHubSectionSkeleton>
+          <ClientHubRowSkeleton lines={2} />
+          <ClientHubRowSkeleton lines={2} chevron />
+        </ClientHubSectionSkeleton>
+
+        <ClientHubSectionSkeleton>
+          <div className="flex min-h-14 w-full items-center justify-center px-4 py-3.5">
+            <Skeleton className="h-5 w-24 rounded-md" />
+          </div>
+        </ClientHubSectionSkeleton>
+      </div>
+    </div>
+  );
+}
+
 export function PublicProfileSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn(PROFILE_SCROLL_SHELL, className)} aria-hidden aria-busy="true">

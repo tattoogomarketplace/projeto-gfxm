@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { Images, LogOut, PenTool, Route, ShieldCheck } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { ProfileSkeleton } from '@/components/ui/route-skeletons';
+import { ClientIdentitySkeleton, ProfileSkeleton } from '@/components/ui/route-skeletons';
 import { ClientIdentityHub } from '@/components/settings/client-identity-hub';
 import {
   PublicProfile,
@@ -293,7 +293,8 @@ export function ProfileView() {
   // React.
   const hasIdentity = Boolean(cachedUser || user || email || nome);
   if (!isLoaded && !hasIdentity) {
-    return <ProfileSkeleton />;
+    const knownRole = identity?.role ?? cachedRole;
+    return knownRole === 'cliente' ? <ClientIdentitySkeleton /> : <ProfileSkeleton />;
   }
 
   const displayNome = nome || cachedUser?.fullName || '';
