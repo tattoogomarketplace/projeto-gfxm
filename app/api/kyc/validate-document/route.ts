@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { analyzeKycDocument } from '@/lib/ai/kyc-validator';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
+import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { fetchR2Object } from '@/lib/storage/r2';
 
 /** Limite defensivo: o inlineData do Gemini aceita ~20MB; mantemos folga. */
@@ -71,6 +72,14 @@ function isNotFoundError(error: unknown): boolean {
 
 export async function POST(request: Request) {
   try {
+    const integrity = await guardAppIntegrity(request);
+    if (!integrity.allowed) {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Integridade do aplicativo não verificada.', codigo: 'APP_INTEGRITY_REQUIRED' },
+        { status: 403 }
+      );
+    }
+
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
       return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });

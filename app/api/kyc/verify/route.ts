@@ -14,6 +14,7 @@ import {
 } from '@/lib/services/kyc-service';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
+import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { maskCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { onlyCpfDigits } from '@/lib/utils/cpf';
 import { maskCpf } from '@/lib/utils-security';
@@ -90,6 +91,14 @@ function maskDocument(document: string): string {
 }
 
 export async function POST(request: Request) {
+  const integrity = await guardAppIntegrity(request);
+  if (!integrity.allowed) {
+    return NextResponse.json(
+      { sucesso: false, erro: 'Integridade do aplicativo não verificada.', codigo: 'APP_INTEGRITY_REQUIRED' },
+      { status: 403 }
+    );
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
