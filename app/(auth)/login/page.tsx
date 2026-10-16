@@ -18,7 +18,7 @@ import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticate
 import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthScreen } from '@/components/layout/auth-screen';
-import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { formatAppError } from '@/lib/error-handler';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
@@ -42,8 +42,8 @@ export default function LoginPage() {
   const [forceShow, setForceShow] = useState(false);
   const [bridging, setBridging] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const nextPathRef = useRef<string | null>(null);
-  const turnstileRef = useRef<TurnstileGuardHandle>(null);
   const resetToastShown = useRef(false);
   const prevLocaleRef = useRef(locale);
 
@@ -159,7 +159,7 @@ export default function LoginPage() {
       console.error('CLERK ERROR:', err);
       toast.error(formatAppError(err, 'auth'));
       setTurnstileToken('');
-      turnstileRef.current?.reset();
+      setTurnstileNonce((nonce) => nonce + 1);
     } finally {
       setIsLoading(false);
     }
@@ -360,7 +360,7 @@ export default function LoginPage() {
           </div>
 
           <TurnstileGuard
-            ref={turnstileRef}
+            key={turnstileNonce}
             action="login"
             onSuccess={setTurnstileToken}
             onExpire={() => setTurnstileToken('')}

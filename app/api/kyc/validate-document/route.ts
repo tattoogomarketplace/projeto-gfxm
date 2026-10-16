@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { analyzeKycDocument } from '@/lib/ai/kyc-validator';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
+import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
 import { fetchR2Object } from '@/lib/storage/r2';
 
 /** Limite defensivo: o inlineData do Gemini aceita ~20MB; mantemos folga. */
@@ -24,6 +25,7 @@ type ValidateDocumentBody = {
   fileKey?: unknown;
   publicUrl?: unknown;
   contentType?: unknown;
+  turnstileToken?: unknown;
 };
 
 function sanitizeFileKey(value: unknown): string | null {
@@ -86,6 +88,17 @@ export async function POST(request: Request) {
       body = (await request.json()) as ValidateDocumentBody;
     } catch {
       return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+    }
+
+    const turnstile = await verifyTurnstileToken(
+      typeof body.turnstileToken === 'string' ? body.turnstileToken : undefined,
+      resolveClientIp(request)
+    );
+    if (turnstile.configured && !turnstile.success) {
+      return NextResponse.json(
+        { sucesso: false, erro: 'Falha na verificação anti-bot. Recarregue a página e tente novamente.' },
+        { status: 403 }
+      );
     }
 
     const fileKey = resolveFileKey(body);

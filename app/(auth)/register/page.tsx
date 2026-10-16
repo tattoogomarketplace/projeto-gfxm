@@ -28,7 +28,7 @@ import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { AuthScreen } from '@/components/layout/auth-screen';
-import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
@@ -199,8 +199,8 @@ export default function RegisterPage() {
   const [razaoSocial, setRazaoSocial] = useState('');
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const nextPathRef = useRef<string | null>(null);
-  const turnstileRef = useRef<TurnstileGuardHandle>(null);
   const prevLocaleRef = useRef(locale);
 
   // Redirect-only guard: a transição de cadastro -> onboarding entrega direto
@@ -394,7 +394,7 @@ export default function RegisterPage() {
         const clerkMsg = formatAppError(err, 'signup');
        toast.error(clerkMsg);
        setTurnstileToken('');
-       turnstileRef.current?.reset();
+       setTurnstileNonce((nonce) => nonce + 1);
      } finally {
       setLoading(false);
       setLoadingText('');
@@ -779,7 +779,7 @@ export default function RegisterPage() {
           </div>
 
           <TurnstileGuard
-            ref={turnstileRef}
+            key={turnstileNonce}
             action="register"
             onSuccess={setTurnstileToken}
             onExpire={() => setTurnstileToken('')}

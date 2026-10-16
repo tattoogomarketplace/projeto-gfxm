@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, X, XCircle } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
-import { TurnstileGuard, type TurnstileGuardHandle } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
@@ -106,10 +106,12 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [extractedName, setExtractedName] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const busy = phase !== 'idle';
-  const canSubmit = Boolean(pendingFile) && !busy;
+  const canSubmit = Boolean(pendingFile) && !busy && Boolean(turnstileToken);
   const progress = PHASE_PROGRESS[phase];
   // Fase de processamento no servidor (validação por IA pode levar ~30s): é o
   // "deadzone" que precisa de feedback contínuo para não parecer travado.
@@ -224,6 +226,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
               fileKey: presign.fileKey,
               publicUrl: presign.publicUrl,
               contentType,
+              turnstileToken,
             }),
           },
           tokenFn
@@ -263,9 +266,14 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       } finally {
         setPhase('idle');
         if (inputRef.current) inputRef.current.value = '';
+        // Token do Turnstile é de uso único: invalida o atual e renova o widget
+        // (via remontagem) para o próximo envio, mantendo o CTA desabilitado até
+        // nova validação. A remontagem também cobre o bypass de dev sem site key.
+        setTurnstileToken('');
+        setTurnstileNonce((nonce) => nonce + 1);
       }
     },
-    [applyStatus, getToken, triggerHaptic, t]
+    [applyStatus, getToken, triggerHaptic, t, turnstileToken]
   );
 
   const handleSubmit = useCallback(() => {
@@ -397,6 +405,14 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
               </motion.button>
             )}
           </AnimatePresence>
+
+          <TurnstileGuard
+            key={turnstileNonce}
+            action="kyc-document"
+            onSuccess={setTurnstileToken}
+            onExpire={() => setTurnstileToken('')}
+            onError={() => setTurnstileToken('')}
+          />
 
           <motion.button
             type="button"

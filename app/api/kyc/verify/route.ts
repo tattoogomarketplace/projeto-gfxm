@@ -13,6 +13,7 @@ import {
   type KycOutcome,
 } from '@/lib/services/kyc-service';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
+import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
 import { maskCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { onlyCpfDigits } from '@/lib/utils/cpf';
 import { maskCpf } from '@/lib/utils-security';
@@ -46,6 +47,7 @@ const payloadSchema = z.object({
     .min(1, 'Frente do documento é obrigatória.')
     .max(MAX_DOCUMENT_REF_LENGTH),
   documentBackUrl: z.string().trim().max(MAX_DOCUMENT_REF_LENGTH).optional(),
+  turnstileToken: z.string().trim().max(2048).optional(),
 });
 
 /**
@@ -105,6 +107,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { sucesso: false, erro: parsed.error.issues[0]?.message ?? 'Payload inválido.' },
       { status: 400 }
+    );
+  }
+
+  const turnstile = await verifyTurnstileToken(parsed.data.turnstileToken, resolveClientIp(request));
+  if (turnstile.configured && !turnstile.success) {
+    return NextResponse.json(
+      { sucesso: false, erro: 'Falha na verificação anti-bot. Recarregue a página e tente novamente.' },
+      { status: 403 }
     );
   }
 
