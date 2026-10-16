@@ -3,12 +3,19 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { analyzeKycDocument } from '@/lib/ai/kyc-validator';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
 import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { fetchR2Object } from '@/lib/storage/r2';
+import {
+  invalidPayloadBody,
+  storageKeySchema,
+  storageUrlSchema,
+  turnstileTokenSchema,
+} from '@/lib/security/validation';
 
 /** Limite defensivo: o inlineData do Gemini aceita ~20MB; mantemos folga. */
 const MAX_OBJECT_BYTES = 10 * 1024 * 1024;
@@ -22,12 +29,23 @@ type KycStatusValue = 'pendente' | 'em_analise' | 'aprovado' | 'rejeitado' | 'na
 /** Abaixo deste score a aprovação é retida para revisão humana. */
 const MIN_AUTO_APPROVE_SCORE = 60;
 
-type ValidateDocumentBody = {
-  fileKey?: unknown;
-  publicUrl?: unknown;
-  contentType?: unknown;
-  turnstileToken?: unknown;
-};
+/**
+ * Sanitização impiedosa do payload: aceita `fileKey` cru do bucket OU
+ * `publicUrl` do R2, mais `contentType` e `turnstileToken` opcionais. Qualquer
+ * outro formato é rejeitado com HTTP 400 antes de tocar em segurança ou banco.
+ */
+const payloadSchema = z
+  .object({
+    fileKey: storageKeySchema.optional(),
+    publicUrl: storageUrlSchema.optional(),
+    contentType: z.string().trim().max(120).optional(),
+    turnstileToken: turnstileTokenSchema.optional(),
+  })
+  .refine((data) => Boolean(data.fileKey || data.publicUrl), {
+    message: 'Informe um fileKey ou publicUrl válido do R2.',
+  });
+
+type ValidateDocumentPayload = z.infer<typeof payloadSchema>;
 
 function sanitizeFileKey(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -43,15 +61,15 @@ function sanitizeFileKey(value: unknown): string | null {
  * A URL só é aceita se pertencer ao domínio público configurado do R2, o que
  * elimina SSRF: nunca buscamos um host arbitrário fornecido pelo cliente.
  */
-function resolveFileKey(body: ValidateDocumentBody): string | null {
+function resolveFileKey(body: ValidateDocumentPayload): string | null {
   const direct = sanitizeFileKey(body.fileKey);
   if (direct) return direct;
 
-  if (typeof body.publicUrl !== 'string' || !body.publicUrl.trim()) return null;
+  const url = body.publicUrl?.trim();
+  if (!url) return null;
   const base = (process.env.R2_PUBLIC_URL ?? '').replace(/\/+$/, '');
   if (!base) return null;
 
-  const url = body.publicUrl.trim();
   if (!url.startsWith(`${base}${DELIMITER}`)) return null;
 
   const rawKey = url.slice(base.length + 1).split(/[?#]/)[0];
@@ -72,6 +90,22 @@ function isNotFoundError(error: unknown): boolean {
 
 export async function POST(request: Request) {
   try {
+    // 1) Sanitização impiedosa PRIMEIRO: payload malformado nunca toca em
+    //    integridade, Turnstile, storage ou banco.
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+    }
+
+    const parsed = payloadSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+    const body = parsed.data;
+
+    // 2) Integridade do aplicativo.
     const integrity = await guardAppIntegrity(request);
     if (!integrity.allowed) {
       return NextResponse.json(
@@ -80,6 +114,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // 3) Sessão.
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
       return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
@@ -92,17 +127,8 @@ export async function POST(request: Request) {
       );
     }
 
-    let body: ValidateDocumentBody = {};
-    try {
-      body = (await request.json()) as ValidateDocumentBody;
-    } catch {
-      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-    }
-
-    const turnstile = await verifyTurnstileToken(
-      typeof body.turnstileToken === 'string' ? body.turnstileToken : undefined,
-      resolveClientIp(request)
-    );
+    // 4) Anti-bot.
+    const turnstile = await verifyTurnstileToken(body.turnstileToken, resolveClientIp(request));
     if (turnstile.configured && !turnstile.success) {
       return NextResponse.json(
         { sucesso: false, erro: 'Falha na verificação anti-bot. Recarregue a página e tente novamente.' },
@@ -156,9 +182,7 @@ export async function POST(request: Request) {
     }
 
     const mimeType =
-      object.contentType ||
-      (typeof body.contentType === 'string' ? body.contentType.trim() : '') ||
-      'application/octet-stream';
+      object.contentType || body.contentType || 'application/octet-stream';
 
     if (!ALLOWED_MIME_PREFIXES.some((prefix) => mimeType.startsWith(prefix))) {
       return NextResponse.json(

@@ -3,9 +3,13 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ReceitaWsError, validateCnpj } from '@/lib/services/receitaws';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
+import { cnpjSchema, invalidPayloadBody } from '@/lib/security/validation';
+
+const payloadSchema = z.object({ cnpj: cnpjSchema });
 
 /**
  * Valida um CNPJ junto à ReceitaWS e devolve os dados cadastrais normalizados.
@@ -13,19 +17,25 @@ import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
  * externa. Não persiste nada (uso em pré-visualização/onboarding).
  */
 export async function POST(request: Request) {
+  // Sanitização impiedosa PRIMEIRO: CNPJ malformado nunca toca em sessão/provedor.
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = payloadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  let body: { cnpj?: unknown } = {};
-  try {
-    body = (await request.json()) as { cnpj?: unknown };
-  } catch {
-    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-  }
-
-  const cleanCnpj = onlyCnpjDigits(typeof body.cnpj === 'string' ? body.cnpj : '');
+  const cleanCnpj = onlyCnpjDigits(parsed.data.cnpj);
   if (!isValidCnpj(cleanCnpj)) {
     return NextResponse.json(
       { sucesso: false, erro: 'CNPJ inválido. Informe 14 dígitos válidos.' },

@@ -2,14 +2,21 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { describeRequestAuth, resolvePerfilSession } from '@/lib/services/perfil-session';
 import { changeUsername } from '@/lib/services/username-change';
+import { invalidPayloadBody } from '@/lib/security/validation';
 import {
   isUsernameForbiddenForRole,
   normalizeUsername,
   validateUsername,
 } from '@/lib/username';
+
+/** Payload de identidade: `username` é sempre string (nunca array/objeto). */
+const payloadSchema = z.object({
+  username: z.string().trim().min(1, 'Username inválido.').max(64, 'Username inválido.'),
+});
 
 /**
  * Identidade universal (@username).
@@ -111,11 +118,16 @@ async function claimUsername(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  let body: { username?: unknown } = {};
+  let rawBody: unknown;
   try {
-    body = (await request.json()) as { username?: unknown };
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = payloadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
   }
 
   try {
@@ -130,7 +142,7 @@ async function claimUsername(request: Request) {
 
     // Toda a regra de negocio (formato, unicidade e trava de 30 dias) vive em
     // `changeUsername`, compartilhada com o Server Action `updateUsername`.
-    const result = await changeUsername(perfil.id, body.username);
+    const result = await changeUsername(perfil.id, parsed.data.username);
 
     switch (result.status) {
       case 'ok':

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import {
   ensurePerfilFromClerk,
   findPerfilByClerkId,
@@ -19,7 +20,11 @@ import {
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
-import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete } from '@/lib/utils/auth-redirect';
+import { appRoleSchema, invalidPayloadBody } from '@/lib/security/validation';
+
+/** Payload de onboarding: `role` é opcional (o fluxo tolera corpo vazio). */
+const payloadSchema = z.object({ role: appRoleSchema.optional() });
 
 /**
  * Conclui o onboarding de forma idempotente.
@@ -48,14 +53,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  let body: { role?: string } = {};
+  let rawBody: unknown = {};
   try {
-    body = (await request.json()) as { role?: string };
+    rawBody = await request.json();
   } catch {
-    body = {};
+    rawBody = {};
   }
 
-  const requestedRole = parseAppRole(body.role);
+  const parsed = payloadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
+  const requestedRole = parsed.data.role ?? null;
 
   let existing: LocalPerfil | null = null;
   try {

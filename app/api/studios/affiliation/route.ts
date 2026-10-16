@@ -2,8 +2,10 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
+import { invalidPayloadBody, uuidSchema } from '@/lib/security/validation';
 import {
   AffiliationError,
   decideAffiliation,
@@ -12,6 +14,13 @@ import {
   listForTatuador,
   requestAffiliation,
 } from '@/lib/services/studio-affiliation';
+
+const requestSchema = z.object({ estudio_id: uuidSchema });
+
+const decisionSchema = z.object({
+  convite_id: uuidSchema,
+  action: z.enum(['accept', 'reject', 'cancel']),
+});
 
 async function loadActor(clerkId: string) {
   return prisma.perfil.findUnique({
@@ -51,6 +60,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Sanitização impiedosa PRIMEIRO: payload malformado nunca toca em sessão/banco.
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = requestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
@@ -67,14 +89,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { estudio_id?: unknown } = {};
-  try {
-    body = (await request.json()) as { estudio_id?: unknown };
-  } catch {
-    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-  }
-
-  const estudioId = typeof body.estudio_id === 'string' ? body.estudio_id.trim() : '';
+  const estudioId = parsed.data.estudio_id;
   try {
     const result = await requestAffiliation(actor.id, estudioId);
     return NextResponse.json({ sucesso: true, ...result }, { status: result.reused ? 200 : 201 });
@@ -94,6 +109,19 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  // Sanitização impiedosa PRIMEIRO.
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = decisionSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
@@ -104,20 +132,8 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
   }
 
-  let body: { convite_id?: unknown; action?: unknown } = {};
-  try {
-    body = (await request.json()) as { convite_id?: unknown; action?: unknown };
-  } catch {
-    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-  }
-
-  const conviteId = typeof body.convite_id === 'string' ? body.convite_id.trim() : '';
-  const action = body.action === 'accept' || body.action === 'reject' || body.action === 'cancel'
-    ? body.action
-    : null;
-  if (!action) {
-    return NextResponse.json({ sucesso: false, erro: 'Ação inválida.' }, { status: 400 });
-  }
+  const conviteId = parsed.data.convite_id;
+  const action = parsed.data.action;
 
   try {
     const result = await decideAffiliation(

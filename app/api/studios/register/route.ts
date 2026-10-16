@@ -4,10 +4,14 @@ export const maxDuration = 30;
 
 import { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ReceitaWsError, validateCnpj } from '@/lib/services/receitaws';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
+import { cnpjSchema, invalidPayloadBody } from '@/lib/security/validation';
+
+const payloadSchema = z.object({ cnpj: cnpjSchema });
 
 function isUniqueConstraintError(error: unknown): boolean {
   return (
@@ -26,19 +30,25 @@ function isUniqueConstraintError(error: unknown): boolean {
  * banco e os Documentos Pessoais são responsabilidade de `/api/kyc/validate-document`.
  */
 export async function POST(request: Request) {
+  // Sanitização impiedosa PRIMEIRO: CNPJ malformado nunca toca em sessão/banco.
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = payloadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  let body: { cnpj?: unknown } = {};
-  try {
-    body = (await request.json()) as { cnpj?: unknown };
-  } catch {
-    return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-  }
-
-  const cleanCnpj = onlyCnpjDigits(typeof body.cnpj === 'string' ? body.cnpj : '');
+  const cleanCnpj = onlyCnpjDigits(parsed.data.cnpj);
   if (!isValidCnpj(cleanCnpj)) {
     return NextResponse.json(
       { sucesso: false, erro: 'CNPJ inválido. Informe 14 dígitos válidos.' },

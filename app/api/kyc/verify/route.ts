@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import {
   composeKycVerdict,
   verifyCpfIdentity,
+  verifyFaceMatch,
   verifyLiveness,
   type KycOutcome,
 } from '@/lib/services/kyc-service';
@@ -18,6 +19,13 @@ import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { maskCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { onlyCpfDigits } from '@/lib/utils/cpf';
 import { maskCpf } from '@/lib/utils-security';
+import {
+  cpfOrCnpjSchema,
+  fullNameSchema,
+  invalidPayloadBody,
+  storageRefSchema,
+  turnstileTokenSchema,
+} from '@/lib/security/validation';
 
 /** Limite defensivo para chaves/URLs de documento. */
 const MAX_DOCUMENT_REF_LENGTH = 1024;
@@ -38,17 +46,19 @@ const STATUS_LABEL: Record<KycStatusValue, string> = {
   nao_aplicavel: 'NAO_APLICAVEL',
 };
 
+/**
+ * Sanitização impiedosa do ponto de entrada. Nenhum campo chega a ser tocado
+ * pela checagem de integridade, pelo Turnstile ou pelo Prisma sem antes passar
+ * por aqui: CPF/CNPJ com dígitos verificadores válidos, nome civil plausível e
+ * referências de storage estritas (chave R2 ou `publicUrl`).
+ */
 const payloadSchema = z.object({
-  cpf: z.string().trim().min(11, 'CPF/CNPJ inválido.').max(20),
-  fullName: z.string().trim().min(5, 'Informe o nome completo do titular.').max(160),
-  selfieUrl: z.string().trim().min(1, 'Selfie (prova de vida) é obrigatória.').max(MAX_DOCUMENT_REF_LENGTH),
-  documentFrontUrl: z
-    .string()
-    .trim()
-    .min(1, 'Frente do documento é obrigatória.')
-    .max(MAX_DOCUMENT_REF_LENGTH),
-  documentBackUrl: z.string().trim().max(MAX_DOCUMENT_REF_LENGTH).optional(),
-  turnstileToken: z.string().trim().max(2048).optional(),
+  cpf: cpfOrCnpjSchema,
+  fullName: fullNameSchema,
+  selfieUrl: storageRefSchema,
+  documentFrontUrl: storageRefSchema,
+  documentBackUrl: storageRefSchema.optional(),
+  turnstileToken: turnstileTokenSchema.optional(),
 });
 
 /**
@@ -91,19 +101,8 @@ function maskDocument(document: string): string {
 }
 
 export async function POST(request: Request) {
-  const integrity = await guardAppIntegrity(request);
-  if (!integrity.allowed) {
-    return NextResponse.json(
-      { sucesso: false, erro: 'Integridade do aplicativo não verificada.', codigo: 'APP_INTEGRITY_REQUIRED' },
-      { status: 403 }
-    );
-  }
-
-  const { userId } = await resolvePerfilSession(request);
-  if (!userId) {
-    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
-  }
-
+  // 1) Sanitização impiedosa PRIMEIRO: payload malformado nunca toca na
+  //    checagem de integridade, no Turnstile ou no banco.
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -113,12 +112,25 @@ export async function POST(request: Request) {
 
   const parsed = payloadSchema.safeParse(rawBody);
   if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
+  // 2) Integridade do aplicativo (attestation).
+  const integrity = await guardAppIntegrity(request);
+  if (!integrity.allowed) {
     return NextResponse.json(
-      { sucesso: false, erro: parsed.error.issues[0]?.message ?? 'Payload inválido.' },
-      { status: 400 }
+      { sucesso: false, erro: 'Integridade do aplicativo não verificada.', codigo: 'APP_INTEGRITY_REQUIRED' },
+      { status: 403 }
     );
   }
 
+  // 3) Sessão.
+  const { userId } = await resolvePerfilSession(request);
+  if (!userId) {
+    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+  }
+
+  // 4) Anti-bot.
   const turnstile = await verifyTurnstileToken(parsed.data.turnstileToken, resolveClientIp(request));
   if (turnstile.configured && !turnstile.success) {
     return NextResponse.json(
@@ -198,12 +210,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const [identity, liveness] = await Promise.all([
+    const [identity, liveness, faceMatch] = await Promise.all([
       verifyCpfIdentity(cpf, fullName),
       verifyLiveness(selfieRef, frontRef),
+      verifyFaceMatch(selfieRef, frontRef),
     ]);
 
-    const verdict = composeKycVerdict(identity, liveness);
+    // Log de falha biométrica: similaridade de rosto abaixo do limiar (>90%)
+    // nunca é aprovada. Registra apenas metadados — jamais o CPF/CNPJ cru.
+    if (faceMatch.outcome === 'rejeitado') {
+      console.warn('[kyc/verify] falha biométrica no face matching', {
+        userId,
+        provider: faceMatch.provider,
+        similarity: faceMatch.similarity,
+        threshold: faceMatch.threshold,
+      });
+    }
+
+    const verdict = composeKycVerdict(identity, liveness, faceMatch);
     const status = outcomeToStatus(verdict.outcome);
     const reviewedAt = status === 'em_analise' ? null : new Date();
     const documentPatch =
@@ -261,6 +285,13 @@ export async function POST(request: Request) {
           samePerson: liveness.samePerson,
           score: liveness.score,
           provider: liveness.provider,
+        },
+        faceMatch: {
+          verified: faceMatch.verified,
+          samePerson: faceMatch.samePerson,
+          similarity: faceMatch.similarity,
+          threshold: faceMatch.threshold,
+          provider: faceMatch.provider,
         },
         ...(verdict.reason ? { motivo: verdict.reason } : {}),
       },
