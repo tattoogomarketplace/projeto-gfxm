@@ -159,6 +159,14 @@ model KycProfile {
   document_ref      String?
   selfie_ref        String?
   address_proof_ref String?
+  // Referências (chaves R2, nunca o binário) dos documentos de identidade
+  // capturados no fluxo mobile de KYC. Opcionais para não quebrar perfis legados.
+  documentFrontUrl  String?   @map("document_front_url")
+  documentBackUrl   String?   @map("document_back_url")
+  selfieUrl         String?   @map("selfie_url")
+  // CPF (11 dígitos, apenas números) ou CNPJ (14 dígitos) usado na prova de
+  // identidade. Indexado para detecção de reuso/fraude de documentos.
+  cpfCnpj           String?   @map("cpf_cnpj")
   documents         Json?
   rejection_reason  String?
   reviewed_at       DateTime? @db.Timestamptz(6)
@@ -169,6 +177,7 @@ model KycProfile {
   user Perfil @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([status], map: "kyc_profiles_status_idx")
+  @@index([cpfCnpj], map: "kyc_profiles_cpf_cnpj_idx")
   @@index([deleted_at], map: "kyc_profiles_deleted_at_idx")
   @@map("kyc_profiles")
 }
