@@ -196,3 +196,46 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 }
 
 export const BottomNav = memo(BottomNavInner);
+
+/**
+ * Placeholder estático da dock — fallback de Suspense do Root Layout.
+ *
+ * `useSearchParams` suspende a `BottomNav` durante a renderização no servidor
+ * (exigência do App Router). Com `fallback={null}`, o HTML inicial não reservava
+ * a dock e ela "pipocava" no primeiro frame após a hidratação. Este placeholder
+ * desenha a MESMA caixa de vidro (geometria, ícones e rótulos idênticos) usando
+ * apenas o `pathname` — que é síncrono e nunca suspende — e se auto-oculta fora
+ * do casco autenticado, para jamais surgir na landing (`/`) nem em rotas
+ * imersivas. Não é interativo: é substituído pela dock real assim que o
+ * boundary resolve.
+ */
+function BottomNavFallbackInner() {
+  const pathname = usePathname();
+  const { t } = useI18n();
+
+  if (shouldHideNav(pathname, false)) return null;
+
+  return (
+    <nav
+      aria-hidden
+      className={cn(
+        'glass-chrome fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto flex max-w-md transform-gpu items-center rounded-2xl border border-black/[0.04] px-1 py-1.5 shadow-2xl dark:border-white/[0.05] md:hidden'
+      )}
+    >
+      <ul className="grid h-11 w-full grid-cols-4">
+        {ITEMS.map((item) => (
+          <li key={item.tab} className="flex">
+            <span className="flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-none tracking-tight text-zinc-500 dark:text-zinc-400">
+              <span className="flex transform-gpu items-center justify-center">
+                <NavIcon icon={item.icon} />
+              </span>
+              <span>{t(item.labelKey)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+export const BottomNavFallback = memo(BottomNavFallbackInner);

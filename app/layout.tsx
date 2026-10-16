@@ -12,7 +12,7 @@ import { BootCanvasOverlay } from "@/components/layout/boot-continuation";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
 import { SplashGate } from "@/components/ui/splash-gate";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 
@@ -149,25 +149,28 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Ponte de boot Seamless (Fase 25.2 / fix pós-splash):
-                    enquanto o Clerk hidrata, pintamos apenas um canvas escuro
-                    chapado (`bg-background`). O antigo `BootContinuation`
-                    (Deep Graphite + bloom de cobre) foi removido daqui: ele era
-                    reativado durante navegações internas (ex.: aba Perfil),
-                    pintando o gradiente global de boot por cima do app já
-                    carregado. Agora os skeletons de `loading.tsx` são a ÚNICA
-                    UI de carregamento nas navegações internas; o gradiente da
-                    marca fica exclusivo da splash inicial (`SplashGate`). */}
-                <ClerkLoading>
-                  <div className="h-full min-h-0 w-full flex-1 bg-background" aria-hidden />
-                </ClerkLoading>
+                {/* Fase 25.4 — anti-"apagão" (flash preto nas navegações):
+                    o `<ClerkLoading>` deixou de pintar QUALQUER canvas de tela
+                    cheia. Antes ele renderizava um `<div bg-background h-full
+                    w-full flex-1>` como irmão de `<ClerkLoaded>` dentro do mesmo
+                    `<main>`; qualquer reavaliação do estado `isLoaded` numa
+                    transição interna pintava esse bloco escuro por cima do casco
+                    persistente (header + dock) e produzia o apagão preto ANTES
+                    dos skeletons.
+
+                    Agora ele não renderiza nada. A única pintura de boot é a
+                    splash inicial (`SplashGate`, z-[9999]); se ela já foi vista,
+                    o canvas raiz do `<body>` (`bg-background` = #0a0a0a) segura
+                    o frame até o Clerk resolver. Os skeletons de `loading.tsx`
+                    permanecem a ÚNICA UI de carregamento nas navegações. */}
+                <ClerkLoading />
                 <ClerkLoaded>
                   <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
                     {children}
                   </div>
                 </ClerkLoaded>
               </main>
-              <Suspense fallback={null}>
+              <Suspense fallback={<BottomNavFallback />}>
                 <BottomNav />
               </Suspense>
               {/* BLINDAGEM DE BOOT (Fase 25.3): camada opaca de tela cheia no
