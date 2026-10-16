@@ -8,7 +8,7 @@ import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
-import { BootContinuation, BootCanvasOverlay } from "@/components/layout/boot-continuation";
+import { BootCanvasOverlay } from "@/components/layout/boot-continuation";
 import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
@@ -149,14 +149,17 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Ponte de boot Seamless (Fase 25.2): enquanto o Clerk hidrata,
-                    mantemos apenas o canvas único de boot (Deep Graphite + bloom
-                    de cobre) — o MESMO componente consumido por `app/loading.tsx`,
-                    pelos fallbacks de rota e pela hidratação de sessão. Nenhum
-                    layout deslogado/rota/skeleton é pintado até a sessão resolver,
-                    eliminando o login-flash e o thrash pós-splash. */}
+                {/* Ponte de boot Seamless (Fase 25.2 / fix pós-splash):
+                    enquanto o Clerk hidrata, pintamos apenas um canvas escuro
+                    chapado (`bg-background`). O antigo `BootContinuation`
+                    (Deep Graphite + bloom de cobre) foi removido daqui: ele era
+                    reativado durante navegações internas (ex.: aba Perfil),
+                    pintando o gradiente global de boot por cima do app já
+                    carregado. Agora os skeletons de `loading.tsx` são a ÚNICA
+                    UI de carregamento nas navegações internas; o gradiente da
+                    marca fica exclusivo da splash inicial (`SplashGate`). */}
                 <ClerkLoading>
-                  <BootContinuation />
+                  <div className="h-full min-h-0 w-full flex-1 bg-background" aria-hidden />
                 </ClerkLoading>
                 <ClerkLoaded>
                   <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
@@ -168,13 +171,14 @@ export default function RootLayout({
                 <BottomNav />
               </Suspense>
               {/* BLINDAGEM DE BOOT (Fase 25.3): camada opaca de tela cheia no
-                  nível raiz do <body> — FORA do stacking context do <main>
-                  (relative z-0). Enquanto qualquer canvas de boot estiver ativo
-                  (ClerkLoading, loading.tsx raiz, loading.tsx de rota ou a
-                  hidratação de sessão), esta camada cobre TODO o chrome
-                  persistente do casco (header, gatilho de menu, FAB e dock).
-                  Fica logo abaixo do splash (z-[9999]): nenhum ícone flutuante
-                  é visível entre a saída da splash e o app totalmente pintado. */}
+                  nível raiz do <body>, FORA do stacking context do <main>
+                  (relative z-0). Ela só pinta enquanto existir um
+                  `BootContinuation` montado. AUDITORIA: o único produtor desse
+                  canvas era o `<ClerkLoading>` acima e foi removido, então
+                  navegações internas (e o próprio boot) nunca mais ativam esta
+                  camada — ela permanece inerte e os skeletons de `loading.tsx`
+                  são a única UI de carregamento. A splash inicial (`SplashGate`,
+                  z-[9999]) segue intacta. */}
               <BootCanvasOverlay />
               </I18nProvider>
             </ThemeProvider>
