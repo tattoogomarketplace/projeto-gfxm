@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BRAND_NAME } from '@/lib/i18n/brands';
 import { cn } from '@/lib/utils';
 
 const PROFILE_SCROLL_SHELL =
@@ -332,5 +333,207 @@ export function AppRouteSkeleton({ className }: { className?: string }) {
         <Skeleton className="h-28 w-full rounded-2xl" />
       </div>
     </Shell>
+  );
+}
+
+export function ArtistVerificationSkeleton({ className }: { className?: string }) {
+  return (
+    <Shell
+      className={cn(
+        'relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-background px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+4rem)] text-white sm:px-6 [-webkit-overflow-scrolling:touch]',
+        className
+      )}
+    >
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col space-y-6">
+        <Skeleton className="h-11 w-24 rounded-xl" />
+
+        <section className="rounded-3xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
+          <Skeleton className="h-6 w-36 rounded-full" />
+          <Skeleton className="mt-4 h-9 w-3/4 max-w-[20rem] rounded-lg" />
+          <Skeleton className="mt-3 h-4 w-full rounded-full" />
+          <Skeleton className="mt-2 h-4 w-5/6 rounded-full" />
+
+          <ul className="mt-6 space-y-3">
+            {[0, 1, 2].map((index) => (
+              <li key={index} className="flex items-start gap-3">
+                <Skeleton className="h-9 w-9 min-h-9 min-w-9 shrink-0 rounded-xl" />
+                <span className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-40 rounded-full" />
+                  <Skeleton className="h-3 w-full max-w-[18rem] rounded-full" />
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <Skeleton className="mt-7 h-14 w-full rounded-2xl" />
+        </section>
+
+        <section className="rounded-3xl border border-border/50 bg-white/5 p-6 backdrop-blur-md sm:p-7">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-5 w-44 rounded-full" />
+              <Skeleton className="h-3 w-full max-w-[20rem] rounded-full" />
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-28 rounded-full" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-24 rounded-full" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-14 w-full rounded-2xl" />
+          </div>
+        </section>
+      </div>
+    </Shell>
+  );
+}
+
+export function KycPendingSkeleton({ className }: { className?: string }) {
+  return (
+    <Shell
+      className={cn(
+        'flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-white',
+        className
+      )}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
+        <div className="mx-auto w-full max-w-lg space-y-6 pb-8">
+          <section className="rounded-2xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
+            <Skeleton className="h-3 w-28 rounded-full" />
+            <Skeleton className="mt-3 h-8 w-3/4 max-w-[16rem] rounded-full" />
+            <Skeleton className="mt-3 h-4 w-full rounded-full" />
+            <Skeleton className="mt-2 h-4 w-4/5 rounded-full" />
+            <ul className="mt-6 space-y-3">
+              {[0, 1, 2].map((index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <Skeleton className="h-8 w-8 min-h-8 min-w-8 shrink-0 rounded-lg" />
+                  <span className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-32 rounded-full" />
+                    <Skeleton className="h-3 w-full max-w-[18rem] rounded-full" />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <div className="rounded-2xl border border-border/50 bg-white/5 p-6 backdrop-blur-md sm:p-8">
+            <Skeleton className="h-3 w-20 rounded-full" />
+            <Skeleton className="mt-3 h-7 w-2/3 max-w-[14rem] rounded-full" />
+            <Skeleton className="mt-3 h-4 w-full rounded-full" />
+            <Skeleton className="mt-2 h-4 w-5/6 rounded-full" />
+            <div className="mt-6 flex items-center gap-2">
+              <Skeleton className="h-2 w-2 rounded-full" />
+              <Skeleton className="h-3 w-40 rounded-full" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/50 bg-white/5 p-5 backdrop-blur-md sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-3 w-24 rounded-full" />
+                <Skeleton className="h-5 w-40 rounded-full" />
+                <Skeleton className="h-3 w-full max-w-[20rem] rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-24 shrink-0 rounded-full" />
+            </div>
+            <div className="mt-5 space-y-4">
+              {[0, 1].map((index) => (
+                <div key={index} className="rounded-2xl border border-border/50 bg-white/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-40 rounded-full" />
+                      <Skeleton className="h-3 w-full max-w-[18rem] rounded-full" />
+                    </div>
+                  </div>
+                  <Skeleton className="mt-4 h-28 w-full rounded-2xl" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="mt-5 h-12 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+export function AiChatSkeleton({ className }: { className?: string }) {
+  return (
+    <Shell
+      className={cn(
+        'relative z-10 mx-auto flex h-full min-h-0 w-full max-w-app flex-1 flex-col overflow-hidden',
+        className
+      )}
+    >
+      <div className="glass-chrome z-40 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.05]">
+        <div className="flex min-h-11 items-center gap-2 px-4 pb-3">
+          <Skeleton className="h-6 w-16 rounded-lg" />
+          <Skeleton className="mx-auto h-4 w-20 rounded-full" />
+          <Skeleton className="h-6 w-11 rounded-lg" />
+        </div>
+      </div>
+
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none px-4 pt-4 pb-36 [-webkit-overflow-scrolling:touch]">
+        <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-3 w-24 rounded-full" />
+              <Skeleton className="h-4 w-40 rounded-full" />
+              <Skeleton className="h-3 w-full rounded-full" />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="fixed bottom-0 left-1/2 z-40 w-full max-w-app -translate-x-1/2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2">
+        <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2">
+          <Skeleton className="h-11 min-h-11 min-w-0 flex-1 rounded-xl" />
+          <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full" />
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+export function UsernameOnboardingSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Preparando sua identidade..."
+      className={cn(
+        'fixed inset-0 z-50 flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden overscroll-none bg-background px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+        className
+      )}
+      style={{
+        background:
+          'radial-gradient(120% 120% at 50% 0%, #131313 0%, #0a0a0a 55%, #050505 100%)',
+      }}
+    >
+      <div className="relative flex flex-col items-center gap-6">
+        <span className="relative flex h-16 w-16 items-center justify-center">
+          <span aria-hidden className="absolute inset-0 rounded-full border border-white/[0.06]" />
+          <span
+            aria-hidden
+            className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-r-orange-500/30 border-t-orange-500 [animation-duration:1.1s]"
+          />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500 shadow-[0_0_16px_rgba(249,115,22,0.85)]" />
+        </span>
+        <div className="w-full space-y-2 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-orange-500">
+            {BRAND_NAME}
+          </p>
+          <Skeleton className="mx-auto h-4 w-52 rounded-full" />
+        </div>
+      </div>
+    </div>
   );
 }
