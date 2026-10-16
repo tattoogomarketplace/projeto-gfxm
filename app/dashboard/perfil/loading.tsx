@@ -1,8 +1,11 @@
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { ProfileSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Fallback de rota unificado (Fase 25.2): o mesmo canvas escuro do boot.
+ * Route-level fallback of `/dashboard/perfil`.
+ *
+ * Reserves the full profile geometry (cover header, metrics, highlights rail,
+ * media tab bar, grid and footer action) with the premium Dark Luxury shimmer.
  */
 export default function PerfilSegmentLoading() {
-  return <BootContinuation />;
+  return <ProfileSkeleton />;
 }

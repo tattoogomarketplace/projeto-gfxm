@@ -7,6 +7,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/input';
 import { PasswordStrengthBar } from '@/components/features/password-strength-bar';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useI18n } from '@/hooks/use-i18n';
 import { getPasswordStrength } from '@/lib/utils/password-strength';
 import { passwordErrorMessage } from '@/lib/error-handler';
@@ -171,7 +172,32 @@ export const PasswordChangeForm = memo(function PasswordChangeForm({
     resetFields,
   ]);
 
-  if (!isLoaded) return null;
+  if (!isLoaded) {
+    return (
+      <div
+        className={cn(
+          'space-y-4',
+          !embedded &&
+            'rounded-xl border border-black/[0.04] bg-white p-4 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none'
+        )}
+        aria-hidden
+        aria-busy="true"
+      >
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-11 w-11 min-h-11 min-w-11 rounded-xl" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-40 rounded-md" />
+            <Skeleton className="h-3 w-56 max-w-full rounded-md" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-[3.25rem] w-full rounded-lg" />
+          <Skeleton className="h-[3.25rem] w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-11 w-full rounded-lg" />
+      </div>
+    );
+  }
 
   return (
     <div

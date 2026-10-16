@@ -1,17 +1,18 @@
 'use client';
 
 import { memo } from 'react';
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { ArtistHubSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Estado de hidratação de sessão dos painéis (Fase 25.2).
+ * Session-hydration state of the panels.
  *
- * Renderizado como conteúdo de página quando `requireDashboardPerfil` ainda não
- * resolveu. Unificado ao canvas único de boot — sem skeleton, sem spinner, sem
- * texto: apenas a tela escura idêntica ao splash.
+ * Rendered as page content while `requireDashboardPerfil` has not resolved.
+ * Paints the premium Dark Luxury skeleton (inside the App Shell) rather than a
+ * blank black canvas, sealing the blank-screen gap during Clerk/Prisma
+ * resolution.
  */
 function SessionHydratingBase() {
-  return <BootContinuation />;
+  return <ArtistHubSkeleton />;
 }
 
 export const SessionHydrating = memo(SessionHydratingBase);

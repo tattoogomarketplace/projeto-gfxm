@@ -1,12 +1,12 @@
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Fallback de rota unificado (Fase 25.2).
+ * Route-level fallback of `/dashboard/chat`.
  *
- * Em vez de um "ghost layout" de geometria — que aparecia como um degrau visual
- * distinto entre o splash e o conteúdo — pinta o MESMO canvas escuro do boot.
- * Nenhum skeleton, nenhum ícone, nada que possa piscar na troca.
+ * Mirrors the inbox chrome (glass header + search, category tabs, conversation
+ * list) and the desktop split view, so the hydrated workspace lands with zero
+ * layout shift.
  */
 export default function ChatLoading() {
-  return <BootContinuation />;
+  return <ChatInboxSkeleton />;
 }

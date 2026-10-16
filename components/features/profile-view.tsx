@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { Images, LogOut, PenTool, Route, ShieldCheck } from 'lucide-react';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ProfileSkeleton } from '@/components/ui/route-skeletons';
 import { ClientIdentityHub } from '@/components/settings/client-identity-hub';
 import {
   PublicProfile,
@@ -47,64 +47,6 @@ function isProfileImageMissingError(err: unknown): boolean {
         ? err
         : '';
   return /not[_\s-]?found|resource[_\s-]?not|404|não encontrado/i.test(message);
-}
-
-
-/**
- * Skeleton de geometria idêntica ao layout real (header + destaques + grade em
- * abas + "Sair da Conta"). Evita salto de layout (CLS) e, principalmente,
- * impede que a transição de re-hidratação deixe a área de conteúdo em branco.
- */
-function ProfileSkeleton() {
-  return (
-    <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white">
-      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] contain-paint dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
-        <Skeleton className="h-32 w-full rounded-none" />
-        <div className="relative px-5 pb-5">
-          <div className="flex items-end gap-4">
-            <Skeleton className="-mt-12 h-20 w-20 min-h-20 min-w-20 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-2 pb-1">
-              <Skeleton className="h-6 w-40 rounded-md" />
-              <Skeleton className="h-5 w-24 rounded-full" />
-            </div>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {[0, 1, 2].map((index) => (
-              <div key={index} className="flex flex-col items-center gap-1.5">
-                <Skeleton className="h-6 w-12 rounded-md" />
-                <Skeleton className="h-3 w-16 rounded-md" />
-              </div>
-            ))}
-          </div>
-          <Skeleton className="mt-4 h-4 w-full rounded-md" />
-          <Skeleton className="mt-2 h-4 w-2/3 rounded-md" />
-          <Skeleton className="mt-4 h-11 w-full rounded-xl" />
-        </div>
-      </header>
-
-      <div className="mt-5 flex gap-3 px-1">
-        {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="flex w-[76px] shrink-0 flex-col items-center gap-2">
-            <Skeleton className="h-[68px] w-[68px] rounded-full" />
-            <Skeleton className="h-3 w-14 rounded-md" />
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-6">
-        <Skeleton className="h-12 w-full rounded-2xl" />
-        <div className="mt-4 grid grid-cols-3 gap-[3px] sm:gap-1">
-          {[0, 1, 2, 3, 4, 5].map((index) => (
-            <Skeleton key={index} className="aspect-square w-full rounded-[10px]" />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-auto pt-8">
-        <Skeleton className="h-11 w-full rounded-xl" />
-      </div>
-    </div>
-  );
 }
 
 type PerfilIdentity = {

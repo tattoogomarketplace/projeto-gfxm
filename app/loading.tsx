@@ -1,14 +1,16 @@
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { AppRouteSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Root route-level loading boundary (Fase 25.2).
+ * Root route-level loading boundary.
  *
- * Renderiza o MESMO canvas único de boot consumido por `<ClerkLoading>`, pelos
- * `loading.tsx` de rota, `DashboardHomeSkeleton` e `SessionHydrating`. Assim o
- * fluxo nativo -> servidor -> hidratação do Clerk -> UI autenticada é um único
- * canvas contínuo (Deep Graphite + bloom de cobre), sem skeletons paralelos e
- * sem layout thrashing.
+ * Renders a premium Dark Luxury skeleton (deep graphite canvas + subtle copper
+ * shimmer) that reserves the generic content geometry until the segment
+ * resolves. Never a blank/black canvas.
  */
 export default function Loading() {
-  return <BootContinuation />;
+  return (
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
+      <AppRouteSkeleton />
+    </div>
+  );
 }

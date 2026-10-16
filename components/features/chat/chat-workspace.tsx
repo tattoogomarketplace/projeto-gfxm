@@ -17,6 +17,7 @@ import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
 import { SearchBar } from '@/components/ui/search-bar';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -58,7 +59,7 @@ export const ChatWorkspace = memo(function ChatWorkspace() {
   // primeiro frame — exatamente como o AppShell/BottomNav — eliminando qualquer
   // reconcilição pós-hidratação (que era a origem do "snap").
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ChatInboxSkeleton />}>
       <ChatWorkspaceInner />
     </Suspense>
   );

@@ -1,14 +1,15 @@
 import { memo } from 'react';
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { ArtistHubSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Route-level fallback de `/dashboard/*` (Fase 25.2).
+ * Route-level fallback of `/dashboard/*` (content skeleton).
  *
- * Unificado ao canvas único de boot: qualquer transição de segmento sob o
- * painel pinta a MESMA tela escura do splash — nunca um skeleton de geometria.
+ * Unified with `DashboardHomeSkeleton`: any segment transition under the panel
+ * paints the premium Dark Luxury skeleton inside the App Shell, never a blank
+ * canvas.
  */
 function DashboardRouteSkeletonBase() {
-  return <BootContinuation />;
+  return <ArtistHubSkeleton />;
 }
 
 export const DashboardRouteSkeleton = memo(DashboardRouteSkeletonBase);

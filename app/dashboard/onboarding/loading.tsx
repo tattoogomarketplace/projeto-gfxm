@@ -1,8 +1,11 @@
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { OnboardingSkeleton } from '@/components/features/onboarding-skeleton';
 
 /**
- * Fallback de rota unificado (Fase 25.2): o mesmo canvas escuro do boot.
+ * Route-level fallback of `/dashboard/onboarding`.
+ *
+ * Reserves the exact geometry of the hydrated role-selection screen (avatar
+ * medallion, narrative copy, role cards and CTA) with the premium shimmer.
  */
 export default function OnboardingLoading() {
-  return <BootContinuation />;
+  return <OnboardingSkeleton />;
 }

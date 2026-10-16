@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { useUser } from '@clerk/nextjs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useI18n } from '@/hooks/use-i18n';
 
 export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
@@ -41,7 +42,19 @@ export function BankAccountForm({ role }: { role: 'tatuador' | 'estudio' }) {
     setLoading(false);
   };
 
-  if (!isLoaded) return null;
+  if (!isLoaded) {
+    return (
+      <div
+        className="rounded-xl border border-black/[0.04] bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]"
+        aria-hidden
+        aria-busy="true"
+      >
+        <Skeleton className="h-5 w-36 rounded-md" />
+        <Skeleton className="mb-4 mt-4 h-[3.25rem] w-full rounded-lg" />
+        <Skeleton className="h-11 w-28 rounded-lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-black/[0.04] bg-white p-6 dark:border-white/[0.05] dark:bg-white/[0.03]">

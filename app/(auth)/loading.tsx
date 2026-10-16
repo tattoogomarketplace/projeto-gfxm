@@ -1,11 +1,12 @@
-import { BootContinuation } from '@/components/layout/boot-continuation';
+import { AuthFormSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Fallback de rota unificado (Fase 25.2).
+ * Route-level fallback of the `(auth)` group.
  *
- * Substitui o skeleton do formulário de autenticação: no boot, a rota revelada
- * após o splash é o MESMO canvas escuro, nunca um skeleton genérico.
+ * Reserves the exact geometry of the sign-in card (brand wordmark, two inputs,
+ * primary CTA) with the premium Dark Luxury shimmer, so the hydrated Clerk form
+ * lands with zero layout shift.
  */
 export default function AuthLoading() {
-  return <BootContinuation />;
+  return <AuthFormSkeleton />;
 }
