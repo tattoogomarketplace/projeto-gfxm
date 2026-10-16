@@ -434,7 +434,26 @@ export function formatAppError(
 }
 
 export function clerkErrorMessage(err: unknown, locale?: Locale): string {
-  return formatAppError(err, 'auth', locale);
+  const key = resolveKey(err, 'auth');
+  // Em fluxos de autenticação o erro genérico ("Não foi possível autenticar.")
+  // esconde a causa real. Quando o código do Clerk não é mapeado, expomos o
+  // `longMessage` devolvido pelo próprio Clerk em vez de mascarar a falha.
+  if (key === CONTEXT_FALLBACK.auth) {
+    const detail = clerkErrorDetail(err);
+    if (detail) return detail;
+  }
+  return t(key, undefined, locale);
+}
+
+/**
+ * Extrai a mensagem legível do Clerk (`longMessage` ou, na ausência, `message`)
+ * do primeiro item de `errors[]`. Retorna string vazia quando o erro não é do
+ * Clerk ou não traz detalhe — permitindo que o chamador use o fallback.
+ */
+export function clerkErrorDetail(err: unknown): string {
+  const first = firstClerkError(err);
+  if (!first) return '';
+  return asString(first.longMessage) || asString(first.message);
 }
 
 export function passwordErrorMessage(err: unknown, locale?: Locale): string {

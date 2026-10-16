@@ -13,9 +13,13 @@ import { cn } from '@/lib/utils';
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
 
 /**
- * Sentinel usado somente fora de produção, quando a chave pública não está
- * configurada. O backend também faz fail-open sem `TURNSTILE_SECRET_KEY`, então
- * o fluxo local continua funcional sem quebrar a proteção em produção.
+ * Sentinel usado quando a chave pública não está configurada no cliente.
+ *
+ * A decisão de bloquear (ou não) pertence ao BACKEND: `verifyTurnstileToken`
+ * faz fail-open apenas quando `TURNSTILE_SECRET_KEY` está ausente e, com o
+ * segredo presente, rejeita o token sentinela via `siteverify`. O cliente nunca
+ * deve ser um beco sem saída — por isso emitimos o sentinel em vez de pintar um
+ * erro fixo que impediria o usuário de sequer tentar autenticar.
  */
 export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
@@ -44,9 +48,9 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const configured = TURNSTILE_SITE_KEY.length > 0;
 
     useEffect(() => {
-      if (configured || process.env.NODE_ENV === 'production') return;
+      if (configured) return;
       console.warn(
-        '[turnstile] NEXT_PUBLIC_TURNSTILE_SITE_KEY ausente: bypass de desenvolvimento ativo.'
+        '[turnstile] NEXT_PUBLIC_TURNSTILE_SITE_KEY ausente: prosseguindo sem desafio visível (o backend decide via TURNSTILE_SECRET_KEY).'
       );
       onSuccessRef.current(TURNSTILE_DEV_BYPASS_TOKEN);
     }, [configured]);
@@ -76,13 +80,9 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     }, [onExpire]);
 
     if (!configured) {
-      if (process.env.NODE_ENV === 'production') {
-        return (
-          <p role="alert" className={cn('text-center text-xs text-red-400', className)}>
-            Verificação de segurança indisponível. Tente novamente mais tarde.
-          </p>
-        );
-      }
+      // Sem chave pública não há widget a montar. O sentinel já foi emitido no
+      // efeito acima, então o formulário permanece utilizável; qualquer bloqueio
+      // real é decidido no servidor, nunca por uma mensagem fixa no cliente.
       return null;
     }
 

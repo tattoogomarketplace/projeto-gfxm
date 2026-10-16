@@ -19,7 +19,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthScreen } from '@/components/layout/auth-screen';
 import { TurnstileGuard } from '@/components/auth/turnstile-guard';
-import { formatAppError } from '@/lib/error-handler';
+import { clerkErrorMessage } from '@/lib/error-handler';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
 type LoginFormValues = {
@@ -134,6 +134,7 @@ export default function LoginPage() {
           setBridging(true);
         } catch (err) {
           console.error('Session activation error:', err);
+          toast.error(clerkErrorMessage(err));
         }
         return;
       }
@@ -157,7 +158,7 @@ export default function LoginPage() {
       toast.success(t('auth.codeSent'));
     } catch (err) {
       console.error('CLERK ERROR:', err);
-      toast.error(formatAppError(err, 'auth'));
+      toast.error(clerkErrorMessage(err));
       setTurnstileToken('');
       setTurnstileNonce((nonce) => nonce + 1);
     } finally {
@@ -206,7 +207,7 @@ export default function LoginPage() {
       setResendSeconds(60);
       toast.success(t('auth.codeResent'));
     } catch (err) {
-      toast.error(formatAppError(err, 'auth'));
+      toast.error(clerkErrorMessage(err));
     } finally {
       setResending(false);
     }
@@ -262,7 +263,7 @@ export default function LoginPage() {
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);
-      toast.error(formatAppError(err, 'auth'));
+      toast.error(clerkErrorMessage(err));
       return false;
     }
   };
