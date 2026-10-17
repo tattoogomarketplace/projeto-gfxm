@@ -1,3 +1,4 @@
+const { Prisma } = require("@prisma/client");
 const { prisma } = require("./prisma.service.cjs");
 
 function httpError(status, message) {
@@ -32,12 +33,30 @@ async function upsertSchedule(tatuadorId, raw) {
   if (raw === undefined || raw === null || typeof raw !== "object" || Array.isArray(raw)) {
     throw httpError(400, "Informe o expediente em schedule.");
   }
-  const row = await prisma.artistSchedule.upsert({
-    where: { tatuadorId },
-    create: { tatuadorId, scheduleJson: raw },
-    update: { scheduleJson: raw },
-    select: { scheduleJson: true, updatedAt: true },
-  });
+
+  // A agenda é uma tabela de disponibilidade: escrita concorrente (express x
+  // server action) precisa ser serializada por profissional via advisory lock
+  // transacional, para que a criação de agendamentos nunca leia um expediente
+  // parcialmente substituído.
+  const row = await prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`
+        SELECT pg_advisory_xact_lock(hashtext(${`schedule:${tatuadorId}`}::text))
+      `;
+      return tx.artistSchedule.upsert({
+        where: { tatuadorId },
+        create: { tatuadorId, scheduleJson: raw },
+        update: { scheduleJson: raw },
+        select: { scheduleJson: true, updatedAt: true },
+      });
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 5000,
+      timeout: 15000,
+    }
+  );
+
   return {
     schedule: row.scheduleJson,
     persisted: true,

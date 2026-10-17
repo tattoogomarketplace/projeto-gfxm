@@ -207,6 +207,12 @@ export async function updateWeeklySchedule(
     schedule.updatedAt = updatedAt;
 
     await prisma.$transaction(async (tx) => {
+      // Mesmo advisory lock do backend Express (`artist-schedule.service.cjs`):
+      // serializa escritas concorrentes na tabela de disponibilidade por
+      // profissional, evitando que o booking leia um expediente inconsistente.
+      await tx.$queryRaw`
+        SELECT pg_advisory_xact_lock(hashtext(${`schedule:${actor.id}`}::text))
+      `;
       await tx.artistSchedule.deleteMany({ where: { tatuadorId: actor.id } });
       await tx.artistSchedule.create({
         data: {

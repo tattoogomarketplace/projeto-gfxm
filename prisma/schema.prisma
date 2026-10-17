@@ -2,9 +2,17 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Menor privilégio (Neon / PostgreSQL):
+//  - `url` (DATABASE_URL) aponta para o papel RESTRITO de runtime (`app_runner`),
+//    limitado a SELECT/INSERT/UPDATE/DELETE. Sem permissão de DROP/ALTER.
+//  - `directUrl` (DIRECT_URL / MIGRATION_URL) aponta para o papel ADMIN e é
+//    usado SOMENTE por `prisma migrate deploy` / `db push` no CI/CD.
+//  O script de provisionamento do papel restrito vive em
+//  prisma/migrations/20261017_least_privilege_app_runner.sql.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum PerfilRole {

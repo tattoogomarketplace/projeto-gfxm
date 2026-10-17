@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
@@ -53,6 +54,76 @@ const PERFIL_SELECT = {
   has_seen_welcome_notice: true,
   deleted_at: true,
 } as const;
+
+const MAX_SERIALIZATION_RETRIES = 3;
+
+/**
+ * Executa uma operação sujeita a conflito de serialização (P2034) com retry.
+ * O nível Serializable é usado para impedir que duas entregas concorrentes de
+ * webhook (ou webhook + endpoint ensure) manipulem o mesmo perfil antes do
+ * COMMIT.
+ */
+async function withSerializableRetry<T>(
+  operation: () => Promise<T>,
+  attempts = MAX_SERIALIZATION_RETRIES
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      const code = (error as { code?: string } | null)?.code;
+      if ((code === 'P2034' || code === 'P2028') && attempt < attempts - 1) continue;
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Upsert atômico do perfil por `clerk_id` (anti race condition).
+ *
+ * O fluxo leitura-validação-escrita roda dentro de uma transação Serializable
+ * com advisory lock transacional por `clerk_id`: entregas duplicadas/concorrentes
+ * do webhook do Clerk (ou o endpoint `/api/perfil/ensure`) serializam no banco,
+ * garantindo consistência de papel/CPF/e-mail sem depender apenas do lock do
+ * Redis (melhor-esforço).
+ */
+function upsertPerfilAtomic(args: {
+  clerkId: string;
+  create: Prisma.PerfilUncheckedCreateInput;
+  update: Prisma.PerfilUncheckedUpdateInput;
+}): Promise<LocalPerfil> {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${args.clerkId}::text))`;
+
+      const current = await tx.perfil.findUnique({
+        where: { clerk_id: args.clerkId },
+        select: { id: true },
+      });
+
+      if (current) {
+        return tx.perfil.update({
+          where: { clerk_id: args.clerkId },
+          data: args.update,
+          select: PERFIL_SELECT,
+        });
+      }
+
+      return tx.perfil.create({
+        data: args.create,
+        select: PERFIL_SELECT,
+      });
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 5000,
+      timeout: 15000,
+    }
+  );
+}
 
 function onlyDigits(value: unknown): string {
   return String(value || '').replace(/\D/g, '');
@@ -557,12 +628,13 @@ export async function ensurePerfilFromClerk(
   // sessão hidratar os metadados reais. Nunca devolve null por dados incompletos.
 
   try {
-    return await prisma.perfil.upsert({
-      where: { clerk_id: clerkId },
-      create: createData(cpf),
-      update: updateData,
-      select: PERFIL_SELECT,
-    });
+    return await withSerializableRetry(() =>
+      upsertPerfilAtomic({
+        clerkId,
+        create: createData(cpf),
+        update: updateData,
+      })
+    );
   } catch (error) {
     const uniqueError = asUniqueConstraintError(error);
     if (!uniqueError) {
