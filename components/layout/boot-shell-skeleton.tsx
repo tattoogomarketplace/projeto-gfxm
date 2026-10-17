@@ -82,7 +82,11 @@ function ShellChrome({ children }: { children: ReactNode }) {
           <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
             <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
             <div className="flex shrink-0 items-center gap-2">
-              <Skeleton className="h-11 w-11 min-h-11 min-w-11 rounded-xl" />
+              {/* Slot do gatilho de configurações: o ícone REAL é persistente
+                  (`PersistentAppChrome`, root layout) e já está pintado sobre
+                  este mesmo ponto. Não desenhamos um esqueleto cinza aqui para
+                  não haver troca visual (cinza -> ícone) no handoff. */}
+              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
             </div>
           </div>
           <div className="hidden px-4 pb-3 md:block">

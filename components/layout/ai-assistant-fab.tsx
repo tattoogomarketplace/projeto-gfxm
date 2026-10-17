@@ -1,35 +1,35 @@
 'use client';
 
 import { memo, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 
-function AiAssistantFabBase() {
-  const pathname = usePathname();
+/**
+ * FAB do Atelier IA.
+ *
+ * PERSISTÊNCIA DE HIDRATAÇÃO: este componente é montado uma única vez no
+ * `PersistentAppChrome` (root layout), FORA do handoff
+ * `<ClerkLoading>` -> `<ClerkLoaded>`. A visibilidade é controlada por CSS
+ * (`visible`), nunca por desmonte/`return null`: assim o ícone atravessa o
+ * frame de hidratação sem desaparecer e reaparecer. As rotas que não exibem o
+ * FAB continuam exatamente as mesmas do casco (decididas pelo pai).
+ */
+function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   const router = useRouter();
   const { t } = useI18n();
   const constraintsRef = useRef<HTMLDivElement>(null);
 
-  // O FAB só pertence ao casco padrão. Nas rotas "sem casco" (onboarding, IA,
-  // KYC e "Quero ser Tatuador") ele não era renderizado antes de o AppShell
-  // passar a cobri-las, então mantemos o mesmo comportamento.
-  if (
-    pathname.startsWith('/dashboard/onboarding') ||
-    pathname.startsWith('/dashboard/ai') ||
-    pathname.startsWith('/dashboard/kyc-pendente') ||
-    pathname.startsWith('/dashboard/chat') ||
-    pathname.startsWith('/dashboard/seja-tatuador')
-  ) {
-    return null;
-  }
-
   return (
     <div
       ref={constraintsRef}
-      className="pointer-events-none fixed bottom-[calc(var(--dock-clearance)+0.25rem)] right-[max(1.25rem,env(safe-area-inset-right))] z-[60] w-12 md:bottom-5"
+      aria-hidden={!visible}
+      className={cn(
+        'pointer-events-none fixed bottom-[calc(var(--dock-clearance)+0.25rem)] right-[max(1.25rem,env(safe-area-inset-right))] z-[60] w-12 md:bottom-5',
+        !visible && 'invisible pointer-events-none'
+      )}
       style={{
         top: 'calc(env(safe-area-inset-top) + 4.5rem)',
       }}

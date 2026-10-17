@@ -13,6 +13,7 @@ import { StrictSessionGuard } from "@/components/layout/strict-session-guard";
 import { SingleSessionEnforcer } from "@/components/layout/single-session-enforcer";
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
+import { PersistentAppChrome } from "@/components/layout/persistent-app-chrome";
 import { SplashGate } from "@/components/ui/splash-gate";
 import { BootShellSkeleton } from "@/components/layout/boot-shell-skeleton";
 import { BRAND_NAME } from "@/lib/i18n/brands";
@@ -176,6 +177,12 @@ export default function RootLayout({
                   </div>
                 </ClerkLoaded>
               </main>
+              {/* Chrome persistente do casco (gatilho de configurações + FAB
+                  do Atelier IA). Montado UMA vez no root layout, fora do
+                  `<ClerkLoading>`/`<ClerkLoaded>` e de qualquer fronteira de
+                  rota: os ícones atravessam o handoff de hidratação sem
+                  desmontar, eliminando o flicker de 1 frame. */}
+              <PersistentAppChrome />
               <Suspense fallback={<BottomNavFallback />}>
                 <BottomNav />
               </Suspense>

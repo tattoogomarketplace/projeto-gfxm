@@ -3,9 +3,8 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
-import { useUiStore, useSettingsDrawerOpen, type AppTab } from '@/hooks/use-ui-store';
+import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import {
@@ -21,7 +20,6 @@ import {
   type AppRole,
 } from '@/lib/utils/auth-redirect';
 import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
-import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useRouteTab } from '@/hooks/use-route-tab';
@@ -42,8 +40,6 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
   const pending = useOfflineQueue((s) => s.queue.length);
-  const settingsDrawerOpen = useSettingsDrawerOpen();
-  const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
   const { t } = useI18n();
   const pathnameRef = useRef(pathname);
 
@@ -315,7 +311,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               </span>
             ) : null}
             {showMachineTrigger ? (
-              <TattooMachineMenuTrigger open={settingsDrawerOpen} onClick={toggleSettingsDrawer} />
+              // Slot geométrico do gatilho de configurações. O botão real é
+              // montado pelo `PersistentAppChrome` (root layout), fora do
+              // handoff de hidratação — aqui reservamos apenas os 44x44px para
+              // que o header nunca mude de largura quando o ícone aparece.
+              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
             ) : null}
           </div>
         </div>
@@ -381,7 +381,6 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       </div>
 
       {showMachineTrigger ? <ProfileSettingsDrawer /> : null}
-      <AiAssistantFab />
     </div>
   );
 }
