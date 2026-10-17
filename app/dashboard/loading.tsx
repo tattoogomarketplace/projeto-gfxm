@@ -1,13 +1,14 @@
-import { ArtistHubSkeleton } from '@/components/ui/route-skeletons';
+import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
 
 /**
  * Route-level fallback of `/dashboard/*`.
  *
- * Paints the premium Dark Luxury content skeleton (flash notes rail, quick
- * access bento, activity feed) inside the already-resolved App Shell — the dock
- * and header stay visible, and the hydrated role dashboard lands with zero
- * layout shift.
+ * Paints the premium Dark Luxury content skeleton inside the already-resolved
+ * App Shell — the dock and header stay visible. Unified with the authentication
+ * handoff (`<ClerkLoading>` -> `BootShellSkeleton`) on the SAME
+ * `DashboardHomeSkeleton`, so the boot skeleton and this route boundary are
+ * pixel-identical (zero layout shift before the hydrated feed lands).
  */
 export default function DashboardLoading() {
-  return <ArtistHubSkeleton />;
+  return <DashboardHomeSkeleton />;
 }

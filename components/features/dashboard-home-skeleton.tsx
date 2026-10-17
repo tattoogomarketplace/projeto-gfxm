@@ -1,16 +1,18 @@
 import { memo } from 'react';
-import { ArtistHubSkeleton } from '@/components/ui/route-skeletons';
+import { HomeDiscoverSkeleton } from '@/components/ui/route-skeletons';
 
 /**
- * Global dashboard boot fallback (role-aware content skeleton).
+ * Global dashboard boot fallback (Home / Início content skeleton).
  *
  * Consumed by the `/dashboard` dispatcher, the `/dashboard` route boundary and
- * the session-hydration state. Paints the premium Dark Luxury hub skeleton
- * instead of a blank canvas, so the handoff from the splash is a continuous
- * skeleton -> content transition with zero layout shift.
+ * the authentication handoff (`<ClerkLoading>` via `BootShellSkeleton`). Paints
+ * the premium Dark Luxury Discover-feed skeleton — the exact geometry of the
+ * default Home ("Início") the client lands on — instead of a blank canvas, so
+ * the handoff from the splash is a continuous skeleton -> content transition
+ * with zero Cumulative Layout Shift: no skeleton is stretched or shifted.
  */
 function DashboardHomeSkeletonBase() {
-  return <ArtistHubSkeleton />;
+  return <HomeDiscoverSkeleton />;
 }
 
 export const DashboardHomeSkeleton = memo(DashboardHomeSkeletonBase);

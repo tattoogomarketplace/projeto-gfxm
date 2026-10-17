@@ -1,0 +1,122 @@
+'use client';
+
+import type { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
+import {
+  AppRouteSkeleton,
+  ArtistHubSkeleton,
+  StudioDashboardSkeleton,
+} from '@/components/ui/route-skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
+
+/**
+ * CASCO DE BOOT — ZERO CLS (Fase 25.6).
+ *
+ * O `<ClerkLoading>` do Root Layout vive FORA do casco autenticado
+ * (`app/dashboard/layout.tsx`), então, enquanto o Clerk valida a sessão
+ * recém-criada (hand-off do OTP), ele pintava um conteúdo `AppRouteSkeleton`
+ * sem header, sem dock e sem o padding do viewport do `AppShell`. Quando o
+ * Clerk resolvia, o casco real aparecia e o esqueleto "esticava"/deslizava:
+ * títulos e cards trocavam de coordenadas (CLS > 0) antes do conteúdo real.
+ *
+ * Esta camada resolve o problema na raiz: ela lê o pathname de forma SÍNCRONA
+ * (client-only — o `<ClerkLoading>` só renderiza no ciclo de validação do
+ * Clerk) e replica EXATAMENTE a geometria do casco real (o mesmo
+ * `data-viewport-root` + a mesma caixa de conteúdo do `AppShell`, com header,
+ * `px-4 sm:px-6`, `nav-safe-pad` e dock) preenchendo a área com o MESMO
+ * esqueleto que a rota de destino usa em `loading.tsx`. Assim, o handoff
+ * ClerkLoading -> rota -> conteúdo é um único frame contínuo: os cards de
+ * shimmer ficam travados nas mesmas coordenadas do início ao fim.
+ *
+ * Rotas fora da Home autenticada (onboarding, IA, KYC, "Quero ser Tatuador",
+ * chat, galeria, configurações) mantêm o fallback genérico (`AppRouteSkeleton`)
+ * — nunca um `null`/canvas vazio.
+ */
+
+const DASHBOARD_ROOT = '/dashboard';
+const CLIENTE_HOME = '/dashboard/cliente';
+const TATUADOR_HOME = '/dashboard/tatuador';
+const ESTUDIO_HOME = '/dashboard/estudio';
+
+type HomeKind = 'cliente' | 'tatuador' | 'estudio';
+
+function isAtPath(pathname: string, base: string): boolean {
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
+/**
+ * Resolve qual Home autenticada o pathname atual pinta. O despachante
+ * (`/dashboard`) e todo o painel do cliente compartilham o Feed de Descoberta
+ * (Home / Início) como esqueleto de boot — exatamente como seus `loading.tsx`.
+ */
+function resolveHomeKind(pathname: string): HomeKind | null {
+  if (pathname === DASHBOARD_ROOT || isAtPath(pathname, CLIENTE_HOME)) {
+    return 'cliente';
+  }
+  if (isAtPath(pathname, TATUADOR_HOME)) return 'tatuador';
+  if (isAtPath(pathname, ESTUDIO_HOME)) return 'estudio';
+  return null;
+}
+
+function HomeSkeleton({ kind }: { kind: HomeKind }) {
+  if (kind === 'tatuador') return <ArtistHubSkeleton />;
+  if (kind === 'estudio') return <StudioDashboardSkeleton />;
+  return <DashboardHomeSkeleton />;
+}
+
+/**
+ * Estrutura imutável do casco (header + viewport de conteúdo). Espelha, classe
+ * por classe, o `data-viewport-root` de `app/dashboard/layout.tsx` + o casco de
+ * `AppShell` — a caixa física é a MESMA, então nenhuma fronteira (header,
+ * padding, dock) pode deslocar os esqueletos na transição.
+ */
+function ShellChrome({ children }: { children: ReactNode }) {
+  return (
+    <div
+      data-viewport-root
+      className="luxury-canvas relative flex h-[100dvh] max-h-[100dvh] min-h-[100dvh] min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white"
+    >
+      <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
+        <header className="glass-chrome z-40 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.05]">
+          <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
+            <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
+            <div className="flex shrink-0 items-center gap-2">
+              <Skeleton className="h-11 w-11 min-h-11 min-w-11 rounded-xl" />
+            </div>
+          </div>
+          <div className="hidden px-4 pb-3 md:block">
+            <div className="grid w-full rounded-2xl border border-black/[0.04] bg-black/[0.03] p-1 backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.04]">
+              <Skeleton className="h-11 w-full rounded-xl" />
+            </div>
+          </div>
+        </header>
+
+        <div className="scrollbar-none relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
+          <div className="nav-safe-pad absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 sm:px-6">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function BootShellSkeleton() {
+  const pathname = usePathname();
+  const kind = resolveHomeKind(pathname);
+
+  if (!kind) {
+    return (
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
+        <AppRouteSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    <ShellChrome>
+      <HomeSkeleton kind={kind} />
+    </ShellChrome>
+  );
+}

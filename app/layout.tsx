@@ -14,7 +14,7 @@ import { SingleSessionEnforcer } from "@/components/layout/single-session-enforc
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
 import { SplashGate } from "@/components/ui/splash-gate";
-import { AppRouteSkeleton } from "@/components/ui/route-skeletons";
+import { BootShellSkeleton } from "@/components/layout/boot-shell-skeleton";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 
 const BRAND_ASSET_VERSION = "20261005";
@@ -150,24 +150,25 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Fase 25.5 — erradicação do apagão pós-login:
-                    o `<ClerkLoading>` NÃO pode mais retornar `null`. Ele é irmão
-                    de `<ClerkLoaded>` dentro do mesmo `<main>`: enquanto o Clerk
-                    valida a sessão recém-criada (hand-off do OTP), o
-                    `<ClerkLoaded>` não pinta nada — logo uma pintura vazia aqui
-                    deixava o `<main>` inteiro em branco e o canvas raiz escuro
-                    (#0a0a0a) aparecia como o flash preto de 1s.
+                {/* Fase 25.6 — Zero CLS no handoff de autenticação:
+                    o `<ClerkLoading>` NÃO retorna `null` (Fase 25.5) e agora
+                    também NÃO pinta um esqueleto genérico. Ele renderiza o
+                    `BootShellSkeleton`, que replica classe por classe o casco
+                    real (`data-viewport-root` + header + viewport de conteúdo
+                    com `px-4 sm:px-6` e `nav-safe-pad`) e injeta o MESMO
+                    esqueleto que a rota de destino usa em `loading.tsx`
+                    (Feed de Descoberta na Home / Início, hub no painel do
+                    tatuador, overview no do estúdio). Sem header, padding ou
+                    geometria divergentes, os cards de shimmer ficam travados
+                    nas mesmas coordenadas do boot até o conteúdo hidratar —
+                    nenhuma "esticada"/layout shift.
 
-                    Agora ele pinta o MESMO skeleton premium das fronteiras de
-                    rota (`AppRouteSkeleton`) com a geometria exata do casco, de
-                    modo que o DOM permaneça sempre desenhado (canvas dark luxury
-                    + skeletons) durante toda a autenticação. Como `<ClerkLoaded>`
-                    só renderiza os filhos quando o Clerk resolve, os dois nunca
-                    se sobrepõem. */}
+                    Rotas fora da Home autenticada caem no fallback genérico
+                    (`AppRouteSkeleton`), nunca num canvas vazio. Como
+                    `<ClerkLoaded>` só renderiza os filhos quando o Clerk
+                    resolve, os dois nunca se sobrepõem. */}
                 <ClerkLoading>
-                  <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
-                    <AppRouteSkeleton />
-                  </div>
+                  <BootShellSkeleton />
                 </ClerkLoading>
                 <ClerkLoaded>
                   <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
