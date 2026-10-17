@@ -9,6 +9,7 @@ import {
   SESSION_TASK_COMPLETE_URL,
   type SessionTaskKey,
 } from '@/lib/utils/session-tasks';
+import { AppRouteSkeleton } from '@/components/ui/route-skeletons';
 
 /**
  * Dynamic entry point for Clerk session tasks. The path segment selects which
@@ -30,7 +31,15 @@ export default function SessionTaskPage() {
     if (!task || bypassed) router.push(SESSION_TASK_COMPLETE_URL);
   }, [task, bypassed, router]);
 
-  if (!task || bypassed) return null;
+  // Nunca devolvemos `null` (canvas vazio/escuro) enquanto o redirect do efeito
+  // acontece: o skeleton mantém o DOM pintado durante o hand-off da tarefa.
+  if (!task || bypassed) {
+    return (
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
+        <AppRouteSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">

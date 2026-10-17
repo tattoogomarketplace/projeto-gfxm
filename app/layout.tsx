@@ -14,6 +14,7 @@ import { SingleSessionEnforcer } from "@/components/layout/single-session-enforc
 import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
 import { SplashGate } from "@/components/ui/splash-gate";
+import { AppRouteSkeleton } from "@/components/ui/route-skeletons";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 
 const BRAND_ASSET_VERSION = "20261005";
@@ -149,21 +150,25 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
-                {/* Fase 25.4 — anti-"apagão" (flash preto nas navegações):
-                    o `<ClerkLoading>` deixou de pintar QUALQUER canvas de tela
-                    cheia. Antes ele renderizava um `<div bg-background h-full
-                    w-full flex-1>` como irmão de `<ClerkLoaded>` dentro do mesmo
-                    `<main>`; qualquer reavaliação do estado `isLoaded` numa
-                    transição interna pintava esse bloco escuro por cima do casco
-                    persistente (header + dock) e produzia o apagão preto ANTES
-                    dos skeletons.
+                {/* Fase 25.5 — erradicação do apagão pós-login:
+                    o `<ClerkLoading>` NÃO pode mais retornar `null`. Ele é irmão
+                    de `<ClerkLoaded>` dentro do mesmo `<main>`: enquanto o Clerk
+                    valida a sessão recém-criada (hand-off do OTP), o
+                    `<ClerkLoaded>` não pinta nada — logo uma pintura vazia aqui
+                    deixava o `<main>` inteiro em branco e o canvas raiz escuro
+                    (#0a0a0a) aparecia como o flash preto de 1s.
 
-                    Agora ele não renderiza nada. A única pintura de boot é a
-                    splash inicial (`SplashGate`, z-[9999]); se ela já foi vista,
-                    o canvas raiz do `<body>` (`bg-background` = #0a0a0a) segura
-                    o frame até o Clerk resolver. Os skeletons de `loading.tsx`
-                    permanecem a ÚNICA UI de carregamento nas navegações. */}
-                <ClerkLoading />
+                    Agora ele pinta o MESMO skeleton premium das fronteiras de
+                    rota (`AppRouteSkeleton`) com a geometria exata do casco, de
+                    modo que o DOM permaneça sempre desenhado (canvas dark luxury
+                    + skeletons) durante toda a autenticação. Como `<ClerkLoaded>`
+                    só renderiza os filhos quando o Clerk resolve, os dois nunca
+                    se sobrepõem. */}
+                <ClerkLoading>
+                  <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
+                    <AppRouteSkeleton />
+                  </div>
+                </ClerkLoading>
                 <ClerkLoaded>
                   <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
                     {children}
