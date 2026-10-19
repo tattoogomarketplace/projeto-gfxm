@@ -45,7 +45,6 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
-  const { t } = useI18n();
 
   const query = useMemo(
     () => ({
@@ -80,28 +79,16 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="space-y-4">
-      <div className={ENTRY_CARD_CLASS}>
-        <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
-          <Images className="h-5 w-5" strokeWidth={1.75} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
-            {t('gallery.title')}
-          </span>
-          <span className="mt-0.5 block text-xs text-zinc-500">
-            {t('gallery.subtitle')}
-          </span>
-        </span>
+      <div className="px-4">
+        <PortfolioFilterBar
+          style={style}
+          bodyPart={bodyPart}
+          healed={healed}
+          onStyleChange={setStyle}
+          onBodyPartChange={setBodyPart}
+          onHealingChange={setHealed}
+        />
       </div>
-
-      <PortfolioFilterBar
-        style={style}
-        bodyPart={bodyPart}
-        healed={healed}
-        onStyleChange={setStyle}
-        onBodyPartChange={setBodyPart}
-        onHealingChange={setHealed}
-      />
 
       <GalleryInspirationGrid
         items={inspirations}

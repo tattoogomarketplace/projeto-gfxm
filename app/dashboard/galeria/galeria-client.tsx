@@ -12,7 +12,7 @@ export default function GaleriaClient() {
 
   return (
     <div className="relative flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-gray-900 dark:text-white">
-      <div className="relative flex-1 overflow-y-auto min-h-0 pb-48 px-4 pt-5 [-webkit-overflow-scrolling:touch]">
+      <div className="relative flex-1 overflow-y-auto overflow-x-hidden min-h-0 pb-48 pt-3 [-webkit-overflow-scrolling:touch]">
         <GaleriaInspiracoes
           onStartConversation={(tatuadorId, artworkId) => {
             setPendingChatPeer(tatuadorId);

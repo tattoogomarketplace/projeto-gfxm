@@ -166,11 +166,16 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex flex-col gap-8 pb-24" aria-hidden>
+        <div className="flex w-full flex-col gap-6 pb-24" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <div key={index} className="w-full space-y-3">
-              <Skeleton className="aspect-[4/5] w-full rounded-[22px]" />
-              <div className="flex items-center justify-between px-1">
+              <Skeleton
+                className={cn(
+                  'w-full rounded-none',
+                  index % 2 === 0 ? 'aspect-[4/5]' : 'aspect-square'
+                )}
+              />
+              <div className="flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-11 w-11 rounded-full" />
                   <div className="space-y-1.5">
@@ -201,7 +206,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex flex-col gap-8 pb-24' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col gap-6 pb-24' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -223,7 +228,7 @@ export function GalleryInspirationGrid({
               >
                 <div
                   className={cn(
-                    'relative w-full overflow-hidden rounded-[22px] border border-white/[0.06] bg-zinc-900',
+                    'relative w-full overflow-hidden rounded-none bg-zinc-900',
                     index % 2 === 0 ? 'aspect-[4/5]' : 'aspect-square'
                   )}
                 >
@@ -243,7 +248,7 @@ export function GalleryInspirationGrid({
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-3 px-0.5">
+                <div className="mt-3 flex items-center justify-between gap-3 px-4">
                   <button
                     type="button"
                     onClick={() => handleInspirationClick(item)}

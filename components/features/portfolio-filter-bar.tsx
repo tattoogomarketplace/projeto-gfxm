@@ -160,9 +160,9 @@ export function PortfolioFilterBar({
     healed === 'fresh' ? t('gallery.fresh') : healed === 'healed' ? t('gallery.healed') : null;
 
   return (
-    <div>
-      <div className="relative">
-        <div className="relative z-30 grid grid-cols-3 gap-2">
+    <div className="flex flex-col items-center">
+      <div className="relative w-full max-w-lg">
+        <div className="relative z-30 grid grid-cols-3 justify-center gap-2">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
@@ -256,7 +256,7 @@ export function PortfolioFilterBar({
         <button
           type="button"
           onClick={clearFilters}
-          className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-black/[0.04] bg-white px-3.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-orange-300"
+          className="mt-2 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-black/[0.04] bg-white px-3.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-orange-300"
         >
           <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
           {t('gallery.clearFilters')}

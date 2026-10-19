@@ -301,9 +301,20 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         )}
       >
         <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
-          <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight">
-            {headerTitle}
-          </h1>
+          {isGaleria ? (
+            <div className="min-w-0 flex-1 pr-2">
+              <h1 className="truncate text-[17px] font-semibold tracking-tight">
+                {t('gallery.title')}
+              </h1>
+              <p className="mt-0.5 truncate text-[12px] font-medium leading-snug text-zinc-500 dark:text-zinc-400">
+                {t('gallery.subtitle')}
+              </p>
+            </div>
+          ) : (
+            <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight">
+              {headerTitle}
+            </h1>
+          )}
           <div className="flex shrink-0 items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
