@@ -47,8 +47,8 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-9999 flex h-[100dvh] w-full flex-col overflow-hidden bg-black/90 p-4 backdrop-blur-md">
-      <div className="mx-auto my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-5 sm:p-8">
+    <div className="fixed inset-0 z-9999 flex h-[100dvh] w-full flex-col overflow-hidden bg-black/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] backdrop-blur-md">
+      <div className="mx-auto my-auto flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-5 sm:p-8">
         <h2 className="mb-4 shrink-0 text-xl font-bold text-white sm:text-2xl">{t('terms.requiredTitle')}</h2>
         <div
           className="mb-5 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-white/10 p-4 pb-[calc(env(safe-area-inset-bottom)+5rem)] text-sm leading-relaxed text-zinc-400 [-webkit-overflow-scrolling:touch]"

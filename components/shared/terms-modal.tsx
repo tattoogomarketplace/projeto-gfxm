@@ -34,12 +34,12 @@ export function TermsModal({ isOpen, onClose, onAccept }: TermsModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 p-3 backdrop-blur-md sm:p-4"
+          className="fixed inset-0 z-[9999] flex h-[100dvh] max-h-[100dvh] items-center justify-center overflow-hidden bg-black/90 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] backdrop-blur-md sm:px-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:max-h-[80dvh] sm:p-8"
+            className="relative flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 p-5 sm:max-h-[80dvh] sm:p-8"
           >
             <button
               type="button"

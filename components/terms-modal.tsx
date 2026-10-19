@@ -8,7 +8,7 @@ export default function TermsModal({ onAccept }: { onAccept: () => void }) {
   const { t } = useI18n();
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] backdrop-blur-md">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}

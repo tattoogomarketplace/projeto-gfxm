@@ -52,7 +52,7 @@ export function TermsViewerModal({ isOpen, onClose, closeLabel }: TermsViewerMod
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] flex-col justify-end overflow-hidden bg-black/90 p-3 backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:justify-center sm:p-4"
+          className="gpu-layer fixed inset-0 z-9999 flex h-[100dvh] max-h-[100dvh] flex-col justify-end overflow-hidden bg-black/90 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] backdrop-blur-md contain-paint transform-gpu backface-hidden will-change-transform sm:justify-center sm:px-4"
           role="dialog"
           aria-modal="true"
           aria-label={t('terms.viewerAria')}
@@ -62,7 +62,7 @@ export function TermsViewerModal({ isOpen, onClose, closeLabel }: TermsViewerMod
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-            className="gpu-layer flex min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-0 shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-h-[80vh] sm:max-w-md"
+            className="gpu-layer flex min-h-0 w-full max-h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] p-0 shadow-[0_0_40px_rgba(249,115,22,0.18)] contain-paint transform-gpu backface-hidden will-change-transform sm:max-h-[80vh] sm:max-w-md"
           >
             <div className="relative flex shrink-0 items-center gap-3 border-b border-border/50 p-4 pr-14">
               <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
