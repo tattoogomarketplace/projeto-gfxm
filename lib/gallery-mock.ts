@@ -5,6 +5,8 @@ export type InspirationItem = {
   artistName: string;
   artistId: string | null;
   likes: number;
+  artistAvatarUrl?: string | null;
+  artistInitial?: string;
 };
 
 export const HOME_GALLERY_TEASER_LIMIT = 10;

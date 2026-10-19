@@ -38,7 +38,7 @@ type GalleryInspirationGridProps = {
   loading?: boolean;
   skeletonCount?: number;
   onExploreStyle?: (style: string) => void;
-  layout?: 'masonry' | 'carousel';
+  layout?: 'masonry' | 'carousel' | 'feed';
   showLike?: boolean;
 };
 
@@ -149,6 +149,7 @@ export function GalleryInspirationGrid({
   );
 
   const isCarousel = layout === 'carousel';
+  const isFeed = layout === 'feed';
 
   if (loading) {
     if (isCarousel) {
@@ -159,6 +160,27 @@ export function GalleryInspirationGrid({
               key={index}
               className="h-[15.5rem] w-[11.5rem] shrink-0 snap-start rounded-xl"
             />
+          ))}
+        </div>
+      );
+    }
+    if (isFeed) {
+      return (
+        <div className="flex flex-col gap-8 pb-24" aria-hidden>
+          {Array.from({ length: skeletonCount }, (_, index) => (
+            <div key={index} className="w-full space-y-3">
+              <Skeleton className="aspect-[4/5] w-full rounded-[22px]" />
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-11 w-11 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3.5 w-28 rounded-md" />
+                    <Skeleton className="h-3 w-16 rounded-md" />
+                  </div>
+                </div>
+                <Skeleton className="h-11 w-11 rounded-full" />
+              </div>
+            </div>
           ))}
         </div>
       );
@@ -177,9 +199,96 @@ export function GalleryInspirationGrid({
 
   return (
     <>
-      <div className={isCarousel ? CAROUSEL_CLASS : 'columns-2 gap-4'}>
+      <div
+        className={
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex flex-col gap-8 pb-24' : 'columns-2 gap-4'
+        }
+      >
         {items.map((item, index) => {
           const isSaved = Boolean(saved[item.id]);
+          const artistName = item.artistName || t('welcome.artistFallback');
+          const artistInitial = item.artistInitial || artistName.charAt(0);
+
+          if (isFeed) {
+            return (
+              <article
+                key={item.id}
+                onPointerDown={startLongPress(item)}
+                onPointerMove={moveLongPress}
+                onPointerUp={cancelLongPress}
+                onPointerCancel={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onContextMenu={(event) => event.preventDefault()}
+                className="w-full select-none"
+              >
+                <div
+                  className={cn(
+                    'relative w-full overflow-hidden rounded-[22px] border border-white/[0.06] bg-zinc-900',
+                    index % 2 === 0 ? 'aspect-[4/5]' : 'aspect-square'
+                  )}
+                >
+                  <motion.div
+                    layout="position"
+                    layoutId={galleryPreviewLayoutId(item.id)}
+                    transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
+                    style={{ backfaceVisibility: 'hidden' }}
+                    className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                  >
+                    <OptimizedImage
+                      src={item.imageUrl}
+                      alt={`${styleLabel(item.style)} — ${artistName}`}
+                      className="h-full w-full"
+                    />
+                  </motion.div>
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3 px-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleInspirationClick(item)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    aria-label={t('gallery.visitProfile')}
+                  >
+                    <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-zinc-900 text-sm font-semibold uppercase text-orange-400">
+                      {item.artistAvatarUrl ? (
+                        <OptimizedImage
+                          src={item.artistAvatarUrl}
+                          alt={artistName}
+                          className="h-full w-full rounded-full"
+                        />
+                      ) : (
+                        artistInitial
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold tracking-tight text-white">
+                        {artistName}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[12px] font-medium text-zinc-400">
+                        {styleLabel(item.style)}
+                      </span>
+                      <span className="mt-1 block text-[11px] font-semibold tracking-wide text-orange-400">
+                        {t('gallery.visitProfile')}
+                      </span>
+                    </span>
+                  </button>
+
+                  {showLike ? (
+                    <TattooLikeButton
+                      liked={isSaved}
+                      count={item.likes}
+                      onToggle={() => toggleSaved(item.id)}
+                      dataGalleryAction
+                      ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
+                      className="pointer-events-auto"
+                    />
+                  ) : null}
+                </div>
+              </article>
+            );
+          }
+
           return (
             <article
               key={item.id}
@@ -205,7 +314,7 @@ export function GalleryInspirationGrid({
               >
                 <OptimizedImage
                   src={item.imageUrl}
-                  alt={`${styleLabel(item.style)} — ${item.artistName || t('welcome.artistFallback')}`}
+                  alt={`${styleLabel(item.style)} — ${artistName}`}
                   className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
                 />
               </motion.div>
@@ -213,17 +322,13 @@ export function GalleryInspirationGrid({
                 type="button"
                 onClick={() => handleInspirationClick(item)}
                 className="absolute inset-0 z-[1]"
-                aria-label={item.artistName || t('welcome.artistFallback')}
+                aria-label={artistName}
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-3">
                 <div className="pointer-events-none min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-white">
-                    {item.artistName || t('welcome.artistFallback')}
-                  </p>
-                  <p className="truncate text-[11px] text-zinc-300/90">
-                    {styleLabel(item.style)}
-                  </p>
+                  <p className="truncate text-[13px] font-semibold text-white">{artistName}</p>
+                  <p className="truncate text-[11px] text-zinc-300/90">{styleLabel(item.style)}</p>
                 </div>
                 {showLike ? (
                   <TattooLikeButton

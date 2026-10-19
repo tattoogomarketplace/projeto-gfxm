@@ -70,6 +70,8 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
             artistName: item.artist?.name || '',
             artistId: item.tatuadorId,
             likes: item.likesCount,
+            artistAvatarUrl: item.artist?.avatarUrl ?? null,
+            artistInitial: item.artist?.initial,
           }))
         : PLACEHOLDER_INSPIRATIONS;
 
@@ -104,7 +106,8 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
       <GalleryInspirationGrid
         items={inspirations}
         loading={loading}
-        skeletonCount={8}
+        skeletonCount={4}
+        layout="feed"
         onExploreStyle={(nextStyle) => setStyle(nextStyle)}
       />
     </div>
