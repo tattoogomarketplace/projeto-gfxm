@@ -585,8 +585,9 @@ export function HomeDiscover() {
                   )}
                 >
                   <motion.div
+                    layout
                     layoutId={galleryPreviewLayoutId(item.id)}
-                    transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                     className="absolute inset-0"
                   >
                     <OptimizedImage

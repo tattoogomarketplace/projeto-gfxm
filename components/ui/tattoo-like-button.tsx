@@ -16,7 +16,7 @@ type TattooLikeButtonProps = {
   dataGalleryAction?: boolean;
 };
 
-function TattooMachineLikeGlyph({
+export function TattooMachineLikeGlyph({
   liked,
   className,
 }: {

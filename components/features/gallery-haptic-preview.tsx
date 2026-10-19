@@ -6,10 +6,12 @@ import {
   AnimatePresence,
   motion,
   useMotionValue,
+  usePresence,
   useTransform,
 } from 'framer-motion';
-import { Heart, Palette, UserRound, X } from 'lucide-react';
+import { Palette, UserRound, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useI18n } from '@/hooks/use-i18n';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
@@ -35,6 +37,7 @@ export function galleryPreviewLayoutId(id: string) {
 
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
+const PREVIEW_SPRING = { type: 'spring', stiffness: 350, damping: 25 } as const;
 
 export function GalleryHapticPreview({
   item,
@@ -52,7 +55,7 @@ export function GalleryHapticPreview({
   if (!mounted) return null;
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {item ? (
         <PreviewSurface
           key={item.id}
@@ -79,10 +82,18 @@ function PreviewSurface({
   const openedAt = useRef(0);
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.15]);
+  const [isPresent, safeToRemove] = usePresence();
 
   useEffect(() => {
     openedAt.current = Date.now();
   }, []);
+
+  useEffect(() => {
+    if (isPresent) return;
+    dragY.set(0);
+    const timeout = window.setTimeout(() => safeToRemove?.(), 520);
+    return () => window.clearTimeout(timeout);
+  }, [dragY, isPresent, safeToRemove]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -130,16 +141,19 @@ function PreviewSurface({
       aria-modal="true"
       aria-label={`${artistName}${style ? ` — ${style}` : ''}`}
       className="fixed inset-0 z-[120] flex touch-none items-center justify-center overflow-hidden overscroll-none px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
-      initial={{ opacity: 1 }}
+      initial={false}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 1 }}
+      transition={PREVIEW_SPRING}
+      style={{ pointerEvents: isPresent ? 'auto' : 'none' }}
       onContextMenu={(event) => event.preventDefault()}
     >
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: isPresent ? 1 : 0 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        transition={PREVIEW_SPRING}
         onClick={handleBackdropClick}
       >
         <motion.div
@@ -149,25 +163,30 @@ function PreviewSurface({
         />
       </motion.div>
 
-      <button
+      <motion.button
         type="button"
         onClick={onDismiss}
         aria-label={t('common.close')}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isPresent ? 1 : 0 }}
+        exit={{ opacity: 0 }}
+        transition={PREVIEW_SPRING}
         className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white backdrop-blur-md transition-transform duration-150 active:scale-90"
       >
         <X className="h-5 w-5" strokeWidth={1.75} />
-      </button>
+      </motion.button>
 
       <div className="relative z-10 flex w-full max-w-[26rem] flex-col items-center">
         <motion.div
+          layout
           layoutId={galleryPreviewLayoutId(item.id)}
-          drag="y"
+          drag={isPresent ? 'y' : false}
           dragElastic={0.2}
           dragConstraints={{ top: 0, bottom: 0 }}
           dragMomentum={false}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+          transition={PREVIEW_SPRING}
           className="relative h-[52dvh] max-h-[30rem] min-h-[16rem] w-full cursor-grab touch-none overflow-hidden rounded-[22px] border border-white/10 bg-zinc-900 shadow-[0_28px_90px_-18px_rgba(0,0,0,0.95)] active:cursor-grabbing"
         >
           <OptimizedImage
@@ -184,7 +203,7 @@ function PreviewSurface({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
             <p className="truncate text-sm font-semibold text-white">{artistName}</p>
             <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-300">
-              <Heart className="h-3 w-3 fill-orange-500 text-orange-500" strokeWidth={1.9} />
+              <TattooMachineLikeGlyph liked className="h-3 w-3 text-orange-500" />
               {item.likes}
             </p>
           </div>
@@ -192,9 +211,9 @@ function PreviewSurface({
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: isPresent ? 1 : 0, y: isPresent ? 0 : 12 }}
           exit={{ opacity: 0, y: 12 }}
-          transition={{ delay: 0.04, type: 'spring', stiffness: 320, damping: 30 }}
+          transition={PREVIEW_SPRING}
           className="mt-5 w-full"
           onPointerDown={(event) => event.stopPropagation()}
         >
