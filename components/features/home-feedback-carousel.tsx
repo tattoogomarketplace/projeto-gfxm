@@ -18,14 +18,9 @@ import type { ReviewDto } from '@/lib/types/review';
 const CAROUSEL_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
 
-function isPlaceholderId(id: string | null | undefined): boolean {
-  return !id || id.startsWith('ph-');
-}
-
 export function reviewDestination(review: ReviewDto): string {
-  return isPlaceholderId(review.targetId)
-    ? '/dashboard/avaliacoes'
-    : `/profile/${encodeURIComponent(review.targetId)}`;
+  if (!review?.id) return '/dashboard/avaliacoes';
+  return `/dashboard/avaliacoes/${encodeURIComponent(review.id)}`;
 }
 
 export function HomeFeedbackCarousel() {

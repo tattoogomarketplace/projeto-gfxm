@@ -247,6 +247,37 @@ export async function getArtistReviews(artistIdRaw: string): Promise<ArtistRevie
   }
 }
 
+export async function getReviewById(reviewIdRaw: string): Promise<ReviewDto> {
+  const reviewId = String(reviewIdRaw ?? '').trim();
+  if (!reviewId) {
+    throw new ReviewError(400, 'Avaliação inválida.');
+  }
+
+  if (!isUuid(reviewId)) {
+    const mock = PLACEHOLDER_REVIEWS.find((item) => item.id === reviewId);
+    if (!mock) {
+      throw new ReviewError(404, 'Avaliação não encontrada.');
+    }
+    return mock;
+  }
+
+  try {
+    const row = await prisma.review.findFirst({
+      where: { id: reviewId, deleted_at: null },
+      select: REVIEW_SELECT,
+    });
+    if (!row) {
+      throw new ReviewError(404, 'Avaliação não encontrada.');
+    }
+    return toReviewDto(row as ReviewRow);
+  } catch (error) {
+    if (error instanceof ReviewError) throw error;
+    const mock = PLACEHOLDER_REVIEWS.find((item) => item.id === reviewId);
+    if (mock) return mock;
+    throw new ReviewError(404, 'Avaliação não encontrada.');
+  }
+}
+
 export async function getFeaturedReviews(): Promise<FeaturedReviewsPayload> {
   try {
     const rows = await prisma.review.findMany({

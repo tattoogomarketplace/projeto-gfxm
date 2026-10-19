@@ -16,10 +16,10 @@ export function ReviewStars({
   size = 'sm',
 }: {
   rating: number;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }) {
   const clamped = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
-  const iconClass = size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+  const iconClass = size === 'lg' ? 'h-5 w-5' : size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
 
   return (
     <span className="flex items-center gap-0.5" aria-label={`${clamped} / 5`}>
