@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { resolveDisplayName, resolveFullName } from '@/lib/utils/display-name';
-import { normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { normalizeAppRole, parseMetadataRole } from '@/lib/utils/auth-redirect';
 import { useI18n } from '@/hooks/use-i18n';
 
 export function UserIdentity() {
@@ -29,7 +29,11 @@ export function UserIdentity() {
         name: clerkUser.fullName || undefined,
       }),
     });
-    setRole(normalizeAppRole(metadata.role as string));
+    setRole(
+      normalizeAppRole(
+        parseMetadataRole(clerkUser.publicMetadata, clerkUser.unsafeMetadata)
+      )
+    );
   }, [user?.fullName, isLoaded, isSignedIn, clerkUser, setUser, setRole]);
 
   const displayName = resolveDisplayName(

@@ -25,7 +25,7 @@ import { useArtistViewportGuard } from '@/hooks/use-artist-viewport-guard';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { cn } from '@/lib/utils';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { parseMetadataRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
 import type { MessageKey } from '@/lib/i18n/types';
@@ -112,9 +112,7 @@ export default function SejaTatuadorPage() {
     return () => resetScrollChain(containerRef.current);
   }, [isLoaded]);
 
-  const metadataRole = parseAppRole(
-    (user?.unsafeMetadata as Record<string, unknown> | undefined)?.role as string | undefined
-  );
+  const metadataRole = parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata);
   const currentRole: AppRole = role ?? metadataRole ?? 'cliente';
   const defaultEmail = user?.primaryEmailAddress?.emailAddress ?? '';
 

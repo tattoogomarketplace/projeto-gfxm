@@ -5,7 +5,7 @@ import { UsernameGate } from '@/components/layout/username-gate';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
 import { buildProfileSource } from '@/lib/services/perfil-session';
-import { parseAppRole } from '@/lib/utils/auth-redirect';
+import { parseMetadataRole } from '@/lib/utils/auth-redirect';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -65,10 +65,9 @@ async function syncAuthenticatedPerfil() {
     if (!userId) return;
 
     const user = await currentUser();
-    const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
     await ensurePerfilFromClerk(
       buildProfileSource(userId, user),
-      parseAppRole(metadata.role as string | undefined)
+      parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata)
     );
   } catch {
     // Upsert concorrente com o webhook é idempotente; o casco nunca bloqueia.

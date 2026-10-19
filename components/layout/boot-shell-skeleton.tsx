@@ -109,7 +109,19 @@ export function BootShellSkeleton() {
   const pathname = usePathname();
   const kind = resolveHomeKind(pathname);
 
+  // O despachante `/dashboard` pertence ao casco autenticado, mas ainda não
+  // conhece o papel. Pintamos o skeleton genérico DENTRO do mesmo chrome
+  // (header + dock) para que a troca para a Home do papel não desloque a
+  // geometria. Demais rotas sem Home (onboarding, KYC, chat, configurações)
+  // seguem com o fallback sem chrome, pois são telas de tela cheia.
   if (!kind) {
+    if (pathname === '/dashboard') {
+      return (
+        <ShellChrome>
+          <AppRouteSkeleton />
+        </ShellChrome>
+      );
+    }
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
         <AppRouteSkeleton />
