@@ -17,6 +17,7 @@ import {
   GalleryHapticPreview,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
+import { HomeFeedbackCarousel } from '@/components/features/home-feedback-carousel';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -40,6 +41,7 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  *  - Carrossel horizontal de "Artistas em Destaque" com snap nativo.
  *  - Barra sticky de filtros por estilo em glassmorphism.
  *  - Galeria de inspirações em carrossel horizontal com long-press preview.
+ *  - Carrossel de avaliações em destaque com preview háptico sem like/reply.
  *
  * Zero layout shift: cada card/skeleton trava a proporção (`aspect-[4/5]`,
  * `aspect-square`) para o DOM nascer completo no primeiro frame.
@@ -485,6 +487,8 @@ export function HomeDiscover() {
           onExploreStyle={(style) => setSelectedStyle(style || null)}
         />
       </section>
+
+      <HomeFeedbackCarousel />
 
       <ErrorBoundary fallback={null}>
         <GalleryHapticPreview
