@@ -193,6 +193,8 @@ export const PT_BR: MessageDictionary = {
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Configurações e atividade',
   ...DISCOVERY_PT_BR,
+  'gallery.visitProfile': 'Visitar Perfil',
+  'gallery.domainStyles': 'Estilos de Domínio',
 
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Sair da Conta',
@@ -349,6 +351,8 @@ export const EN: MessageDictionary = {
   'profile.title': 'Profile',
   'profile.settingsAndActivity': 'Settings and activity',
   ...DISCOVERY_EN,
+  'gallery.visitProfile': 'Visit Profile',
+  'gallery.domainStyles': 'Signature Styles',
 
   'auth.signIn': 'Sign in',
   'auth.signOut': 'Sign Out',
@@ -505,6 +509,8 @@ export const ES: MessageDictionary = {
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Ajustes y actividad',
   ...DISCOVERY_ES,
+  'gallery.visitProfile': 'Visitar Perfil',
+  'gallery.domainStyles': 'Estilos de Dominio',
 
   'auth.signIn': 'Entrar',
   'auth.signOut': 'Cerrar sesión',

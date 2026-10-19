@@ -275,6 +275,8 @@ export type MessageKey =
   | 'gallery.title'
   | 'gallery.subtitle'
   | 'gallery.explore'
+  | 'gallery.visitProfile'
+  | 'gallery.domainStyles'
   | 'gallery.style'
   | 'gallery.bodyPart'
   | 'gallery.healing'

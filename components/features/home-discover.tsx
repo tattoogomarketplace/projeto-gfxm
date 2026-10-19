@@ -1,8 +1,22 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Compass, Heart, Sparkles } from 'lucide-react';
+import {
+  GalleryHapticPreview,
+  galleryPreviewLayoutId,
+  type GalleryPreviewItem,
+} from '@/components/features/gallery-haptic-preview';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -32,6 +46,10 @@ const STICKY_FILTER_CLASS =
   'sticky top-0 z-20 -mx-4 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
+
+const LONG_PRESS_MS = 420;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
+const CLICK_SUPPRESSION_MS = 800;
 
 function aspectFor(index: number): string {
   return ASPECTS[index % ASPECTS.length];
@@ -282,6 +300,57 @@ export function HomeDiscover() {
 
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
+
+  const pressTimer = useRef<number | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickUntil = useRef(0);
+
+  const cancelLongPress = useCallback(() => {
+    if (pressTimer.current !== null) {
+      window.clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+    pressOrigin.current = null;
+  }, []);
+
+  useEffect(() => cancelLongPress, [cancelLongPress]);
+
+  const startLongPress =
+    (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-gallery-action]')) return;
+
+      cancelLongPress();
+      pressOrigin.current = { x: event.clientX, y: event.clientY };
+      pressTimer.current = window.setTimeout(() => {
+        pressTimer.current = null;
+        pressOrigin.current = null;
+        suppressClickUntil.current = Date.now() + CLICK_SUPPRESSION_MS;
+        triggerHaptic('medium');
+        setPreview(item);
+      }, LONG_PRESS_MS);
+    };
+
+  const moveLongPress = (event: ReactPointerEvent<HTMLElement>) => {
+    const origin = pressOrigin.current;
+    if (!origin) return;
+    if (
+      Math.hypot(event.clientX - origin.x, event.clientY - origin.y) >
+      LONG_PRESS_MOVE_TOLERANCE
+    ) {
+      cancelLongPress();
+    }
+  };
+
+  const consumeLongPressClick = useCallback(() => {
+    if (Date.now() < suppressClickUntil.current) {
+      suppressClickUntil.current = 0;
+      return true;
+    }
+    return false;
+  }, []);
 
   const items = useMemo(() => data ?? [], [data]);
   const loading = isLoading && items.length === 0;
@@ -337,6 +406,35 @@ export function HomeDiscover() {
     triggerHaptic('light');
     setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const handleInspirationClick = (item: InspirationItem) => {
+    if (consumeLongPressClick()) return;
+    openInspiration(item);
+  };
+
+  const dismissPreview = useCallback(() => setPreview(null), []);
+
+  const visitPreviewProfile = useCallback(
+    (item: GalleryPreviewItem) => {
+      setPreview(null);
+      triggerHaptic('light');
+      router.push(
+        item.artistId
+          ? `/profile/${encodeURIComponent(item.artistId)}`
+          : '/dashboard/galeria'
+      );
+    },
+    [router, triggerHaptic]
+  );
+
+  const explorePreviewStyles = useCallback(
+    (item: GalleryPreviewItem) => {
+      setPreview(null);
+      triggerHaptic('light');
+      setSelectedStyle(item.style || null);
+    },
+    [triggerHaptic]
+  );
 
   return (
     <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
@@ -475,19 +573,31 @@ export function HomeDiscover() {
               return (
                 <article
                   key={item.id}
+                  onPointerDown={startLongPress(item)}
+                  onPointerMove={moveLongPress}
+                  onPointerUp={cancelLongPress}
+                  onPointerCancel={cancelLongPress}
+                  onPointerLeave={cancelLongPress}
+                  onContextMenu={(event) => event.preventDefault()}
                   className={cn(
-                    'group relative mb-4 break-inside-avoid overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
+                    'group relative mb-4 select-none break-inside-avoid overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
                     aspectFor(index)
                   )}
                 >
-                  <OptimizedImage
-                    src={item.imageUrl}
-                    alt={`${styleLabel(item.style)} — ${item.artistName || t('welcome.artistFallback')}`}
-                    className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
-                  />
+                  <motion.div
+                    layoutId={galleryPreviewLayoutId(item.id)}
+                    transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                    className="absolute inset-0"
+                  >
+                    <OptimizedImage
+                      src={item.imageUrl}
+                      alt={`${styleLabel(item.style)} — ${item.artistName || t('welcome.artistFallback')}`}
+                      className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                  </motion.div>
                   <button
                     type="button"
-                    onClick={() => openInspiration(item)}
+                    onClick={() => handleInspirationClick(item)}
                     className="absolute inset-0 z-[1]"
                     aria-label={item.artistName || t('welcome.artistFallback')}
                   />
@@ -503,6 +613,7 @@ export function HomeDiscover() {
                     </div>
                     <button
                       type="button"
+                      data-gallery-action
                       onClick={() => toggleSaved(item.id)}
                       aria-pressed={isSaved}
                       aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
@@ -523,6 +634,13 @@ export function HomeDiscover() {
           </div>
         )}
       </section>
+
+      <GalleryHapticPreview
+        item={preview}
+        onDismiss={dismissPreview}
+        onVisitProfile={visitPreviewProfile}
+        onExploreStyles={explorePreviewStyles}
+      />
     </div>
   );
 }
