@@ -6,9 +6,9 @@ import {
   assignAppPath,
   destinationAfterProfileSync,
   LOGIN_PATH,
-  parseAppRole,
+  parseMetadataRole,
 } from '@/lib/utils/auth-redirect';
-import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
+import { AppRouteSkeleton } from '@/components/ui/route-skeletons';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingGrace } from '@/lib/utils/session';
 import {
@@ -29,12 +29,12 @@ export default function DashboardPage() {
   const authRef = useRef({ isLoaded, isSignedIn, getToken });
   const roleRef = useRef<string | null>(null);
 
-  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
+  const metadataRole = parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata);
 
   useEffect(() => {
     authRef.current = { isLoaded, isSignedIn, getToken };
-    roleRef.current = parseAppRole((metadata.role as string) || storedRole);
-  }, [isLoaded, isSignedIn, getToken, metadata.role, storedRole]);
+    roleRef.current = metadataRole ?? storedRole;
+  }, [isLoaded, isSignedIn, getToken, metadataRole, storedRole]);
 
   const leave = useCallback((path: string) => {
     if (redirected.current) return;
@@ -138,5 +138,5 @@ export default function DashboardPage() {
     };
   }, [leave, releaseToDashboard]);
 
-  return <DashboardHomeSkeleton />;
+  return <AppRouteSkeleton />;
 }

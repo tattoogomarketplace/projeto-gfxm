@@ -99,6 +99,26 @@ export function parseAppRole(role?: string | null): AppRole | null {
   return null;
 }
 
+type MetadataRoleSource = { role?: unknown } | null | undefined;
+
+/**
+ * Resolve o papel a partir dos metadados do Clerk com precedência SEGURA:
+ * `publicMetadata` (somente escrita pelo backend) vence `unsafeMetadata`
+ * (editável pelo usuário). Isso impede que um metadado antigo em
+ * `unsafeMetadata` — ex.: `cliente` de antes de um upgrade para tatuador/
+ * estúdio — sobreponha o papel já promovido em `publicMetadata`.
+ */
+export function parseMetadataRole(
+  publicMetadata?: unknown,
+  unsafeMetadata?: unknown
+): AppRole | null {
+  const read = (metadata: unknown): AppRole | null => {
+    if (!metadata || typeof metadata !== 'object') return null;
+    return parseAppRole((metadata as MetadataRoleSource)?.role as string | undefined);
+  };
+  return read(publicMetadata) ?? read(unsafeMetadata);
+}
+
 export function normalizeAppRole(role?: string | null): AppRole {
   return parseAppRole(role) ?? 'cliente';
 }

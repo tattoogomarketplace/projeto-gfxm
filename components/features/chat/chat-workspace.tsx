@@ -522,7 +522,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
           onClose={() => setBookingOpen(false)}
           onBooked={() => {
             setActiveTab('agendar');
-            router.push('/dashboard/cliente?tab=agendar');
+            router.push(`${dashboardPathForRole(role)}?tab=agendar`);
           }}
         />
       ) : null}

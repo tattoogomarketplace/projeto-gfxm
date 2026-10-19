@@ -11,6 +11,7 @@ import {
   assignAppPath,
   dashboardPathForRole,
   normalizeAppRole,
+  parseMetadataRole,
   type AppRole,
 } from '@/lib/utils/auth-redirect';
 
@@ -46,9 +47,7 @@ function UsernameOnboardingInner() {
 
     const run = async () => {
       const metadataRole = normalizeAppRole(
-        ((user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>).role as
-          | string
-          | undefined
+        parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata)
       );
 
       try {

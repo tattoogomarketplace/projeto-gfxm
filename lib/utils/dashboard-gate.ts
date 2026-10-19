@@ -115,16 +115,21 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
   try {
     const session = await requireDashboardSession();
     if (!session) {
-      if (expectedRole && expectedRole !== 'cliente') {
-        redirect(dashboardPathForRole('cliente'));
-      }
-      return fallbackPerfil(null, 'cliente');
+      // Sessão indisponível (Clerk/DB transitório): mantemos o usuário na
+      // rota que ele pediu em vez de forçá-lo ao painel do cliente. O casco
+      // pinta o skeleton do papel esperado; a próxima revalidação corrige.
+      return fallbackPerfil(null, expectedRole ?? 'cliente');
     }
 
     const { perfil, role } = session;
 
     if (!perfil || perfil.deleted_at) {
-      return fallbackPerfil(session.clerkId, expectedRole ?? 'cliente');
+      // Sem registro local, o papel seguro do Clerk (publicMetadata) ainda
+      // manda: nunca renderizamos o ecossistema de outro papel.
+      if (expectedRole && role && role !== expectedRole) {
+        redirect(dashboardPathForRole(role));
+      }
+      return fallbackPerfil(session.clerkId, role ?? expectedRole ?? 'cliente');
     }
 
     if (!role || !isOnboardingComplete(perfil)) {
@@ -154,6 +159,6 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
   } catch (error) {
     rethrowNextControlFlow(error);
     console.error('[dashboard-gate] falha transitória; liberando painel', error);
-    return fallbackPerfil(null, 'cliente');
+    return fallbackPerfil(null, expectedRole ?? 'cliente');
   }
 }

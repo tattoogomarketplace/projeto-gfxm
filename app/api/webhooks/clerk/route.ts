@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { ensurePerfilFromClerk, findPerfilByClerkId } from '@/lib/services/ensure-perfil';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { parseMetadataRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 type ClerkEmailAddress = {
   id?: string;
@@ -42,8 +42,7 @@ function resolveEmail(data: ClerkUserCreatedData): string {
 }
 
 function resolveRole(data: ClerkUserCreatedData): AppRole | null {
-  const metadata = data.unsafe_metadata || data.public_metadata || {};
-  return parseAppRole(metadata.role);
+  return parseMetadataRole(data.public_metadata, data.unsafe_metadata);
 }
 
 export async function POST(request: NextRequest) {
@@ -79,7 +78,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'missing_clerk_id' }, { status: 422 });
   }
 
-  const metadata = data.unsafe_metadata || data.public_metadata || {};
+  const metadata = { ...(data.public_metadata || {}), ...(data.unsafe_metadata || {}) };
   const role = resolveRole(data);
 
   try {

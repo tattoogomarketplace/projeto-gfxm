@@ -12,7 +12,7 @@ import { Input } from '@/components/input';
 import Link from 'next/link';
 import { OtpInput } from '@/components/ui/otp-input';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
-import { assignAppPath, dashboardPathForRole, normalizeAppRole, postSignupPathForRole } from '@/lib/utils/auth-redirect';
+import { assignAppPath, normalizeAppRole, parseMetadataRole } from '@/lib/utils/auth-redirect';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { useI18n } from '@/hooks/use-i18n';
@@ -240,13 +240,20 @@ export default function LoginPage() {
         string,
         unknown
       >;
-      const role = normalizeAppRole((metadata.role as string) || undefined);
+      // O metadado do Clerk é apenas um espelho do cadastro e pode estar
+      // defasado (ex.: conta promovida no banco). O papel SOBERANO é resolvido
+      // pelo despachante `/dashboard` (Clerk + Prisma), que então entrega a
+      // rota correta — nunca um painel fixo de cliente.
+      const metadataRole = parseMetadataRole(
+        clerkUser?.publicMetadata,
+        clerkUser?.unsafeMetadata
+      );
+      const role = normalizeAppRole(metadataRole);
       const fullName =
         (metadata.full_name as string) ||
         (metadata.nome as string) ||
         clerkUser?.fullName ||
         '';
-      const kycStatus = metadata.kyc_status as string | undefined;
 
       setUser({
         id: clerkUser?.id || result.createdSessionId,
@@ -256,10 +263,7 @@ export default function LoginPage() {
       setRole(role);
 
       toast.success(t('auth.welcomeBack'));
-      nextPathRef.current =
-        role === 'tatuador' && kycStatus !== 'aprovado'
-          ? postSignupPathForRole(role)
-          : dashboardPathForRole(role);
+      nextPathRef.current = '/dashboard';
       return true;
     } catch (err) {
       console.error('CLERK ERROR:', err);

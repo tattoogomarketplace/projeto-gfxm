@@ -17,6 +17,7 @@ import {
   destinationAfterProfileSync,
   isOnboardingComplete,
   parseAppRole,
+  parseMetadataRole,
 } from '@/lib/utils/auth-redirect';
 import { formatAppError } from '@/lib/error-handler';
 import type { MessageKey } from '@/lib/i18n/types';
@@ -46,7 +47,7 @@ export default function DashboardOnboardingPage() {
     () => (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>,
     [user]
   );
-  const lockedRole = parseAppRole((metadata.role as string) ?? null);
+  const lockedRole = parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata);
   const role: RegisterRole = lockedRole ?? selectedRole ?? 'cliente';
   const profileName =
     (metadata.full_name as string | undefined) ||

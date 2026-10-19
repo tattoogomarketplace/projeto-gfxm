@@ -17,7 +17,7 @@ import {
   perfilResponse,
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
-import { isOnboardingComplete, parseAppRole } from '@/lib/utils/auth-redirect';
+import { isOnboardingComplete, parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 const ENSURE_STEP_TIMEOUT_MS = 4000;
 
@@ -40,15 +40,22 @@ function fallbackEmail(userId: string, email?: string | null): string {
   return normalized || `${userId}@tattoogo.local`;
 }
 
-function fallbackPerfilPayload(userId: string, email?: string | null) {
+function fallbackPerfilPayload(
+  userId: string,
+  email?: string | null,
+  role?: AppRole | null
+) {
   const resolvedEmail = fallbackEmail(userId, email);
+  const resolvedRole = role ?? 'cliente';
   return {
     id: userId,
     email: resolvedEmail,
     nome: null as string | null,
     username: null as string | null,
-    role: 'cliente' as const,
-    kyc_status: 'nao_aplicavel' as const,
+    role: resolvedRole,
+    kyc_status: (resolvedRole === 'cliente' ? 'nao_aplicavel' : 'pendente') as
+      | 'nao_aplicavel'
+      | 'pendente',
     has_seen_welcome_notice: true,
     onboarding_completed: true,
   };
@@ -65,8 +72,12 @@ function okWithPerfil(perfil: LocalPerfil) {
   });
 }
 
-function okWithFallback(userId: string, email?: string | null) {
-  const perfil = fallbackPerfilPayload(userId, email);
+function okWithFallback(
+  userId: string,
+  email?: string | null,
+  role?: AppRole | null
+) {
+  const perfil = fallbackPerfilPayload(userId, email, role);
   return NextResponse.json({
     sucesso: true,
     reactivated: false,
@@ -79,9 +90,11 @@ function okWithFallback(userId: string, email?: string | null) {
 async function provisionBaselinePerfil(
   userId: string,
   email?: string | null,
-  nome?: string | null
+  nome?: string | null,
+  role?: AppRole | null
 ): Promise<LocalPerfil | null> {
   const resolvedEmail = fallbackEmail(userId, email);
+  const resolvedRole = role ?? 'cliente';
   try {
     return await prisma.perfil.upsert({
       where: { clerk_id: userId },
@@ -90,8 +103,8 @@ async function provisionBaselinePerfil(
         clerk_id: userId,
         email: resolvedEmail,
         nome: nome || null,
-        role: 'cliente',
-        kyc_status: 'nao_aplicavel',
+        role: resolvedRole,
+        kyc_status: resolvedRole === 'cliente' ? 'nao_aplicavel' : 'pendente',
       },
       update: {
         deleted_at: null,
@@ -124,6 +137,7 @@ async function provisionBaselinePerfil(
 export async function GET(request: Request) {
   let userId: string | null = null;
   let email: string | null = null;
+  let metadataRole: AppRole | null = null;
 
   try {
     try {
@@ -135,6 +149,7 @@ export async function GET(request: Request) {
 
     const session = await withTimeout(resolvePerfilSession(request), ENSURE_STEP_TIMEOUT_MS);
     userId = userId || session.userId;
+    metadataRole = session.metadataRole;
     email =
       session.user?.primaryEmailAddress?.emailAddress ||
       session.user?.emailAddresses?.[0]?.emailAddress ||
@@ -190,7 +205,8 @@ export async function GET(request: Request) {
           provisionBaselinePerfil(
             userId,
             email,
-            session.user?.fullName || session.user?.firstName || null
+            session.user?.fullName || session.user?.firstName || null,
+            session.metadataRole
           ),
           ENSURE_STEP_TIMEOUT_MS
         );
@@ -202,7 +218,7 @@ export async function GET(request: Request) {
 
     if (!perfil || perfil.deleted_at) {
       console.error('[perfil/ensure] usando fallback 200 após falha de persistência', { userId });
-      return okWithFallback(userId, email);
+      return okWithFallback(userId, email, metadataRole);
     }
 
     return okWithPerfil(perfil);
@@ -220,13 +236,14 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
-    return okWithFallback(userId, email);
+    return okWithFallback(userId, email, metadataRole);
   }
 }
 
 export async function POST(request: Request) {
   let userId: string | null = null;
   let email: string | null = null;
+  let metadataRole: AppRole | null = null;
 
   try {
     try {
@@ -237,6 +254,7 @@ export async function POST(request: Request) {
 
     const session = await withTimeout(resolvePerfilSession(request), ENSURE_STEP_TIMEOUT_MS);
     userId = userId || session.userId;
+    metadataRole = session.metadataRole;
     email =
       session.user?.primaryEmailAddress?.emailAddress ||
       session.user?.emailAddresses?.[0]?.emailAddress ||
@@ -315,7 +333,8 @@ export async function POST(request: Request) {
           provisionBaselinePerfil(
             userId,
             email,
-            session.user?.fullName || session.user?.firstName || null
+            session.user?.fullName || session.user?.firstName || null,
+            session.metadataRole
           ),
           ENSURE_STEP_TIMEOUT_MS
         );
@@ -330,7 +349,7 @@ export async function POST(request: Request) {
 
     if (!perfil || perfil.deleted_at) {
       console.error('[perfil/ensure] POST usando fallback 200', { userId });
-      return okWithFallback(userId, email);
+      return okWithFallback(userId, email, metadataRole);
     }
 
     return okWithPerfil(perfil);
@@ -339,6 +358,6 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
     }
-    return okWithFallback(userId, email);
+    return okWithFallback(userId, email, metadataRole);
   }
 }

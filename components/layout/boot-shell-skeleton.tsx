@@ -34,7 +34,6 @@ import { Skeleton } from '@/components/ui/skeleton';
  * — nunca um `null`/canvas vazio.
  */
 
-const DASHBOARD_ROOT = '/dashboard';
 const CLIENTE_HOME = '/dashboard/cliente';
 const TATUADOR_HOME = '/dashboard/tatuador';
 const ESTUDIO_HOME = '/dashboard/estudio';
@@ -47,13 +46,13 @@ function isAtPath(pathname: string, base: string): boolean {
 
 /**
  * Resolve qual Home autenticada o pathname atual pinta. O despachante
- * (`/dashboard`) e todo o painel do cliente compartilham o Feed de Descoberta
- * (Home / Início) como esqueleto de boot — exatamente como seus `loading.tsx`.
+ * (`/dashboard`) NÃO pertence a nenhum papel — ele resolve Clerk + Prisma e
+ * redireciona. Mapeá-lo para o Feed de Descoberta pintava a Home do cliente
+ * para tatuadores/estúdios até o redirect; nesse caso usamos o skeleton
+ * genérico do casco (`AppRouteSkeleton`).
  */
 function resolveHomeKind(pathname: string): HomeKind | null {
-  if (pathname === DASHBOARD_ROOT || isAtPath(pathname, CLIENTE_HOME)) {
-    return 'cliente';
-  }
+  if (isAtPath(pathname, CLIENTE_HOME)) return 'cliente';
   if (isAtPath(pathname, TATUADOR_HOME)) return 'tatuador';
   if (isAtPath(pathname, ESTUDIO_HOME)) return 'estudio';
   return null;

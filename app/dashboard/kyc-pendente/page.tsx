@@ -6,7 +6,12 @@ import { useUser } from '@clerk/nextjs';
 import { Calendar, ShieldCheck, Sparkles } from 'lucide-react';
 import { ProfessionalKycPanel, type KycStatusValue } from '@/components/features/professional-kyc-panel';
 import { KycPendingSkeleton } from '@/components/ui/route-skeletons';
-import { dashboardPathForRole, isOnboardingComplete, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import {
+  dashboardPathForRole,
+  isOnboardingComplete,
+  normalizeAppRole,
+  parseMetadataRole,
+} from '@/lib/utils/auth-redirect';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useI18n } from '@/hooks/use-i18n';
 import type { MessageKey } from '@/lib/i18n/types';
@@ -79,6 +84,7 @@ export default function KycPendentePage() {
 
     const hydrate = async () => {
       const metadata = (user.unsafeMetadata || user.publicMetadata || {}) as Record<string, unknown>;
+      const metadataRole = parseMetadataRole(user.publicMetadata, user.unsafeMetadata);
       try {
         const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
         if (cancelled) return;
@@ -92,7 +98,7 @@ export default function KycPendentePage() {
           router.push('/dashboard/onboarding');
           return;
         }
-        const role = normalizeAppRole(payload?.perfil?.role || (metadata?.role as string));
+        const role = normalizeAppRole(payload?.perfil?.role || metadataRole);
         if (role !== 'tatuador') {
           router.push(dashboardPathForRole(role));
           return;
@@ -109,7 +115,7 @@ export default function KycPendentePage() {
         if (cancelled) return;
       }
 
-      const role = normalizeAppRole(metadata?.role as string);
+      const role = normalizeAppRole(metadataRole);
         if (role !== 'tatuador') {
           router.push(dashboardPathForRole(role));
           return;

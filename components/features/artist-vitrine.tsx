@@ -7,8 +7,10 @@ import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useAuthStore } from '@/hooks/use-auth-store';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
+import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { weekdayKey } from '@/lib/working-hours';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
@@ -25,6 +27,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const { triggerHaptic } = useHapticFeedback();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
+  const role = useAuthStore((s) => s.role);
 
   const { artist, items, scheduleSummary, availableSlots } = vitrine;
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -210,7 +213,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         onClose={() => setBookingOpen(false)}
         onBooked={() => {
           setActiveTab('agendar');
-          router.push('/dashboard/cliente?tab=agendar');
+          router.push(`${dashboardPathForRole(role)}?tab=agendar`);
         }}
       />
     </div>

@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { headers } from 'next/headers';
 import { verifyToken } from '@clerk/backend';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { parseMetadataRole, type AppRole } from '@/lib/utils/auth-redirect';
 import type { ClerkProfileSource, LocalPerfil } from '@/lib/services/ensure-perfil';
 
 type ClerkUser = Awaited<ReturnType<typeof currentUser>>;
@@ -258,8 +258,8 @@ export async function resolvePerfilSession(request?: Request): Promise<PerfilSes
     }
   }
 
-  const metadata = (user?.unsafeMetadata || user?.publicMetadata || {}) as Record<string, unknown>;
-  return { userId, user, metadataRole: parseAppRole(metadata.role as string | undefined) };
+  const metadataRole = parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata);
+  return { userId, user, metadataRole };
 }
 
 /**

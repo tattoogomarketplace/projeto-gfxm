@@ -23,7 +23,7 @@ import {
 } from '@/lib/utils/age-calculator';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
 import { formatCnpj, isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
-import { ONBOARDING_PATH, assignAppPath, normalizeAppRole } from '@/lib/utils/auth-redirect';
+import { ONBOARDING_PATH, assignAppPath, normalizeAppRole, parseMetadataRole } from '@/lib/utils/auth-redirect';
 import { getOnboardingLoadingMessage } from '@/lib/content/role-experience';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
@@ -434,7 +434,7 @@ export default function RegisterPage() {
         unknown
       >;
       const resolvedRole = normalizeAppRole(
-        (metadata.role as string) || userRole
+        parseMetadataRole(clerkUser?.publicMetadata, clerkUser?.unsafeMetadata) ?? userRole
       );
 
       setUser({

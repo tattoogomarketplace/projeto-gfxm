@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { parseAppRole, parseMetadataRole, type AppRole } from '@/lib/utils/auth-redirect';
 
 export type LocalPerfil = {
   id: string;
@@ -135,7 +135,14 @@ function optionalText(value: unknown): string | null {
 }
 
 function metadataOf(source: ClerkProfileSource): ClerkMetadata {
-  return (source.unsafeMetadata || source.publicMetadata || {}) as ClerkMetadata;
+  // `publicMetadata` fornece os campos administrados pelo backend; o
+  // `unsafeMetadata` complementa/sobrescreve os dados do cadastro. A leitura
+  // NUNCA descarta o publicMetadata inteiro só porque o unsafe existe (o
+  // Clerk devolve `{}` para ele em contas antigas).
+  return {
+    ...((source.publicMetadata || {}) as ClerkMetadata),
+    ...((source.unsafeMetadata || {}) as ClerkMetadata),
+  };
 }
 
 export function resolveEmail(source: ClerkProfileSource): string {
@@ -549,7 +556,10 @@ export async function ensurePerfilFromClerk(
   const metadata = metadataOf(source);
   const resolvedEmail = resolveEmail(source);
   const nome = resolveNome(source);
-  const role = parseAppRole(roleOverride) ?? parseAppRole(metadata.role as string | undefined);
+  const role =
+    parseAppRole(roleOverride) ??
+    parseMetadataRole(source.publicMetadata, source.unsafeMetadata) ??
+    parseAppRole(metadata.role as string | undefined);
 
   const existing = await findPerfilByClerkId(clerkId);
   const cpf = resolveCpf(source);

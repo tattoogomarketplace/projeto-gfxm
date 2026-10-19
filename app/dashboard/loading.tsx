@@ -1,14 +1,15 @@
-import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
+import { AppRouteSkeleton } from '@/components/ui/route-skeletons';
 
 /**
  * Route-level fallback of `/dashboard/*`.
  *
- * Paints the premium Dark Luxury content skeleton inside the already-resolved
- * App Shell — the dock and header stay visible. Unified with the authentication
- * handoff (`<ClerkLoading>` -> `BootShellSkeleton`) on the SAME
- * `DashboardHomeSkeleton`, so the boot skeleton and this route boundary are
- * pixel-identical (zero layout shift before the hydrated feed lands).
+ * O `/dashboard` é o DESPACHANTE de papel: o destino (cliente, tatuador ou
+ * estúdio) ainda não é conhecido neste frame. Pintar aqui o Feed de Descoberta
+ * do cliente fazia o tatuador/estúdio ver a Home errada por um instante. O
+ * skeleton genérico preserva a geometria do casco (header + dock já resolvidos)
+ * com a mesma linguagem Dark Luxury, e a rota de destino aplica o skeleton
+ * específico do papel assim que o redirecionamento resolve.
  */
 export default function DashboardLoading() {
-  return <DashboardHomeSkeleton />;
+  return <AppRouteSkeleton />;
 }
