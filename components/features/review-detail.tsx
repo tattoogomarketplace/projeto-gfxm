@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, BadgeCheck } from 'lucide-react';
 import { ReviewStars } from '@/components/features/feedback-card';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -22,12 +23,26 @@ export function ReviewDetail({ review }: ReviewDetailProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(0);
+  const isTargetArtist = true;
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [draftReply, setDraftReply] = useState('');
+  const [localReply, setLocalReply] = useState(review.artistReply);
 
   const authorName = review.author?.name?.trim() || t('welcome.artistFallback');
   const targetName = review.target?.name?.trim() || t('welcome.artistFallback');
   const authorInitial = review.author?.initial || authorName.charAt(0).toUpperCase() || 'A';
   const targetInitial = review.target?.initial || targetName.charAt(0).toUpperCase() || 'A';
   const style = review.portfolio?.style ? styleLabel(review.portfolio.style) : '';
+  const artistReply = localReply?.trim() ? localReply : null;
+
+  const submitReply = () => {
+    const next = draftReply.trim();
+    if (!next) return;
+    triggerHaptic('success');
+    setLocalReply(next);
+    setComposerOpen(false);
+    setDraftReply('');
+  };
 
   const goBack = () => {
     triggerHaptic('light');
@@ -124,6 +139,71 @@ export function ReviewDetail({ review }: ReviewDetailProps) {
             </span>
           </button>
         </div>
+
+        {artistReply ? (
+          <div className="ml-6 rounded-2xl border-l-2 border-orange-500 bg-zinc-900/50 p-4 sm:ml-8">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-zinc-900 text-xs font-semibold uppercase text-orange-400">
+                {review.target?.avatarUrl ? (
+                  <OptimizedImage
+                    src={review.target.avatarUrl}
+                    alt={targetName}
+                    className="h-full w-full rounded-full"
+                  />
+                ) : (
+                  targetInitial
+                )}
+              </span>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">
+                {t('home.artistReply')}
+              </p>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-200">{artistReply}</p>
+          </div>
+        ) : isTargetArtist ? (
+          <div className="ml-6 sm:ml-8">
+            {!composerOpen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setComposerOpen(true);
+                }}
+                className="inline-flex min-h-11 items-center rounded-xl px-1 text-sm font-semibold text-orange-300 transition-colors hover:text-orange-200"
+              >
+                {t('home.reply')}
+              </button>
+            ) : null}
+            <AnimatePresence initial={false}>
+              {composerOpen ? (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex flex-col gap-3 pt-1">
+                    <textarea
+                      value={draftReply}
+                      onChange={(event) => setDraftReply(event.target.value)}
+                      rows={4}
+                      className="bg-zinc-900/80 border border-zinc-800 focus:border-orange-500 rounded-xl p-4 w-full outline-none text-zinc-200 resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={submitReply}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-semibold text-neutral-950 transition-colors hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={!draftReply.trim()}
+                    >
+                      {t('home.submitReply')}
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        ) : null}
 
         {review.portfolio?.imageUrl ? (
           <div className="relative w-full overflow-hidden rounded-3xl aspect-square border border-white/10 bg-zinc-900">
