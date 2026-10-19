@@ -41,10 +41,10 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'flex min-h-11 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-xl border px-3 py-2 text-left transition-all active:scale-[0.98]',
+        'flex min-h-11 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-xl border px-3 py-2 text-left backdrop-blur-md transition-all active:scale-[0.98]',
         active
-          ? 'border-orange-500 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.28)]'
-          : 'border-black/[0.04] bg-white text-neutral-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:border-orange-500/40 hover:text-neutral-900 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-300 dark:shadow-none dark:hover:text-zinc-100'
+          ? 'border-orange-500/60 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.24)]'
+          : 'border-black/[0.06] bg-white/60 text-neutral-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:border-orange-500/40 hover:text-neutral-900 dark:border-white/10 dark:bg-zinc-900/40 dark:text-zinc-300 dark:shadow-none dark:hover:border-orange-500/40 dark:hover:text-zinc-100'
       )}
     >
       <span className="min-w-0">
@@ -193,7 +193,7 @@ export function PortfolioFilterBar({
             />
             <div
               role="listbox"
-              className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.12)] dark:border-white/[0.05] dark:bg-white/[0.04] dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+              className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-black/[0.06] bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/70 dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
             >
               <div className="max-h-72 overflow-y-auto p-2">
                 {openCategory === 'style' ? (

@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useI18n } from '@/hooks/use-i18n';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
-import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
@@ -57,7 +56,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
     [style, bodyPart, healed]
   );
 
-  const { data, isLoading, isFetching, isError } = useGaleria(query);
+  const { data, isLoading, isError } = useGaleria(query);
   const items = data ?? [];
   const hasFilters = Boolean(style || bodyPart || healed !== 'all');
 
@@ -109,12 +108,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           </p>
         </GlassContainer>
       ) : (
-        <div
-          className={cn(
-            'columns-1 gap-4 sm:columns-2',
-            isFetching && 'opacity-80 transition-opacity duration-300'
-          )}
-        >
+        <div className="columns-1 gap-4 sm:columns-2">
           {items.map((item) => (
             <div key={item.id} className="mb-4 break-inside-avoid">
               <GaleriaCard item={item} onStartConversation={onStartConversation} />

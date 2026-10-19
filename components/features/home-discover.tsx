@@ -44,7 +44,7 @@ const CAROUSEL_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
 
 const STICKY_FILTER_CLASS =
-  'sticky top-0 z-20 -mx-4 bg-zinc-950/70 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6';
+  'sticky top-0 z-20 -mx-4 border-y border-white/[0.04] bg-neutral-950/55 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
@@ -514,10 +514,10 @@ export function HomeDiscover() {
               setSelectedStyle(null);
             }}
             className={cn(
-              'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 active:scale-[0.96]',
+              'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium backdrop-blur-md transition-all duration-200 active:scale-[0.96]',
               selectedStyle === null
-                ? 'border-orange-500/50 bg-orange-500 font-semibold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)]'
-                : 'border-zinc-800/50 bg-zinc-900/60 text-zinc-300 backdrop-blur-md hover:border-orange-500/40 hover:text-orange-300'
+                ? 'border-orange-500/60 bg-orange-500/15 font-semibold text-orange-300 shadow-[0_0_18px_rgba(249,115,22,0.25)]'
+                : 'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-orange-500/40 hover:text-orange-300'
             )}
           >
             Tudo
@@ -533,10 +533,10 @@ export function HomeDiscover() {
                   setSelectedStyle(active ? null : style);
                 }}
                 className={cn(
-                  'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium transition-all duration-200 active:scale-[0.96]',
+                  'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium backdrop-blur-md transition-all duration-200 active:scale-[0.96]',
                   active
-                    ? 'border-orange-500/50 bg-orange-500 font-semibold text-black shadow-[0_0_18px_rgba(249,115,22,0.3)]'
-                    : 'border-zinc-800/50 bg-zinc-900/60 text-zinc-300 backdrop-blur-md hover:border-orange-500/40 hover:text-orange-300'
+                    ? 'border-orange-500/60 bg-orange-500/15 font-semibold text-orange-300 shadow-[0_0_18px_rgba(249,115,22,0.25)]'
+                    : 'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-orange-500/40 hover:text-orange-300'
                 )}
               >
                 {styleLabel(style)}
