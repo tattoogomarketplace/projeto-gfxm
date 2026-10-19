@@ -1,29 +1,20 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-} from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Compass, Sparkles } from 'lucide-react';
-import {
-  GalleryHapticPreview,
-  galleryPreviewLayoutId,
-  type GalleryPreviewItem,
-} from '@/components/features/gallery-haptic-preview';
+import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
-import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
 import { useI18n } from '@/hooks/use-i18n';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BRAND_NAME } from '@/lib/i18n/brands';
+import {
+  HOME_GALLERY_TEASER_LIMIT,
+  PLACEHOLDER_INSPIRATIONS,
+  type InspirationItem,
+} from '@/lib/gallery-mock';
 import { PORTFOLIO_STYLES, portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 import type { GaleriaItem } from '@/lib/types/galeria';
@@ -46,16 +37,6 @@ const CAROUSEL_CLASS =
 const STICKY_FILTER_CLASS =
   'sticky top-0 z-20 -mx-4 border-y border-white/[0.04] bg-neutral-950/55 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6';
 
-const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
-
-const LONG_PRESS_MS = 420;
-const LONG_PRESS_MOVE_TOLERANCE = 10;
-const CLICK_SUPPRESSION_MS = 800;
-
-function aspectFor(index: number): string {
-  return ASPECTS[index % ASPECTS.length];
-}
-
 type DiscoverArtist = {
   id: string;
   name: string;
@@ -64,15 +45,6 @@ type DiscoverArtist = {
   initial: string;
   verified: boolean;
   placeholder?: boolean;
-};
-
-type InspirationItem = {
-  id: string;
-  imageUrl: string;
-  style: string;
-  artistName: string;
-  artistId: string | null;
-  likes: number;
 };
 
 const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
@@ -129,89 +101,6 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
     initial: 'L',
     verified: false,
     placeholder: true,
-  },
-];
-
-const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
-  {
-    id: 'ph-i1',
-    imageUrl: 'https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=800&q=80&auto=format&fit=crop',
-    style: 'Realismo',
-    artistName: 'Rafael Lima',
-    artistId: null,
-    likes: 428,
-  },
-  {
-    id: 'ph-i2',
-    imageUrl: 'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=800&q=80&auto=format&fit=crop',
-    style: 'Fine Line',
-    artistName: 'Marina Costa',
-    artistId: null,
-    likes: 312,
-  },
-  {
-    id: 'ph-i3',
-    imageUrl: 'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=800&q=80&auto=format&fit=crop',
-    style: 'Blackwork',
-    artistName: 'Bianca Souza',
-    artistId: null,
-    likes: 587,
-  },
-  {
-    id: 'ph-i4',
-    imageUrl: 'https://images.unsplash.com/photo-1542727365-19732a80dcfd?w=800&q=80&auto=format&fit=crop',
-    style: 'Old School',
-    artistName: 'Diego Martins',
-    artistId: null,
-    likes: 204,
-  },
-  {
-    id: 'ph-i5',
-    imageUrl: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=80&auto=format&fit=crop',
-    style: 'Minimalista',
-    artistName: 'Camila Rocha',
-    artistId: null,
-    likes: 356,
-  },
-  {
-    id: 'ph-i6',
-    imageUrl: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800&q=80&auto=format&fit=crop',
-    style: 'Geometrico',
-    artistName: 'Lucas Ferreira',
-    artistId: null,
-    likes: 271,
-  },
-  {
-    id: 'ph-i7',
-    imageUrl: 'https://images.unsplash.com/photo-1560707854-fb9a10eeaace?w=800&q=80&auto=format&fit=crop',
-    style: 'Aquarela',
-    artistName: 'Marina Costa',
-    artistId: null,
-    likes: 193,
-  },
-  {
-    id: 'ph-i8',
-    imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80&auto=format&fit=crop',
-    style: 'Lettering',
-    artistName: 'Diego Martins',
-    artistId: null,
-    likes: 462,
-  },
-  {
-    id: 'ph-i9',
-    imageUrl: 'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=800&q=80&auto=format&fit=crop',
-    style: 'Oriental',
-    artistName: 'Bianca Souza',
-    artistId: null,
-    likes: 638,
-  },
-  {
-    id: 'ph-i10',
-    imageUrl: 'https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=800&q=80&auto=format&fit=crop',
-    style: 'Realismo',
-    artistName: 'Rafael Lima',
-    artistId: null,
-    likes: 349,
   },
 ];
 
@@ -300,58 +189,6 @@ export function HomeDiscover() {
   const { data, isLoading } = useGaleria({ healed: 'all' });
 
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
-
-  const pressTimer = useRef<number | null>(null);
-  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
-  const suppressClickUntil = useRef(0);
-
-  const cancelLongPress = useCallback(() => {
-    if (pressTimer.current !== null) {
-      window.clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-    pressOrigin.current = null;
-  }, []);
-
-  useEffect(() => cancelLongPress, [cancelLongPress]);
-
-  const startLongPress =
-    (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      const target = event.target;
-      if (target instanceof Element && target.closest('[data-gallery-action]')) return;
-
-      cancelLongPress();
-      pressOrigin.current = { x: event.clientX, y: event.clientY };
-      pressTimer.current = window.setTimeout(() => {
-        pressTimer.current = null;
-        pressOrigin.current = null;
-        suppressClickUntil.current = Date.now() + CLICK_SUPPRESSION_MS;
-        triggerHaptic('medium');
-        setPreview(item);
-      }, LONG_PRESS_MS);
-    };
-
-  const moveLongPress = (event: ReactPointerEvent<HTMLElement>) => {
-    const origin = pressOrigin.current;
-    if (!origin) return;
-    if (
-      Math.hypot(event.clientX - origin.x, event.clientY - origin.y) >
-      LONG_PRESS_MOVE_TOLERANCE
-    ) {
-      cancelLongPress();
-    }
-  };
-
-  const consumeLongPressClick = useCallback(() => {
-    if (Date.now() < suppressClickUntil.current) {
-      suppressClickUntil.current = 0;
-      return true;
-    }
-    return false;
-  }, []);
 
   const items = useMemo(() => data ?? [], [data]);
   const loading = isLoading && items.length === 0;
@@ -381,7 +218,8 @@ export function HomeDiscover() {
           }))
         : PLACEHOLDER_INSPIRATIONS;
 
-    return selectedStyle ? source.filter((item) => item.style === selectedStyle) : source;
+    const filtered = selectedStyle ? source.filter((item) => item.style === selectedStyle) : source;
+    return filtered.slice(0, HOME_GALLERY_TEASER_LIMIT);
   }, [items, selectedStyle]);
 
   const openArtist = (artist: DiscoverArtist) => {
@@ -393,48 +231,10 @@ export function HomeDiscover() {
     router.push(`/profile/${encodeURIComponent(artist.id)}`);
   };
 
-  const openInspiration = (item: InspirationItem) => {
-    triggerHaptic('light');
-    router.push(item.artistId ? `/profile/${encodeURIComponent(item.artistId)}` : '/dashboard/galeria');
-  };
-
   const openGallery = () => {
     triggerHaptic('light');
     router.push('/dashboard/galeria');
   };
-
-  const toggleSaved = (id: string) => {
-    setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleInspirationClick = (item: InspirationItem) => {
-    if (consumeLongPressClick()) return;
-    openInspiration(item);
-  };
-
-  const dismissPreview = useCallback(() => setPreview(null), []);
-
-  const visitPreviewProfile = useCallback(
-    (item: GalleryPreviewItem) => {
-      setPreview(null);
-      triggerHaptic('light');
-      router.push(
-        item.artistId
-          ? `/profile/${encodeURIComponent(item.artistId)}`
-          : '/dashboard/galeria'
-      );
-    },
-    [router, triggerHaptic]
-  );
-
-  const explorePreviewStyles = useCallback(
-    (item: GalleryPreviewItem) => {
-      setPreview(null);
-      triggerHaptic('light');
-      setSelectedStyle(item.style || null);
-    },
-    [triggerHaptic]
-  );
 
   return (
     <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
@@ -553,88 +353,13 @@ export function HomeDiscover() {
           action={t('home.viewAll')}
           onAction={openGallery}
         />
-        {loading ? (
-          <div className="columns-2 gap-4" aria-hidden>
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <Skeleton
-                key={index}
-                className={cn('mb-4 w-full break-inside-avoid rounded-xl', aspectFor(index))}
-              />
-            ))}
-          </div>
-        ) : inspirations.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-zinc-800/50 px-4 py-8 text-center text-sm text-zinc-500">
-            {t('gallery.empty')}
-          </p>
-        ) : (
-          <div className="columns-2 gap-4">
-            {inspirations.map((item, index) => {
-              const isSaved = Boolean(saved[item.id]);
-              return (
-                <article
-                  key={item.id}
-                  onPointerDown={startLongPress(item)}
-                  onPointerMove={moveLongPress}
-                  onPointerUp={cancelLongPress}
-                  onPointerCancel={cancelLongPress}
-                  onPointerLeave={cancelLongPress}
-                  onContextMenu={(event) => event.preventDefault()}
-                  className={cn(
-                    'group relative mb-4 select-none break-inside-avoid overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
-                    aspectFor(index)
-                  )}
-                >
-                  <motion.div
-                    layout
-                    layoutId={galleryPreviewLayoutId(item.id)}
-                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                    className="absolute inset-0"
-                  >
-                    <OptimizedImage
-                      src={item.imageUrl}
-                      alt={`${styleLabel(item.style)} — ${item.artistName || t('welcome.artistFallback')}`}
-                      className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
-                    />
-                  </motion.div>
-                  <button
-                    type="button"
-                    onClick={() => handleInspirationClick(item)}
-                    className="absolute inset-0 z-[1]"
-                    aria-label={item.artistName || t('welcome.artistFallback')}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-3">
-                    <div className="pointer-events-none min-w-0">
-                      <p className="truncate text-[13px] font-semibold text-white">
-                        {item.artistName || t('welcome.artistFallback')}
-                      </p>
-                      <p className="truncate text-[11px] text-zinc-300/90">
-                        {styleLabel(item.style)}
-                      </p>
-                    </div>
-                    <TattooLikeButton
-                      liked={isSaved}
-                      onToggle={() => toggleSaved(item.id)}
-                      showCount={false}
-                      dataGalleryAction
-                      ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
-                      className="pointer-events-auto h-9 w-9 min-h-9 min-w-9 border border-white/15 bg-black/50 p-0 text-white backdrop-blur-md"
-                      iconClassName="h-[17px] w-[17px]"
-                    />
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+        <GalleryInspirationGrid
+          items={inspirations}
+          loading={loading}
+          skeletonCount={HOME_GALLERY_TEASER_LIMIT}
+          onExploreStyle={(style) => setSelectedStyle(style || null)}
+        />
       </section>
-
-      <GalleryHapticPreview
-        item={preview}
-        onDismiss={dismissPreview}
-        onVisitProfile={visitPreviewProfile}
-        onExploreStyles={explorePreviewStyles}
-      />
     </div>
   );
 }

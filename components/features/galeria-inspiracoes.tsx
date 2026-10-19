@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Images, Sparkles } from 'lucide-react';
-import { GaleriaCard } from '@/components/features/galeria-card';
+import { ChevronRight, Images } from 'lucide-react';
+import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
-import { GlassContainer } from '@/components/ui/glass-container';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useI18n } from '@/hooks/use-i18n';
+import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 
 type GaleriaInspiracoesProps = {
@@ -42,6 +41,7 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
 }
 
 export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
+  void onStartConversation;
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
@@ -56,9 +56,25 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
     [style, bodyPart, healed]
   );
 
-  const { data, isLoading, isError } = useGaleria(query);
-  const items = data ?? [];
-  const hasFilters = Boolean(style || bodyPart || healed !== 'all');
+  const { data, isLoading } = useGaleria(query);
+  const liveItems = useMemo(() => data ?? [], [data]);
+  const loading = isLoading && liveItems.length === 0;
+
+  const inspirations = useMemo<InspirationItem[]>(() => {
+    const source: InspirationItem[] =
+      liveItems.length > 0
+        ? liveItems.map((item) => ({
+            id: item.id,
+            imageUrl: item.imageUrl,
+            style: item.style,
+            artistName: item.artist?.name || '',
+            artistId: item.tatuadorId,
+            likes: item.likesCount,
+          }))
+        : PLACEHOLDER_INSPIRATIONS;
+
+    return style ? source.filter((item) => item.style === style) : source;
+  }, [liveItems, style]);
 
   return (
     <div className="space-y-4">
@@ -85,37 +101,12 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         onHealingChange={setHealed}
       />
 
-      {isLoading ? (
-        <div className="columns-1 gap-4 sm:columns-2">
-          <Skeleton className="mb-4 h-80 w-full break-inside-avoid rounded-2xl" />
-          <Skeleton className="mb-4 h-64 w-full break-inside-avoid rounded-2xl" />
-          <Skeleton className="mb-4 h-72 w-full break-inside-avoid rounded-2xl" />
-          <Skeleton className="mb-4 h-56 w-full break-inside-avoid rounded-2xl" />
-        </div>
-      ) : isError ? (
-        <GlassContainer className="border-dashed p-6 text-center">
-          <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('gallery.loadError')}</p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">{t('gallery.loadErrorHint')}</p>
-        </GlassContainer>
-      ) : items.length === 0 ? (
-        <GlassContainer className="border-dashed p-6 text-center">
-          <Sparkles className="mx-auto h-6 w-6 text-orange-500 dark:text-orange-400" strokeWidth={1.75} />
-          <p className="mt-3 text-sm text-neutral-500 dark:text-zinc-400">
-            {hasFilters ? t('gallery.emptyFiltered') : t('gallery.empty')}
-          </p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-zinc-500">
-            {hasFilters ? t('gallery.emptyFilteredHint') : t('gallery.emptyHint')}
-          </p>
-        </GlassContainer>
-      ) : (
-        <div className="columns-1 gap-4 sm:columns-2">
-          {items.map((item) => (
-            <div key={item.id} className="mb-4 break-inside-avoid">
-              <GaleriaCard item={item} onStartConversation={onStartConversation} />
-            </div>
-          ))}
-        </div>
-      )}
+      <GalleryInspirationGrid
+        items={inspirations}
+        loading={loading}
+        skeletonCount={8}
+        onExploreStyle={(nextStyle) => setStyle(nextStyle)}
+      />
     </div>
   );
 }
