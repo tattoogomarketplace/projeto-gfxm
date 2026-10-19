@@ -37,7 +37,9 @@ export function galleryPreviewLayoutId(id: string) {
 
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
-const PREVIEW_SPRING = { type: 'spring', stiffness: 350, damping: 25 } as const;
+const PREVIEW_SPRING = { type: 'spring', stiffness: 380, damping: 28, mass: 0.8 } as const;
+const GPU_LAYER =
+  'transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
 export function GalleryHapticPreview({
   item,
@@ -140,26 +142,31 @@ function PreviewSurface({
       role="dialog"
       aria-modal="true"
       aria-label={`${artistName}${style ? ` — ${style}` : ''}`}
-      className="fixed inset-0 z-[120] flex touch-none items-center justify-center overflow-hidden overscroll-none px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className={`fixed inset-0 z-[120] flex touch-none items-center justify-center overflow-hidden overscroll-none contain-paint px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${GPU_LAYER}`}
       initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 1 }}
       transition={PREVIEW_SPRING}
-      style={{ pointerEvents: isPresent ? 'auto' : 'none' }}
+      style={{ pointerEvents: isPresent ? 'auto' : 'none', backfaceVisibility: 'hidden' }}
       onContextMenu={(event) => event.preventDefault()}
     >
       <motion.div
-        className="absolute inset-0"
+        className={`absolute inset-0 ${GPU_LAYER}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: isPresent ? 1 : 0 }}
         exit={{ opacity: 0 }}
         transition={PREVIEW_SPRING}
         onClick={handleBackdropClick}
+        style={{ backfaceVisibility: 'hidden' }}
       >
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-md ${GPU_LAYER}`}
+        />
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-md"
-          style={{ opacity: backdropOpacity }}
+          className={`pointer-events-none absolute inset-0 bg-black/50 ${GPU_LAYER}`}
+          style={{ opacity: backdropOpacity, backfaceVisibility: 'hidden' }}
         />
       </motion.div>
 
@@ -167,18 +174,19 @@ function PreviewSurface({
         type="button"
         onClick={onDismiss}
         aria-label={t('common.close')}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isPresent ? 1 : 0 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: isPresent ? 1 : 0, scale: isPresent ? 1 : 0.92 }}
+        exit={{ opacity: 0, scale: 0.92 }}
         transition={PREVIEW_SPRING}
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white backdrop-blur-md transition-transform duration-150 active:scale-90"
+        className={`absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white backdrop-blur-md ${GPU_LAYER}`}
+        whileTap={{ scale: 0.9 }}
       >
         <X className="h-5 w-5" strokeWidth={1.75} />
       </motion.button>
 
       <div className="relative z-10 flex w-full max-w-[26rem] flex-col items-center">
         <motion.div
-          layout
+          layout="position"
           layoutId={galleryPreviewLayoutId(item.id)}
           drag={isPresent ? 'y' : false}
           dragElastic={0.2}
@@ -187,7 +195,8 @@ function PreviewSurface({
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           transition={PREVIEW_SPRING}
-          className="relative h-[52dvh] max-h-[30rem] min-h-[16rem] w-full cursor-grab touch-none overflow-hidden rounded-[22px] border border-white/10 bg-zinc-900 shadow-[0_28px_90px_-18px_rgba(0,0,0,0.95)] active:cursor-grabbing"
+          style={{ backfaceVisibility: 'hidden' }}
+          className={`relative h-[52dvh] max-h-[30rem] min-h-[16rem] w-full cursor-grab touch-none overflow-hidden rounded-[22px] border border-white/10 bg-zinc-900 shadow-[0_28px_90px_-18px_rgba(0,0,0,0.95)] active:cursor-grabbing ${GPU_LAYER}`}
         >
           <OptimizedImage
             src={item.imageUrl}
@@ -214,7 +223,8 @@ function PreviewSurface({
           animate={{ opacity: isPresent ? 1 : 0, y: isPresent ? 0 : 12 }}
           exit={{ opacity: 0, y: 12 }}
           transition={PREVIEW_SPRING}
-          className="mt-5 w-full"
+          className={`mt-5 w-full ${GPU_LAYER}`}
+          style={{ backfaceVisibility: 'hidden' }}
           onPointerDown={(event) => event.stopPropagation()}
         >
           <div className="flex gap-2">

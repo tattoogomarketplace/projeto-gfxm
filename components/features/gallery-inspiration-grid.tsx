@@ -174,10 +174,11 @@ export function GalleryInspirationGrid({
               )}
             >
               <motion.div
-                layout
+                layout="position"
                 layoutId={galleryPreviewLayoutId(item.id)}
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                className="absolute inset-0"
+                transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
+                style={{ backfaceVisibility: 'hidden' }}
+                className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
               >
                 <OptimizedImage
                   src={item.imageUrl}
