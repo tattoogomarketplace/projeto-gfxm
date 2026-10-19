@@ -20,16 +20,16 @@ async function enviar(req, res) {
       return res.status(400).json({ sucesso: false, erro: message });
     }
 
-    const { remetente_id, destinatario_id, mensagem } = validacao.data;
+    const { destinatario_id, mensagem } = validacao.data;
     const mensagemSanitizada = validator.escape(mensagem);
 
-    if (req.user && remetente_id !== req.user.id && !String(remetente_id).startsWith("usr_")) {
-      return res.status(403).json({ sucesso: false, erro: "Remetente nao corresponde a sessao." });
+    if (!req.user?.id) {
+      return res.status(401).json({ sucesso: false, erro: "Nao autenticado." });
     }
 
     try {
       const data = await chatService.enviarDuvida({
-        remetenteId: req.user?.id || remetente_id,
+        remetenteId: req.user.id,
         destinatarioId: destinatario_id,
         mensagem: mensagemSanitizada,
       });
@@ -56,6 +56,9 @@ async function historico(req, res) {
     const interlocutorId = req.query.interlocutor_id;
     if (!interlocutorId || typeof interlocutorId !== "string") {
       return res.status(400).json({ sucesso: false, erro: "interlocutor_id obrigatorio." });
+    }
+    if (!req.user?.id) {
+      return res.status(401).json({ sucesso: false, erro: "Nao autenticado." });
     }
     const data = await chatService.historico({
       userId: req.user.id,

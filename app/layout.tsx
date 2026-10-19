@@ -102,6 +102,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   // Deep Graphite hardcoded (canvas da marca, `--background` dark e splash):
   // o boot e SEMPRE escuro, entao o WebKit nunca pinta um frame branco antes
   // do CSS — inclusive em aparelhos configurados em Light Mode.
@@ -122,7 +123,7 @@ export default function RootLayout({
               __html: `(function(){try{var t=localStorage.getItem("tattoogo-theme")||"dark";var d=t==="system"?(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;var r=document.documentElement;if(sessionStorage.getItem("hasSeenSplash")){r.classList.add("splash-seen");}r.classList.remove("light","dark");r.classList.add(d==="light"?"light":"dark");r.style.colorScheme=d==="light"?"light":"dark";var bg=d==="light"?"#FAFAFA":"#0a0a0a";r.style.backgroundColor=bg;r.setAttribute("data-theme",d);var paint=function(){var b=document.body;if(b){b.style.backgroundColor=bg;}};paint();document.addEventListener("DOMContentLoaded",paint);var l=localStorage.getItem("tattoogo-locale")||"pt-BR";var a={pt:"pt-BR","pt-br":"pt-BR","pt-pt":"pt-PT",en:"en","en-us":"en",es:"es",fr:"fr",de:"de",it:"it",ja:"ja",zh:"zh","zh-cn":"zh",ko:"ko",ar:"ar",ru:"ru",hi:"hi",nl:"nl",tr:"tr",pl:"pl"};var n=String(l).replace("_","-");var k=n.toLowerCase();var loc=a[k]||a[k.split("-")[0]]||( /^(pt-BR|pt-PT|en|es|fr|de|it|ja|zh|ko|ar|ru|hi|nl|tr|pl)$/.test(n)?n:"pt-BR");var h={ "pt-BR":"pt-BR","pt-PT":"pt-PT",en:"en",es:"es",fr:"fr",de:"de",it:"it",ja:"ja",zh:"zh-CN",ko:"ko",ar:"ar",ru:"ru",hi:"hi",nl:"nl",tr:"tr",pl:"pl"};r.lang=h[loc]||loc;r.dir=loc==="ar"?"rtl":"ltr";}catch(e){}})();`,
             }}
           />
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
           <meta name="theme-color" content="#0a0a0a" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-title" content={BRAND_NAME} />

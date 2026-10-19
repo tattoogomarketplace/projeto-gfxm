@@ -67,6 +67,16 @@ enum ChatCategoria {
   @@map("chat_categoria")
 }
 
+enum QuoteStatus {
+  solicitado
+  enviado
+  aceito
+  recusado
+  agendado
+
+  @@map("quote_status")
+}
+
 enum EstudioConviteStatus {
   pendente
   aceito
@@ -286,6 +296,11 @@ model MensagemChat {
   bloqueada       Boolean            @default(false)
   status          ChatMensagemStatus @default(enviado)
   categoria       ChatCategoria      @default(DIRECT)
+  reference_image String?
+  body_part       String?
+  estimated_size  String?
+  price_range     String?
+  quote_status    QuoteStatus?
   entregue_em     DateTime?          @db.Timestamptz(6)
   lido_em         DateTime?          @db.Timestamptz(6)
   created_at      DateTime           @default(now()) @db.Timestamptz(6)

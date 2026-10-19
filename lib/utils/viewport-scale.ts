@@ -14,12 +14,12 @@
  */
 
 export const CANONICAL_VIEWPORT =
-  'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+  'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content';
 
 // Variante levemente diferente usada apenas para forçar o WebKit a reparsear a
 // diretiva de viewport (mudar o valor para o mesmo texto não dispara reflow).
 const RECALIBRATION_VIEWPORT =
-  'width=device-width, initial-scale=1, maximum-scale=1.0001, user-scalable=no, viewport-fit=cover';
+  'width=device-width, initial-scale=1, maximum-scale=1.0001, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content';
 
 const EDITABLE_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 

@@ -483,7 +483,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
 
         <section
           className={cn(
-            'min-h-0 min-w-0 overflow-hidden',
+            'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
             'lg:rounded-2xl',
             mobileThreadOpen ? 'flex' : 'hidden lg:flex'
           )}

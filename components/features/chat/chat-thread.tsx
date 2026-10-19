@@ -352,7 +352,7 @@ export function ChatThread({
       </div>
 
       {/* Composer — anchored to the base with safe-area padding. */}
-      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-white/[0.06]">
+      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom),env(keyboard-inset-bottom,0px))] dark:border-white/[0.06]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}
@@ -373,7 +373,7 @@ export function ChatThread({
               }
             }}
             rows={1}
-            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-black/[0.04] bg-white px-3 py-2.5 text-sm text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.06] dark:bg-white/[0.05] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
+            className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-black/[0.04] bg-white px-3 py-2.5 text-base leading-5 text-neutral-900 caret-neutral-900 outline-none placeholder:text-neutral-400 focus:border-orange-500/50 dark:border-white/[0.06] dark:bg-white/[0.05] dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
             placeholder={
               bookingIntent
                 ? bookingDraft(t, artwork)

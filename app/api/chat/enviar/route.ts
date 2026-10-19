@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 
     const mensagemCriada = await enviarMensagem({
       actorId: actor.id,
+      actorRole: actor.role,
       destinatarioId,
       mensagem,
       artworkId,

@@ -146,6 +146,59 @@ export async function resolveChatActor(clerkId: string): Promise<ActorPerfil> {
   return actor;
 }
 
+function isProfessionalRole(role: string): boolean {
+  return role === 'tatuador' || role === 'estudio';
+}
+
+async function hasExistingThread(actorId: string, peerId: string): Promise<boolean> {
+  const existing = await prisma.mensagemChat.findFirst({
+    where: {
+      deleted_at: null,
+      OR: [
+        { remetente_id: actorId, destinatario_id: peerId },
+        { remetente_id: peerId, destinatario_id: actorId },
+      ],
+    },
+    select: { id: true },
+  });
+  return Boolean(existing);
+}
+
+async function assertEligibleChatPeer(actor: ActorPerfil, peerId: string) {
+  const peer = await prisma.perfil.findFirst({
+    where: { id: peerId, deleted_at: null, statusConta: 'ATIVO' },
+    select: { id: true, role: true, studio_id: true },
+  });
+  if (!peer) {
+    throw new ChatError(404, 'Destinatário não encontrado.');
+  }
+  if (peer.id === actor.id) {
+    throw new ChatError(400, 'Não é possível enviar mensagem para si mesmo.');
+  }
+  if (await hasExistingThread(actor.id, peer.id)) {
+    return peer;
+  }
+  const actorIsPro = isProfessionalRole(actor.role);
+  const peerIsPro = isProfessionalRole(peer.role);
+  if (!actorIsPro && peerIsPro) return peer;
+  if (actor.role === 'estudio' && peer.studio_id === actor.id) return peer;
+  if (actorIsPro && peer.role === 'cliente') {
+    const booking = await prisma.agendamento.findFirst({
+      where: {
+        deleted_at: null,
+        cliente_id: peer.id,
+        OR: [
+          { tatuador_id: actor.id },
+          ...(actor.role === 'estudio' ? [{ tatuador: { studio_id: actor.id } }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    if (booking) return peer;
+  }
+  throw new ChatError(403, 'Acesso negado a esta conversa.');
+}
+
 export async function requireChatActor(request: Request): Promise<ActorPerfil> {
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
@@ -356,6 +409,7 @@ export async function getChatContext(
 
 export async function enviarMensagem(params: {
   actorId: string;
+  actorRole?: string;
   destinatarioId: string;
   mensagem: string;
   artworkId?: string;
@@ -364,6 +418,18 @@ export async function enviarMensagem(params: {
   const destinatarioId = parseChatId(params.destinatarioId, 'destinatario_id');
   if (destinatarioId === params.actorId) {
     throw new ChatError(400, 'Não é possível enviar mensagem para si mesmo.');
+  }
+  if (params.actorRole) {
+    await assertEligibleChatPeer(
+      {
+        id: params.actorId,
+        role: params.actorRole,
+        deleted_at: null,
+        nome: null,
+        email: '',
+      },
+      destinatarioId
+    );
   }
 
   const trimmed = params.mensagem.trim();
