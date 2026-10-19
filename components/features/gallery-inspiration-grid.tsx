@@ -8,13 +8,13 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
-import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
+import { TattooLikeButton, TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -28,6 +28,8 @@ const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]'
 const LONG_PRESS_MS = 420;
 const LONG_PRESS_MOVE_TOLERANCE = 10;
 const CLICK_SUPPRESSION_MS = 800;
+const DOUBLE_TAP_MS = 320;
+const LIKE_BURST_MS = 800;
 
 function aspectFor(index: number): string {
   return ASPECTS[index % ASPECTS.length];
@@ -59,10 +61,13 @@ export function GalleryInspirationGrid({
   const { triggerHaptic } = useHapticFeedback();
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
+  const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
   const suppressClickUntil = useRef(0);
+  const lastFeedTap = useRef<{ id: string; at: number } | null>(null);
+  const burstTimer = useRef<number | null>(null);
 
   const cancelLongPress = useCallback(() => {
     if (pressTimer.current !== null) {
@@ -72,7 +77,13 @@ export function GalleryInspirationGrid({
     pressOrigin.current = null;
   }, []);
 
-  useEffect(() => cancelLongPress, [cancelLongPress]);
+  useEffect(
+    () => () => {
+      cancelLongPress();
+      if (burstTimer.current !== null) window.clearTimeout(burstTimer.current);
+    },
+    [cancelLongPress]
+  );
 
   const startLongPress =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
@@ -123,6 +134,40 @@ export function GalleryInspirationGrid({
   const toggleSaved = (id: string) => {
     setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const likeFromDoubleTap = useCallback(
+    (id: string) => {
+      cancelLongPress();
+      setSaved((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+      setLikeBurst((current) => ({
+        id,
+        nonce: current?.id === id ? current.nonce + 1 : 1,
+      }));
+      triggerHaptic('heavy');
+      if (burstTimer.current !== null) window.clearTimeout(burstTimer.current);
+      burstTimer.current = window.setTimeout(() => {
+        burstTimer.current = null;
+        setLikeBurst((current) => (current?.id === id ? null : current));
+      }, LIKE_BURST_MS);
+    },
+    [cancelLongPress, triggerHaptic]
+  );
+
+  const handleFeedImagePointerUp =
+    (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
+      cancelLongPress();
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (Date.now() < suppressClickUntil.current) return;
+
+      const now = Date.now();
+      const last = lastFeedTap.current;
+      if (last && last.id === item.id && now - last.at <= DOUBLE_TAP_MS) {
+        lastFeedTap.current = null;
+        likeFromDoubleTap(item.id);
+        return;
+      }
+      lastFeedTap.current = { id: item.id, at: now };
+    };
 
   const dismissPreview = useCallback(() => setPreview(null), []);
 
@@ -227,6 +272,7 @@ export function GalleryInspirationGrid({
                 className="w-full select-none"
               >
                 <div
+                  onPointerUp={handleFeedImagePointerUp(item)}
                   className={cn(
                     'relative w-full overflow-hidden rounded-none bg-zinc-900',
                     index % 2 === 0 ? 'aspect-[4/5]' : 'aspect-square'
@@ -246,6 +292,26 @@ export function GalleryInspirationGrid({
                     />
                   </motion.div>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+                  <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
+                    <AnimatePresence>
+                      {likeBurst?.id === item.id ? (
+                        <motion.span
+                          key={likeBurst.nonce}
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+                          exit={{ scale: 0.8, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                          className="flex h-24 w-24 items-center justify-center rounded-full bg-black/25 backdrop-blur-md transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                          style={{ backfaceVisibility: 'hidden' }}
+                        >
+                          <TattooMachineLikeGlyph
+                            liked
+                            className="h-16 w-16 text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+                          />
+                        </motion.span>
+                      ) : null}
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3 px-4">
@@ -281,6 +347,7 @@ export function GalleryInspirationGrid({
 
                   {showLike ? (
                     <TattooLikeButton
+                      key={`${item.id}-${likeBurst?.id === item.id ? likeBurst.nonce : 'idle'}`}
                       liked={isSaved}
                       count={item.likes}
                       onToggle={() => toggleSaved(item.id)}
