@@ -1,32 +1,26 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-} from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, BadgeCheck, Compass, Sparkles } from 'lucide-react';
+import { BadgeCheck, Compass, Sparkles } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import {
   GalleryHapticPreview,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
+import { HomeCarouselActionCard } from '@/components/features/home-carousel-action-card';
 import { HomeFeedbackCarousel } from '@/components/features/home-feedback-carousel';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import {
-  HOME_GALLERY_TEASER_LIMIT,
+  HOME_CAROUSEL_LIMIT,
   PLACEHOLDER_INSPIRATIONS,
   type InspirationItem,
 } from '@/lib/gallery-mock';
@@ -50,8 +44,6 @@ import type { GaleriaItem } from '@/lib/types/galeria';
 const CAROUSEL_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
 
-const LONG_PRESS_MS = 420;
-const LONG_PRESS_MOVE_TOLERANCE = 10;
 const PREVIEW_SPRING = { type: 'spring', stiffness: 380, damping: 28, mass: 0.8 } as const;
 
 const STICKY_FILTER_CLASS =
@@ -125,34 +117,20 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
 ];
 
 function SectionHeader({
-  icon,
+  id,
   title,
-  action,
-  onAction,
+  subtitle,
 }: {
-  icon: ReactNode;
+  id: string;
   title: string;
-  action?: string;
-  onAction?: () => void;
+  subtitle: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-3 px-0.5">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
-          {icon}
-        </span>
-        <h2 className="text-base font-bold tracking-tight text-white">{title}</h2>
-      </div>
-      {action ? (
-        <button
-          type="button"
-          onClick={onAction}
-          className="apple-press inline-flex min-h-8 items-center gap-1 rounded-lg px-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300"
-        >
-          {action}
-          <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-        </button>
-      ) : null}
+    <div className="space-y-1 px-0.5">
+      <h2 id={id} className="text-base font-bold tracking-tight text-white">
+        {title}
+      </h2>
+      <p className="text-[13px] font-medium leading-snug text-zinc-400">{subtitle}</p>
     </div>
   );
 }
@@ -190,8 +168,7 @@ function deriveArtists(items: GaleriaItem[]): DiscoverArtist[] {
       });
       return { ...artist, specialty };
     })
-    .sort((a, b) => Number(b.verified) - Number(a.verified))
-    .slice(0, 12);
+    .sort((a, b) => Number(b.verified) - Number(a.verified));
 }
 
 function ArtistCardSkeleton() {
@@ -202,36 +179,29 @@ function ArtistCardSkeleton() {
   );
 }
 
+function artistDestination(artist: DiscoverArtist): string {
+  if (artist.placeholder || !artist.id) return '/dashboard/artistas';
+  return `/profile/${encodeURIComponent(artist.id)}`;
+}
+
 export function HomeDiscover() {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const { data, isLoading } = useGaleria({ healed: 'all' });
+  const longPress = useLongPressPreview();
 
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [artistPreview, setArtistPreview] = useState<GalleryPreviewItem | null>(null);
-
-  const pressTimer = useRef<number | null>(null);
-  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
-  const suppressNextClick = useRef(false);
-
-  const cancelLongPress = useCallback(() => {
-    if (pressTimer.current !== null) {
-      window.clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-    pressOrigin.current = null;
-  }, []);
-
-  useEffect(() => cancelLongPress, [cancelLongPress]);
 
   const items = useMemo(() => data ?? [], [data]);
   const loading = isLoading && items.length === 0;
 
   const artists = useMemo<DiscoverArtist[]>(() => {
     const derived = deriveArtists(items);
-    return derived.length > 0 ? derived : PLACEHOLDER_ARTISTS;
+    const source = derived.length > 0 ? derived : PLACEHOLDER_ARTISTS;
+    return source.slice(0, HOME_CAROUSEL_LIMIT);
   }, [items]);
 
   const styleOptions = useMemo<string[]>(() => {
@@ -255,7 +225,7 @@ export function HomeDiscover() {
         : PLACEHOLDER_INSPIRATIONS;
 
     const filtered = selectedStyle ? source.filter((item) => item.style === selectedStyle) : source;
-    return filtered.slice(0, HOME_GALLERY_TEASER_LIMIT);
+    return filtered.slice(0, HOME_CAROUSEL_LIMIT);
   }, [items, selectedStyle]);
 
   const toArtistPreview = (artist: DiscoverArtist): GalleryPreviewItem | null => {
@@ -273,49 +243,17 @@ export function HomeDiscover() {
     };
   };
 
-  const startArtistLongPress =
-    (artist: DiscoverArtist) => (event: ReactPointerEvent<HTMLElement>) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      cancelLongPress();
-      pressOrigin.current = { x: event.clientX, y: event.clientY };
-      pressTimer.current = window.setTimeout(() => {
-        pressTimer.current = null;
-        pressOrigin.current = null;
-        const preview = toArtistPreview(artist);
-        if (!preview) return;
-        suppressNextClick.current = true;
-        triggerHaptic('medium');
-        setArtistPreview(preview);
-      }, LONG_PRESS_MS);
-    };
-
-  const moveArtistLongPress = (event: ReactPointerEvent<HTMLElement>) => {
-    const origin = pressOrigin.current;
-    if (!origin) return;
-    if (
-      Math.hypot(event.clientX - origin.x, event.clientY - origin.y) >
-      LONG_PRESS_MOVE_TOLERANCE
-    ) {
-      cancelLongPress();
-    }
+  const openArtist = (artist: DiscoverArtist, event?: { preventDefault: () => void; stopPropagation: () => void }) => {
+    if (longPress.consumeClick(event)) return;
+    triggerHaptic('light');
+    router.push(artistDestination(artist));
   };
 
-  const openArtist = (artist: DiscoverArtist) => {
-    if (suppressNextClick.current) {
-      suppressNextClick.current = false;
-      return;
-    }
-    triggerHaptic('light');
-    if (artist.placeholder) {
-      router.push('/dashboard/galeria');
-      return;
-    }
-    router.push(`/profile/${encodeURIComponent(artist.id)}`);
-  };
-
-  const openGallery = () => {
-    triggerHaptic('light');
-    router.push('/dashboard/galeria');
+  const fireArtistPreview = (artist: DiscoverArtist) => {
+    const preview = toArtistPreview(artist);
+    if (!preview) return;
+    triggerHaptic('medium');
+    setArtistPreview(preview);
   };
 
   const dismissArtistPreview = useCallback(() => setArtistPreview(null), []);
@@ -327,7 +265,7 @@ export function HomeDiscover() {
       router.push(
         item.artistId
           ? `/profile/${encodeURIComponent(item.artistId)}`
-          : '/dashboard/galeria'
+          : '/dashboard/artistas'
       );
     },
     [router, triggerHaptic]
@@ -340,6 +278,15 @@ export function HomeDiscover() {
       setSelectedStyle(item.style || null);
     },
     [setSelectedStyle, triggerHaptic]
+  );
+
+  const galleryAction = (
+    <HomeCarouselActionCard
+      href="/dashboard/galeria"
+      label={t('home.ctaInspireMore')}
+      icon={<Compass className="h-5 w-5" strokeWidth={1.9} />}
+      className="h-[15.5rem] w-[11.5rem] rounded-xl"
+    />
   );
 
   return (
@@ -364,10 +311,9 @@ export function HomeDiscover() {
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-artists">
         <SectionHeader
-          icon={<Sparkles className="h-4 w-4" strokeWidth={1.9} />}
+          id="discover-artists"
           title={t('home.featuredArtists')}
-          action={t('home.viewAll')}
-          onAction={openGallery}
+          subtitle={t('home.featuredArtistsSubtitle')}
         />
         <ErrorBoundary
           fallback={
@@ -378,20 +324,20 @@ export function HomeDiscover() {
         >
           <div className={CAROUSEL_CLASS} role="list" aria-label={t('home.featuredArtists')}>
             {loading
-              ? [0, 1, 2, 3].map((index) => <ArtistCardSkeleton key={index} />)
+              ? [0, 1, 2, 3, 4].map((index) => <ArtistCardSkeleton key={index} />)
               : artists.map((artist) => (
                   <button
                     key={artist.id}
                     type="button"
                     role="listitem"
-                    onClick={() => openArtist(artist)}
-                    onPointerDown={startArtistLongPress(artist)}
-                    onPointerMove={moveArtistLongPress}
-                    onPointerUp={cancelLongPress}
-                    onPointerCancel={cancelLongPress}
-                    onPointerLeave={cancelLongPress}
+                    onClick={(event) => openArtist(artist, event)}
+                    onPointerDown={longPress.start(() => fireArtistPreview(artist))}
+                    onPointerMove={longPress.move}
+                    onPointerUp={longPress.cancel}
+                    onPointerCancel={longPress.cancel}
+                    onPointerLeave={longPress.cancel}
                     onContextMenu={(event) => event.preventDefault()}
-                    className="group flex w-[9rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-center transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
+                    className="group flex h-[9.25rem] w-[9rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-center transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
                   >
                     <motion.span
                       layout="position"
@@ -426,6 +372,14 @@ export function HomeDiscover() {
                     </span>
                   </button>
                 ))}
+            {loading ? null : (
+              <HomeCarouselActionCard
+                href="/dashboard/artistas"
+                label={t('home.ctaMeetMasters')}
+                icon={<Sparkles className="h-5 w-5" strokeWidth={1.9} />}
+                className="h-[9.25rem] w-[9rem]"
+              />
+            )}
           </div>
         </ErrorBoundary>
       </section>
@@ -473,18 +427,18 @@ export function HomeDiscover() {
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-inspirations">
         <SectionHeader
-          icon={<Compass className="h-4 w-4" strokeWidth={1.9} />}
-          title={t('gallery.title')}
-          action={t('home.viewAll')}
-          onAction={openGallery}
+          id="discover-inspirations"
+          title={t('home.inspirationGallery')}
+          subtitle={t('home.inspirationGallerySubtitle')}
         />
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
-          skeletonCount={HOME_GALLERY_TEASER_LIMIT}
+          skeletonCount={HOME_CAROUSEL_LIMIT}
           layout="carousel"
           showLike={false}
           onExploreStyle={(style) => setSelectedStyle(style || null)}
+          actionCard={galleryAction}
         />
       </section>
 

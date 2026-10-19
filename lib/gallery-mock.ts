@@ -9,7 +9,8 @@ export type InspirationItem = {
   artistInitial?: string;
 };
 
-export const HOME_GALLERY_TEASER_LIMIT = 10;
+export const HOME_CAROUSEL_LIMIT = 5;
+export const HOME_GALLERY_TEASER_LIMIT = HOME_CAROUSEL_LIMIT;
 
 export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
   {

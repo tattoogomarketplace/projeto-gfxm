@@ -45,14 +45,17 @@ export function FeedbackCardSkeleton() {
   );
 }
 
+type ClickLike = { preventDefault: () => void; stopPropagation: () => void };
+
 type FeedbackCardProps = {
   review: ReviewDto;
-  onOpen: () => void;
+  onOpen: (event: ClickLike) => void;
   onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onPointerUp: () => void;
   onPointerCancel: () => void;
   onPointerLeave: () => void;
+  className?: string;
 };
 
 export function FeedbackCard({
@@ -63,6 +66,7 @@ export function FeedbackCard({
   onPointerUp,
   onPointerCancel,
   onPointerLeave,
+  className,
 }: FeedbackCardProps) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -83,7 +87,10 @@ export function FeedbackCard({
       onPointerCancel={onPointerCancel}
       onPointerLeave={onPointerLeave}
       onContextMenu={(event) => event.preventDefault()}
-      className="group flex w-[18rem] shrink-0 snap-start flex-col gap-3 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-4 text-left transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
+      className={cn(
+        'group flex w-[18rem] shrink-0 snap-start flex-col gap-3 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-4 text-left transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70',
+        className
+      )}
     >
       <span className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-900 text-[13px] font-semibold uppercase text-orange-400">

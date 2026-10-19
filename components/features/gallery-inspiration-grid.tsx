@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -19,15 +20,13 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
-const LONG_PRESS_MS = 420;
-const LONG_PRESS_MOVE_TOLERANCE = 10;
-const CLICK_SUPPRESSION_MS = 800;
 const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
 
@@ -42,6 +41,7 @@ type GalleryInspirationGridProps = {
   onExploreStyle?: (style: string) => void;
   layout?: 'masonry' | 'carousel' | 'feed';
   showLike?: boolean;
+  actionCard?: ReactNode;
 };
 
 const CAROUSEL_CLASS =
@@ -54,6 +54,7 @@ export function GalleryInspirationGrid({
   onExploreStyle,
   layout = 'masonry',
   showLike = true,
+  actionCard,
 }: GalleryInspirationGridProps) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -113,9 +114,11 @@ export function GalleryInspirationGrid({
     }
   };
 
-  const consumeLongPressClick = useCallback(() => {
+  const consumeLongPressClick = useCallback((event?: { preventDefault: () => void; stopPropagation: () => void }) => {
     if (Date.now() < suppressClickUntil.current) {
       suppressClickUntil.current = 0;
+      event?.preventDefault();
+      event?.stopPropagation();
       return true;
     }
     return false;
@@ -123,11 +126,16 @@ export function GalleryInspirationGrid({
 
   const openInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
-    router.push(item.artistId ? `/profile/${encodeURIComponent(item.artistId)}` : '/dashboard/galeria');
+    router.push(
+      item.artistId ? `/profile/${encodeURIComponent(item.artistId)}` : '/dashboard/galeria'
+    );
   };
 
-  const handleInspirationClick = (item: InspirationItem) => {
-    if (consumeLongPressClick()) return;
+  const handleInspirationClick = (
+    item: InspirationItem,
+    event?: { preventDefault: () => void; stopPropagation: () => void }
+  ) => {
+    if (consumeLongPressClick(event)) return;
     openInspiration(item);
   };
 
@@ -317,7 +325,7 @@ export function GalleryInspirationGrid({
                 <div className="mt-3 flex items-center justify-between gap-3 px-4">
                   <button
                     type="button"
-                    onClick={() => handleInspirationClick(item)}
+                    onClick={(event) => handleInspirationClick(item, event)}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     aria-label={t('gallery.visitProfile')}
                   >
@@ -392,7 +400,7 @@ export function GalleryInspirationGrid({
               </motion.div>
               <button
                 type="button"
-                onClick={() => handleInspirationClick(item)}
+                onClick={(event) => handleInspirationClick(item, event)}
                 className="absolute inset-0 z-[1]"
                 aria-label={artistName}
               />
@@ -417,6 +425,7 @@ export function GalleryInspirationGrid({
             </article>
           );
         })}
+        {isCarousel ? actionCard : null}
       </div>
 
       <GalleryHapticPreview
