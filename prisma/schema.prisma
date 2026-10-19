@@ -145,6 +145,8 @@ model Perfil {
   convitesRecebidos        EstudioConvite[]     @relation("ConviteTatuador")
   artistSchedule           ArtistSchedule?
   flashNotes               FlashNote[]
+  reviewsAuthored          Review[]             @relation("ReviewAuthor")
+  reviewsReceived          Review[]             @relation("ReviewTarget")
 
   @@unique([email], map: "perfis_email_unique_idx")
   @@index([role], map: "perfis_role_idx")
@@ -206,6 +208,7 @@ model Portfolio {
 
   tatuador Perfil          @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   likes    PortfolioLike[]
+  reviews  Review[]
 
   @@index([tatuador_id], map: "portfolios_tatuador_id_idx")
   @@index([estilo], map: "portfolios_estilo_idx")
@@ -421,4 +424,31 @@ model ComplianceLog {
   @@index([user_id], map: "compliance_logs_user_id_idx")
   @@index([created_at], map: "compliance_logs_created_at_idx")
   @@map("compliance_logs")
+}
+
+model Review {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  author_id      String    @db.Uuid
+  target_id      String    @db.Uuid
+  portfolio_id   String?   @db.Uuid
+  agendamento_id String?   @db.Uuid
+  rating         Int
+  content        String
+  artist_reply   String?
+  replied_at     DateTime? @db.Timestamptz(6)
+  is_verified    Boolean   @default(false)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+
+  author    Perfil     @relation("ReviewAuthor", fields: [author_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  target    Perfil     @relation("ReviewTarget", fields: [target_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  portfolio Portfolio? @relation(fields: [portfolio_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([target_id, created_at], map: "reviews_target_created_idx")
+  @@index([author_id], map: "reviews_author_id_idx")
+  @@index([portfolio_id], map: "reviews_portfolio_id_idx")
+  @@index([is_verified], map: "reviews_is_verified_idx")
+  @@index([deleted_at], map: "reviews_deleted_at_idx")
+  @@map("reviews")
 }
