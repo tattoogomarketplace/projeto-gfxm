@@ -38,13 +38,20 @@ type GalleryInspirationGridProps = {
   loading?: boolean;
   skeletonCount?: number;
   onExploreStyle?: (style: string) => void;
+  layout?: 'masonry' | 'carousel';
+  showLike?: boolean;
 };
+
+const CAROUSEL_CLASS =
+  '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
 
 export function GalleryInspirationGrid({
   items,
   loading = false,
   skeletonCount = 6,
   onExploreStyle,
+  layout = 'masonry',
+  showLike = true,
 }: GalleryInspirationGridProps) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -141,7 +148,21 @@ export function GalleryInspirationGrid({
     [onExploreStyle, triggerHaptic]
   );
 
+  const isCarousel = layout === 'carousel';
+
   if (loading) {
+    if (isCarousel) {
+      return (
+        <div className={CAROUSEL_CLASS} aria-hidden>
+          {Array.from({ length: Math.min(skeletonCount, 6) }, (_, index) => (
+            <Skeleton
+              key={index}
+              className="h-[15.5rem] w-[11.5rem] shrink-0 snap-start rounded-xl"
+            />
+          ))}
+        </div>
+      );
+    }
     return (
       <div className="columns-2 gap-4" aria-hidden>
         {Array.from({ length: skeletonCount }, (_, index) => (
@@ -156,7 +177,7 @@ export function GalleryInspirationGrid({
 
   return (
     <>
-      <div className="columns-2 gap-4">
+      <div className={isCarousel ? CAROUSEL_CLASS : 'columns-2 gap-4'}>
         {items.map((item, index) => {
           const isSaved = Boolean(saved[item.id]);
           return (
@@ -169,8 +190,10 @@ export function GalleryInspirationGrid({
               onPointerLeave={cancelLongPress}
               onContextMenu={(event) => event.preventDefault()}
               className={cn(
-                'group relative mb-4 select-none break-inside-avoid overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
-                aspectFor(index)
+                'group relative select-none overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
+                isCarousel
+                  ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start'
+                  : cn('mb-4 break-inside-avoid', aspectFor(index))
               )}
             >
               <motion.div
@@ -202,15 +225,17 @@ export function GalleryInspirationGrid({
                     {styleLabel(item.style)}
                   </p>
                 </div>
-                <TattooLikeButton
-                  liked={isSaved}
-                  onToggle={() => toggleSaved(item.id)}
-                  showCount={false}
-                  dataGalleryAction
-                  ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
-                  className="pointer-events-auto h-9 w-9 min-h-9 min-w-9 border border-white/15 bg-black/50 p-0 text-white backdrop-blur-md"
-                  iconClassName="h-[17px] w-[17px]"
-                />
+                {showLike ? (
+                  <TattooLikeButton
+                    liked={isSaved}
+                    onToggle={() => toggleSaved(item.id)}
+                    showCount={false}
+                    dataGalleryAction
+                    ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
+                    className="pointer-events-auto h-9 w-9 min-h-9 min-w-9 border border-white/15 bg-black/50 p-0 text-white backdrop-blur-md"
+                    iconClassName="h-[17px] w-[17px]"
+                  />
+                ) : null}
               </div>
             </article>
           );
@@ -222,6 +247,7 @@ export function GalleryInspirationGrid({
         onDismiss={dismissPreview}
         onVisitProfile={visitPreviewProfile}
         onExploreStyles={explorePreviewStyles}
+        showLike={showLike}
       />
     </>
   );

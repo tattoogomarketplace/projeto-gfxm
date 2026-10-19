@@ -9,7 +9,7 @@ import {
   usePresence,
   useTransform,
 } from 'framer-motion';
-import { Palette, UserRound, X } from 'lucide-react';
+import { BadgeCheck, Palette, UserRound, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useI18n } from '@/hooks/use-i18n';
@@ -22,6 +22,9 @@ export type GalleryPreviewItem = {
   artistName: string;
   artistId: string | null;
   likes: number;
+  kind?: 'artwork' | 'artist';
+  verified?: boolean;
+  initial?: string;
 };
 
 type GalleryHapticPreviewProps = {
@@ -29,6 +32,7 @@ type GalleryHapticPreviewProps = {
   onDismiss: () => void;
   onVisitProfile: (item: GalleryPreviewItem) => void;
   onExploreStyles: (item: GalleryPreviewItem) => void;
+  showLike?: boolean;
 };
 
 export function galleryPreviewLayoutId(id: string) {
@@ -46,6 +50,7 @@ export function GalleryHapticPreview({
   onDismiss,
   onVisitProfile,
   onExploreStyles,
+  showLike = true,
 }: GalleryHapticPreviewProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -65,6 +70,7 @@ export function GalleryHapticPreview({
           onDismiss={onDismiss}
           onVisitProfile={onVisitProfile}
           onExploreStyles={onExploreStyles}
+          showLike={showLike}
         />
       ) : null}
     </AnimatePresence>,
@@ -77,6 +83,7 @@ function PreviewSurface({
   onDismiss,
   onVisitProfile,
   onExploreStyles,
+  showLike = true,
 }: GalleryHapticPreviewProps & { item: GalleryPreviewItem }) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -135,6 +142,8 @@ function PreviewSurface({
 
   const artistName = item.artistName || t('welcome.artistFallback');
   const style = item.style ? styleLabel(item.style) : '';
+  const isArtist = item.kind === 'artist';
+  const canShowLike = showLike && !isArtist;
 
   return (
     <motion.div
@@ -196,26 +205,63 @@ function PreviewSurface({
           onDragEnd={handleDragEnd}
           transition={PREVIEW_SPRING}
           style={{ backfaceVisibility: 'hidden' }}
-          className={`relative h-[52dvh] max-h-[30rem] min-h-[16rem] w-full cursor-grab touch-none overflow-hidden rounded-[22px] border border-white/10 bg-zinc-900 shadow-[0_28px_90px_-18px_rgba(0,0,0,0.95)] active:cursor-grabbing ${GPU_LAYER}`}
+          className={`relative w-full cursor-grab touch-none overflow-hidden border border-white/10 bg-zinc-900 shadow-[0_28px_90px_-18px_rgba(0,0,0,0.95)] active:cursor-grabbing ${GPU_LAYER} ${
+            isArtist
+              ? 'flex h-auto min-h-[16rem] max-h-[30rem] flex-col items-center justify-center rounded-[28px] px-6 py-10'
+              : 'h-[52dvh] max-h-[30rem] min-h-[16rem] rounded-[22px]'
+          }`}
         >
-          <OptimizedImage
-            src={item.imageUrl}
-            alt={`${style || t('gallery.title')} — ${artistName}`}
-            className="h-full w-full"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-black/20" />
-          {style ? (
-            <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-orange-500/40 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-300 backdrop-blur-md">
-              {style}
-            </span>
-          ) : null}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
-            <p className="truncate text-sm font-semibold text-white">{artistName}</p>
-            <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-300">
-              <TattooMachineLikeGlyph liked className="h-3 w-3 text-orange-500" />
-              {item.likes}
-            </p>
-          </div>
+          {isArtist ? (
+            <>
+              <span className="relative flex h-36 w-36 min-h-36 min-w-36 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px]">
+                <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900 text-4xl font-semibold uppercase text-orange-400">
+                  {item.imageUrl ? (
+                    <OptimizedImage
+                      src={item.imageUrl}
+                      alt={artistName}
+                      className="h-full w-full rounded-full"
+                    />
+                  ) : (
+                    item.initial || artistName.charAt(0)
+                  )}
+                </span>
+                {item.verified ? (
+                  <span className="absolute -bottom-1 -right-1 flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-orange-500 text-black">
+                    <BadgeCheck className="h-5 w-5" strokeWidth={2.4} />
+                  </span>
+                ) : null}
+              </span>
+              <p className="mt-5 max-w-full truncate text-lg font-semibold tracking-tight text-white">
+                {artistName}
+              </p>
+              {style ? (
+                <p className="mt-1 text-[13px] font-medium text-zinc-300">{style}</p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <OptimizedImage
+                src={item.imageUrl}
+                alt={`${style || t('gallery.title')} — ${artistName}`}
+                className="h-full w-full"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-black/20" />
+              {style ? (
+                <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-orange-500/40 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-300 backdrop-blur-md">
+                  {style}
+                </span>
+              ) : null}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4">
+                <p className="truncate text-sm font-semibold text-white">{artistName}</p>
+                {canShowLike ? (
+                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-300">
+                    <TattooMachineLikeGlyph liked className="h-3 w-3 text-orange-500" />
+                    {item.likes}
+                  </p>
+                ) : null}
+              </div>
+            </>
+          )}
         </motion.div>
 
         <motion.div

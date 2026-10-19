@@ -1,9 +1,23 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Compass, Sparkles } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
+import {
+  GalleryHapticPreview,
+  galleryPreviewLayoutId,
+  type GalleryPreviewItem,
+} from '@/components/features/gallery-haptic-preview';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -25,14 +39,18 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  * Ponto único de social, portfólio, galeria e descoberta do cliente:
  *  - Carrossel horizontal de "Artistas em Destaque" com snap nativo.
  *  - Barra sticky de filtros por estilo em glassmorphism.
- *  - Galeria de inspirações em masonry (`columns-2`) com overlay e favoritar.
+ *  - Galeria de inspirações em carrossel horizontal com long-press preview.
  *
  * Zero layout shift: cada card/skeleton trava a proporção (`aspect-[4/5]`,
  * `aspect-square`) para o DOM nascer completo no primeiro frame.
  */
 
 const CAROUSEL_CLASS =
-  '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
+  '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
+
+const LONG_PRESS_MS = 420;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
+const PREVIEW_SPRING = { type: 'spring', stiffness: 380, damping: 28, mass: 0.8 } as const;
 
 const STICKY_FILTER_CLASS =
   'sticky top-0 z-20 -mx-4 border-y border-white/[0.04] bg-neutral-950/55 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6';
@@ -189,6 +207,21 @@ export function HomeDiscover() {
   const { data, isLoading } = useGaleria({ healed: 'all' });
 
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [artistPreview, setArtistPreview] = useState<GalleryPreviewItem | null>(null);
+
+  const pressTimer = useRef<number | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
+  const suppressNextClick = useRef(false);
+
+  const cancelLongPress = useCallback(() => {
+    if (pressTimer.current !== null) {
+      window.clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+    pressOrigin.current = null;
+  }, []);
+
+  useEffect(() => cancelLongPress, [cancelLongPress]);
 
   const items = useMemo(() => data ?? [], [data]);
   const loading = isLoading && items.length === 0;
@@ -222,7 +255,48 @@ export function HomeDiscover() {
     return filtered.slice(0, HOME_GALLERY_TEASER_LIMIT);
   }, [items, selectedStyle]);
 
+  const toArtistPreview = (artist: DiscoverArtist): GalleryPreviewItem => ({
+    id: `artist-${artist.id}`,
+    imageUrl: artist.avatarUrl || '',
+    style: artist.specialty,
+    artistName: artist.name,
+    artistId: artist.placeholder ? null : artist.id,
+    likes: 0,
+    kind: 'artist',
+    verified: artist.verified,
+    initial: artist.initial,
+  });
+
+  const startArtistLongPress =
+    (artist: DiscoverArtist) => (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      cancelLongPress();
+      pressOrigin.current = { x: event.clientX, y: event.clientY };
+      pressTimer.current = window.setTimeout(() => {
+        pressTimer.current = null;
+        pressOrigin.current = null;
+        suppressNextClick.current = true;
+        triggerHaptic('medium');
+        setArtistPreview(toArtistPreview(artist));
+      }, LONG_PRESS_MS);
+    };
+
+  const moveArtistLongPress = (event: ReactPointerEvent<HTMLElement>) => {
+    const origin = pressOrigin.current;
+    if (!origin) return;
+    if (
+      Math.hypot(event.clientX - origin.x, event.clientY - origin.y) >
+      LONG_PRESS_MOVE_TOLERANCE
+    ) {
+      cancelLongPress();
+    }
+  };
+
   const openArtist = (artist: DiscoverArtist) => {
+    if (suppressNextClick.current) {
+      suppressNextClick.current = false;
+      return;
+    }
     triggerHaptic('light');
     if (artist.placeholder) {
       router.push('/dashboard/galeria');
@@ -235,6 +309,30 @@ export function HomeDiscover() {
     triggerHaptic('light');
     router.push('/dashboard/galeria');
   };
+
+  const dismissArtistPreview = useCallback(() => setArtistPreview(null), []);
+
+  const visitArtistPreview = useCallback(
+    (item: GalleryPreviewItem) => {
+      setArtistPreview(null);
+      triggerHaptic('light');
+      router.push(
+        item.artistId
+          ? `/profile/${encodeURIComponent(item.artistId)}`
+          : '/dashboard/galeria'
+      );
+    },
+    [router, triggerHaptic]
+  );
+
+  const exploreArtistStyle = useCallback(
+    (item: GalleryPreviewItem) => {
+      setArtistPreview(null);
+      triggerHaptic('light');
+      setSelectedStyle(item.style || null);
+    },
+    [setSelectedStyle, triggerHaptic]
+  );
 
   return (
     <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
@@ -272,9 +370,21 @@ export function HomeDiscover() {
                   type="button"
                   role="listitem"
                   onClick={() => openArtist(artist)}
+                  onPointerDown={startArtistLongPress(artist)}
+                  onPointerMove={moveArtistLongPress}
+                  onPointerUp={cancelLongPress}
+                  onPointerCancel={cancelLongPress}
+                  onPointerLeave={cancelLongPress}
+                  onContextMenu={(event) => event.preventDefault()}
                   className="group flex w-[9rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-center transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
                 >
-                  <span className="relative flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[2.5px]">
+                  <motion.span
+                    layout="position"
+                    layoutId={galleryPreviewLayoutId(`artist-${artist.id}`)}
+                    transition={PREVIEW_SPRING}
+                    style={{ backfaceVisibility: 'hidden' }}
+                    className="relative flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[2.5px] transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                  >
                     <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900 text-lg font-semibold uppercase text-orange-400">
                       {artist.avatarUrl ? (
                         <OptimizedImage
@@ -291,7 +401,7 @@ export function HomeDiscover() {
                         <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
                       </span>
                     ) : null}
-                  </span>
+                  </motion.span>
                   <span className="flex w-full flex-col items-center gap-0.5">
                     <span className="w-full truncate text-sm font-semibold tracking-tight text-white">
                       {artist.name || t('welcome.artistFallback')}
@@ -357,9 +467,19 @@ export function HomeDiscover() {
           items={inspirations}
           loading={loading}
           skeletonCount={HOME_GALLERY_TEASER_LIMIT}
+          layout="carousel"
+          showLike={false}
           onExploreStyle={(style) => setSelectedStyle(style || null)}
         />
       </section>
+
+      <GalleryHapticPreview
+        item={artistPreview}
+        onDismiss={dismissArtistPreview}
+        onVisitProfile={visitArtistPreview}
+        onExploreStyles={exploreArtistStyle}
+        showLike={false}
+      />
     </div>
   );
 }

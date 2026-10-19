@@ -7,7 +7,7 @@ export type InspirationItem = {
   likes: number;
 };
 
-export const HOME_GALLERY_TEASER_LIMIT = 6;
+export const HOME_GALLERY_TEASER_LIMIT = 10;
 
 export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
   {
