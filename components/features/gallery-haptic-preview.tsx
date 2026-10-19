@@ -36,7 +36,7 @@ type GalleryHapticPreviewProps = {
 };
 
 export function galleryPreviewLayoutId(id: string) {
-  return `gallery-haptic-${id}`;
+  return id ? `gallery-haptic-${id}` : undefined;
 }
 
 const DISMISS_DISTANCE = 110;
@@ -59,7 +59,8 @@ export function GalleryHapticPreview({
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted || typeof document === 'undefined' || !document.body) return null;
+  if (item && !item.id) return null;
 
   return createPortal(
     <AnimatePresence initial={false}>
@@ -140,10 +141,12 @@ function PreviewSurface({
     dragY.set(0);
   };
 
-  const artistName = item.artistName || t('welcome.artistFallback');
-  const style = item.style ? styleLabel(item.style) : '';
-  const isArtist = item.kind === 'artist';
+  const artistName = item?.artistName || t('welcome.artistFallback');
+  const rawStyle = item?.style || '';
+  const style = rawStyle ? styleLabel(rawStyle) : '';
+  const isArtist = item?.kind === 'artist';
   const canShowLike = showLike && !isArtist;
+  const previewLayoutId = isArtist ? undefined : galleryPreviewLayoutId(item?.id ?? '');
 
   return (
     <motion.div
@@ -196,7 +199,7 @@ function PreviewSurface({
       <div className="relative z-10 flex w-full max-w-[26rem] flex-col items-center">
         <motion.div
           layout="position"
-          layoutId={galleryPreviewLayoutId(item.id)}
+          layoutId={previewLayoutId}
           drag={isPresent ? 'y' : false}
           dragElastic={0.2}
           dragConstraints={{ top: 0, bottom: 0 }}
@@ -215,17 +218,17 @@ function PreviewSurface({
             <>
               <span className="relative flex h-36 w-36 min-h-36 min-w-36 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[3px]">
                 <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900 text-4xl font-semibold uppercase text-orange-400">
-                  {item.imageUrl ? (
+                  {item?.imageUrl ? (
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={artistName}
                       className="h-full w-full rounded-full"
                     />
                   ) : (
-                    item.initial || artistName.charAt(0)
+                    item?.initial || artistName.charAt(0) || 'A'
                   )}
                 </span>
-                {item.verified ? (
+                {item?.verified ? (
                   <span className="absolute -bottom-1 -right-1 flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-orange-500 text-black">
                     <BadgeCheck className="h-5 w-5" strokeWidth={2.4} />
                   </span>
@@ -241,7 +244,7 @@ function PreviewSurface({
           ) : (
             <>
               <OptimizedImage
-                src={item.imageUrl}
+                src={item?.imageUrl}
                 alt={`${style || t('gallery.title')} — ${artistName}`}
                 className="h-full w-full"
               />
@@ -256,7 +259,7 @@ function PreviewSurface({
                 {canShowLike ? (
                   <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-300">
                     <TattooMachineLikeGlyph liked className="h-3 w-3 text-orange-500" />
-                    {item.likes}
+                    {item?.likes ?? 0}
                   </p>
                 ) : null}
               </div>
@@ -276,7 +279,7 @@ function PreviewSurface({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => onVisitProfile(item)}
+              onClick={() => item && onVisitProfile(item)}
               className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/15 px-3 text-sm font-semibold text-orange-300 backdrop-blur-md transition-all duration-150 hover:border-orange-500 hover:bg-orange-500/25 active:scale-[0.97]"
             >
               <UserRound className="h-4 w-4" strokeWidth={1.9} />
@@ -284,7 +287,7 @@ function PreviewSurface({
             </button>
             <button
               type="button"
-              onClick={() => onExploreStyles(item)}
+              onClick={() => item && onExploreStyles(item)}
               className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 text-sm font-semibold text-zinc-200 backdrop-blur-md transition-all duration-150 hover:border-orange-500/40 hover:text-orange-200 active:scale-[0.97]"
             >
               <Palette className="h-4 w-4" strokeWidth={1.9} />

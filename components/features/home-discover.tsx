@@ -15,12 +15,12 @@ import { ArrowRight, BadgeCheck, Compass, Sparkles } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import {
   GalleryHapticPreview,
-  galleryPreviewLayoutId,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BRAND_NAME } from '@/lib/i18n/brands';
@@ -158,7 +158,8 @@ function SectionHeader({
 function deriveArtists(items: GaleriaItem[]): DiscoverArtist[] {
   const map = new Map<string, DiscoverArtist & { counts: Map<string, number> }>();
   for (const item of items) {
-    const key = item.tatuadorId;
+    const key = item?.tatuadorId;
+    if (!key) continue;
     let entry = map.get(key);
     if (!entry) {
       entry = {
@@ -255,17 +256,20 @@ export function HomeDiscover() {
     return filtered.slice(0, HOME_GALLERY_TEASER_LIMIT);
   }, [items, selectedStyle]);
 
-  const toArtistPreview = (artist: DiscoverArtist): GalleryPreviewItem => ({
-    id: `artist-${artist.id}`,
-    imageUrl: artist.avatarUrl || '',
-    style: artist.specialty,
-    artistName: artist.name,
-    artistId: artist.placeholder ? null : artist.id,
-    likes: 0,
-    kind: 'artist',
-    verified: artist.verified,
-    initial: artist.initial,
-  });
+  const toArtistPreview = (artist: DiscoverArtist): GalleryPreviewItem | null => {
+    if (!artist?.id) return null;
+    return {
+      id: `artist-${artist.id}`,
+      imageUrl: artist.avatarUrl ?? '',
+      style: artist.specialty ?? '',
+      artistName: artist.name ?? '',
+      artistId: artist.placeholder ? null : artist.id,
+      likes: 0,
+      kind: 'artist',
+      verified: Boolean(artist.verified),
+      initial: artist.initial || (artist.name || 'A').charAt(0),
+    };
+  };
 
   const startArtistLongPress =
     (artist: DiscoverArtist) => (event: ReactPointerEvent<HTMLElement>) => {
@@ -275,9 +279,11 @@ export function HomeDiscover() {
       pressTimer.current = window.setTimeout(() => {
         pressTimer.current = null;
         pressOrigin.current = null;
+        const preview = toArtistPreview(artist);
+        if (!preview) return;
         suppressNextClick.current = true;
         triggerHaptic('medium');
-        setArtistPreview(toArtistPreview(artist));
+        setArtistPreview(preview);
       }, LONG_PRESS_MS);
     };
 
@@ -361,58 +367,65 @@ export function HomeDiscover() {
           action={t('home.viewAll')}
           onAction={openGallery}
         />
-        <div className={CAROUSEL_CLASS} role="list" aria-label={t('home.featuredArtists')}>
-          {loading
-            ? [0, 1, 2, 3].map((index) => <ArtistCardSkeleton key={index} />)
-            : artists.map((artist) => (
-                <button
-                  key={artist.id}
-                  type="button"
-                  role="listitem"
-                  onClick={() => openArtist(artist)}
-                  onPointerDown={startArtistLongPress(artist)}
-                  onPointerMove={moveArtistLongPress}
-                  onPointerUp={cancelLongPress}
-                  onPointerCancel={cancelLongPress}
-                  onPointerLeave={cancelLongPress}
-                  onContextMenu={(event) => event.preventDefault()}
-                  className="group flex w-[9rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-center transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
-                >
-                  <motion.span
-                    layout="position"
-                    layoutId={galleryPreviewLayoutId(`artist-${artist.id}`)}
-                    transition={PREVIEW_SPRING}
-                    style={{ backfaceVisibility: 'hidden' }}
-                    className="relative flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[2.5px] transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+        <ErrorBoundary
+          fallback={
+            <div className="flex min-h-[9.25rem] items-center justify-center rounded-2xl border border-zinc-800/50 bg-zinc-900/40 px-4 py-6 text-center">
+              <p className="text-sm text-zinc-400">{t('empty.unavailable')}</p>
+            </div>
+          }
+        >
+          <div className={CAROUSEL_CLASS} role="list" aria-label={t('home.featuredArtists')}>
+            {loading
+              ? [0, 1, 2, 3].map((index) => <ArtistCardSkeleton key={index} />)
+              : artists.map((artist) => (
+                  <button
+                    key={artist.id}
+                    type="button"
+                    role="listitem"
+                    onClick={() => openArtist(artist)}
+                    onPointerDown={startArtistLongPress(artist)}
+                    onPointerMove={moveArtistLongPress}
+                    onPointerUp={cancelLongPress}
+                    onPointerCancel={cancelLongPress}
+                    onPointerLeave={cancelLongPress}
+                    onContextMenu={(event) => event.preventDefault()}
+                    className="group flex w-[9rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-center transition-colors duration-200 hover:border-orange-500/40 active:bg-zinc-900/70"
                   >
-                    <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900 text-lg font-semibold uppercase text-orange-400">
-                      {artist.avatarUrl ? (
-                        <OptimizedImage
-                          src={artist.avatarUrl}
-                          alt={artist.name || t('welcome.artistFallback')}
-                          className="h-full w-full rounded-full"
-                        />
-                      ) : (
-                        artist.initial
-                      )}
-                    </span>
-                    {artist.verified ? (
-                      <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 min-h-6 min-w-6 items-center justify-center rounded-full border-2 border-zinc-950 bg-orange-500 text-black">
-                        <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    <motion.span
+                      layout="position"
+                      transition={PREVIEW_SPRING}
+                      style={{ backfaceVisibility: 'hidden' }}
+                      className="relative flex h-20 w-20 min-h-20 min-w-20 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-300 p-[2.5px] transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                    >
+                      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900 text-lg font-semibold uppercase text-orange-400">
+                        {artist.avatarUrl ? (
+                          <OptimizedImage
+                            src={artist.avatarUrl}
+                            alt={artist.name || t('welcome.artistFallback')}
+                            className="h-full w-full rounded-full"
+                          />
+                        ) : (
+                          artist.initial || (artist.name || 'A').charAt(0)
+                        )}
                       </span>
-                    ) : null}
-                  </motion.span>
-                  <span className="flex w-full flex-col items-center gap-0.5">
-                    <span className="w-full truncate text-sm font-semibold tracking-tight text-white">
-                      {artist.name || t('welcome.artistFallback')}
+                      {artist.verified ? (
+                        <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 min-h-6 min-w-6 items-center justify-center rounded-full border-2 border-zinc-950 bg-orange-500 text-black">
+                          <BadgeCheck className="h-3.5 w-3.5" strokeWidth={2.4} />
+                        </span>
+                      ) : null}
+                    </motion.span>
+                    <span className="flex w-full flex-col items-center gap-0.5">
+                      <span className="w-full truncate text-sm font-semibold tracking-tight text-white">
+                        {artist.name || t('welcome.artistFallback')}
+                      </span>
+                      <span className="w-full truncate text-[11px] font-medium text-zinc-400">
+                        {artist.specialty ? styleLabel(artist.specialty) : ''}
+                      </span>
                     </span>
-                    <span className="w-full truncate text-[11px] font-medium text-zinc-400">
-                      {artist.specialty ? styleLabel(artist.specialty) : ''}
-                    </span>
-                  </span>
-                </button>
-              ))}
-        </div>
+                  </button>
+                ))}
+          </div>
+        </ErrorBoundary>
       </section>
 
       <div className={STICKY_FILTER_CLASS}>
@@ -473,13 +486,15 @@ export function HomeDiscover() {
         />
       </section>
 
-      <GalleryHapticPreview
-        item={artistPreview}
-        onDismiss={dismissArtistPreview}
-        onVisitProfile={visitArtistPreview}
-        onExploreStyles={exploreArtistStyle}
-        showLike={false}
-      />
+      <ErrorBoundary fallback={null}>
+        <GalleryHapticPreview
+          item={artistPreview}
+          onDismiss={dismissArtistPreview}
+          onVisitProfile={visitArtistPreview}
+          onExploreStyles={exploreArtistStyle}
+          showLike={false}
+        />
+      </ErrorBoundary>
     </div>
   );
 }

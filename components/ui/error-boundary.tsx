@@ -5,6 +5,7 @@ import { subscribeLocale, t } from '@/lib/i18n/store';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -38,6 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      if (this.props.fallback !== undefined) return this.props.fallback;
       return (
         <div className="flex flex-col items-center justify-center h-64 p-4 text-center bg-zinc-900/50 border border-zinc-800 rounded-2xl backdrop-blur-md">
           <p className="text-zinc-400 mb-4 text-sm">{t('empty.unavailable')}</p>
