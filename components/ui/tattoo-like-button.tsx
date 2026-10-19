@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
-import { motion, useAnimationControls } from 'framer-motion';
+import { useId, useState, type MouseEvent, type PointerEvent } from 'react';
+import { motion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
@@ -187,54 +187,57 @@ export function TattooLikeButton({
   dataGalleryAction,
 }: TattooLikeButtonProps) {
   const { triggerHaptic } = useHapticFeedback();
-  const controls = useAnimationControls();
-  const previousLiked = useRef(liked);
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
+  const active = optimisticLiked ?? liked;
 
-  useEffect(() => {
-    if (liked && !previousLiked.current) {
-      void controls.start(
-        { scale: [1, 1.3, 1] },
-        { type: 'spring', stiffness: 400, damping: 10, mass: 0.7 }
-      );
-    }
-    previousLiked.current = liked;
-  }, [controls, liked]);
+  const isolatePointer = (event: PointerEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setOptimisticLiked(!active);
+    triggerHaptic('light');
+    onToggle();
+  };
 
   return (
     <motion.button
       type="button"
-      onClick={() => {
-        triggerHaptic('light');
-        onToggle();
-      }}
+      onPointerDown={isolatePointer}
+      onPointerUp={isolatePointer}
+      onPointerCancel={isolatePointer}
+      onClick={handleClick}
       aria-label={ariaLabel}
-      aria-pressed={liked}
+      aria-pressed={active}
       data-gallery-action={dataGalleryAction ? '' : undefined}
       whileTap={{ scale: 0.85 }}
-      transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
       className={cn(
-        'relative inline-flex min-h-11 min-w-11 shrink-0 select-none items-center justify-center gap-1.5 rounded-full p-2 outline-none transition-colors',
+        'relative z-10 inline-flex min-h-11 min-w-11 shrink-0 select-none items-center justify-center gap-1.5 rounded-full p-2 outline-none',
+        'transform-gpu will-change-transform',
         'focus-visible:ring-2 focus-visible:ring-orange-500/60',
         className
       )}
     >
       <motion.span
-        animate={controls}
-        className="pointer-events-none flex h-[22px] w-[22px] items-center justify-center will-change-transform"
+        key={active ? 'liked' : 'idle'}
+        initial={{ scale: 1 }}
+        animate={{ scale: active ? [1, 1.35, 1] : 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+        className="pointer-events-none flex h-[22px] w-[22px] items-center justify-center transform-gpu will-change-transform"
       >
         <TattooMachineLikeGlyph
-          liked={liked}
-          className={cn(
-            liked ? 'text-orange-500 dark:text-orange-400' : 'text-zinc-500 hover:text-zinc-300',
-            iconClassName
-          )}
+          liked={active}
+          className={cn(active ? 'text-orange-500' : 'text-zinc-500', iconClassName)}
         />
       </motion.span>
       {showCount ? (
         <span
           className={cn(
-            'min-w-[1.75rem] text-left text-sm font-medium tabular-nums transition-colors',
-            liked ? 'text-orange-600 dark:text-orange-400' : 'text-neutral-500 dark:text-zinc-400'
+            'min-w-[1.75rem] text-left text-sm font-medium tabular-nums',
+            active ? 'text-orange-500' : 'text-zinc-500'
           )}
         >
           {count ?? 0}
