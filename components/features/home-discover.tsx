@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, BadgeCheck, Compass, Heart, Sparkles } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Compass, Sparkles } from 'lucide-react';
 import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
@@ -19,6 +19,7 @@ import {
 } from '@/components/features/gallery-haptic-preview';
 import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
 import { useI18n } from '@/hooks/use-i18n';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -403,7 +404,6 @@ export function HomeDiscover() {
   };
 
   const toggleSaved = (id: string) => {
-    triggerHaptic('light');
     setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -611,22 +611,15 @@ export function HomeDiscover() {
                         {styleLabel(item.style)}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      data-gallery-action
-                      onClick={() => toggleSaved(item.id)}
-                      aria-pressed={isSaved}
-                      aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
-                      className="pointer-events-auto flex h-9 w-9 min-h-9 min-w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/50 backdrop-blur-md transition-transform duration-200 active:scale-90"
-                    >
-                      <Heart
-                        className={cn(
-                          'h-4 w-4',
-                          isSaved ? 'fill-orange-500 text-orange-500' : 'text-white'
-                        )}
-                        strokeWidth={1.9}
-                      />
-                    </button>
+                    <TattooLikeButton
+                      liked={isSaved}
+                      onToggle={() => toggleSaved(item.id)}
+                      showCount={false}
+                      dataGalleryAction
+                      ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
+                      className="pointer-events-auto h-9 w-9 min-h-9 min-w-9 border border-white/15 bg-black/50 p-0 text-white backdrop-blur-md"
+                      iconClassName="h-[17px] w-[17px]"
+                    />
                   </div>
                 </article>
               );

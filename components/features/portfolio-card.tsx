@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
@@ -34,7 +34,6 @@ export function PortfolioCard({
 }: PortfolioCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(initialLikes);
-  const { triggerHaptic } = useHapticFeedback();
   const enqueue = useOfflineQueue((s) => s.enqueue);
   const { t } = useI18n();
   const { styleLabel, bodyPartLabel, sessionDurationLabel, healingLabel } =
@@ -44,7 +43,6 @@ export function PortfolioCard({
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
     setLikes((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
-    triggerHaptic('medium');
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
     if (!online) {
@@ -115,23 +113,13 @@ export function PortfolioCard({
             ) : null}
           </div>
         </div>
-        <button onClick={handleLike} className="relative flex min-h-11 min-w-11 items-center gap-2 p-2 active:scale-95">
-          <AnimatePresence>
-            <motion.div
-              key={isLiked ? "liked" : "unliked"}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            >
-              <Heart 
-                className={isLiked ? "fill-orange-500 text-orange-500" : "text-zinc-500 hover:text-zinc-300"} 
-                size={24} 
-              />
-            </motion.div>
-          </AnimatePresence>
-          <span className={isLiked ? "text-orange-400 font-medium" : "text-zinc-400 font-medium"}>{likes}</span>
-        </button>
+        <TattooLikeButton
+          liked={isLiked}
+          count={likes}
+          onToggle={handleLike}
+          ariaLabel={isLiked ? t('aria.unlike') : t('aria.like')}
+          className="-mr-2"
+        />
       </div>
     </motion.div>
   );

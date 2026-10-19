@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MapPin, MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin, MessageCircle } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
@@ -45,7 +46,6 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
     setLikes((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
-    triggerHaptic('medium');
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
     if (!online) {
@@ -148,30 +148,13 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
               </p>
             ) : null}
           </button>
-          <button
-            type="button"
-            onClick={handleLike}
-            className="relative flex min-h-11 min-w-11 items-center gap-1.5 p-2 active:scale-95"
-            aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
-          >
-            <AnimatePresence>
-              <motion.div
-                key={isLiked ? 'liked' : 'unliked'}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-              >
-                <Heart
-                  className={isLiked ? 'fill-orange-500 text-orange-500' : 'text-neutral-400 hover:text-orange-500 dark:text-zinc-500 dark:hover:text-zinc-300'}
-                  size={22}
-                />
-              </motion.div>
-            </AnimatePresence>
-            <span className={isLiked ? 'font-medium text-orange-600 dark:text-orange-400' : 'font-medium text-neutral-500 dark:text-zinc-400'}>
-              {likes}
-            </span>
-          </button>
+          <TattooLikeButton
+            liked={isLiked}
+            count={likes}
+            onToggle={handleLike}
+            ariaLabel={isLiked ? t('aria.unlike') : t('aria.like')}
+            className="-mr-2"
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
