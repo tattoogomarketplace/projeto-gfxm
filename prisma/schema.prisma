@@ -117,6 +117,9 @@ model Perfil {
   bank_account                   Json?
   cidade                         String?
   estado                         String?
+  latitude                       Float?
+  longitude                      Float?
+  address                        Json?
   cnpj                           String?
   data_nascimento                String?
   responsavel_nome               String?
@@ -164,6 +167,7 @@ model Perfil {
   @@index([cidade], map: "perfis_cidade_idx")
   @@index([estado], map: "perfis_estado_idx")
   @@index([cidade, estado], map: "perfis_geo_idx")
+  @@index([latitude, longitude], map: "perfis_coordinates_idx")
   @@index([studio_id], map: "perfis_studio_id_idx")
   @@index([deleted_at], map: "perfis_deleted_at_idx")
   @@index([statusConta], map: "perfis_status_conta_idx")

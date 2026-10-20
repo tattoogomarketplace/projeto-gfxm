@@ -23,6 +23,14 @@ export interface Perfil {
   bank_account?: BankAccount | string | null;
   cidade?: string;
   estado?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  } | null;
   cnpj?: string;
   agendamentos_pendentes_repasse?: number;
   agenda_bloqueada?: boolean;
@@ -61,6 +69,8 @@ export interface ArtistaResumo {
   email: string;
   cidade?: string | null;
   estado?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface FeedItem {
