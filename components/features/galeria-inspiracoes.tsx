@@ -81,7 +81,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="relative flex w-full flex-col bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1f0d05] via-[#0a0a0a] to-black text-white">
+    <div className="relative flex w-full flex-col text-white">
       <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-black/40 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
