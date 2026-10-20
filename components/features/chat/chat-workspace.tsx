@@ -11,10 +11,10 @@ import {
 } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, MessageCircle, ReceiptText } from 'lucide-react';
-import { ConversationLifecycleBadge } from '@/components/chat/conversation-lifecycle-badge';
+import { ArrowLeft, FileText, MessageCircle } from 'lucide-react';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
+import { ChatListCard } from '@/components/features/chat/chat-list-card';
 import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
@@ -53,24 +53,41 @@ let conversationCache: {
 } | null = null;
 const categoryInflight: Partial<Record<ChatTab, Promise<void>>> = {};
 
-export const ChatWorkspace = memo(function ChatWorkspace() {
-  // `useSearchParams` exige um boundary de Suspense. Isolamos a leitura da rota
-  // aqui para que o workspace derive "thread ativa" de forma SÍNCRONA no
-  // primeiro frame — exatamente como o AppShell/BottomNav — eliminando qualquer
-  // reconcilição pós-hidratação (que era a origem do "snap").
+export type ChatWorkspaceProps = {
+  actorId?: string | null;
+  initialDirect?: ChatConversationDto[];
+  initialBudget?: ChatConversationDto[];
+};
+
+function seedFromServer(props: ChatWorkspaceProps) {
+  if (props.initialDirect === undefined && props.initialBudget === undefined) {
+    return;
+  }
+  conversationCache = {
+    actorId: props.actorId ?? conversationCache?.actorId ?? null,
+    byCategory: {
+      DIRECT: props.initialDirect ?? conversationCache?.byCategory.DIRECT ?? [],
+      BUDGET: props.initialBudget ?? conversationCache?.byCategory.BUDGET ?? [],
+    },
+  };
+}
+
+export const ChatWorkspace = memo(function ChatWorkspace(props: ChatWorkspaceProps) {
+  seedFromServer(props);
   return (
     <Suspense fallback={<ChatInboxSkeleton />}>
-      <ChatWorkspaceInner />
+      <ChatWorkspaceInner {...props} />
     </Suspense>
   );
 });
 
-const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
+const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
+  actorId: actorIdProp = null,
+  initialDirect,
+  initialBudget,
+}: ChatWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Thread ativa = interlocutor presente na query. É o mesmo sinal canônico
-  // usado por todos os pontos de entrada (vitrine, galeria e seleção no inbox)
-  // e é lido de forma síncrona, sem nenhum efeito pós-hidratação.
   const artistIdParam = searchParams.get('artistId') || searchParams.get('tatuadorId');
   const artworkIdParam = searchParams.get('artworkId') || searchParams.get('portfolioId');
   const bookingIntent = searchParams.get('intent') === 'agendar';
@@ -79,7 +96,6 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
   const { triggerHaptic } = useHapticFeedback();
   const { t } = useI18n();
   const role = useAuthStore((s) => s.role);
-  const isProfessional = role === 'tatuador' || role === 'estudio';
   const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   const pendingChatPeer = useUiStore((s) => s.pendingChatPeer);
   const pendingChatArtwork = useUiStore((s) => s.pendingChatArtwork);
@@ -87,23 +103,28 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
 
-  const [actorId, setActorId] = useState<string | null>(() => conversationCache?.actorId ?? null);
+  const serverHydrated = initialDirect !== undefined || initialBudget !== undefined;
+
+  const [actorId, setActorId] = useState<string | null>(
+    () => conversationCache?.actorId ?? actorIdProp ?? null
+  );
   const [activeCategory, setActiveCategory] = useState<ChatTab>('DIRECT');
   const [conversationsByCategory, setConversationsByCategory] = useState<CategoryConversations>(
-    () => conversationCache?.byCategory ?? EMPTY_CATEGORY_DATA
+    () =>
+      conversationCache?.byCategory ?? {
+        DIRECT: initialDirect ?? [],
+        BUDGET: initialBudget ?? [],
+      }
   );
   const [loadedCategories, setLoadedCategories] = useState<Record<ChatTab, boolean>>(() =>
-    conversationCache ? { DIRECT: true, BUDGET: true } : { DIRECT: false, BUDGET: false }
+    conversationCache || serverHydrated
+      ? { DIRECT: true, BUDGET: true }
+      : { DIRECT: false, BUDGET: false }
   );
 
-  const conversations = conversationsByCategory[activeCategory];
-  const loadingList = !loadedCategories[activeCategory];
+  const loadingList = !loadedCategories.DIRECT || !loadedCategories.BUDGET;
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
-  // A thread é DERIVADA da rota: quando há um `artistId` na query a thread
-  // está aberta. Assim o painel e o casco (AppShell/BottomNav) mudam de
-  // geometria no MESMO commit — inclusive no swipe-back do iOS, que apenas
-  // limpa a query (sem nenhum estado local a reconciliar).
   const mobileThreadOpen = Boolean(artistIdParam);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
@@ -205,34 +226,39 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
     setPendingChatArtwork,
   ]);
 
-  const orderedConversations = useMemo(() => {
-    if (!selectedPeer) return conversations;
-    const exists = conversations.some((item) => item.peer.id === selectedPeer.id);
-    if (exists) {
+  const orderedFor = useCallback(
+    (category: ChatTab) => {
+      const conversations = conversationsByCategory[category];
+      if (!selectedPeer) return conversations;
+      const exists = conversations.some((item) => item.peer.id === selectedPeer.id);
+      if (exists) {
+        return [
+          ...conversations.filter((item) => item.peer.id === selectedPeer.id),
+          ...conversations.filter((item) => item.peer.id !== selectedPeer.id),
+        ];
+      }
+      if (category !== 'BUDGET') return conversations;
       return [
-        ...conversations.filter((item) => item.peer.id === selectedPeer.id),
-        ...conversations.filter((item) => item.peer.id !== selectedPeer.id),
+        {
+          peer: selectedPeer,
+          lastMessage: null,
+          unreadCount: 0,
+          categoria: 'ORCAMENTO' as const,
+          lifecycle: null,
+        },
+        ...conversations,
       ];
-    }
-    return [
-      { peer: selectedPeer, lastMessage: null, unreadCount: 0, categoria: 'ORCAMENTO', lifecycle: null },
-      ...conversations,
-    ];
-  }, [conversations, selectedPeer]);
+    },
+    [conversationsByCategory, selectedPeer]
+  );
 
   const selectConversation = (peer: ChatPeer) => {
     triggerHaptic('light');
     setSelectedPeer(peer);
     setArtwork(null);
-    // `push` (não `replace`) transforma a thread numa entrada de histórico:
-    // assim o gesto nativo de "swipe back" do iOS volta para o INBOX — e não
-    // para a aba anterior — restaurando o casco e a posição de scroll.
     router.push(`/dashboard/chat?artistId=${encodeURIComponent(peer.id)}`, { scroll: false });
   };
 
-  // Sair da thread volta para o inbox limpando a query. Como o painel e o
-  // casco derivam do MESMO `artistId`, ambos restauram de forma síncrona e
-  // suave, sem medição via JS nem "snap" de geometria.
   const closeThread = useCallback(() => {
     triggerHaptic('light');
     setSelectedPeer(null);
@@ -258,8 +284,6 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
     });
     return counts;
   }, [conversationsByCategory]);
-
-  const activeCategoryLabel = activeCategory === 'BUDGET' ? t('chat.quotes') : t('chat.conversations');
 
   const openBooking = useCallback(
     async (artistId: string, nextArtworkId?: string) => {
@@ -287,22 +311,14 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
 
   const handleBackToDashboard = useCallback(() => {
     triggerHaptic('light');
-    // Hard clean-up ao sair do chat imersivo: purga foco/transform/escala
-    // residual do viewport (mesmo fluxo das rotas "sem casco") para que a
-    // dock do painel de destino monte perfeitamente alinhada no iOS.
     resetViewportScale({ forceBlur: true });
     forceViewportRecalibration();
     router.push(dashboardPathForRole(role));
   }, [role, router, triggerHaptic]);
 
-  // Global discovery anchored at the inbox top: selecting a @username opens
-  // that professional's public profile instantly, mirroring Instagram Explore.
   const openPublicProfile = useCallback(
     (handle: string) => {
       triggerHaptic('light');
-      // Hard clean-up ao deixar o chat imersivo pela porta do perfil público:
-      // purga foco/transform/escala residual do viewport (mesmo fluxo de
-      // `handleBackToDashboard`) para que a rota de destino monte alinhada no iOS.
       resetViewportScale({ forceBlur: true });
       forceViewportRecalibration();
       router.push(`/profile/${encodeURIComponent(handle)}`);
@@ -317,167 +333,93 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner() {
     [openPublicProfile]
   );
 
+  const renderPane = (category: ChatTab) => {
+    const items = orderedFor(category);
+    const showSkeleton = loadingList && items.length === 0;
+    const empty = !loadingList && items.length === 0;
+    const isBudget = category === 'BUDGET';
+
+    return (
+      <div className={activeCategory === category ? 'flex min-h-full flex-col' : 'hidden'}>
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 space-y-2 p-2 transform-gpu transition-opacity duration-200',
+            showSkeleton ? 'opacity-100' : 'opacity-0'
+          )}
+          aria-hidden={!showSkeleton}
+        >
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+        </div>
+        {empty ? (
+          <div className="flex flex-col items-center justify-center mt-20 px-8 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-orange-400/70">
+              {isBudget ? (
+                <FileText className="h-6 w-6" strokeWidth={1.6} aria-hidden />
+              ) : (
+                <MessageCircle className="h-6 w-6" strokeWidth={1.6} aria-hidden />
+              )}
+            </div>
+            <p className="mt-4 max-w-[22rem] text-balance text-[15px] font-semibold tracking-tight text-zinc-200">
+              {isBudget ? t('chat.emptyQuotes') : t('chat.empty')}
+            </p>
+            <p className="mt-1.5 max-w-[22rem] text-pretty text-[13px] leading-relaxed text-zinc-500">
+              {isBudget ? t('chat.emptyQuotesHint') : t('chat.emptyHint')}
+            </p>
+          </div>
+        ) : null}
+        {items.map((item) => (
+          <ChatListCard
+            key={`${category}-${item.peer.id}`}
+            item={item}
+            active={selectedId === item.peer.id}
+            isQuote={isBudget || item.categoria === 'ORCAMENTO' || item.categoria === 'BUDGET'}
+            previewFallback={isBudget ? t('chat.newQuoteRequest') : t('chat.newConversation')}
+            onSelect={selectConversation}
+            onOpenProfile={openPublicProfile}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background text-neutral-900 transform-gpu transition-opacity duration-200 dark:text-white">
-      {/* Inbox chrome — glass header + segmented control. */}
+    <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950 text-zinc-100 transform-gpu transition-opacity duration-200">
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
-        <header className="sticky top-0 z-50 shrink-0 border-b border-white/[0.06] bg-black/60 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
-          <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
+        <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-900 bg-zinc-950/90 pt-[max(env(safe-area-inset-top),_1.5rem)] px-4 pb-2 backdrop-blur-xl">
+          <div className="flex min-h-11 items-center gap-2">
             <button
               type="button"
               onClick={handleBackToDashboard}
-              className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-transform active:scale-95 dark:text-zinc-400"
+              className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-transform active:scale-95"
               aria-label={t('common.back')}
             >
               <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
             </button>
-            {/* Search bar replaces the redundant "Chat & Orçamentos" title,
-                anchored at the absolute top with an Instagram-Explore glass. */}
             <SearchBar onSelect={handleSearchSelect} className="min-w-0 flex-1" />
           </div>
+          <div className="pt-3">
+            <ChatCategoryTabs
+              value={activeCategory}
+              onChange={handleCategoryChange}
+              counts={categoryCounts}
+            />
+          </div>
         </header>
-
-        <div className="relative px-3 pb-3 pt-3">
-          <ChatCategoryTabs
-            value={activeCategory}
-            onChange={handleCategoryChange}
-            counts={categoryCounts}
-          />
-        </div>
       </div>
 
-      {/* Conversation area — single pane on mobile, split view on desktop. */}
       <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-4 lg:p-3">
         <aside
           className={cn(
             'flex min-h-0 min-w-0 flex-col overflow-hidden',
-            'lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]',
+            'lg:rounded-2xl lg:border lg:border-zinc-800 lg:bg-zinc-950',
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
-          <div className="flex items-center gap-2 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
-            {activeCategory === 'BUDGET' ? (
-              <ReceiptText className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-            ) : (
-              <MessageCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-            )}
-            <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {activeCategoryLabel}
-            </p>
-          </div>
-          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 [-webkit-overflow-scrolling:touch]">
-            <div
-              className={cn(
-                'pointer-events-none absolute inset-x-0 top-0 space-y-2 p-2 transform-gpu transition-opacity duration-200',
-                loadingList && orderedConversations.length === 0 ? 'opacity-100' : 'opacity-0'
-              )}
-              aria-hidden={!loadingList || orderedConversations.length > 0}
-            >
-              <Skeleton className="h-16 w-full rounded-xl" />
-              <Skeleton className="h-16 w-full rounded-xl" />
-              <Skeleton className="h-16 w-full rounded-xl" />
-            </div>
-            <div
-              className={cn(
-                'flex min-h-full flex-col transform-gpu transition-opacity duration-200',
-                loadingList && orderedConversations.length === 0 ? 'opacity-0' : 'opacity-100'
-              )}
-            >
-            {!loadingList && orderedConversations.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center px-8 py-12 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/[0.05] bg-white/70 text-orange-500/70 opacity-70 shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-orange-400/70">
-                  {activeCategory === 'BUDGET' ? (
-                    <FileText className="h-6 w-6" strokeWidth={1.6} aria-hidden />
-                  ) : (
-                    <MessageCircle className="h-6 w-6" strokeWidth={1.6} aria-hidden />
-                  )}
-                </div>
-                <p className="mt-4 max-w-[22rem] text-balance text-[15px] font-semibold tracking-tight text-neutral-700 dark:text-zinc-200">
-                  {activeCategory === 'BUDGET'
-                    ? t(isProfessional ? 'chat.emptyQuotesProfessional' : 'chat.emptyQuotes')
-                    : t('chat.empty')}
-                </p>
-                <p className="mt-1.5 max-w-[22rem] text-pretty text-[13px] leading-relaxed text-neutral-400 dark:text-zinc-500">
-                  {activeCategory === 'BUDGET'
-                    ? t(isProfessional ? 'chat.emptyQuotesProfessionalHint' : 'chat.emptyQuotesHint')
-                    : t(isProfessional ? 'chat.emptyProfessionalHint' : 'chat.emptyHint')}
-                </p>
-              </div>
-            ) : null}
-            {orderedConversations.map((item) => {
-              const active = selectedId === item.peer.id;
-              // Structured booking request (Lead) vs. casual chat — surfaced
-              // regardless of the active tab so the professional never misses
-              // an orçamento hidden inside the Conversas list.
-              const isQuoteItem =
-                activeCategory === 'BUDGET' || item.categoria === 'ORCAMENTO';
-              return (
-                <div
-                  key={item.peer.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => selectConversation(item.peer)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      selectConversation(item.peer);
-                    }
-                  }}
-                  className={cn(
-                    'mb-1 flex min-h-11 w-full cursor-pointer touch-manipulation items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60',
-                    // Hover affordance is gated to hover-capable pointers so it can
-                    // never hijack the first tap on touch devices (double-tap bug).
-                    '[@media(hover:hover)]:hover:border-black/[0.04] [@media(hover:hover)]:hover:bg-neutral-50 dark:[@media(hover:hover)]:hover:border-white/[0.05] dark:[@media(hover:hover)]:hover:bg-white/5',
-                    active
-                      ? 'border-orange-500/50 bg-orange-500/10 shadow-[0_0_18px_rgba(249,115,22,0.18)]'
-                      : 'border-transparent'
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openPublicProfile(item.peer.id);
-                    }}
-                    className="flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full border border-orange-500/30 bg-white text-sm font-semibold text-orange-500 dark:bg-white/[0.05] dark:text-orange-400"
-                    aria-label={t('chat.openVitrine', { name: item.peer.name })}
-                  >
-                    {item.peer.initial}
-                  </button>
-                  <div className="min-w-0 flex-1 text-left">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate text-sm font-semibold text-neutral-900 dark:text-white">{item.peer.name}</span>
-                        {isQuoteItem ? (
-                          <span
-                            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-500 dark:text-orange-300"
-                            aria-label={t('chat.quotes')}
-                            title={t('chat.quotes')}
-                          >
-                            <ReceiptText className="h-2.5 w-2.5" strokeWidth={2.4} aria-hidden />
-                          </span>
-                        ) : null}
-                      </span>
-                      {item.unreadCount > 0 ? (
-                        <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-black">
-                          {item.unreadCount}
-                        </span>
-                      ) : null}
-                    </span>
-                    {item.lifecycle ? (
-                      <span className="mt-1 flex min-w-0">
-                        <ConversationLifecycleBadge status={item.lifecycle} />
-                      </span>
-                    ) : null}
-                    <span className="mt-0.5 block truncate text-[11px] text-neutral-500 dark:text-zinc-500">
-                      {item.lastMessage?.mensagem ||
-                        (activeCategory === 'BUDGET' ? t('chat.newQuoteRequest') : t('chat.newConversation'))}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            </div>
+          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-[calc(env(safe-area-inset-bottom)+7rem)] [-webkit-overflow-scrolling:touch]">
+            {renderPane('DIRECT')}
+            {renderPane('BUDGET')}
           </div>
         </aside>
 

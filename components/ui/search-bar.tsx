@@ -172,7 +172,7 @@ export function SearchBar({ className, placeholder = SEARCH_BAR_PLACEHOLDER, onS
     <div className={cn('relative w-full', className)}>
       <div
         onMouseDown={handleBarMouseDown}
-        className="relative flex h-12 w-full cursor-text items-center rounded-xl border border-white/10 bg-white/10 pl-3 pr-10 backdrop-blur-md transition-colors focus-within:border-orange-500/60 focus-within:ring-1 focus-within:ring-orange-500/40 dark:bg-zinc-900/80"
+        className="relative flex w-full cursor-text items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2.5 pr-10 transition-colors focus-within:border-orange-500/60 focus-within:ring-1 focus-within:ring-orange-500/40"
       >
         <UsernameMorphGlyph
           focused={isFocused}
@@ -191,7 +191,7 @@ export function SearchBar({ className, placeholder = SEARCH_BAR_PLACEHOLDER, onS
           autoComplete="off"
           spellCheck={false}
           inputMode="search"
-          className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium text-neutral-900 caret-neutral-900 outline-none ring-0 placeholder:text-zinc-400 dark:text-white dark:caret-white dark:placeholder:text-zinc-500"
+          className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium text-zinc-100 caret-white outline-none ring-0 placeholder:text-zinc-500"
         />
         {isLoading ? (
           <Loader2

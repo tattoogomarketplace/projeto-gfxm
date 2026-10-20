@@ -303,26 +303,22 @@ export function PublicProfileSkeleton({ className }: { className?: string }) {
 
 export function ChatInboxSkeleton({ className }: { className?: string }) {
   return (
-    <Shell className={cn('relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden', className)}>
+    <Shell className={cn('relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950', className)}>
       <div className="shrink-0">
-        <div className="border-b border-black/[0.04] bg-black/[0.03] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/[0.06] dark:bg-black/60">
-          <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
+        <div className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-4 pb-2 pt-[max(env(safe-area-inset-top),_1.5rem)] backdrop-blur-xl">
+          <div className="flex min-h-11 items-center gap-2">
             <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full" />
-            <Skeleton className="h-11 min-h-11 flex-1 rounded-full" />
+            <Skeleton className="h-10 min-h-10 flex-1 rounded-full" />
           </div>
-        </div>
-        <div className="px-3 pb-3 pt-3">
-          <Skeleton className="h-11 w-full rounded-2xl" />
+          <div className="pt-3">
+            <Skeleton className="h-11 w-full rounded-2xl" />
+          </div>
         </div>
       </div>
 
-      <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
-          <div className="flex items-center gap-2 border-b border-black/[0.04] px-4 py-3 dark:border-white/[0.05]">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 w-28 rounded-full" />
-          </div>
-          <div className="space-y-2 p-2">
+      <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-4 lg:p-3">
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800 lg:bg-zinc-950">
+          <div className="space-y-2 p-2 pb-[calc(env(safe-area-inset-bottom)+7rem)]">
             {[0, 1, 2, 3, 4, 5].map((index) => (
               <Skeleton key={index} className="h-16 w-full rounded-xl" />
             ))}

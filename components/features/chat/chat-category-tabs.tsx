@@ -30,8 +30,8 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
       role="tablist"
       aria-label={t('chat.filterAria')}
       className={cn(
-        'relative grid w-full rounded-2xl border border-black/[0.06] bg-neutral-100 p-1 backdrop-blur-xl',
-        'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] dark:border-white/[0.08] dark:bg-black/40 dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]',
+        'relative grid w-full rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1 backdrop-blur-xl',
+        'shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]',
         className
       )}
       style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}
@@ -66,8 +66,8 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
               'text-[13px] font-semibold tracking-tight transition-colors duration-200',
               'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
               selected
-                ? 'text-orange-700 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)] dark:text-orange-200'
-                : 'text-neutral-500 hover:text-neutral-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                ? 'text-orange-200 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]'
+                : 'text-zinc-400 hover:text-zinc-200'
             )}
           >
             <Icon className="h-4 w-4 shrink-0" strokeWidth={selected ? 2.25 : 1.9} />
@@ -78,7 +78,7 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
                   'flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums',
                   selected
                     ? 'bg-orange-500 text-black'
-                    : 'bg-neutral-300 text-neutral-700 dark:bg-white/15 dark:text-zinc-200'
+                    : 'bg-white/15 text-zinc-200'
                 )}
               >
                 {count > 99 ? '99+' : count}
