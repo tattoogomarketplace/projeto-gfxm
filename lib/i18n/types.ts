@@ -884,6 +884,7 @@ export type MessageKey =
   | 'vitrine.estimatedSizePlaceholder'
   | 'vitrine.referenceImage'
   | 'vitrine.sendToArtist'
+  | 'vitrine.sendingQuote'
   | 'flash.aria'
   | 'flash.empty'
   | 'flash.benchStatus'

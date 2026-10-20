@@ -82,13 +82,16 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
   const closeQuoteSheet = useCallback(() => setQuoteOpen(false), []);
 
-  const submitQuote = useCallback(() => {
-    triggerHaptic('medium');
-    setQuoteOpen(false);
-    setPendingChatPeer(artist.id);
-    setActiveTabNav('chat');
-    router.push(`/dashboard/chat?artistId=${encodeURIComponent(artist.id)}`);
-  }, [artist.id, router, setActiveTabNav, setPendingChatPeer, triggerHaptic]);
+  const submitQuote = useCallback(
+    (result: { artistId: string }) => {
+      triggerHaptic('medium');
+      setQuoteOpen(false);
+      setPendingChatPeer(result.artistId);
+      setActiveTabNav('chat');
+      router.push(`/dashboard/chat?artistId=${encodeURIComponent(result.artistId)}`);
+    },
+    [router, setActiveTabNav, setPendingChatPeer, triggerHaptic]
+  );
 
   const dismissPreview = useCallback(() => setPreview(null), []);
 
@@ -317,8 +320,9 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
       <QuoteRequestSheet
         open={quoteOpen}
+        artistId={artist.id}
         onClose={closeQuoteSheet}
-        onSubmit={submitQuote}
+        onSuccess={submitQuote}
       />
     </div>
   );
