@@ -1,18 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CalendarDays, Star } from 'lucide-react';
-import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
+import Image from 'next/image';
+import { ArrowLeft, BadgeCheck, Star } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
-import { useAuthStore } from '@/hooks/use-auth-store';
-import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
-import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import { cn } from '@/lib/utils';
+
+type ProfileTab = 'portfolio' | 'reviews' | 'about';
 
 type ArtistVitrineProps = {
   vitrine: PublicArtistVitrine;
@@ -21,24 +20,11 @@ type ArtistVitrineProps = {
 export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const router = useRouter();
   const { t } = useI18n();
-  const { styleLabel, bodyPartLabel, sessionDurationLabel } = portfolioLabelResolver(t);
+  const { styleLabel } = portfolioLabelResolver(t);
   const { triggerHaptic } = useHapticFeedback();
-  const setActiveTab = useUiStore((s) => s.setActiveTab);
-  const role = useAuthStore((s) => s.role);
 
-  const { artist, items, availableSlots } = vitrine;
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [bookingArtworkId, setBookingArtworkId] = useState<string | undefined>();
-  const bookingArtwork = useMemo(
-    () => items.find((item) => item.id === bookingArtworkId) ?? null,
-    [items, bookingArtworkId]
-  );
-
-  const openBooking = (artworkId?: string) => {
-    triggerHaptic('medium');
-    setBookingArtworkId(artworkId);
-    setBookingOpen(true);
-  };
+  const { artist, items } = vitrine;
+  const [activeTab, setActiveTab] = useState<ProfileTab>('portfolio');
 
   const goBack = () => {
     triggerHaptic('light');
@@ -53,7 +39,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const ratingLabel = artist.reviewCount > 0 ? artist.rating.toFixed(1) : '—';
 
   return (
-    <div className="relative overflow-x-hidden bg-zinc-950 pb-24 text-white">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-24 text-white [-webkit-overflow-scrolling:touch]">
       <header className="relative">
         <div className="relative h-48 w-full md:h-64">
           {artist.coverUrl ? (
@@ -133,81 +119,69 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         </div>
       </header>
 
-      <section className="relative mt-8 space-y-3 px-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
-          {t('vitrine.portfolio')}
-        </h2>
-        {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <p className="text-sm text-neutral-500 dark:text-zinc-400">{t('vitrine.empty')}</p>
+      <nav
+        className="sticky top-0 z-40 mt-6 border-b border-zinc-800 bg-zinc-950/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl"
+        aria-label={t('vitrine.badge')}
+      >
+        <div className="grid grid-cols-3">
+          {(
+            [
+              { id: 'portfolio', label: t('vitrine.portfolio') },
+              { id: 'reviews', label: t('vitrine.reviews') },
+              { id: 'about', label: t('vitrine.about') },
+            ] as const
+          ).map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setActiveTab(tab.id);
+                }}
+                className={cn(
+                  'relative flex min-h-11 items-center justify-center px-2 text-[13px] tracking-wide transition-colors',
+                  isActive
+                    ? 'font-semibold text-zinc-100'
+                    : 'font-medium text-zinc-500'
+                )}
+              >
+                {tab.label}
+                {isActive ? (
+                  <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-orange-500" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {activeTab === 'portfolio' ? (
+        items.length === 0 ? (
+          <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-sm text-zinc-500">
+            {t('vitrine.empty')}
           </div>
         ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ul className="grid w-full grid-cols-3 gap-0.5 md:gap-1">
             {items.map((item) => (
-              <li
-                key={item.id}
-                className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none"
-              >
-                <div className="relative h-48 w-full overflow-hidden">
-                  <OptimizedImage
-                    src={item.imageUrl}
-                    alt={styleLabel(item.style)}
-                    className="h-full w-full"
-                  />
-                </div>
-                <div className="space-y-2 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white">{styleLabel(item.style)}</span>
-                    <span
-                      className={cn(
-                        'rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-wide',
-                        item.isHealed
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/40 dark:text-emerald-300'
-                          : 'border-orange-500/40 bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                      )}
-                    >
-                      {item.isHealed ? t('portfolio.healed') : t('portfolio.fresh')}
-                    </span>
-                  </div>
-                  {item.descricao ? (
-                      <p className="line-clamp-3 text-xs leading-relaxed text-neutral-500 dark:text-zinc-400">{item.descricao}</p>
-                  ) : null}
-                  <p className="text-xs text-neutral-500 dark:text-zinc-500">
-                    {bodyPartLabel(item.bodyPart)} · {sessionDurationLabel(item.sessionDuration)}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => openBooking(item.id)}
-                    disabled={!artist.bookingEnabled}
-                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-4 text-sm font-semibold text-orange-600 transition-all hover:border-orange-500 hover:bg-orange-500/20 active:scale-[0.98] disabled:opacity-40 dark:text-orange-300"
-                  >
-                    <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-                    {t('vitrine.bookThis')}
-                  </button>
-                </div>
+              <li key={item.id} className="relative aspect-square w-full overflow-hidden bg-zinc-900">
+                <Image
+                  src={item.imageUrl}
+                  alt={styleLabel(item.style)}
+                  fill
+                  sizes="(max-width: 768px) 33vw, 240px"
+                  className="object-cover"
+                />
               </li>
             ))}
           </ul>
-        )}
-      </section>
-
-      <AtomicBookingSheet
-        artistId={artist.id}
-        artistName={artist.name || t('welcome.artistFallback')}
-        slots={availableSlots}
-        artworkId={bookingArtwork?.id}
-        artworkLabel={
-          bookingArtwork
-            ? `${styleLabel(bookingArtwork.style)} · ${bodyPartLabel(bookingArtwork.bodyPart)}`
-            : undefined
-        }
-        open={bookingOpen}
-        onClose={() => setBookingOpen(false)}
-        onBooked={() => {
-          setActiveTab('agendar');
-          router.push(`${dashboardPathForRole(role)}?tab=agendar`);
-        }}
-      />
+        )
+      ) : (
+        <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-sm text-zinc-500">
+          {t('vitrine.empty')}
+        </div>
+      )}
     </div>
   );
 }

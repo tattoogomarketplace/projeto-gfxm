@@ -1,4 +1,5 @@
 import { artistProfileHref } from '@/lib/artist-profile';
+import { PLACEHOLDER_INSPIRATIONS } from '@/lib/gallery-mock';
 import { prisma } from '@/lib/prisma';
 import { PLACEHOLDER_REVIEWS, REVIEW_FEATURED_ARTISTS } from '@/lib/review-mock';
 import { getArtistSchedule } from '@/lib/services/artist-schedule';
@@ -77,14 +78,54 @@ function summarizeSchedule(schedule: WorkingHoursSchedule): PublicArtistSchedule
     .map((day) => ({ day: day.day, start: day.start, end: day.end }));
 }
 
+function mockPortfolioItems(artistId: string, artistName: string): PortfolioItemDto[] {
+  const items: PortfolioItemDto[] = [];
+  const seen = new Set<string>();
+  const pushItem = (id: string, imageUrl: string, style: string) => {
+    if (!imageUrl || seen.has(imageUrl)) return;
+    seen.add(imageUrl);
+    items.push({
+      id,
+      tatuadorId: artistId,
+      imageUrl,
+      style,
+      bodyPart: 'Braco',
+      sessionDuration: '1-2h',
+      isHealed: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      likesCount: 0,
+      descricao: null,
+    });
+  };
+
+  for (const review of PLACEHOLDER_REVIEWS) {
+    if (review.targetId !== artistId || !review.portfolio) continue;
+    pushItem(
+      review.portfolio.id,
+      review.portfolio.imageUrl,
+      review.portfolio.style
+    );
+  }
+  for (const inspiration of PLACEHOLDER_INSPIRATIONS) {
+    if (inspiration.artistName !== artistName) continue;
+    pushItem(inspiration.id, inspiration.imageUrl, inspiration.style);
+  }
+  for (const inspiration of PLACEHOLDER_INSPIRATIONS) {
+    if (items.length >= 9) break;
+    pushItem(`${artistId}-${inspiration.id}`, inspiration.imageUrl, inspiration.style);
+  }
+  return items;
+}
+
 function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
   const featured = Object.values(REVIEW_FEATURED_ARTISTS).find((artist) => artist.id === identifier);
   if (!featured) return null;
   const reviews = PLACEHOLDER_REVIEWS.filter((review) => review.targetId === featured.id);
+  const items = mockPortfolioItems(featured.id, featured.name);
   const styles: string[] = [];
   const seen = new Set<string>();
-  for (const review of reviews) {
-    const style = review.portfolio?.style?.trim();
+  for (const item of items) {
+    const style = item.style?.trim();
     if (!style || seen.has(style)) continue;
     seen.add(style);
     styles.push(style);
@@ -95,7 +136,7 @@ function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
     count === 0
       ? 0
       : Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / count) * 10) / 10;
-  const coverUrl = reviews.find((review) => review.portfolio?.imageUrl)?.portfolio?.imageUrl ?? null;
+  const coverUrl = items[0]?.imageUrl ?? null;
   return {
     artist: {
       id: featured.id,
@@ -113,7 +154,7 @@ function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
       reviewCount: count,
       styles,
     },
-    items: [],
+    items,
     scheduleSummary: [],
     availableSlots: [],
   };

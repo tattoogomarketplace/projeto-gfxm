@@ -873,6 +873,8 @@ export type MessageKey =
   | 'vitrine.empty'
   | 'vitrine.bookThis'
   | 'vitrine.requestQuote'
+  | 'vitrine.reviews'
+  | 'vitrine.about'
   | 'flash.aria'
   | 'flash.empty'
   | 'flash.benchStatus'
