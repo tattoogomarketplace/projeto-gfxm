@@ -850,3 +850,24 @@ html.splash-seen .splash-root {
   }
 }
 
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: #0a0a0a;
+  font-family: inherit;
+}
+
+.tg-map-pin {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-control-attribution {
+  background: rgba(9, 9, 11, 0.72) !important;
+  color: #a1a1aa !important;
+}
+
+.leaflet-control-attribution a {
+  color: #f97316 !important;
+}
+

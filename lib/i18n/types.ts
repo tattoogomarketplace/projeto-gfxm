@@ -320,6 +320,7 @@ export type MessageKey =
   | 'home.exploreRegion'
   | 'home.exploreRegionSubtitle'
   | 'home.openInteractiveMap'
+  | 'map.viewFullProfile'
   | 'agenda.tab'
   | 'agenda.tabClient'
   | 'agenda.tabStudio'

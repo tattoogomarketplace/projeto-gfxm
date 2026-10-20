@@ -73,10 +73,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
   const isGaleria = pathname.startsWith('/dashboard/galeria');
   const isPagamentos = pathname.startsWith('/dashboard/pagamentos');
+  const isMapa = pathname.startsWith('/dashboard/mapa');
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
-    isOnboarding || isAiChat || isKycPendente || isArtistVerification;
+    isOnboarding || isAiChat || isKycPendente || isArtistVerification || isMapa;
   // O chat possui dois estados distintos:
   //  - Inbox/Hub (`/dashboard/chat`): mantém o bottom navigation do casco
   //    visível. NÃO é imersivo — o casco reserva o clearance da dock

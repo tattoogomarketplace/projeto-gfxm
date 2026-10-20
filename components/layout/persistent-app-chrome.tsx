@@ -31,6 +31,7 @@ const CHROME_HIDDEN_PREFIXES = [
   '/dashboard/kyc-pendente',
   '/dashboard/seja-tatuador',
   '/dashboard/chat',
+  '/dashboard/mapa',
 ] as const;
 
 export function isPersistentChromeVisible(pathname: string): boolean {

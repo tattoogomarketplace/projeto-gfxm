@@ -36,6 +36,7 @@ function shouldHideNav(pathname: string, chatThreadActive: boolean): boolean {
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
     pathname.startsWith('/dashboard/kyc-pendente') ||
+    pathname.startsWith('/dashboard/mapa') ||
     // Apenas a THREAD de chat é imersiva: o composer é ancorado na base com
     // safe-area e a dock flutuante colidiria com o campo de mensagem. O
     // inbox/hub (`/dashboard/chat` sem thread) mantém a dock visível.
@@ -56,6 +57,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
     pathname.startsWith('/dashboard/onboarding') ||
     pathname.startsWith('/dashboard/ai') ||
     pathname.startsWith('/dashboard/kyc-pendente') ||
+    pathname.startsWith('/dashboard/mapa') ||
     (pathname.startsWith('/dashboard/chat') && chatThreadActive)
   );
 }
