@@ -243,7 +243,7 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="relative mb-10 flex w-full flex-col bg-transparent"
+              className="relative mb-12 flex w-full flex-col bg-transparent"
             >
               <div className="mb-3 flex w-full items-center justify-between px-4">
                 <div className="flex items-center gap-3">
@@ -255,15 +255,17 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-8 w-[5.5rem] rounded-full" />
               </div>
-              <Skeleton className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
-              <div className="relative z-30 mx-4 -mt-7 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/80 px-6 py-4 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
+              <div className="px-4">
+                <Skeleton className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
+              </div>
+              <div className="mt-3 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl">
                 <div className="flex items-center gap-8">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                 </div>
                 <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="flex flex-col gap-1.5 px-4 pt-6">
+              <div className="flex flex-col gap-1.5 px-4 pt-4">
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
@@ -318,7 +320,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative mb-10 flex w-full flex-col bg-transparent"
+                className="relative mb-12 flex w-full flex-col bg-transparent"
               >
                 <div className="mb-3 flex w-full items-center justify-between px-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -351,46 +353,48 @@ export function GalleryInspirationGrid({
                   </Link>
                 </div>
 
-                <div
-                  onPointerUp={handleFeedImagePointerUp(item)}
-                  className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl"
-                >
-                  <motion.div
-                    layout="position"
-                    layoutId={galleryPreviewLayoutId(item.id)}
-                    transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
-                    style={{ backfaceVisibility: 'hidden' }}
-                    className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                <div className="px-4">
+                  <div
+                    onPointerUp={handleFeedImagePointerUp(item)}
+                    className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl"
                   >
-                    <OptimizedImage
-                      src={item.imageUrl}
-                      alt={`${styleLabel(item.style)} — ${artistName}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </motion.div>
-                  <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
-                    <AnimatePresence>
-                      {likeBurst?.id === item.id ? (
-                        <motion.span
-                          key={likeBurst.nonce}
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: [0, 1.2, 1], opacity: 1 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                          className="flex h-24 w-24 items-center justify-center rounded-full bg-black/25 backdrop-blur-md transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
-                          style={{ backfaceVisibility: 'hidden' }}
-                        >
-                          <TattooMachineLikeGlyph
-                            liked
-                            className="h-16 w-16 text-orange-500 drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
-                          />
-                        </motion.span>
-                      ) : null}
-                    </AnimatePresence>
+                    <motion.div
+                      layout="position"
+                      layoutId={galleryPreviewLayoutId(item.id)}
+                      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
+                      style={{ backfaceVisibility: 'hidden' }}
+                      className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                    >
+                      <OptimizedImage
+                        src={item.imageUrl}
+                        alt={`${styleLabel(item.style)} — ${artistName}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </motion.div>
+                    <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
+                      <AnimatePresence>
+                        {likeBurst?.id === item.id ? (
+                          <motion.span
+                            key={likeBurst.nonce}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                            className="flex h-24 w-24 items-center justify-center rounded-full bg-black/25 backdrop-blur-md transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                            style={{ backfaceVisibility: 'hidden' }}
+                          >
+                            <TattooMachineLikeGlyph
+                              liked
+                              className="h-16 w-16 text-orange-500 drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+                            />
+                          </motion.span>
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </div>
 
-                <div className="relative z-30 mx-4 -mt-7 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/80 px-6 py-4 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
+                <div className="mt-3 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl">
                   <div className="flex items-center gap-8">
                     {showLike ? (
                       <button
@@ -442,7 +446,7 @@ export function GalleryInspirationGrid({
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1.5 px-4 pt-6">
+                <div className="flex flex-col gap-1.5 px-4 pt-4">
                   <p className="text-[13px] font-semibold text-zinc-200">{likeLabel}</p>
                   <p className="text-[13px] font-light leading-relaxed text-zinc-400">
                     <span className="mr-2 font-bold text-zinc-100">

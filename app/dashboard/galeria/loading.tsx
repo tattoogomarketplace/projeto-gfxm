@@ -16,7 +16,7 @@ export default function GaleriaLoading() {
         </div>
       </div>
       <div className="flex w-full flex-col px-0">
-        <article className="relative mb-10 flex w-full flex-col bg-transparent">
+        <article className="relative mb-12 flex w-full flex-col bg-transparent">
           <div className="mb-3 flex w-full items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-zinc-800 object-cover ring-1 ring-white/10" />
@@ -27,15 +27,17 @@ export default function GaleriaLoading() {
             </div>
             <div className="h-8 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/10" />
           </div>
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
-          <div className="relative z-30 mx-4 -mt-7 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/80 px-6 py-4 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
+          <div className="px-4">
+            <div className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
+          </div>
+          <div className="mt-3 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl">
             <div className="flex items-center gap-8">
               <div className="h-6 w-6 rounded bg-zinc-700" />
               <div className="h-6 w-6 rounded bg-zinc-700" />
             </div>
             <div className="h-6 w-6 rounded bg-zinc-700" />
           </div>
-          <div className="flex flex-col gap-1.5 px-4 pt-6">
+          <div className="flex flex-col gap-1.5 px-4 pt-4">
             <div className="h-3 w-40 rounded bg-zinc-800" />
             <div className="h-3 w-full rounded bg-zinc-900" />
           </div>
