@@ -243,11 +243,11 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="relative mb-12 flex w-full flex-col border-b border-zinc-900/60 pb-8"
+              className="relative mb-10 flex w-full flex-col bg-transparent"
             >
-              <div className="mb-3 flex items-center justify-between px-4 pt-2">
+              <div className="mb-3 flex w-full items-center justify-between px-4">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-full object-cover shadow-md ring-1 ring-white/10" />
+                  <Skeleton className="h-10 w-10 rounded-full object-cover ring-1 ring-white/10" />
                   <div className="flex flex-col gap-1">
                     <Skeleton className="h-3 w-28" />
                     <Skeleton className="h-2.5 w-20" />
@@ -256,14 +256,14 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-8 w-[5.5rem] rounded-full" />
               </div>
               <Skeleton className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
-              <div className="relative z-30 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/70 px-6 py-3.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
+              <div className="relative z-30 mx-4 -mt-7 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/80 px-6 py-4 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
                 <div className="flex items-center gap-8">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                 </div>
                 <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="flex flex-col gap-1.5 px-4 pt-5">
+              <div className="flex flex-col gap-1.5 px-4 pt-6">
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
@@ -318,34 +318,34 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative mb-12 flex w-full flex-col border-b border-zinc-900/60 pb-8"
+                className="relative mb-10 flex w-full flex-col bg-transparent"
               >
-                <div className="mb-3 flex items-center justify-between px-4 pt-2">
+                <div className="mb-3 flex w-full items-center justify-between px-4">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
                         src={item.artistAvatarUrl}
                         alt={artistName}
-                        className="h-10 w-10 shrink-0 rounded-full object-cover shadow-md ring-1 ring-white/10"
+                        className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-white/10"
                       />
                     ) : (
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 shadow-md ring-1 ring-white/10">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 ring-1 ring-white/10">
                         {artistInitial}
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold tracking-wide text-zinc-100">
+                      <p className="truncate text-sm font-bold text-zinc-100">
                         {artistName}
                       </p>
                       {metaLine ? (
-                        <p className="truncate text-xs font-light text-zinc-400">{metaLine}</p>
+                        <p className="truncate text-xs text-zinc-400">{metaLine}</p>
                       ) : null}
                     </div>
                   </div>
                   <Link
                     href={profileHref}
                     data-gallery-action=""
-                    className="shrink-0 px-5 py-2 bg-orange-500/10 backdrop-blur-xl rounded-full text-xs font-bold text-orange-500 border border-orange-500/30 uppercase tracking-widest hover:bg-orange-500/20 active:scale-95 transition-all shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                    className="shrink-0 px-5 py-2 bg-orange-500/10 backdrop-blur-xl rounded-full text-xs font-bold text-orange-500 border border-orange-500/30 uppercase tracking-widest active:scale-95 transition-all"
                   >
                     VISITAR
                   </Link>
@@ -390,7 +390,7 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="relative z-30 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/70 px-6 py-3.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
+                <div className="relative z-30 mx-4 -mt-7 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-900/80 px-6 py-4 shadow-[0_15px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
                   <div className="flex items-center gap-8">
                     {showLike ? (
                       <button
@@ -442,10 +442,10 @@ export function GalleryInspirationGrid({
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1.5 px-4 pt-5">
-                  <p className="text-[13px] font-semibold tracking-wide text-zinc-200">{likeLabel}</p>
+                <div className="flex flex-col gap-1.5 px-4 pt-6">
+                  <p className="text-[13px] font-semibold text-zinc-200">{likeLabel}</p>
                   <p className="text-[13px] font-light leading-relaxed text-zinc-400">
-                    <span className="mr-2 text-[11px] font-bold uppercase tracking-wider text-zinc-100">
+                    <span className="mr-2 font-bold text-zinc-100">
                       {artistName}
                     </span>
                     {caption}
