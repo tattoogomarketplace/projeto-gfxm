@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { BadgeCheck, Compass, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { BadgeCheck, Compass, MapPin, Sparkles } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import {
   GalleryHapticPreview,
@@ -382,6 +383,45 @@ export function HomeDiscover() {
             )}
           </div>
         </ErrorBoundary>
+      </section>
+
+      <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-region">
+        <SectionHeader
+          id="discover-region"
+          title={t('home.exploreRegion')}
+          subtitle={t('home.exploreRegionSubtitle')}
+        />
+        <Link
+          href="/dashboard/mapa"
+          onClick={() => triggerHaptic('light')}
+          aria-label={t('home.openInteractiveMap')}
+          className="relative block w-full aspect-[21/9] overflow-hidden rounded-3xl border border-zinc-800 active:scale-95 transition-transform md:aspect-video"
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_42%,rgba(217,70,14,0.22)_0%,rgba(10,10,10,0.55)_42%,#0a0a0a_78%)]"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(249,115,22,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(249,115,22,0.14)_1px,transparent_1px)] [background-size:28px_28px]"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-zinc-950/20 backdrop-blur-[1px]"
+          />
+          <span className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+            <span className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute h-16 w-16 rounded-full border border-orange-500/35 animate-ping" />
+              <span className="absolute h-24 w-24 rounded-full border border-orange-500/20 animate-pulse" />
+              <span className="relative flex h-12 w-12 min-h-12 min-w-12 items-center justify-center rounded-full border border-orange-500/50 bg-orange-500/15 text-orange-400 shadow-[0_0_24px_rgba(249,115,22,0.35)]">
+                <MapPin className="h-6 w-6" strokeWidth={1.9} />
+              </span>
+            </span>
+            <span className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-black/45 px-4 text-[13px] font-semibold tracking-tight text-white backdrop-blur-md">
+              {t('home.openInteractiveMap')}
+            </span>
+          </span>
+        </Link>
       </section>
 
       <div className={STICKY_FILTER_CLASS}>
