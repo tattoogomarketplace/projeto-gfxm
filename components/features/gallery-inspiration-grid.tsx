@@ -243,18 +243,18 @@ export function GalleryInspirationGrid({
         <div className="flex w-full flex-col" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article key={index} className="relative mb-8 flex w-full flex-col">
-              <div className="flex items-center justify-between bg-transparent px-4 py-3">
+              <div className="flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-9 w-9 rounded-full border border-zinc-800 shadow-lg" />
+                  <Skeleton className="h-9 w-9 rounded-full object-cover ring-1 ring-white/10" />
                   <div className="flex flex-col gap-1">
                     <Skeleton className="h-3 w-28" />
                     <Skeleton className="h-2.5 w-20" />
                   </div>
                 </div>
-                <Skeleton className="h-7 w-16 rounded-full" />
+                <Skeleton className="h-7 w-20 rounded-full" />
               </div>
               <Skeleton className="relative z-0 aspect-[4/5] w-full rounded-none bg-zinc-900" />
-              <div className="relative z-30 mx-4 -mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-800/80 px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.8)] backdrop-blur-2xl">
+              <div className="relative z-30 mx-4 -mt-6 flex items-center justify-between rounded-2xl border-t border-l border-white/[0.08] border-b border-r border-black/50 bg-[#18181b]/40 px-6 py-3.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[#18181b]/20">
                 <div className="flex items-center gap-5">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
@@ -262,7 +262,7 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="flex flex-col gap-1 px-4 pt-4">
+              <div className="flex flex-col gap-1.5 px-4 pt-6 pb-10">
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
@@ -319,16 +319,16 @@ export function GalleryInspirationGrid({
                 onContextMenu={(event) => event.preventDefault()}
                 className="relative mb-8 flex w-full flex-col"
               >
-                <div className="flex items-center justify-between bg-transparent px-4 py-3">
+                <div className="flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
                         src={item.artistAvatarUrl}
                         alt={artistName}
-                        className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-zinc-800 object-cover shadow-lg"
+                        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-white/10"
                       />
                     ) : (
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 shadow-lg">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 ring-1 ring-white/10">
                         {artistInitial}
                       </span>
                     )}
@@ -342,7 +342,7 @@ export function GalleryInspirationGrid({
                   <Link
                     href={profileHref}
                     data-gallery-action=""
-                    className="shrink-0 rounded-full border border-white/5 bg-zinc-800/50 px-3 py-1 text-xs font-bold text-orange-500 backdrop-blur-md transition-colors hover:border-orange-500/30 hover:bg-zinc-800/80"
+                    className="shrink-0 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-orange-500 backdrop-blur-md"
                   >
                     Visitar
                   </Link>
@@ -387,7 +387,7 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="relative z-30 mx-4 -mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-800/80 px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.8)] backdrop-blur-2xl">
+                <div className="relative z-30 mx-4 -mt-6 flex items-center justify-between rounded-2xl border-t border-l border-white/[0.08] border-b border-r border-black/50 bg-[#18181b]/40 px-6 py-3.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[#18181b]/20">
                   <div className="flex items-center gap-5">
                     {showLike ? (
                       <button
@@ -398,8 +398,8 @@ export function GalleryInspirationGrid({
                           toggleSaved(item.id);
                         }}
                         className={cn(
-                          'inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
-                          isSaved ? 'text-orange-500' : 'text-zinc-200'
+                          'inline-flex h-11 w-11 cursor-pointer items-center justify-center text-zinc-300 transition-all duration-300 hover:text-orange-500 hover:drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]',
+                          isSaved && 'text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]'
                         )}
                         aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
                         aria-pressed={isSaved}
@@ -415,19 +415,19 @@ export function GalleryInspirationGrid({
                         triggerHaptic('light');
                         onStartConversation?.(item.artistId, item.id);
                       }}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center text-zinc-300 transition-all duration-300 hover:text-orange-500 hover:drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]"
                       aria-label={t('galeria.startConversation')}
                     >
-                      <MessageCircle className="h-6 w-6 text-zinc-200" strokeWidth={1.75} />
+                      <MessageCircle className="h-6 w-6" strokeWidth={2} />
                     </button>
                     <button
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center text-zinc-300 transition-all duration-300 hover:text-orange-500 hover:drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]"
                       aria-label="Compartilhar"
                     >
-                      <Send className="h-6 w-6 text-zinc-200" strokeWidth={1.75} />
+                      <Send className="h-6 w-6" strokeWidth={2} />
                     </button>
                   </div>
                   <button
@@ -438,24 +438,24 @@ export function GalleryInspirationGrid({
                       toggleBookmarked(item.id);
                     }}
                     className={cn(
-                      'inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
-                      isBookmarked ? 'text-orange-500' : 'text-zinc-200'
+                      'inline-flex h-11 w-11 cursor-pointer items-center justify-center text-zinc-300 transition-all duration-300 hover:text-orange-500 hover:drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]',
+                      isBookmarked && 'text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]'
                     )}
                     aria-label="Salvar"
                     aria-pressed={isBookmarked}
                   >
                     <Bookmark
-                      className="h-6 w-6 text-zinc-200"
-                      strokeWidth={1.75}
+                      className="h-6 w-6"
+                      strokeWidth={2}
                       fill={isBookmarked ? 'currentColor' : 'none'}
                     />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1 px-4 pt-4">
-                  <p className="text-[13px] font-bold tracking-wide text-zinc-200">{likeLabel}</p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
-                    <span className="mr-2 text-[11px] font-bold uppercase tracking-wider text-zinc-100">
+                <div className="flex flex-col gap-1.5 px-4 pt-6 pb-10">
+                  <p className="text-sm font-semibold tracking-wide text-zinc-100">{likeLabel}</p>
+                  <p className="text-[13px] font-light leading-relaxed text-zinc-400">
+                    <span className="mr-2 font-bold text-zinc-100">
                       {artistName}
                     </span>
                     {caption}
