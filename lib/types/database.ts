@@ -59,8 +59,11 @@ export interface Agendamento {
   data_hora: string;
   status: 'rascunho' | 'aguardando_sinal' | 'confirmado' | 'cancelado' | 'concluido';
   valor_total: number;
+  valor_sinal?: number;
   sinal_pago: boolean;
   pagamento_restante_presencial?: boolean;
+  waiver_signed?: boolean;
+  session_status?: 'ACTION_NEEDED' | 'AWAITING_PAYMENT' | 'CONFIRMED' | 'COMPLETED' | null;
   version: number;
 }
 
