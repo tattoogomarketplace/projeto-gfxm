@@ -242,29 +242,29 @@ export function GalleryInspirationGrid({
       return (
         <div className="flex w-full flex-col" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
-            <article key={index} className="mb-6 flex w-full flex-col border-b border-zinc-900 pb-4">
-              <div className="flex items-center justify-between px-4 py-3">
+            <article key={index} className="mb-2 flex w-full flex-col">
+              <div className="flex items-center justify-between bg-gradient-to-b from-[#0a0a0a] to-transparent px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-9 w-9 rounded-full border border-zinc-800 shadow-lg" />
                   <div className="flex flex-col gap-1">
                     <Skeleton className="h-3 w-28" />
                     <Skeleton className="h-2.5 w-20" />
                   </div>
                 </div>
-                <Skeleton className="h-4 w-14" />
+                <Skeleton className="h-7 w-16 rounded-full" />
               </div>
               <Skeleton className="aspect-[4/5] w-full rounded-none bg-zinc-900" />
-              <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <div className="flex items-center gap-4">
+              <div className="relative z-20 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-zinc-900/60 px-6 py-3 shadow-2xl shadow-black/80 backdrop-blur-xl">
+                <div className="flex gap-6">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                 </div>
                 <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="flex flex-col gap-1 px-4">
+              <div className="flex flex-col px-4 pt-5 pb-8">
                 <Skeleton className="h-3 w-40" />
-                <Skeleton className="h-3 w-full" />
+                <Skeleton className="mt-1.5 h-3 w-full" />
               </div>
             </article>
           ))}
@@ -317,18 +317,18 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="mb-6 flex w-full flex-col border-b border-zinc-900 pb-4"
+                className="mb-2 flex w-full flex-col"
               >
-                <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between bg-gradient-to-b from-[#0a0a0a] to-transparent px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
                         src={item.artistAvatarUrl}
                         alt={artistName}
-                        className="h-8 w-8 shrink-0 overflow-hidden rounded-full object-cover"
+                        className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-zinc-800 object-cover shadow-lg"
                       />
                     ) : (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 shadow-lg">
                         {artistInitial}
                       </span>
                     )}
@@ -342,7 +342,7 @@ export function GalleryInspirationGrid({
                   <Link
                     href={profileHref}
                     data-gallery-action=""
-                    className="shrink-0 text-sm font-bold text-zinc-100 transition-colors hover:text-zinc-300"
+                    className="shrink-0 rounded-full border border-white/5 bg-zinc-800/50 px-3 py-1 text-xs font-bold text-orange-500 backdrop-blur-md transition-colors hover:border-orange-500/30 hover:bg-zinc-800/80"
                   >
                     Visitar
                   </Link>
@@ -387,8 +387,8 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                  <div className="flex items-center gap-4">
+                <div className="relative z-20 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-zinc-900/60 px-6 py-3 shadow-2xl shadow-black/80 backdrop-blur-xl">
+                  <div className="flex gap-6">
                     {showLike ? (
                       <button
                         type="button"
@@ -398,8 +398,8 @@ export function GalleryInspirationGrid({
                           toggleSaved(item.id);
                         }}
                         className={cn(
-                          'inline-flex h-11 w-11 items-center justify-center transition-colors hover:text-orange-500',
-                          isSaved ? 'text-orange-500' : 'text-zinc-100'
+                          'inline-flex h-11 w-11 items-center justify-center drop-shadow-md transition-colors hover:text-orange-500',
+                          isSaved ? 'text-orange-500' : 'text-zinc-300'
                         )}
                         aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
                         aria-pressed={isSaved}
@@ -415,7 +415,7 @@ export function GalleryInspirationGrid({
                         triggerHaptic('light');
                         onStartConversation?.(item.artistId, item.id);
                       }}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-100 transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-300 drop-shadow-md transition-colors hover:text-orange-500"
                       aria-label={t('galeria.startConversation')}
                     >
                       <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
@@ -424,7 +424,7 @@ export function GalleryInspirationGrid({
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-100 transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-300 drop-shadow-md transition-colors hover:text-orange-500"
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6" strokeWidth={1.75} />
@@ -438,8 +438,8 @@ export function GalleryInspirationGrid({
                       toggleBookmarked(item.id);
                     }}
                     className={cn(
-                      'inline-flex h-11 w-11 items-center justify-center transition-colors hover:text-orange-500',
-                      isBookmarked ? 'text-orange-500' : 'text-zinc-100'
+                      'inline-flex h-11 w-11 items-center justify-center drop-shadow-md transition-colors hover:text-orange-500',
+                      isBookmarked ? 'text-orange-500' : 'text-zinc-300'
                     )}
                     aria-label="Salvar"
                     aria-pressed={isBookmarked}
@@ -452,10 +452,12 @@ export function GalleryInspirationGrid({
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1 px-4">
-                  <p className="text-sm font-semibold text-zinc-100">{likeLabel}</p>
-                  <p className="text-sm leading-snug text-zinc-300">
-                    <span className="mr-2 font-bold text-zinc-100">{artistName}</span>
+                <div className="px-4 pt-5 pb-8">
+                  <p className="text-[13px] font-bold tracking-wide text-zinc-200">{likeLabel}</p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+                    <span className="mr-2 text-[11px] font-bold uppercase tracking-wider text-zinc-100">
+                      {artistName}
+                    </span>
                     {caption}
                   </p>
                 </div>

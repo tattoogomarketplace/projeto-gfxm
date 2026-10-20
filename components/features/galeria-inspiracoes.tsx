@@ -81,8 +81,8 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 text-white [-webkit-overflow-scrolling:touch]">
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-[#050505] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(249,115,22,0.05),rgba(255,255,255,0))] text-white [-webkit-overflow-scrolling:touch]">
+      <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-[#050505]/70 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
             <Images className="h-5 w-5" strokeWidth={1.75} />
