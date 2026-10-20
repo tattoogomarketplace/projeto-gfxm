@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronRight, MessageCircle, Star } from 'lucide-react';
 import { FeedbackCard, FeedbackCardSkeleton } from '@/components/features/feedback-card';
 import { HomeCarouselActionCard } from '@/components/features/home-carousel-action-card';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
@@ -68,13 +69,20 @@ export function HomeFeedbackCarousel() {
 
   return (
     <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-reviews">
-      <div className="space-y-1 px-0.5">
-        <h2 id="discover-reviews" className="text-base font-bold tracking-tight text-white">
-          {t('home.reviews')}
-        </h2>
-        <p className="text-[13px] font-medium leading-snug text-zinc-400">
-          {t('home.reviewsSubtitle')}
-        </p>
+      <div className="mb-4 flex w-full items-center justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <Star className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={1.9} aria-hidden />
+          <h2 id="discover-reviews" className="truncate text-lg font-bold text-zinc-100 md:text-xl">
+            {t('home.featuredReviews')}
+          </h2>
+        </div>
+        <Link
+          href="/dashboard/avaliacoes"
+          className="flex shrink-0 items-center gap-1 text-sm font-bold text-orange-500 transition-colors hover:text-orange-400"
+        >
+          {t('home.viewAll')}
+          <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+        </Link>
       </div>
 
       <ErrorBoundary

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { BadgeCheck, Compass, MapPin, Sparkles } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Compass, MapPin, Sparkles, type LucideIcon } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import {
   GalleryHapticPreview,
@@ -129,17 +129,45 @@ function SectionHeader({
   id,
   title,
   subtitle,
+  icon: Icon,
+  href,
+  ctaLabel,
 }: {
   id: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  href?: string;
+  ctaLabel?: string;
 }) {
+  if (href && Icon && ctaLabel) {
+    return (
+      <div className="mb-4 flex w-full items-center justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <Icon className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={1.9} aria-hidden />
+          <h2 id={id} className="truncate text-lg font-bold text-zinc-100 md:text-xl">
+            {title}
+          </h2>
+        </div>
+        <Link
+          href={href}
+          className="flex shrink-0 items-center gap-1 text-sm font-bold text-orange-500 transition-colors hover:text-orange-400"
+        >
+          {ctaLabel}
+          <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1 px-0.5">
       <h2 id={id} className="text-base font-bold tracking-tight text-white">
         {title}
       </h2>
-      <p className="text-[13px] font-medium leading-snug text-zinc-400">{subtitle}</p>
+      {subtitle ? (
+        <p className="text-[13px] font-medium leading-snug text-zinc-400">{subtitle}</p>
+      ) : null}
     </div>
   );
 }
@@ -320,7 +348,9 @@ export function HomeDiscover() {
         <SectionHeader
           id="discover-artists"
           title={t('home.featuredArtists')}
-          subtitle={t('home.featuredArtistsSubtitle')}
+          icon={Sparkles}
+          href="/dashboard/artistas"
+          ctaLabel={t('home.viewAll')}
         />
         <ErrorBoundary
           fallback={
@@ -475,7 +505,9 @@ export function HomeDiscover() {
         <SectionHeader
           id="discover-inspirations"
           title={t('home.inspirationGallery')}
-          subtitle={t('home.inspirationGallerySubtitle')}
+          icon={Compass}
+          href="/dashboard/galeria"
+          ctaLabel={t('home.viewAll')}
         />
         <GalleryInspirationGrid
           items={inspirations}
