@@ -8,8 +8,10 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Bookmark, MessageCircle, Send } from 'lucide-react';
 import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
@@ -40,6 +42,7 @@ type GalleryInspirationGridProps = {
   loading?: boolean;
   skeletonCount?: number;
   onExploreStyle?: (style: string) => void;
+  onStartConversation?: (tatuadorId: string, artworkId: string) => void;
   layout?: 'masonry' | 'carousel' | 'feed';
   showLike?: boolean;
   actionCard?: ReactNode;
@@ -53,6 +56,7 @@ export function GalleryInspirationGrid({
   loading = false,
   skeletonCount = 6,
   onExploreStyle,
+  onStartConversation,
   layout = 'masonry',
   showLike = true,
   actionCard,
@@ -62,6 +66,7 @@ export function GalleryInspirationGrid({
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
 
@@ -142,6 +147,23 @@ export function GalleryInspirationGrid({
     setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const toggleBookmarked = (id: string) => {
+    setBookmarked((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const shareInspiration = (item: InspirationItem) => {
+    triggerHaptic('light');
+    const href = artistProfileHref({ id: item.artistId, username: item.artistUsername });
+    const url = typeof window === 'undefined' ? href : `${window.location.origin}${href}`;
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      void navigator.share({ title: item.artistName, url }).catch(() => undefined);
+      return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText(url);
+    }
+  };
+
   const likeFromDoubleTap = useCallback(
     (id: string) => {
       cancelLongPress();
@@ -220,10 +242,31 @@ export function GalleryInspirationGrid({
       return (
         <div className="flex w-full flex-col" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
-            <Skeleton
-              key={index}
-              className="relative aspect-[4/5] w-full rounded-none border-b border-zinc-900 bg-zinc-900"
-            />
+            <article key={index} className="mb-6 flex w-full flex-col border-b border-zinc-900 pb-4">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <div className="flex flex-col gap-1">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-2.5 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <Skeleton className="aspect-[4/5] w-full rounded-none bg-zinc-900" />
+              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-6 w-6 rounded-md" />
+                  <Skeleton className="h-6 w-6 rounded-md" />
+                  <Skeleton className="h-6 w-6 rounded-md" />
+                </div>
+                <Skeleton className="h-6 w-6 rounded-md" />
+              </div>
+              <div className="flex flex-col gap-1 px-4">
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </article>
           ))}
         </div>
       );
@@ -253,6 +296,18 @@ export function GalleryInspirationGrid({
 
           if (isFeed) {
             const artistInitial = item.artistInitial || artistName.charAt(0) || 'A';
+            const profileHref = artistProfileHref({
+              id: item.artistId,
+              username: item.artistUsername,
+            });
+            const metaLine = [styleLabel(item.style), item.location].filter(Boolean).join(' · ');
+            const likeCount = item.likes + (isSaved ? 1 : 0);
+            const likeLabel = `Curtido por ${likeCount.toLocaleString('pt-BR')} pessoas`;
+            const caption =
+              item.description?.trim() ||
+              `${styleLabel(item.style)} disponível para orçamento.`;
+            const isBookmarked = Boolean(bookmarked[item.id]);
+
             return (
               <article
                 key={item.id}
@@ -262,11 +317,40 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative aspect-[4/5] w-full select-none overflow-hidden rounded-none border-b border-zinc-900 bg-zinc-900"
+                className="mb-6 flex w-full flex-col border-b border-zinc-900 pb-4"
               >
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {item.artistAvatarUrl ? (
+                      <OptimizedImage
+                        src={item.artistAvatarUrl}
+                        alt={artistName}
+                        className="h-8 w-8 shrink-0 overflow-hidden rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100">
+                        {artistInitial}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-zinc-100">{artistName}</p>
+                      {metaLine ? (
+                        <p className="truncate text-xs text-zinc-500">{metaLine}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Link
+                    href={profileHref}
+                    data-gallery-action=""
+                    className="shrink-0 text-sm font-bold text-zinc-100 transition-colors hover:text-zinc-300"
+                  >
+                    Visitar
+                  </Link>
+                </div>
+
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="absolute inset-0"
+                  className="relative aspect-[4/5] w-full bg-zinc-900"
                 >
                   <motion.div
                     layout="position"
@@ -303,46 +387,77 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="pointer-events-none absolute bottom-0 z-[4] h-1/2 w-full bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 z-10 flex items-end justify-between">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {item.artistAvatarUrl ? (
-                      <OptimizedImage
-                        src={item.artistAvatarUrl}
-                        alt={artistName}
-                        className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-zinc-700"
-                      />
-                    ) : (
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-sm font-semibold uppercase text-zinc-100">
-                        {artistInitial}
-                      </span>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-zinc-100">{artistName}</p>
-                      <p className="truncate text-xs text-zinc-400">{styleLabel(item.style)}</p>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-3">
+                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                  <div className="flex items-center gap-4">
                     {showLike ? (
-                      <TattooLikeButton
-                        liked={isSaved}
-                        onToggle={() => toggleSaved(item.id)}
-                        showCount={false}
-                        dataGalleryAction
-                        ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
-                        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-zinc-900/40 p-0 text-orange-500 backdrop-blur-md"
-                        iconClassName="h-5 w-5"
-                      />
+                      <button
+                        type="button"
+                        data-gallery-action=""
+                        onClick={() => {
+                          triggerHaptic('light');
+                          toggleSaved(item.id);
+                        }}
+                        className={cn(
+                          'inline-flex h-11 w-11 items-center justify-center transition-colors hover:text-orange-500',
+                          isSaved ? 'text-orange-500' : 'text-zinc-100'
+                        )}
+                        aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
+                        aria-pressed={isSaved}
+                      >
+                        <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6" />
+                      </button>
                     ) : null}
                     <button
                       type="button"
-                      onClick={(event) => handleInspirationClick(item, event)}
-                      className="rounded-full border border-white/10 bg-zinc-900/40 px-5 py-2 text-sm font-bold text-orange-500 backdrop-blur-md"
-                      aria-label={t('gallery.visitProfile')}
+                      data-gallery-action=""
+                      onClick={() => {
+                        if (!item.artistId) return;
+                        triggerHaptic('light');
+                        onStartConversation?.(item.artistId, item.id);
+                      }}
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-100 transition-colors hover:text-orange-500"
+                      aria-label={t('galeria.startConversation')}
                     >
-                      {t('gallery.visitProfile')}
+                      <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
+                    </button>
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      onClick={() => shareInspiration(item)}
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-100 transition-colors hover:text-orange-500"
+                      aria-label="Compartilhar"
+                    >
+                      <Send className="h-6 w-6" strokeWidth={1.75} />
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    data-gallery-action=""
+                    onClick={() => {
+                      triggerHaptic('light');
+                      toggleBookmarked(item.id);
+                    }}
+                    className={cn(
+                      'inline-flex h-11 w-11 items-center justify-center transition-colors hover:text-orange-500',
+                      isBookmarked ? 'text-orange-500' : 'text-zinc-100'
+                    )}
+                    aria-label="Salvar"
+                    aria-pressed={isBookmarked}
+                  >
+                    <Bookmark
+                      className="h-6 w-6"
+                      strokeWidth={1.75}
+                      fill={isBookmarked ? 'currentColor' : 'none'}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-1 px-4">
+                  <p className="text-sm font-semibold text-zinc-100">{likeLabel}</p>
+                  <p className="text-sm leading-snug text-zinc-300">
+                    <span className="mr-2 font-bold text-zinc-100">{artistName}</span>
+                    {caption}
+                  </p>
                 </div>
               </article>
             );

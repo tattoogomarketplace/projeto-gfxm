@@ -41,7 +41,6 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
 }
 
 export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
-  void onStartConversation;
   const { t } = useI18n();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
@@ -73,6 +72,8 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
             likes: item.likesCount,
             artistAvatarUrl: item.artist?.avatarUrl ?? null,
             artistInitial: item.artist?.initial,
+            location: item.location,
+            description: item.descricao,
           }))
         : PLACEHOLDER_INSPIRATIONS;
 
@@ -108,6 +109,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           layout="feed"
           showLike
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}
+          onStartConversation={onStartConversation}
         />
       </div>
     </div>
