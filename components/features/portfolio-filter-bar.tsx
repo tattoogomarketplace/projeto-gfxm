@@ -41,27 +41,21 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'flex min-h-11 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-xl border px-3 py-2 text-left backdrop-blur-md transition-all active:scale-[0.98]',
-        active
-          ? 'border-orange-500/60 bg-orange-500/15 text-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.24)]'
-          : 'border-black/[0.06] bg-white/60 text-neutral-700 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:border-orange-500/40 hover:text-neutral-900 dark:border-white/10 dark:bg-zinc-900/40 dark:text-zinc-300 dark:shadow-none dark:hover:border-orange-500/40 dark:hover:text-zinc-100'
+        'flex min-h-11 min-w-[110px] shrink-0 flex-col rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-left transition-colors active:scale-[0.98]',
+        active ? 'border-orange-500/60' : 'hover:border-zinc-700'
       )}
     >
-      <span className="min-w-0">
-        <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          {label}
-        </span>
-        <span className="mt-0.5 block truncate text-xs font-semibold tracking-tight">
-          {value ?? t('gallery.all')}
-        </span>
+      <span className="truncate text-[10px] font-bold uppercase text-zinc-500">{label}</span>
+      <span className="mt-0.5 flex items-center justify-between gap-2 text-sm text-zinc-200">
+        <span className="min-w-0 truncate">{value ?? t('gallery.all')}</span>
+        <ChevronDown
+          className={cn(
+            'h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform duration-200',
+            open && 'rotate-180 text-orange-400'
+          )}
+          strokeWidth={1.75}
+        />
       </span>
-      <ChevronDown
-        className={cn(
-          'h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200',
-          open && 'rotate-180 text-orange-400'
-        )}
-        strokeWidth={1.75}
-      />
     </button>
   );
 }
@@ -160,9 +154,9 @@ export function PortfolioFilterBar({
     healed === 'fresh' ? t('gallery.fresh') : healed === 'healed' ? t('gallery.healed') : null;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-full max-w-lg">
-        <div className="relative z-30 grid grid-cols-3 justify-center gap-2">
+    <div className="flex w-full flex-col">
+      <div className="relative w-full">
+        <div className="relative z-30 flex gap-3 overflow-x-auto pb-2 scrollbar-none">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
@@ -256,7 +250,7 @@ export function PortfolioFilterBar({
         <button
           type="button"
           onClick={clearFilters}
-          className="mt-2 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-black/[0.04] bg-white px-3.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:bg-white/[0.03] dark:text-zinc-400 dark:hover:text-orange-300"
+          className="mt-1 inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-xl px-1 text-xs font-semibold text-zinc-500 transition-colors hover:text-orange-400"
         >
           <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
           {t('gallery.clearFilters')}

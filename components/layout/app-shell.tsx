@@ -2,7 +2,6 @@
 
 import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Images } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
@@ -103,7 +102,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // Em ambos os estados do chat a barra superior é do próprio workspace (glass
   // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
   // no inbox, onde a dock permanece visível.
-  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda;
+  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda || isGaleria;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 
@@ -312,25 +311,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         )}
       >
         <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
-          {isGaleria ? (
-            <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-              <span className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
-                <Images className="h-5 w-5" strokeWidth={1.75} />
-              </span>
-              <div className="flex min-w-0 flex-col">
-                <h1 className="truncate text-[17px] font-semibold tracking-tight">
-                  {t('gallery.title')}
-                </h1>
-                <p className="truncate text-[12px] font-medium leading-snug text-zinc-500 dark:text-zinc-400">
-                  {t('gallery.subtitle')}
-                </p>
-              </div>
-            </div>
-          ) : (
             <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight">
               {headerTitle}
             </h1>
-          )}
           <div className="flex shrink-0 items-center gap-2">
             {!isOnline || pending > 0 ? (
               <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">

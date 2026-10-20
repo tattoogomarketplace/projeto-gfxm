@@ -42,6 +42,7 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
 
 export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
   void onStartConversation;
+  const { t } = useI18n();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
@@ -78,25 +79,31 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="space-y-4">
-      <div className="px-4">
-        <PortfolioFilterBar
-          style={style}
-          bodyPart={bodyPart}
-          healed={healed}
-          onStyleChange={setStyle}
-          onBodyPartChange={setBodyPart}
-          onHealingChange={setHealed}
+    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] text-white [-webkit-overflow-scrolling:touch]">
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-6 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <h1 className="text-2xl font-bold text-zinc-100">{t('gallery.title')}</h1>
+        <p className="mt-1 text-sm text-zinc-400">{t('gallery.subtitle')}</p>
+        <div className="mt-4">
+          <PortfolioFilterBar
+            style={style}
+            bodyPart={bodyPart}
+            healed={healed}
+            onStyleChange={setStyle}
+            onBodyPartChange={setBodyPart}
+            onHealingChange={setHealed}
+          />
+        </div>
+      </header>
+
+      <div className="flex flex-col gap-6 p-4">
+        <GalleryInspirationGrid
+          items={inspirations}
+          loading={loading}
+          skeletonCount={4}
+          layout="feed"
+          onExploreStyle={(nextStyle) => setStyle(nextStyle)}
         />
       </div>
-
-      <GalleryInspirationGrid
-        items={inspirations}
-        loading={loading}
-        skeletonCount={4}
-        layout="feed"
-        onExploreStyle={(nextStyle) => setStyle(nextStyle)}
-      />
     </div>
   );
 }
