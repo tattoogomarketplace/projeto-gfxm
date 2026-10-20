@@ -374,29 +374,16 @@ export function GalleryGridSkeleton({ className }: { className?: string }) {
 export function AuthFormSkeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn(
-        'form-page screen-fade-in relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background text-foreground',
-        className
-      )}
+      className={cn('w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8', className)}
       aria-hidden
       aria-busy="true"
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-36 pt-[max(1.25rem,env(safe-area-inset-top))] [-webkit-overflow-scrolling:touch]">
-        <div className="my-auto flex w-full max-w-md flex-col items-center">
-          <div className="w-full max-w-sm space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
-            <div className="flex flex-col items-center gap-2">
-              <Skeleton className="h-9 w-44 rounded-lg" />
-              <Skeleton className="h-4 w-52 rounded-full" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-[3.25rem] w-full rounded-lg" />
-              <Skeleton className="h-[3.25rem] w-full rounded-lg" />
-            </div>
-            <Skeleton className="h-[3.25rem] w-full rounded-lg" />
-            <Skeleton className="h-12 w-full rounded-lg" />
-          </div>
-        </div>
+      <div className="space-y-4">
+        <Skeleton className="h-[3.25rem] w-full rounded-lg" />
+        <Skeleton className="h-[3.25rem] w-full rounded-lg" />
       </div>
+      <Skeleton className="h-[3.25rem] w-full rounded-lg" />
+      <Skeleton className="h-12 w-full rounded-lg" />
     </div>
   );
 }

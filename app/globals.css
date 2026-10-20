@@ -871,3 +871,50 @@ html.splash-seen .splash-root {
   color: #f97316 !important;
 }
 
+.cl-rootBox,
+.cl-card,
+.cl-cardBox,
+.cl-main,
+.cl-footer,
+.cl-modalContent {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.cl-header,
+.cl-logoBox,
+.cl-logoImage {
+  display: none !important;
+}
+
+.cl-formFieldInput,
+.cl-otpCodeFieldInput {
+  background-color: #18181b !important;
+  border-color: #3f3f46 !important;
+  color: #fafafa !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: #f97316 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.4) !important;
+}
+
+.cl-footerActionText {
+  color: #71717a !important;
+}
+
+.cl-footerActionLink {
+  color: #f97316 !important;
+}
+
+.cl-modalBackdrop {
+  background-color: rgba(10, 10, 10, 0.92) !important;
+}
+
+html:has([data-auth-shell]),
+html:has([data-auth-shell]) body {
+  background-color: #0a0a0a !important;
+}
+

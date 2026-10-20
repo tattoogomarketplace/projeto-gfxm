@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { useMemo, useSyncExternalStore } from 'react';
+import { CLERK_DARK_LUXURY_APPEARANCE } from '@/lib/clerk/appearance';
 import { CLERK_LOCALIZATIONS } from '@/lib/i18n/clerk';
 import {
   getLocaleServerSnapshot,
@@ -21,6 +22,7 @@ export function LocalizedClerkProvider({ children }: { children: React.ReactNode
   return (
     <ClerkProvider
       localization={localization}
+      appearance={CLERK_DARK_LUXURY_APPEARANCE}
       signInUrl="/login"
       signUpUrl="/register"
       signInFallbackRedirectUrl="/"

@@ -581,7 +581,7 @@ export default function RegisterPage() {
           <span aria-hidden="true">&lt;</span>
           {t('common.back')}
         </Link>
-        <h1 className="text-2xl font-bold mb-6 text-center">{t('auth.registerTitle')} <span className="text-orange-500">{BRAND_NAME}</span></h1>
+        <h1 className="mb-6 text-center text-2xl font-bold">{t('auth.registerTitle')}</h1>
 
         {status === 'menor_14' && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-lg mb-6 text-sm text-center">
