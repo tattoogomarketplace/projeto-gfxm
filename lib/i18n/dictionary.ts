@@ -193,6 +193,9 @@ export const PT_BR: MessageDictionary = {
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Configurações e atividade',
   ...DISCOVERY_PT_BR,
+  'payments.payNow': 'Pagar Agora',
+  'payments.vaultEmpty': 'Nenhum pagamento em andamento',
+  'payments.vaultEmptyHint': 'Sinal e confirmações aparecerão aqui',
   'gallery.visitProfile': 'Visitar Perfil',
   'gallery.domainStyles': 'Estilos de Domínio',
 
@@ -351,6 +354,9 @@ export const EN: MessageDictionary = {
   'profile.title': 'Profile',
   'profile.settingsAndActivity': 'Settings and activity',
   ...DISCOVERY_EN,
+  'payments.payNow': 'Pay Now',
+  'payments.vaultEmpty': 'No payments in progress',
+  'payments.vaultEmptyHint': 'Deposits and confirmations will appear here',
   'gallery.visitProfile': 'Visit Profile',
   'gallery.domainStyles': 'Signature Styles',
 
@@ -509,6 +515,9 @@ export const ES: MessageDictionary = {
   'profile.title': 'Perfil',
   'profile.settingsAndActivity': 'Ajustes y actividad',
   ...DISCOVERY_ES,
+  'payments.payNow': 'Pagar ahora',
+  'payments.vaultEmpty': 'Ningún pago en curso',
+  'payments.vaultEmptyHint': 'Señal y confirmaciones aparecerán aquí',
   'gallery.visitProfile': 'Visitar Perfil',
   'gallery.domainStyles': 'Estilos de Dominio',
 

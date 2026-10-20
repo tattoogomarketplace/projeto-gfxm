@@ -2,21 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { TimelineCard } from '@/components/features/agenda-timeline-card';
-import { PaymentsPanel } from '@/components/features/payments-hub';
+import { PaymentsVault } from '@/components/features/payments-vault';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useI18n } from '@/hooks/use-i18n';
 import type { UserSession } from '@/lib/types/user-session';
-import type { AppRole } from '@/lib/utils/auth-redirect';
 
 type AgendaPane = 'agenda' | 'payments';
 
-export function ImmersiveAgenda({
-  sessions,
-  role,
-}: {
-  sessions: UserSession[];
-  role: AppRole;
-}) {
+export function ImmersiveAgenda({ sessions }: { sessions: UserSession[] }) {
   const { t } = useI18n();
   const [view, setView] = useState<AgendaPane>('agenda');
   const activeSessions = useMemo(
@@ -41,7 +34,7 @@ export function ImmersiveAgenda({
         </div>
       </header>
 
-      <div className={view === 'agenda' ? 'px-4 pt-5' : 'hidden'}>
+      <div className={view === 'agenda' ? 'w-full px-4 pt-5' : 'hidden'}>
         {activeSessions.length === 0 ? (
           <p className="px-2 py-16 text-center text-sm text-zinc-500">{t('agenda.empty')}</p>
         ) : (
@@ -49,8 +42,8 @@ export function ImmersiveAgenda({
         )}
       </div>
 
-      <div className={view === 'payments' ? 'px-4 pt-5' : 'hidden'}>
-        <PaymentsPanel role={role} />
+      <div className={view === 'payments' ? 'w-full px-4 pt-5' : 'hidden'}>
+        <PaymentsVault sessions={sessions} />
       </div>
     </div>
   );

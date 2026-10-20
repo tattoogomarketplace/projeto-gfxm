@@ -26,6 +26,7 @@ export interface ClientActionCTAProps {
   /** Destino após a ação simulada. Mantém o fluxo existente da plataforma. */
   readonly href?: string;
   readonly className?: string;
+  readonly label?: string;
 }
 
 const KIND_STYLE: Record<ClientActionKind, string> = {
@@ -35,7 +36,7 @@ const KIND_STYLE: Record<ClientActionKind, string> = {
 
 const SIMULATED_LATENCY_MS = 900;
 
-export function ClientActionCTA({ kind, href, className }: ClientActionCTAProps): ReactNode {
+export function ClientActionCTA({ kind, href, className, label: labelOverride }: ClientActionCTAProps): ReactNode {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const router = useRouter();
@@ -49,7 +50,8 @@ export function ClientActionCTA({ kind, href, className }: ClientActionCTAProps)
     []
   );
 
-  const label = kind === 'sign' ? t('clientAgenda.signTerm') : t('clientAgenda.payDeposit');
+  const label =
+    labelOverride ?? (kind === 'sign' ? t('clientAgenda.signTerm') : t('clientAgenda.payDeposit'));
   const busyLabel = kind === 'sign' ? t('clientAgenda.signing') : t('clientAgenda.paying');
   const Icon = kind === 'sign' ? PenLine : CreditCard;
 
