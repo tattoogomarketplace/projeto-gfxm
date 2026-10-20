@@ -36,26 +36,21 @@ import { cn } from '@/lib/utils';
  */
 
 const CARD_CLASS =
-  'flex flex-col overflow-hidden rounded-2xl border border-zinc-800/50 bg-zinc-900/40';
+  'flex flex-col overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-900/50';
 
 function HubSection({
   title,
-  subtitle,
   children,
 }: {
   title: string;
-  subtitle?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-y-2">
-      <div className="flex flex-col gap-y-0.5 px-1">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-          {title}
-        </h2>
-        {subtitle ? <p className="text-[11px] text-zinc-600">{subtitle}</p> : null}
-      </div>
-      <div className={cn(CARD_CLASS, 'divide-y divide-zinc-800/50')}>{children}</div>
+    <section className="flex flex-col">
+      <h2 className="mb-2 ml-4 mt-8 text-xs font-bold uppercase tracking-wider text-zinc-500">
+        {title}
+      </h2>
+      <div className={CARD_CLASS}>{children}</div>
     </section>
   );
 }
@@ -90,21 +85,23 @@ function HubRow({
 
   const inner = (
     <>
-      <span className="pointer-events-none flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/25 bg-orange-500/10 text-orange-400">
-        {icon}
-      </span>
-      <span className="pointer-events-none flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-semibold tracking-tight text-zinc-100">{label}</span>
-        {value ? (
-          <span className="mt-0.5 truncate text-[13px] leading-relaxed text-zinc-400">{value}</span>
-        ) : null}
-        {hint ? (
-          <span className="mt-0.5 text-xs leading-relaxed text-zinc-500">{hint}</span>
-        ) : null}
+      <span className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl bg-zinc-800/50 text-zinc-400">
+          {icon}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-sm font-semibold text-zinc-200">{label}</span>
+          {value ? (
+            <span className="mt-0.5 truncate text-xs text-zinc-500">{value}</span>
+          ) : null}
+          {hint ? (
+            <span className="mt-0.5 text-xs text-zinc-500">{hint}</span>
+          ) : null}
+        </span>
       </span>
       {chevron ? (
         <ChevronRight
-          className="pointer-events-none h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-600 transition-colors duration-200 group-hover:text-orange-400"
+          className="pointer-events-none h-5 w-5 min-h-5 min-w-5 shrink-0 text-zinc-600"
           strokeWidth={1.75}
         />
       ) : null}
@@ -112,7 +109,7 @@ function HubRow({
   );
 
   const classes =
-    'group flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 hover:bg-white/[0.03] active:bg-white/[0.05]';
+    'group flex w-full items-center justify-between gap-3 border-b border-zinc-800/50 bg-transparent p-4 text-left transition-colors last:border-0 active:bg-zinc-800/50';
 
   // Linhas interativas precisam de alvo de toque explícito e acima de qualquer
   // camada decorativa (ícones/gradientes) para nunca "engolir" o clique.
@@ -218,31 +215,21 @@ function MagneticUsernameBadge({ username }: { username: string }) {
       aria-label={`Copiar @${username}`}
       whileTap={{ scale: 0.94 }}
       transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.7 }}
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-800/80 bg-zinc-900/50 px-3 py-1 text-sm font-medium text-orange-500 backdrop-blur-sm transition-colors duration-200 hover:border-orange-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60"
+      className="relative mt-1 inline-flex cursor-pointer items-center justify-center text-center text-sm font-semibold text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/60"
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      <span className="relative flex h-4 w-4 min-h-4 min-w-4 items-center justify-center">
-        <AnimatePresence mode="wait" initial={false}>
-          {copied ? (
-            <motion.span
-              key="copied"
-              {...iconMotion}
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              <Check className="h-4 w-4 text-emerald-400" strokeWidth={2.25} />
-            </motion.span>
-          ) : (
-            <motion.span
-              key="copy"
-              {...iconMotion}
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              <AtSign className="h-4 w-4" strokeWidth={2} />
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </span>
-      <span className="leading-none">{username}</span>
+      <span className="leading-none">@{username}</span>
+      <AnimatePresence>
+        {copied ? (
+          <motion.span
+            key="copied"
+            {...iconMotion}
+            className="absolute -right-5 top-1/2 flex h-4 w-4 min-h-4 min-w-4 -translate-y-1/2 items-center justify-center"
+          >
+            <Check className="h-4 w-4 text-emerald-400" strokeWidth={2.25} />
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
     </motion.button>
   );
 }
@@ -321,35 +308,41 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 
   return (
     <>
-      <div className="gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
-        <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
+      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]">
+      <Link
+        href="/dashboard/perfil/configuracoes"
+        aria-label={t('settings.title')}
+        className="absolute right-6 top-6 z-20 text-zinc-400 transition-colors hover:text-zinc-200"
+      >
+        <Settings className="h-5 w-5" strokeWidth={1.75} />
+      </Link>
+      <div className="mx-auto flex w-full max-w-2xl flex-col px-4">
+        <header className="mt-4 flex flex-col items-center text-center">
           <AvatarUpload
             ref={avatarRef}
             src={currentAvatar}
             name={displayName || username || 'Avatar'}
-            size="lg"
+            size="xl"
+            className="mx-auto"
             ariaLabel="Gerenciar foto de perfil"
             onPress={handleAvatarPress}
             onSelect={onAvatarFile}
           />
 
-          <div className="flex flex-col items-center gap-y-1">
-            <h1 className="max-w-full truncate text-[22px] font-semibold tracking-tight text-zinc-50">
-              {displayName || t('profile.title')}
-            </h1>
-            {username ? (
-              <MagneticUsernameBadge username={username} />
-            ) : null}
-          </div>
+          <h1 className="mt-4 max-w-full truncate text-center text-xl font-bold text-zinc-100">
+            {displayName || t('profile.title')}
+          </h1>
+          {username ? <MagneticUsernameBadge username={username} /> : null}
 
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800/50 bg-zinc-900/40 px-3 py-1.5 text-[11px] font-medium text-zinc-400">
-            <Lock className="h-3.5 w-3.5 text-orange-400" strokeWidth={1.75} />
-            Identidade travada por 30 dias
-          </span>
+          <div className="mt-4 flex w-full justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/80 px-4 py-2">
+              <Lock className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.75} />
+              <span className="text-xs text-zinc-400">Identidade travada por 30 dias</span>
+            </span>
+          </div>
         </header>
 
-        <HubSection title="Conta" subtitle="Informações Pessoais">
+        <HubSection title="Conta">
           <HubRow
             icon={<User className="h-5 w-5" strokeWidth={1.75} />}
             label="Nome"
@@ -387,15 +380,17 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="group flex min-h-14 w-full items-center justify-center gap-2 px-4 py-3.5 text-sm font-semibold text-orange-400 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400 active:bg-red-500/[0.14] disabled:opacity-50"
+            className="group flex w-full items-center justify-between border-b border-zinc-800/50 bg-transparent p-4 text-left transition-colors last:border-0 active:bg-zinc-800/50 disabled:opacity-50"
           >
             {loggingOut ? (
               <TattooMachineLoader compact label={t('auth.signOut')} />
             ) : (
-              <>
-                <LogOut className="h-5 w-5" strokeWidth={1.75} />
-                Sair da Conta
-              </>
+              <span className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
+                <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl bg-zinc-800/50 text-orange-500">
+                  <LogOut className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <span className="text-sm font-semibold text-orange-500">Sair da Conta</span>
+              </span>
             )}
           </button>
         </HubSection>

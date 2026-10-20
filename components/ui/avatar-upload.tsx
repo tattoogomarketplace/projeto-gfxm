@@ -38,6 +38,11 @@ const SIZE_MAP = {
     glyph: 'h-16 w-16 min-h-16 min-w-16',
     icon: 'h-6 w-6 min-h-6 min-w-6',
   },
+  xl: {
+    box: 'h-24 w-24 min-h-24 min-w-24',
+    glyph: 'h-14 w-14 min-h-14 min-w-14',
+    icon: 'h-5 w-5 min-h-5 min-w-5',
+  },
 } as const;
 
 const TAU = Math.PI * 2;

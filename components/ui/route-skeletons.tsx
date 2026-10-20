@@ -195,22 +195,13 @@ export function ProfileSkeleton({
 }
 
 const CLIENT_HUB_CARD_CLASS =
-  'flex flex-col overflow-hidden rounded-2xl border border-zinc-800/50 bg-zinc-900/40';
+  'flex flex-col overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-900/50';
 
-function ClientHubSectionSkeleton({
-  children,
-  subtitle = false,
-}: {
-  children: ReactNode;
-  subtitle?: boolean;
-}) {
+function ClientHubSectionSkeleton({ children }: { children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-y-2">
-      <div className="flex flex-col gap-y-0.5 px-1">
-        <Skeleton className="h-[13px] w-16 rounded-md" />
-        {subtitle ? <Skeleton className="h-[13px] w-28 rounded-md" /> : null}
-      </div>
-      <div className={cn(CLIENT_HUB_CARD_CLASS, 'divide-y divide-zinc-800/50')}>{children}</div>
+    <section className="flex flex-col">
+      <Skeleton className="mb-2 ml-4 mt-8 h-3 w-16 rounded-md" />
+      <div className={CLIENT_HUB_CARD_CLASS}>{children}</div>
     </section>
   );
 }
@@ -223,11 +214,13 @@ function ClientHubRowSkeleton({
   chevron?: boolean;
 }) {
   return (
-    <div className="flex min-h-14 w-full items-center gap-3 px-4 py-3">
-      <Skeleton className="h-10 w-10 min-h-10 min-w-10 shrink-0 rounded-xl" />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <Skeleton className="h-5 w-28 rounded-md" />
-        {lines === 2 ? <Skeleton className="mt-0.5 h-4 w-44 rounded-md" /> : null}
+    <div className="flex w-full items-center justify-between border-b border-zinc-800/50 p-4 last:border-0">
+      <span className="flex min-w-0 flex-1 items-center gap-3">
+        <Skeleton className="h-10 w-10 min-h-10 min-w-10 shrink-0 rounded-xl" />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <Skeleton className="h-4 w-28 rounded-md" />
+          {lines === 2 ? <Skeleton className="mt-0.5 h-3 w-44 rounded-md" /> : null}
+        </span>
       </span>
       {chevron ? <Skeleton className="h-5 w-5 min-h-5 min-w-5 shrink-0 rounded-md" /> : null}
     </div>
@@ -238,23 +231,23 @@ export function ClientIdentitySkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-zinc-100 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out',
+        'relative flex h-full min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]',
         className
       )}
       aria-hidden
       aria-busy="true"
     >
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-y-8 px-4">
-        <header className="flex flex-col items-center gap-y-4 pt-2 text-center">
-          <Skeleton className="h-28 w-28 min-h-28 min-w-28 rounded-full" />
-          <div className="flex flex-col items-center gap-y-1">
-            <Skeleton className="h-[26px] w-40 rounded-md" />
-            <Skeleton className="h-7 w-24 rounded-full" />
+      <div className="mx-auto flex w-full max-w-2xl flex-col px-4">
+        <header className="mt-4 flex flex-col items-center text-center">
+          <Skeleton className="mx-auto h-24 w-24 min-h-24 min-w-24 rounded-full" />
+          <Skeleton className="mt-4 h-7 w-52 rounded-md" />
+          <Skeleton className="mt-1 h-4 w-24 rounded-md" />
+          <div className="mt-4 flex w-full justify-center">
+            <Skeleton className="h-8 w-56 rounded-full" />
           </div>
-          <Skeleton className="h-7 w-44 rounded-full" />
         </header>
 
-        <ClientHubSectionSkeleton subtitle>
+        <ClientHubSectionSkeleton>
           <ClientHubRowSkeleton lines={2} />
         </ClientHubSectionSkeleton>
 
@@ -268,8 +261,11 @@ export function ClientIdentitySkeleton({ className }: { className?: string }) {
         </ClientHubSectionSkeleton>
 
         <ClientHubSectionSkeleton>
-          <div className="flex min-h-14 w-full items-center justify-center px-4 py-3.5">
-            <Skeleton className="h-5 w-24 rounded-md" />
+          <div className="flex w-full items-center border-b border-zinc-800/50 p-4 last:border-0">
+            <span className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 min-h-10 min-w-10 rounded-xl" />
+              <Skeleton className="h-4 w-28 rounded-md" />
+            </span>
           </div>
         </ClientHubSectionSkeleton>
       </div>

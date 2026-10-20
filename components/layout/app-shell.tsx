@@ -102,7 +102,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // Em ambos os estados do chat a barra superior é do próprio workspace (glass
   // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
   // no inbox, onde a dock permanece visível.
-  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda || isGaleria;
+  const hideShellHeader =
+    hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda || isGaleria || isProfileSettings;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 
@@ -295,7 +296,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // shell (largura, altura, paddings) jamais mudam e nada "salta" no primeiro
   // frame após a hidratação.
   const isSelfScrollingRoute =
-    hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria || isArtistProfile || isAgenda;
+    hideShellChrome ||
+    isDedicatedChat ||
+    isSettingsHub ||
+    isGaleria ||
+    isArtistProfile ||
+    isAgenda ||
+    isProfileSettings;
 
   return (
     // A unidade de viewport (`100dvh`) é propriedade EXCLUSIVA do layout raiz
