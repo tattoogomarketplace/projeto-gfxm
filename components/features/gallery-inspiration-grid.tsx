@@ -243,7 +243,7 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="relative mb-12 flex w-full flex-col bg-transparent"
+                className="relative mb-12 flex w-full flex-col bg-transparent px-0"
             >
               <div className="mb-3 flex w-full items-center justify-between px-4">
                 <div className="flex items-center gap-3">
@@ -255,10 +255,8 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-8 w-[5.5rem] rounded-full" />
               </div>
-              <div className="px-4">
-                <Skeleton className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl" />
-              </div>
-              <div className="mt-3 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl">
+              <Skeleton className="relative aspect-[4/5] w-full overflow-hidden rounded-none border-y border-white/5 bg-zinc-950 shadow-2xl sm:rounded-3xl" />
+              <div className="mt-3 mx-0 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
                 <div className="flex items-center gap-8">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
@@ -320,7 +318,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative mb-12 flex w-full flex-col bg-transparent"
+              className="relative mb-12 flex w-full flex-col bg-transparent px-0"
               >
                 <div className="mb-3 flex w-full items-center justify-between px-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -353,11 +351,10 @@ export function GalleryInspirationGrid({
                   </Link>
                 </div>
 
-                <div className="px-4">
-                  <div
-                    onPointerUp={handleFeedImagePointerUp(item)}
-                    className="relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-zinc-950 shadow-2xl"
-                  >
+                <div
+                  onPointerUp={handleFeedImagePointerUp(item)}
+                  className="relative aspect-[4/5] w-full overflow-hidden rounded-none border-y border-white/5 bg-zinc-950 shadow-2xl sm:rounded-3xl"
+                >
                     <motion.div
                       layout="position"
                       layoutId={galleryPreviewLayoutId(item.id)}
@@ -392,9 +389,8 @@ export function GalleryInspirationGrid({
                       </AnimatePresence>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-3 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl">
+                <div className="mt-3 mx-0 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
                   <div className="flex items-center gap-8">
                     {showLike ? (
                       <button
