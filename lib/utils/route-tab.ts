@@ -27,5 +27,6 @@ export function tabFromPathname(pathname: string): AppTab | null {
   if (pathname.startsWith('/dashboard/perfil')) return 'perfil';
   if (pathname.startsWith('/dashboard/chat')) return 'chat';
   if (pathname.startsWith('/dashboard/pagamentos')) return 'agendar';
+  if (pathname.startsWith('/dashboard/agenda')) return 'agendar';
   return null;
 }

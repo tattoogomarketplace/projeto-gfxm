@@ -112,6 +112,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       '/dashboard/perfil',
       '/dashboard/galeria',
       '/dashboard/pagamentos',
+      '/dashboard/agenda',
       `${homePath}?tab=portfolio`,
       `${homePath}?tab=agendar`,
     ];
@@ -164,7 +165,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
               ? '/dashboard/perfil'
               : item.tab === 'chat'
                 ? '/dashboard/chat'
-                : `${homePath}?tab=${item.tab}`;
+                : item.tab === 'agendar'
+                  ? '/dashboard/agenda'
+                  : `${homePath}?tab=${item.tab}`;
           return (
             <li key={item.tab} className="flex">
               <Link

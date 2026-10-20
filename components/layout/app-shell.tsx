@@ -73,6 +73,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
   const isGaleria = pathname.startsWith('/dashboard/galeria');
   const isPagamentos = pathname.startsWith('/dashboard/pagamentos');
+  const isAgenda = pathname.startsWith('/dashboard/agenda');
   const isMapa = pathname.startsWith('/dashboard/mapa');
   const isArtistProfile =
     pathname.startsWith('/dashboard/artista/') ||
@@ -102,7 +103,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // Em ambos os estados do chat a barra superior é do próprio workspace (glass
   // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
   // no inbox, onde a dock permanece visível.
-  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile;
+  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 
@@ -224,7 +225,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     ? 'perfil'
     : isDedicatedChat
       ? 'chat'
-      : isPagamentos
+      : isPagamentos || isAgenda
         ? 'agendar'
         : routeTab === 'perfil'
           ? 'portfolio'
@@ -274,6 +275,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           router.push('/dashboard/chat');
           return;
         }
+        if (tab === 'agendar') {
+          setActiveTab('agendar');
+          router.push('/dashboard/agenda');
+          return;
+        }
         setActiveTab(tab);
         const params = new URLSearchParams(window.location.search);
         params.set('tab', tab);
@@ -290,7 +296,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // shell (largura, altura, paddings) jamais mudam e nada "salta" no primeiro
   // frame após a hidratação.
   const isSelfScrollingRoute =
-    hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria || isArtistProfile;
+    hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria || isArtistProfile || isAgenda;
 
   return (
     // A unidade de viewport (`100dvh`) é propriedade EXCLUSIVA do layout raiz
