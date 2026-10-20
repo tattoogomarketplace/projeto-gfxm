@@ -14,7 +14,7 @@ export default async function GaleriaPage() {
   }
   if (!perfil) return <SessionHydrating />;
   return (
-    <div className="min-h-[100dvh] w-full overflow-y-auto bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a0a03] via-[#050505] to-black pb-[calc(env(safe-area-inset-bottom)+8rem)]">
+    <div className="min-h-[100dvh] w-full bg-[#030303] bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(249,115,22,0.06),rgba(0,0,0,0))] pb-[calc(env(safe-area-inset-bottom)+8rem)] overflow-y-auto">
       <GaleriaClient />
     </div>
   );

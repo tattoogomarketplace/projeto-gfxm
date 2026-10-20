@@ -2,7 +2,7 @@ export default function GaleriaLoading() {
   return (
     <div
       aria-hidden
-      className="min-h-[100dvh] w-full overflow-y-auto bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a0a03] via-[#050505] to-black pb-[calc(env(safe-area-inset-bottom)+8rem)]"
+      className="min-h-[100dvh] w-full bg-[#030303] bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(249,115,22,0.06),rgba(0,0,0,0))] pb-[calc(env(safe-area-inset-bottom)+8rem)] overflow-y-auto"
     >
       <div className="sticky top-0 z-40 border-b border-white/[0.04] bg-black/40 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
@@ -16,7 +16,7 @@ export default function GaleriaLoading() {
         </div>
       </div>
       <div className="flex w-full flex-col px-0">
-        <article className="relative mb-12 flex w-full flex-col bg-transparent px-0">
+        <article className="flex flex-col w-full mb-10 pb-10 border-b border-white/[0.04] relative">
           <div className="mb-3 flex w-full items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-zinc-800 object-cover ring-1 ring-white/10" />
