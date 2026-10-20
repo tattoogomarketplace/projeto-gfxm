@@ -34,6 +34,18 @@ const CHROME_HIDDEN_PREFIXES = [
   '/dashboard/mapa',
 ] as const;
 
+const MACHINE_TRIGGER_HIDDEN_PREFIXES = [
+  ...CHROME_HIDDEN_PREFIXES,
+  '/dashboard/galeria',
+] as const;
+
+export function isPersistentMachineTriggerVisible(pathname: string): boolean {
+  if (!pathname.startsWith('/dashboard')) return false;
+  return !MACHINE_TRIGGER_HIDDEN_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function isPersistentChromeVisible(pathname: string): boolean {
   if (!pathname.startsWith('/dashboard')) return false;
   return !CHROME_HIDDEN_PREFIXES.some(
@@ -44,16 +56,17 @@ export function isPersistentChromeVisible(pathname: string): boolean {
 function PersistentAppChromeBase() {
   const pathname = usePathname();
   const visible = isPersistentChromeVisible(pathname);
+  const machineVisible = isPersistentMachineTriggerVisible(pathname);
   const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
   return (
     <>
       <div
-        aria-hidden={!visible}
+        aria-hidden={!machineVisible}
         className={cn(
           'fixed right-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[65]',
-          !visible && 'invisible pointer-events-none'
+          !machineVisible && 'invisible pointer-events-none'
         )}
       >
         <TattooMachineMenuTrigger

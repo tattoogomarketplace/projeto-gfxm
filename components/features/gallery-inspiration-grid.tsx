@@ -218,11 +218,11 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex w-full flex-col gap-8 p-4" aria-hidden>
+        <div className="flex w-full flex-col" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <Skeleton
               key={index}
-              className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
+              className="relative aspect-[4/5] w-full rounded-none border-b border-zinc-900 bg-zinc-900"
             />
           ))}
         </div>
@@ -244,7 +244,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col gap-8 p-4' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -252,6 +252,7 @@ export function GalleryInspirationGrid({
           const artistName = item.artistName || t('welcome.artistFallback');
 
           if (isFeed) {
+            const artistInitial = item.artistInitial || artistName.charAt(0) || 'A';
             return (
               <article
                 key={item.id}
@@ -261,7 +262,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 select-none"
+                className="relative aspect-[4/5] w-full select-none overflow-hidden rounded-none border-b border-zinc-900 bg-zinc-900"
               >
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
@@ -300,8 +301,29 @@ export function GalleryInspirationGrid({
                       ) : null}
                     </AnimatePresence>
                   </div>
-                  {showLike ? (
-                    <div className="absolute right-4 top-4 z-10">
+                </div>
+
+                <div className="pointer-events-none absolute bottom-0 z-[4] h-1/2 w-full bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 z-10 flex items-end justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {item.artistAvatarUrl ? (
+                      <OptimizedImage
+                        src={item.artistAvatarUrl}
+                        alt={artistName}
+                        className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-zinc-700"
+                      />
+                    ) : (
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-sm font-semibold uppercase text-zinc-100">
+                        {artistInitial}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-zinc-100">{artistName}</p>
+                      <p className="truncate text-xs text-zinc-400">{styleLabel(item.style)}</p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-3">
+                    {showLike ? (
                       <TattooLikeButton
                         liked={isSaved}
                         onToggle={() => toggleSaved(item.id)}
@@ -311,19 +333,17 @@ export function GalleryInspirationGrid({
                         className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-zinc-900/40 p-0 text-orange-500 backdrop-blur-md"
                         iconClassName="h-5 w-5"
                       />
-                    </div>
-                  ) : null}
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={(event) => handleInspirationClick(item, event)}
+                      className="rounded-full border border-white/10 bg-zinc-900/40 px-5 py-2 text-sm font-bold text-orange-500 backdrop-blur-md"
+                      aria-label={t('gallery.visitProfile')}
+                    >
+                      {t('gallery.visitProfile')}
+                    </button>
+                  </div>
                 </div>
-
-                <div className="pointer-events-none absolute bottom-0 z-[4] h-1/3 w-full bg-gradient-to-t from-black/80 to-transparent" />
-                <button
-                  type="button"
-                  onClick={(event) => handleInspirationClick(item, event)}
-                  className="absolute bottom-4 right-4 z-10 rounded-full border border-white/10 bg-zinc-900/40 px-5 py-2 text-sm font-bold text-orange-500 backdrop-blur-md"
-                  aria-label={t('gallery.visitProfile')}
-                >
-                  {t('gallery.visitProfile')}
-                </button>
               </article>
             );
           }

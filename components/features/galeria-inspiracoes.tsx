@@ -80,11 +80,15 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] text-white [-webkit-overflow-scrolling:touch]">
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-6 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <h1 className="text-2xl font-bold text-zinc-100">{t('gallery.title')}</h1>
-        <p className="mt-1 text-sm text-zinc-400">{t('gallery.subtitle')}</p>
-        <div className="mt-4">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 text-white [-webkit-overflow-scrolling:touch]">
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
+            <Images className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+          <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
+        </div>
+        <div className="px-4 pb-2">
           <PortfolioFilterBar
             style={style}
             bodyPart={bodyPart}
@@ -96,7 +100,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </div>
       </header>
 
-      <div className="w-full">
+      <div className="flex w-full flex-col px-0 pb-24">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
