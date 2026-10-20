@@ -74,6 +74,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isGaleria = pathname.startsWith('/dashboard/galeria');
   const isPagamentos = pathname.startsWith('/dashboard/pagamentos');
   const isMapa = pathname.startsWith('/dashboard/mapa');
+  const isArtistProfile =
+    pathname.startsWith('/dashboard/artista/') ||
+    /^\/dashboard\/artistas\/.+/.test(pathname);
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
@@ -99,7 +102,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // Em ambos os estados do chat a barra superior é do próprio workspace (glass
   // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
   // no inbox, onde a dock permanece visível.
-  const hideShellHeader = hideShellChrome || isDedicatedChat;
+  const hideShellHeader = hideShellChrome || isDedicatedChat || isArtistProfile;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 
@@ -287,7 +290,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // shell (largura, altura, paddings) jamais mudam e nada "salta" no primeiro
   // frame após a hidratação.
   const isSelfScrollingRoute =
-    hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria;
+    hideShellChrome || isDedicatedChat || isSettingsHub || isGaleria || isArtistProfile;
 
   return (
     // A unidade de viewport (`100dvh`) é propriedade EXCLUSIVA do layout raiz

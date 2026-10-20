@@ -5,6 +5,7 @@ import { BadgeCheck, Sparkles } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useI18n } from '@/hooks/use-i18n';
 import { REVIEW_FEATURED_ARTISTS } from '@/lib/review-mock';
+import { artistProfileHref } from '@/lib/artist-profile';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 const ARTISTS = [
@@ -32,7 +33,7 @@ export default function ArtistasClient() {
         {ARTISTS.map((artist) => (
           <li key={artist.id}>
             <Link
-              href="/dashboard/galeria"
+              href={artistProfileHref(artist)}
               className="flex h-full flex-col items-center gap-2 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-4 text-center transition-colors hover:border-orange-500/40"
             >
               <span className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900">

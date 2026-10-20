@@ -26,6 +26,7 @@ import {
   type InspirationItem,
 } from '@/lib/gallery-mock';
 import { PORTFOLIO_STYLES, portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { artistProfileHref } from '@/lib/artist-profile';
 import { cn } from '@/lib/utils';
 import type { GaleriaItem } from '@/lib/types/galeria';
 
@@ -181,8 +182,7 @@ function ArtistCardSkeleton() {
 }
 
 function artistDestination(artist: DiscoverArtist): string {
-  if (artist.placeholder || !artist.id) return '/dashboard/artistas';
-  return `/profile/${encodeURIComponent(artist.id)}`;
+  return artistProfileHref(artist);
 }
 
 export function HomeDiscover() {
@@ -263,11 +263,7 @@ export function HomeDiscover() {
     (item: GalleryPreviewItem) => {
       setArtistPreview(null);
       triggerHaptic('light');
-      router.push(
-        item.artistId
-          ? `/profile/${encodeURIComponent(item.artistId)}`
-          : '/dashboard/artistas'
-      );
+      router.push(artistProfileHref({ id: item.artistId }));
     },
     [router, triggerHaptic]
   );

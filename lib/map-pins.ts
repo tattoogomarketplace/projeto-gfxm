@@ -1,4 +1,5 @@
 import { PLACEHOLDER_REVIEWS } from '@/lib/review-mock';
+import { artistProfileHref } from '@/lib/artist-profile';
 import type { NearbyArtistDto } from '@/lib/types/geo';
 
 export type MapArtistPin = NearbyArtistDto & {
@@ -27,8 +28,7 @@ export function toMapArtistPins(artists: NearbyArtistDto[]): MapArtistPin[] {
 }
 
 export function mapArtistProfileHref(artistId: string): string {
-  if (!artistId || artistId.startsWith('ph-')) return '/dashboard/artistas';
-  return `/dashboard/artista/${encodeURIComponent(artistId)}`;
+  return artistProfileHref({ id: artistId });
 }
 
 export const SAO_PAULO_ORIGIN = {

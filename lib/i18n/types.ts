@@ -872,6 +872,7 @@ export type MessageKey =
   | 'vitrine.portfolio'
   | 'vitrine.empty'
   | 'vitrine.bookThis'
+  | 'vitrine.requestQuote'
   | 'flash.aria'
   | 'flash.empty'
   | 'flash.benchStatus'

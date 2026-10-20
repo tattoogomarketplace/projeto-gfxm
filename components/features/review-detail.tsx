@@ -10,6 +10,7 @@ import { TattooLikeButton } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { artistProfileHref } from '@/lib/artist-profile';
 import type { ReviewDto } from '@/lib/types/review';
 
 type ReviewDetailProps = {
@@ -109,11 +110,7 @@ export function ReviewDetail({ review }: ReviewDetailProps) {
             type="button"
             onClick={() => {
               triggerHaptic('light');
-              router.push(
-                review.targetId?.startsWith('ph-')
-                  ? '/dashboard/artistas'
-                  : `/profile/${encodeURIComponent(review.targetId)}`
-              );
+              router.push(artistProfileHref({ id: review.targetId }));
             }}
             className="flex items-center gap-3 rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-3 text-left transition-colors hover:border-orange-500/40"
           >

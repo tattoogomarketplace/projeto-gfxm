@@ -2,16 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CalendarDays, MapPin, MessageCircle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarDays, Star } from 'lucide-react';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { NeonButton } from '@/components/ui/neon-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
-import { weekdayKey } from '@/lib/working-hours';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import { cn } from '@/lib/utils';
@@ -26,29 +24,15 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const { styleLabel, bodyPartLabel, sessionDurationLabel } = portfolioLabelResolver(t);
   const { triggerHaptic } = useHapticFeedback();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
-  const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
   const role = useAuthStore((s) => s.role);
 
-  const { artist, items, scheduleSummary, availableSlots } = vitrine;
+  const { artist, items, availableSlots } = vitrine;
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingArtworkId, setBookingArtworkId] = useState<string | undefined>();
-  const location = useMemo(() => {
-    if (artist.cidade && artist.estado) return `${artist.cidade}/${artist.estado}`;
-    return artist.cidade || null;
-  }, [artist.cidade, artist.estado]);
   const bookingArtwork = useMemo(
     () => items.find((item) => item.id === bookingArtworkId) ?? null,
     [items, bookingArtworkId]
   );
-
-  const openChat = (artworkId?: string) => {
-    triggerHaptic('light');
-    setPendingChatPeer(artist.id);
-    setActiveTab('chat');
-    const params = new URLSearchParams({ artistId: artist.id });
-    if (artworkId) params.set('artworkId', artworkId);
-    router.push(`/dashboard/chat?${params.toString()}`);
-  };
 
   const openBooking = (artworkId?: string) => {
     triggerHaptic('medium');
@@ -56,92 +40,100 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
     setBookingOpen(true);
   };
 
-  return (
-    <div className="relative overflow-x-hidden bg-transparent pt-5 text-gray-900 dark:text-white">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="relative mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-neutral-500 hover:text-orange-500 dark:text-zinc-400 dark:hover:text-orange-300"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t('common.back')}
-      </button>
+  const goBack = () => {
+    triggerHaptic('light');
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push('/dashboard/artistas');
+  };
 
-      <header className="relative overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
-        <div className="relative flex items-start gap-4">
-          <span className="flex h-16 w-16 min-h-16 min-w-16 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/10 text-2xl font-semibold uppercase text-orange-500 dark:text-orange-400">
-            {artist.initial}
+  const handle = artist.username ? `@${artist.username}` : null;
+  const ratingLabel = artist.reviewCount > 0 ? artist.rating.toFixed(1) : '—';
+
+  return (
+    <div className="relative overflow-x-hidden bg-zinc-950 pb-24 text-white">
+      <header className="relative">
+        <div className="relative h-48 w-full md:h-64">
+          {artist.coverUrl ? (
+            <OptimizedImage
+              src={artist.coverUrl}
+              alt={artist.name || t('welcome.artistFallback')}
+              className="h-full w-full"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-zinc-800 via-zinc-950 to-orange-950/40" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-black/20" />
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label={t('common.back')}
+            className="absolute left-4 top-[env(safe-area-inset-top)] z-20 inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-zinc-950/70 text-white backdrop-blur-md"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
+          </button>
+          <span className="absolute -bottom-8 left-6 z-20 flex h-24 w-24 overflow-hidden rounded-full border-4 border-zinc-950 bg-zinc-900">
+            {artist.avatarUrl ? (
+              <OptimizedImage
+                src={artist.avatarUrl}
+                alt={artist.name || t('welcome.artistFallback')}
+                className="h-full w-full rounded-full"
+              />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-2xl font-semibold uppercase text-orange-400">
+                {artist.initial}
+              </span>
+            )}
           </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
-              {t('vitrine.badge')}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-              {artist.name || t('welcome.artistFallback')}
-            </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              {artist.kycApproved ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
-                  <ShieldCheck className="h-3 w-3" strokeWidth={1.75} />
-                  {t('vitrine.kycApproved')}
-                </span>
-              ) : (
-                <span className="rounded-full border border-black/[0.04] bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-500">
-                  {t('vitrine.kycReview')}
-                </span>
-              )}
-            </div>
-            <p className="mt-1 truncate text-sm text-neutral-600 dark:text-zinc-400">
-              {artist.studio
-                ? artist.studio.name || t('studio.fallback')
-                : t('vitrine.independent')}
-            </p>
-            {location ? (
-              <p className="mt-2 flex items-center gap-1 text-xs text-neutral-500 dark:text-zinc-500">
-                <MapPin className="h-3.5 w-3.5" strokeWidth={1.75} />
-                {location}
-              </p>
-            ) : null}
-          </div>
         </div>
 
-        {scheduleSummary.length > 0 ? (
-          <div className="relative mt-4 flex flex-wrap gap-1.5">
-            {scheduleSummary.slice(0, 4).map((item) => (
+        <div className="px-6 pt-10">
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="truncate text-2xl font-bold text-zinc-100">
+              {artist.name || t('welcome.artistFallback')}
+            </h1>
+            {artist.kycApproved ? (
+              <BadgeCheck className="h-5 w-5 shrink-0 text-orange-400" strokeWidth={2.2} />
+            ) : null}
+          </div>
+          {handle ? (
+            <p className="mt-1 truncate text-sm text-zinc-400">{handle}</p>
+          ) : (
+            <p className="mt-1 truncate text-sm text-zinc-400">
+              {artist.studio?.name || t('vitrine.independent')}
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="inline-flex min-h-8 items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 text-[12px] font-medium text-zinc-200">
+              <Star className="h-3.5 w-3.5 fill-orange-400 text-orange-400" strokeWidth={1.75} />
+              {ratingLabel}
+            </span>
+            <span className="inline-flex min-h-8 items-center rounded-full border border-zinc-800 bg-zinc-900/70 px-3 text-[12px] font-medium text-zinc-300">
+              {artist.reviewCount} {t('home.reviews')}
+            </span>
+            {artist.styles.map((style) => (
               <span
-                key={item.day}
-                className="rounded-full border border-black/[0.04] bg-neutral-50 px-2.5 py-1 text-[10px] font-medium text-neutral-600 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-400"
+                key={style}
+                className="inline-flex min-h-8 items-center rounded-full border border-zinc-800 bg-zinc-900/70 px-3 text-[12px] font-medium text-zinc-300"
               >
-                {t(weekdayKey(item.day))} · {item.start}–{item.end}
+                {styleLabel(style)}
               </span>
             ))}
           </div>
-        ) : null}
 
-        <div className="relative mt-5 grid gap-2 sm:grid-cols-2">
-          <NeonButton
-            type="button"
-            disabled={!artist.bookingEnabled}
-            onClick={() => openBooking()}
-            className="w-full"
-          >
-            <span className="inline-flex items-center justify-center gap-2">
-              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-              {artist.bookingEnabled ? t('vitrine.bookSession') : t('vitrine.agendaUnavailable')}
-            </span>
-          </NeonButton>
           <button
             type="button"
-            onClick={() => openChat()}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-orange-500/40 bg-orange-500/10 px-6 py-3 text-sm font-semibold text-orange-600 transition-all hover:bg-orange-500/20 active:scale-95 dark:text-orange-300"
+            className="mt-5 flex min-h-12 w-full items-center justify-center rounded-2xl bg-orange-500 px-4 text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
           >
-            <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
-            {t('vitrine.chat')}
+            {t('vitrine.requestQuote')}
           </button>
         </div>
       </header>
 
-      <section className="relative mt-6 space-y-3">
+      <section className="relative mt-8 space-y-3 px-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
           {t('vitrine.portfolio')}
         </h2>

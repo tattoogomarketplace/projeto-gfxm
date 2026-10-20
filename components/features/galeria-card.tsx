@@ -10,6 +10,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { artistProfileHref } from '@/lib/artist-profile';
 import type { GaleriaItem } from '@/lib/types/galeria';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +31,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
 
   const openArtistProfile = () => {
     triggerHaptic('light');
-    router.push(`/profile/${encodeURIComponent(item.tatuadorId)}`);
+    router.push(artistProfileHref({ id: item.tatuadorId }));
   };
 
   const artistName = item.artist?.name || t('welcome.artistFallback');

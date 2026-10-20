@@ -23,6 +23,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { artistProfileHref } from '@/lib/artist-profile';
 import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
@@ -127,7 +128,7 @@ export function GalleryInspirationGrid({
   const openInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
     router.push(
-      item.artistId ? `/profile/${encodeURIComponent(item.artistId)}` : '/dashboard/galeria'
+      item.artistId ? artistProfileHref({ id: item.artistId }) : '/dashboard/galeria'
     );
   };
 
@@ -185,7 +186,7 @@ export function GalleryInspirationGrid({
       triggerHaptic('light');
       router.push(
         item.artistId
-          ? `/profile/${encodeURIComponent(item.artistId)}`
+          ? artistProfileHref({ id: item.artistId })
           : '/dashboard/galeria'
       );
     },
