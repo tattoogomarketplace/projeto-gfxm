@@ -1,14 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, BadgeCheck, Star } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, MapPin, Star } from 'lucide-react';
+import { FeedbackCard } from '@/components/features/feedback-card';
+import { reviewDestination } from '@/components/features/home-feedback-carousel';
+import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
+import type { GeoAddress } from '@/lib/types/geo';
+import type { ReviewDto } from '@/lib/types/review';
 import { cn } from '@/lib/utils';
 
 type ProfileTab = 'portfolio' | 'reviews' | 'about';
@@ -23,8 +29,10 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const { styleLabel } = portfolioLabelResolver(t);
   const { triggerHaptic } = useHapticFeedback();
 
-  const { artist, items } = vitrine;
+  const { artist, items, reviews } = vitrine;
   const [activeTab, setActiveTab] = useState<ProfileTab>('portfolio');
+  const [preview, setPreview] = useState<ReviewDto | null>(null);
+  const longPress = useLongPressPreview();
 
   const goBack = () => {
     triggerHaptic('light');
@@ -37,6 +45,41 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
   const handle = artist.username ? `@${artist.username}` : null;
   const ratingLabel = artist.reviewCount > 0 ? artist.rating.toFixed(1) : '—';
+  const addressLabel = formatArtistAddress(artist.address, artist.cidade, artist.estado);
+  const hasCoordinates = artist.latitude != null && artist.longitude != null;
+  const bio = [
+    artist.studio?.name || t('vitrine.independent'),
+    artist.styles.map((style) => styleLabel(style)).filter(Boolean).join(' · '),
+    addressLabel,
+  ]
+    .filter(Boolean)
+    .join('. ');
+
+  const firePreview = (review: ReviewDto) => {
+    if (!review?.id) return;
+    triggerHaptic('medium');
+    setPreview(review);
+  };
+
+  const openReview = (
+    review: ReviewDto,
+    event?: { preventDefault: () => void; stopPropagation: () => void }
+  ) => {
+    if (longPress.consumeClick(event)) return;
+    triggerHaptic('light');
+    router.push(reviewDestination(review));
+  };
+
+  const dismissPreview = useCallback(() => setPreview(null), []);
+
+  const viewFullReview = useCallback(
+    (review: ReviewDto) => {
+      setPreview(null);
+      triggerHaptic('light');
+      router.push(reviewDestination(review));
+    },
+    [router, triggerHaptic]
+  );
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-24 text-white [-webkit-overflow-scrolling:touch]">
@@ -157,8 +200,8 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         </div>
       </nav>
 
-      {activeTab === 'portfolio' ? (
-        items.length === 0 ? (
+      <div className={activeTab === 'portfolio' ? undefined : 'hidden'}>
+        {items.length === 0 ? (
           <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-sm text-zinc-500">
             {t('vitrine.empty')}
           </div>
@@ -176,12 +219,96 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
               </li>
             ))}
           </ul>
-        )
-      ) : (
-        <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-sm text-zinc-500">
-          {t('vitrine.empty')}
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className={activeTab === 'reviews' ? undefined : 'hidden'}>
+        {reviews.length === 0 ? (
+          <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-sm text-zinc-500">
+            {t('home.noFeaturedReviews')}
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-4 p-4">
+            {reviews.map((review) => (
+              <li key={review.id} className="w-full">
+                <FeedbackCard
+                  review={review}
+                  className="w-full"
+                  onOpen={(event) => openReview(review, event)}
+                  onPointerDown={longPress.start(() => firePreview(review))}
+                  onPointerMove={longPress.move}
+                  onPointerUp={longPress.cancel}
+                  onPointerCancel={longPress.cancel}
+                  onPointerLeave={longPress.cancel}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div
+        className={cn(
+          'min-h-[50vh] flex-col gap-6 p-6 leading-relaxed text-zinc-300',
+          activeTab === 'about' ? 'flex' : 'hidden'
+        )}
+      >
+        <p>{bio || t('profile.bioEmpty')}</p>
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-400">
+            {t('vitrine.location')}
+          </h2>
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/50 backdrop-blur-xl">
+            <div className="relative flex min-h-36 items-center gap-3 bg-gradient-to-br from-zinc-800 via-zinc-950 to-orange-950/30 px-4 py-5">
+              <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/15 text-orange-400">
+                <MapPin className="h-5 w-5" strokeWidth={1.9} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm leading-relaxed text-zinc-200">
+                  {addressLabel || t('vitrine.independent')}
+                </p>
+                {hasCoordinates ? (
+                  <p className="mt-1 text-[11px] tabular-nums text-zinc-500">
+                    {artist.latitude?.toFixed(5)}, {artist.longitude?.toFixed(5)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                router.push('/dashboard/mapa');
+              }}
+              className="flex min-h-11 w-full items-center justify-center border-t border-white/10 px-4 text-[13px] font-semibold text-orange-300"
+            >
+              {t('vitrine.viewOnMap')}
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <ReviewHapticPreview
+        review={preview}
+        onDismiss={dismissPreview}
+        onViewFull={viewFullReview}
+      />
     </div>
   );
+}
+
+function formatArtistAddress(
+  address: GeoAddress | null,
+  cidade: string | null,
+  estado: string | null
+): string {
+  if (address) {
+    const line = [address.street, address.city, address.state, address.zip]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(', ');
+    if (line) return line;
+  }
+  if (cidade && estado) return `${cidade}/${estado}`;
+  return cidade || estado || '';
 }

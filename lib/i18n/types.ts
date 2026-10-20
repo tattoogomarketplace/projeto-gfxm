@@ -875,6 +875,8 @@ export type MessageKey =
   | 'vitrine.requestQuote'
   | 'vitrine.reviews'
   | 'vitrine.about'
+  | 'vitrine.location'
+  | 'vitrine.viewOnMap'
   | 'flash.aria'
   | 'flash.empty'
   | 'flash.benchStatus'

@@ -78,7 +78,7 @@ function boundingBox(lat: number, lng: number, radiusKm: number) {
   };
 }
 
-function parseAddress(raw: unknown, fallbackCity: string | null, fallbackState: string | null): GeoAddress | null {
+export function parseAddress(raw: unknown, fallbackCity: string | null, fallbackState: string | null): GeoAddress | null {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const record = raw as Record<string, unknown>;
     const street = typeof record.street === 'string' ? record.street.trim() : '';

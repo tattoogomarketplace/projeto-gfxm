@@ -1,10 +1,14 @@
 import { artistProfileHref } from '@/lib/artist-profile';
 import { PLACEHOLDER_INSPIRATIONS } from '@/lib/gallery-mock';
+import { FEATURED_ARTIST_GEO } from '@/lib/geo-mock';
 import { prisma } from '@/lib/prisma';
 import { PLACEHOLDER_REVIEWS, REVIEW_FEATURED_ARTISTS } from '@/lib/review-mock';
 import { getArtistSchedule } from '@/lib/services/artist-schedule';
+import { parseAddress } from '@/lib/services/geo';
 import { getArtistReviews } from '@/lib/services/reviews';
 import type { PortfolioItemDto } from '@/lib/portfolio-metadata';
+import type { GeoAddress } from '@/lib/types/geo';
+import type { ReviewDto } from '@/lib/types/review';
 import { normalizeUsername, USERNAME_MAX_LENGTH, USERNAME_PATTERN } from '@/lib/username';
 import { listUpcomingSlots, type WeekdayId, type WorkingHoursSchedule } from '@/lib/working-hours';
 
@@ -43,6 +47,9 @@ export type PublicArtistProfile = {
   rating: number;
   reviewCount: number;
   styles: string[];
+  latitude: number | null;
+  longitude: number | null;
+  address: GeoAddress | null;
 };
 
 export type PublicArtistScheduleSummary = {
@@ -54,6 +61,7 @@ export type PublicArtistScheduleSummary = {
 export type PublicArtistVitrine = {
   artist: PublicArtistProfile;
   items: PortfolioItemDto[];
+  reviews: ReviewDto[];
   scheduleSummary: PublicArtistScheduleSummary[];
   availableSlots: string[];
 };
@@ -137,6 +145,10 @@ function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
       ? 0
       : Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / count) * 10) / 10;
   const coverUrl = items[0]?.imageUrl ?? null;
+  const featuredKey = (Object.keys(REVIEW_FEATURED_ARTISTS) as Array<keyof typeof REVIEW_FEATURED_ARTISTS>).find(
+    (key) => REVIEW_FEATURED_ARTISTS[key].id === featured.id
+  );
+  const geo = featuredKey ? FEATURED_ARTIST_GEO[featuredKey] : null;
   return {
     artist: {
       id: featured.id,
@@ -145,16 +157,20 @@ function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
       initial: featured.initial,
       avatarUrl: featured.avatarUrl,
       coverUrl,
-      cidade: null,
-      estado: null,
+      cidade: geo?.address.city ?? null,
+      estado: geo?.address.state ?? null,
       studio: null,
       kycApproved: true,
       bookingEnabled: false,
       rating,
       reviewCount: count,
       styles,
+      latitude: geo?.latitude ?? null,
+      longitude: geo?.longitude ?? null,
+      address: geo?.address ?? null,
     },
     items,
+    reviews,
     scheduleSummary: [],
     availableSlots: [],
   };
@@ -198,6 +214,9 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       username: true,
       cidade: true,
       estado: true,
+      latitude: true,
+      longitude: true,
+      address: true,
       kyc_status: true,
       agenda_bloqueada: true,
       studio: {
@@ -238,8 +257,9 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
   let availableSlots: string[] = [];
   let rating = 0;
   let reviewCount = 0;
+  let reviews: ReviewDto[] = [];
   try {
-    const [schedule, reviews] = await Promise.all([
+    const [schedule, reviewPayload] = await Promise.all([
       getArtistSchedule(artistId),
       getArtistReviews(artistId),
     ]);
@@ -251,11 +271,18 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
         limit: 12,
       });
     }
-    rating = reviews.summary.averageRating;
-    reviewCount = reviews.summary.count;
+    rating = reviewPayload.summary.averageRating;
+    reviewCount = reviewPayload.summary.count;
+    reviews = reviewPayload.reviews;
   } catch {
     scheduleSummary = [];
     availableSlots = [];
+    reviews = PLACEHOLDER_REVIEWS.filter((review) => review.targetId === artistId);
+    reviewCount = reviews.length;
+    rating =
+      reviewCount === 0
+        ? 0
+        : Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount) * 10) / 10;
   }
 
   return {
@@ -274,6 +301,9 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       rating,
       reviewCount,
       styles: uniqueStyles(rows),
+      latitude: artist.latitude,
+      longitude: artist.longitude,
+      address: parseAddress(artist.address, artist.cidade, artist.estado),
     },
     items: rows.map((row) => ({
       id: row.id,
@@ -287,6 +317,7 @@ export async function getPublicArtistVitrine(artistIdRaw: string): Promise<Publi
       likesCount: row.likes_count,
       descricao: row.descricao,
     })),
+    reviews,
     scheduleSummary,
     availableSlots,
   };
