@@ -4,11 +4,17 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
-import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
 import { useGaleria } from '@/hooks/use-galeria';
+import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
+import {
+  PORTFOLIO_BODY_PARTS,
+  PORTFOLIO_STYLES,
+  portfolioLabelResolver,
+} from '@/lib/portfolio-metadata';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
+import { cn } from '@/lib/utils';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
@@ -40,9 +46,18 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
   );
 }
 
+const CHIP_CLASS =
+  'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium backdrop-blur-md transition-all duration-200 active:scale-[0.96]';
+const CHIP_ACTIVE =
+  'border-orange-500/60 bg-orange-500/15 font-semibold text-orange-300 shadow-[0_0_18px_rgba(249,115,22,0.25)]';
+const CHIP_IDLE =
+  'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-orange-500/40 hover:text-orange-300';
+
 export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
   void onStartConversation;
   const { t } = useI18n();
+  const { triggerHaptic } = useHapticFeedback();
+  const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
@@ -81,27 +96,79 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] text-white [-webkit-overflow-scrolling:touch]">
-      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-6 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <h1 className="text-2xl font-bold text-zinc-100">{t('gallery.title')}</h1>
-        <p className="mt-1 text-sm text-zinc-400">{t('gallery.subtitle')}</p>
-        <div className="mt-4">
-          <PortfolioFilterBar
-            style={style}
-            bodyPart={bodyPart}
-            healed={healed}
-            onStyleChange={setStyle}
-            onBodyPartChange={setBodyPart}
-            onHealingChange={setHealed}
-          />
+      <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-neutral-950/55 px-4 pb-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="flex items-center gap-2">
+          <Images className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={1.9} aria-hidden />
+          <h1 className="truncate text-lg font-bold text-zinc-100 md:text-xl">{t('gallery.title')}</h1>
+        </div>
+        <div className="mt-3 flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setStyle('');
+              setBodyPart('');
+              setHealed('all');
+            }}
+            className={cn(CHIP_CLASS, !style && !bodyPart && healed === 'all' ? CHIP_ACTIVE : CHIP_IDLE)}
+          >
+            {t('gallery.all')}
+          </button>
+          {PORTFOLIO_STYLES.map((item) => (
+            <button
+              key={`style-${item}`}
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setStyle(style === item ? '' : item);
+              }}
+              className={cn(CHIP_CLASS, style === item ? CHIP_ACTIVE : CHIP_IDLE)}
+            >
+              {styleLabel(item)}
+            </button>
+          ))}
+          {PORTFOLIO_BODY_PARTS.map((item) => (
+            <button
+              key={`body-${item}`}
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setBodyPart(bodyPart === item ? '' : item);
+              }}
+              className={cn(CHIP_CLASS, bodyPart === item ? CHIP_ACTIVE : CHIP_IDLE)}
+            >
+              {bodyPartLabel(item)}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setHealed(healed === 'fresh' ? 'all' : 'fresh');
+            }}
+            className={cn(CHIP_CLASS, healed === 'fresh' ? CHIP_ACTIVE : CHIP_IDLE)}
+          >
+            {t('gallery.fresh')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              setHealed(healed === 'healed' ? 'all' : 'healed');
+            }}
+            className={cn(CHIP_CLASS, healed === 'healed' ? CHIP_ACTIVE : CHIP_IDLE)}
+          >
+            {t('gallery.healed')}
+          </button>
         </div>
       </header>
 
-      <div className="min-w-0 w-full flex-1 overflow-x-hidden p-4">
+      <div className="flex flex-col gap-6 p-4">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
           skeletonCount={4}
-          layout="feed"
+          layout="masonry"
           showLike
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}
         />
