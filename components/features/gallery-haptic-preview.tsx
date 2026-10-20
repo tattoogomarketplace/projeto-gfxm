@@ -21,6 +21,7 @@ export type GalleryPreviewItem = {
   style: string;
   artistName: string;
   artistId: string | null;
+  artistUsername?: string | null;
   likes: number;
   kind?: 'artwork' | 'artist';
   verified?: boolean;

@@ -180,7 +180,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   'text-[10px] font-medium leading-none tracking-tight',
                   'active:scale-90 transition-transform duration-200',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
-                  active ? 'text-orange-400' : 'text-zinc-500'
+                  active ? 'text-orange-500' : 'text-zinc-500'
                 )}
                 aria-current={active ? 'page' : undefined}
               >

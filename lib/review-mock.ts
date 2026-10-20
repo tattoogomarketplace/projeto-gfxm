@@ -8,6 +8,7 @@ export const REVIEW_FEATURED_ARTISTS = {
   marina: {
     id: 'ph-marina',
     name: 'Marina Costa',
+    username: 'marina_costa',
     role: 'tatuador' as const,
     avatarUrl:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
@@ -16,6 +17,7 @@ export const REVIEW_FEATURED_ARTISTS = {
   rafael: {
     id: 'ph-rafael',
     name: 'Rafael Lima',
+    username: 'rafael_lima',
     role: 'tatuador' as const,
     avatarUrl:
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop',
@@ -24,6 +26,7 @@ export const REVIEW_FEATURED_ARTISTS = {
   bianca: {
     id: 'ph-bianca',
     name: 'Bianca Souza',
+    username: 'bianca_souza',
     role: 'tatuador' as const,
     avatarUrl:
       'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
@@ -32,6 +35,7 @@ export const REVIEW_FEATURED_ARTISTS = {
   diego: {
     id: 'ph-diego',
     name: 'Diego Martins',
+    username: 'diego_martins',
     role: 'tatuador' as const,
     avatarUrl:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&q=80&auto=format&fit=crop',
@@ -40,10 +44,20 @@ export const REVIEW_FEATURED_ARTISTS = {
   camila: {
     id: 'ph-camila',
     name: 'Camila Rocha',
+    username: 'camila_rocha',
     role: 'tatuador' as const,
     avatarUrl:
       'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
     initial: 'C',
+  },
+  lucas: {
+    id: 'ph-lucas',
+    name: 'Lucas Ferreira',
+    username: 'lucas_ferreira',
+    role: 'tatuador' as const,
+    avatarUrl:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&q=80&auto=format&fit=crop',
+    initial: 'L',
   },
 } as const;
 

@@ -126,7 +126,11 @@ function mockPortfolioItems(artistId: string, artistName: string): PortfolioItem
 }
 
 function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
-  const featured = Object.values(REVIEW_FEATURED_ARTISTS).find((artist) => artist.id === identifier);
+  const needle = identifier.trim().toLowerCase();
+  const featured = Object.values(REVIEW_FEATURED_ARTISTS).find((artist) => {
+    const username = 'username' in artist ? String(artist.username ?? '').toLowerCase() : '';
+    return artist.id === identifier || (username !== '' && username === needle);
+  });
   if (!featured) return null;
   const reviews = PLACEHOLDER_REVIEWS.filter((review) => review.targetId === featured.id);
   const items = mockPortfolioItems(featured.id, featured.name);
@@ -153,7 +157,7 @@ function featuredMockVitrine(identifier: string): PublicArtistVitrine | null {
     artist: {
       id: featured.id,
       name: featured.name,
-      username: null,
+      username: 'username' in featured ? featured.username ?? null : null,
       initial: featured.initial,
       avatarUrl: featured.avatarUrl,
       coverUrl,

@@ -1,6 +1,7 @@
 export type GaleriaArtist = {
   id: string;
   name: string;
+  username?: string | null;
   avatarUrl: string | null;
   initial: string;
   cidade: string | null;

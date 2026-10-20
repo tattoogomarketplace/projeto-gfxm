@@ -31,7 +31,7 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
 
   const openArtistProfile = () => {
     triggerHaptic('light');
-    router.push(artistProfileHref({ id: item.tatuadorId }));
+    router.push(artistProfileHref({ id: item.tatuadorId, username: item.artist?.username }));
   };
 
   const artistName = item.artist?.name || t('welcome.artistFallback');

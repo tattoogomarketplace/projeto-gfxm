@@ -86,7 +86,7 @@ function HubRow({
   const inner = (
     <>
       <span className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
-        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl bg-zinc-800/50 text-zinc-400">
+        <span className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400">
           {icon}
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
@@ -312,7 +312,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       <Link
         href="/dashboard/perfil/configuracoes"
         aria-label={t('settings.title')}
-        className="absolute right-6 top-6 z-20 text-zinc-400 transition-colors hover:text-zinc-200"
+        className="absolute right-6 top-6 z-20 text-orange-400 transition-colors hover:text-orange-300"
       >
         <Settings className="h-5 w-5" strokeWidth={1.75} />
       </Link>
@@ -336,7 +336,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 
           <div className="mt-4 flex w-full justify-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/80 px-4 py-2">
-              <Lock className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.75} />
+              <Lock className="h-3.5 w-3.5 text-orange-400" strokeWidth={1.75} />
               <span className="text-xs text-zinc-400">Identidade travada por 30 dias</span>
             </span>
           </div>

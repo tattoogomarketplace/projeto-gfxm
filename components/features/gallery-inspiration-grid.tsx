@@ -127,7 +127,7 @@ export function GalleryInspirationGrid({
 
   const openInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
-    router.push(artistProfileHref({ id: item.artistId }));
+    router.push(artistProfileHref({ id: item.artistId, username: item.artistUsername }));
   };
 
   const handleInspirationClick = (
@@ -183,8 +183,8 @@ export function GalleryInspirationGrid({
       setPreview(null);
       triggerHaptic('light');
       router.push(
-        item.artistId
-          ? artistProfileHref({ id: item.artistId })
+        item.artistId || item.artistUsername
+          ? artistProfileHref({ id: item.artistId, username: item.artistUsername })
           : '/dashboard/galeria'
       );
     },
@@ -229,11 +229,11 @@ export function GalleryInspirationGrid({
       );
     }
     return (
-      <div className="columns-2 gap-4" aria-hidden>
+      <div className="w-full min-w-0 columns-2 gap-3 sm:gap-4" aria-hidden>
         {Array.from({ length: skeletonCount }, (_, index) => (
           <Skeleton
             key={index}
-            className={cn('mb-4 w-full break-inside-avoid rounded-xl', aspectFor(index))}
+            className={cn('mb-3 w-full max-w-full break-inside-avoid rounded-xl sm:mb-4', aspectFor(index))}
           />
         ))}
       </div>
@@ -244,7 +244,11 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col gap-6' : 'columns-2 gap-4'
+          isCarousel
+            ? CAROUSEL_CLASS
+            : isFeed
+              ? 'flex w-full min-w-0 flex-col gap-5'
+              : 'w-full min-w-0 columns-2 gap-3 sm:gap-4'
         }
       >
         {items.map((item, index) => {
@@ -262,7 +266,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative aspect-[4/5] w-full select-none overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
+                className="relative aspect-[4/5] w-full max-w-full min-w-0 select-none overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
               >
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
@@ -295,17 +299,30 @@ export function GalleryInspirationGrid({
                         >
                           <TattooMachineLikeGlyph
                             liked
-                            className="h-16 w-16 text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+                            className="h-16 w-16 text-orange-500 drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
                           />
                         </motion.span>
                       ) : null}
                     </AnimatePresence>
                   </div>
+                  {showLike ? (
+                    <div className="absolute right-3 top-3 z-[5]">
+                      <TattooLikeButton
+                        liked={isSaved}
+                        onToggle={() => toggleSaved(item.id)}
+                        showCount={false}
+                        dataGalleryAction
+                        ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
+                        className="h-11 w-11 min-h-11 min-w-11 border border-orange-500/40 bg-black/55 p-0 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.28)] backdrop-blur-md"
+                        iconClassName="h-5 w-5"
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="pointer-events-none absolute bottom-0 z-[4] flex h-1/2 w-full items-end bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent p-5">
-                  <div className="pointer-events-auto flex w-full items-center gap-3">
-                    <span className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-800 bg-zinc-900 text-sm font-semibold uppercase text-orange-400">
+                  <div className="pointer-events-auto flex w-full min-w-0 items-center gap-3">
+                    <span className="flex h-12 w-12 min-h-12 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-800 bg-zinc-900 text-sm font-semibold uppercase text-orange-400">
                       {item.artistAvatarUrl ? (
                         <OptimizedImage
                           src={item.artistAvatarUrl}
@@ -325,7 +342,7 @@ export function GalleryInspirationGrid({
                     <button
                       type="button"
                       onClick={(event) => handleInspirationClick(item, event)}
-                      className="shrink-0 rounded-full bg-zinc-800/50 px-4 py-2 text-sm font-semibold text-orange-500 backdrop-blur-md"
+                      className="shrink-0 rounded-full border border-orange-500/40 bg-orange-500/15 px-4 py-2 text-sm font-semibold text-orange-400 backdrop-blur-md"
                       aria-label={t('gallery.visitProfile')}
                     >
                       {t('gallery.visitProfile')}
@@ -346,10 +363,10 @@ export function GalleryInspirationGrid({
               onPointerLeave={cancelLongPress}
               onContextMenu={(event) => event.preventDefault()}
               className={cn(
-                'group relative select-none overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
+                'group relative max-w-full min-w-0 select-none overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
                 isCarousel
                   ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start'
-                  : cn('mb-4 break-inside-avoid', aspectFor(index))
+                  : cn('mb-3 w-full break-inside-avoid sm:mb-4', aspectFor(index))
               )}
             >
               <motion.div
@@ -384,8 +401,8 @@ export function GalleryInspirationGrid({
                     showCount={false}
                     dataGalleryAction
                     ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
-                    className="pointer-events-auto h-9 w-9 min-h-9 min-w-9 border border-white/15 bg-black/50 p-0 text-white backdrop-blur-md"
-                    iconClassName="h-[17px] w-[17px]"
+                    className="pointer-events-auto h-10 w-10 min-h-10 min-w-10 border border-orange-500/40 bg-black/55 p-0 text-orange-500 backdrop-blur-md"
+                    iconClassName="h-[18px] w-[18px]"
                   />
                 ) : null}
               </div>

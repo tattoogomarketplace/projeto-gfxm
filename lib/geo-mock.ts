@@ -61,6 +61,16 @@ export const FEATURED_ARTIST_GEO: Record<
       zip: '04534-002',
     },
   },
+  lucas: {
+    latitude: -23.57318,
+    longitude: -46.64192,
+    address: {
+      street: 'Rua da Consolação, 2423',
+      city: 'São Paulo',
+      state: 'SP',
+      zip: '01301-100',
+    },
+  },
 };
 
 export const PLACEHOLDER_NEARBY_ARTISTS: Omit<NearbyArtistDto, 'distanceKm'>[] = (

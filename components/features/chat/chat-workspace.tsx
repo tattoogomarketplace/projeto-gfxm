@@ -321,7 +321,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
       triggerHaptic('light');
       resetViewportScale({ forceBlur: true });
       forceViewportRecalibration();
-      router.push(`/profile/${encodeURIComponent(handle)}`);
+      router.push(`/dashboard/artistas/${encodeURIComponent(handle)}`);
     },
     [router, triggerHaptic]
   );
@@ -354,7 +354,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
         </div>
         {empty ? (
           <div className="flex flex-col items-center justify-center mt-20 px-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-orange-400/70">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
               {isBudget ? (
                 <FileText className="h-6 w-6" strokeWidth={1.6} aria-hidden />
               ) : (

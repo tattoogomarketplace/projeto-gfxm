@@ -69,6 +69,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
             style: item.style,
             artistName: item.artist?.name || '',
             artistId: item.tatuadorId,
+            artistUsername: item.artist?.username ?? null,
             likes: item.likesCount,
             artistAvatarUrl: item.artist?.avatarUrl ?? null,
             artistInitial: item.artist?.initial,
@@ -95,12 +96,13 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </div>
       </header>
 
-      <div className="flex flex-col gap-6 p-4">
+      <div className="min-w-0 w-full flex-1 overflow-x-hidden p-4">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
           skeletonCount={4}
           layout="feed"
+          showLike
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}
         />
       </div>

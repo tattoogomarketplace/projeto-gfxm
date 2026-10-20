@@ -54,6 +54,7 @@ const STICKY_FILTER_CLASS =
 type DiscoverArtist = {
   id: string;
   name: string;
+  username?: string | null;
   specialty: string;
   avatarUrl: string | null;
   initial: string;
@@ -65,6 +66,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-marina',
     name: 'Marina Costa',
+    username: 'marina_costa',
     specialty: 'Fine Line',
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
     initial: 'M',
@@ -74,6 +76,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-rafael',
     name: 'Rafael Lima',
+    username: 'rafael_lima',
     specialty: 'Realismo',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop',
     initial: 'R',
@@ -83,6 +86,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-bianca',
     name: 'Bianca Souza',
+    username: 'bianca_souza',
     specialty: 'Blackwork',
     avatarUrl: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
     initial: 'B',
@@ -92,6 +96,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-diego',
     name: 'Diego Martins',
+    username: 'diego_martins',
     specialty: 'Old School',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&q=80&auto=format&fit=crop',
     initial: 'D',
@@ -101,6 +106,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-camila',
     name: 'Camila Rocha',
+    username: 'camila_rocha',
     specialty: 'Minimalista',
     avatarUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
     initial: 'C',
@@ -110,6 +116,7 @@ const PLACEHOLDER_ARTISTS: DiscoverArtist[] = [
   {
     id: 'ph-lucas',
     name: 'Lucas Ferreira',
+    username: 'lucas_ferreira',
     specialty: 'Geometrico',
     avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&q=80&auto=format&fit=crop',
     initial: 'L',
@@ -147,6 +154,7 @@ function deriveArtists(items: GaleriaItem[]): DiscoverArtist[] {
       entry = {
         id: key,
         name: item.artist?.name || '',
+        username: item.artist?.username ?? null,
         specialty: item.style || '',
         avatarUrl: item.artist?.avatarUrl ?? null,
         initial: item.artist?.initial || (item.artist?.name || 'A').charAt(0).toUpperCase(),
@@ -221,6 +229,7 @@ export function HomeDiscover() {
             style: item.style,
             artistName: item.artist?.name || '',
             artistId: item.tatuadorId,
+            artistUsername: item.artist?.username ?? null,
             likes: item.likesCount,
           }))
         : PLACEHOLDER_INSPIRATIONS;
@@ -230,13 +239,14 @@ export function HomeDiscover() {
   }, [items, selectedStyle]);
 
   const toArtistPreview = (artist: DiscoverArtist): GalleryPreviewItem | null => {
-    if (!artist?.id) return null;
+    if (!artist?.id && !artist?.username) return null;
     return {
       id: `artist-${artist.id}`,
       imageUrl: artist.avatarUrl ?? '',
       style: artist.specialty ?? '',
       artistName: artist.name ?? '',
-      artistId: artist.placeholder ? null : artist.id,
+      artistId: artist.id,
+      artistUsername: artist.username ?? null,
       likes: 0,
       kind: 'artist',
       verified: Boolean(artist.verified),
@@ -263,7 +273,7 @@ export function HomeDiscover() {
     (item: GalleryPreviewItem) => {
       setArtistPreview(null);
       triggerHaptic('light');
-      router.push(artistProfileHref({ id: item.artistId }));
+      router.push(artistProfileHref({ id: item.artistId, username: item.artistUsername }));
     },
     [router, triggerHaptic]
   );
@@ -472,7 +482,7 @@ export function HomeDiscover() {
           loading={loading}
           skeletonCount={HOME_CAROUSEL_LIMIT}
           layout="carousel"
-          showLike={false}
+          showLike
           onExploreStyle={(style) => setSelectedStyle(style || null)}
           actionCard={galleryAction}
         />

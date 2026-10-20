@@ -20,6 +20,7 @@ export class GaleriaError extends Error {
 export type GaleriaArtist = {
   id: string;
   name: string;
+  username?: string | null;
   avatarUrl: string | null;
   initial: string;
   cidade: string | null;
@@ -151,6 +152,7 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
         select: {
           id: true,
           nome: true,
+          username: true,
           cidade: true,
           estado: true,
           studio: {
@@ -185,6 +187,7 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
       artist: {
         id: row.tatuador.id,
         name,
+        username: row.tatuador.username ?? null,
         avatarUrl: null,
         initial: artistInitial(name),
         cidade: row.tatuador.cidade,

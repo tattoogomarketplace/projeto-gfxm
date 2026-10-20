@@ -65,7 +65,7 @@ function SegmentedControlBase<T extends string>({
               'text-[13px] font-semibold tracking-tight transition-[transform,color] duration-100 ease-out',
               'active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
               selected
-                ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]'
+                ? 'text-white drop-shadow-[0_0_10px_rgba(249,115,22,0.35)]'
                 : 'text-neutral-500 hover:text-neutral-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             )}
           >

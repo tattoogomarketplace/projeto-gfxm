@@ -66,7 +66,7 @@ function ChatCategoryTabsBase({ value, onChange, counts, className }: ChatCatego
               'text-[13px] font-semibold tracking-tight transition-colors duration-200',
               'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/70',
               selected
-                ? 'text-orange-200 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]'
+                ? 'text-orange-500 drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]'
                 : 'text-zinc-400 hover:text-zinc-200'
             )}
           >
