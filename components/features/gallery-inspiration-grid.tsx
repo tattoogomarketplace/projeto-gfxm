@@ -218,11 +218,11 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex w-full flex-col gap-6" aria-hidden>
+        <div className="flex w-full flex-col gap-8 p-4" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <Skeleton
               key={index}
-              className="aspect-[4/5] w-full rounded-3xl border border-zinc-800 bg-zinc-900"
+              className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
             />
           ))}
         </div>
@@ -244,7 +244,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col gap-6' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col gap-8 p-4' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -261,7 +261,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="relative aspect-[4/5] w-full select-none overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900"
+                className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900 select-none"
               >
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
@@ -277,7 +277,7 @@ export function GalleryInspirationGrid({
                     <OptimizedImage
                       src={item.imageUrl}
                       alt={`${styleLabel(item.style)} — ${artistName}`}
-                      className="h-full w-full"
+                      className="h-full w-full object-cover"
                     />
                   </motion.div>
                   <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
@@ -301,24 +301,25 @@ export function GalleryInspirationGrid({
                     </AnimatePresence>
                   </div>
                   {showLike ? (
-                    <div className="absolute right-3 top-3 z-[5]">
+                    <div className="absolute right-4 top-4 z-10">
                       <TattooLikeButton
                         liked={isSaved}
                         onToggle={() => toggleSaved(item.id)}
                         showCount={false}
                         dataGalleryAction
                         ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
-                        className="h-11 w-11 min-h-11 min-w-11 border border-orange-500/40 bg-black/55 p-0 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.28)] backdrop-blur-md"
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-zinc-900/40 p-0 text-orange-500 backdrop-blur-md"
                         iconClassName="h-5 w-5"
                       />
                     </div>
                   ) : null}
                 </div>
 
+                <div className="pointer-events-none absolute bottom-0 z-[4] h-1/3 w-full bg-gradient-to-t from-black/80 to-transparent" />
                 <button
                   type="button"
                   onClick={(event) => handleInspirationClick(item, event)}
-                  className="absolute bottom-3 right-3 z-[5] rounded-full border border-orange-500/40 bg-orange-500/15 px-4 py-2 text-sm font-semibold text-orange-400 backdrop-blur-md"
+                  className="absolute bottom-4 right-4 z-10 rounded-full border border-white/10 bg-zinc-900/40 px-5 py-2 text-sm font-bold text-orange-500 backdrop-blur-md"
                   aria-label={t('gallery.visitProfile')}
                 >
                   {t('gallery.visitProfile')}
