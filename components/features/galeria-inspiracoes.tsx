@@ -82,7 +82,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="relative flex w-full flex-col text-white">
-      <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-[#030303]/80 px-4 pt-4 pb-4 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+      <header className="sticky top-0 z-40 border-b border-zinc-900 bg-[#030303]/90 px-4 pt-4 pb-4 shadow-xl backdrop-blur-2xl">
         <div className="flex items-center gap-3 pb-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
             <Images className="h-5 w-5" strokeWidth={1.75} />
