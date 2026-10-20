@@ -242,8 +242,8 @@ export function GalleryInspirationGrid({
       return (
         <div className="flex w-full flex-col" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
-            <article key={index} className="mb-2 flex w-full flex-col">
-              <div className="flex items-center justify-between bg-gradient-to-b from-[#0a0a0a] to-transparent px-4 py-3">
+            <article key={index} className="relative mb-8 flex w-full flex-col">
+              <div className="flex items-center justify-between bg-transparent px-4 py-3">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-9 w-9 rounded-full border border-zinc-800 shadow-lg" />
                   <div className="flex flex-col gap-1">
@@ -253,18 +253,18 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-7 w-16 rounded-full" />
               </div>
-              <Skeleton className="aspect-[4/5] w-full rounded-none bg-zinc-900" />
-              <div className="relative z-20 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-zinc-900/60 px-6 py-3 shadow-2xl shadow-black/80 backdrop-blur-xl">
-                <div className="flex gap-6">
+              <Skeleton className="relative z-0 aspect-[4/5] w-full rounded-none bg-zinc-900" />
+              <div className="relative z-30 mx-4 -mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-800/80 px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.8)] backdrop-blur-2xl">
+                <div className="flex items-center gap-5">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                 </div>
                 <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="flex flex-col px-4 pt-5 pb-8">
+              <div className="flex flex-col gap-1 px-4 pt-4">
                 <Skeleton className="h-3 w-40" />
-                <Skeleton className="mt-1.5 h-3 w-full" />
+                <Skeleton className="h-3 w-full" />
               </div>
             </article>
           ))}
@@ -317,9 +317,9 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="mb-2 flex w-full flex-col"
+                className="relative mb-8 flex w-full flex-col"
               >
-                <div className="flex items-center justify-between bg-gradient-to-b from-[#0a0a0a] to-transparent px-4 py-3">
+                <div className="flex items-center justify-between bg-transparent px-4 py-3">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
@@ -350,7 +350,7 @@ export function GalleryInspirationGrid({
 
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="relative aspect-[4/5] w-full bg-zinc-900"
+                  className="relative z-0 aspect-[4/5] w-full bg-zinc-900"
                 >
                   <motion.div
                     layout="position"
@@ -387,8 +387,8 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="relative z-20 mx-4 -mt-6 flex items-center justify-between rounded-2xl border border-zinc-700/50 bg-zinc-900/60 px-6 py-3 shadow-2xl shadow-black/80 backdrop-blur-xl">
-                  <div className="flex gap-6">
+                <div className="relative z-30 mx-4 -mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-zinc-800/80 px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.8)] backdrop-blur-2xl">
+                  <div className="flex items-center gap-5">
                     {showLike ? (
                       <button
                         type="button"
@@ -398,8 +398,8 @@ export function GalleryInspirationGrid({
                           toggleSaved(item.id);
                         }}
                         className={cn(
-                          'inline-flex h-11 w-11 items-center justify-center drop-shadow-md transition-colors hover:text-orange-500',
-                          isSaved ? 'text-orange-500' : 'text-zinc-300'
+                          'inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
+                          isSaved ? 'text-orange-500' : 'text-zinc-200'
                         )}
                         aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
                         aria-pressed={isSaved}
@@ -415,19 +415,19 @@ export function GalleryInspirationGrid({
                         triggerHaptic('light');
                         onStartConversation?.(item.artistId, item.id);
                       }}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-300 drop-shadow-md transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
                       aria-label={t('galeria.startConversation')}
                     >
-                      <MessageCircle className="h-6 w-6" strokeWidth={1.75} />
+                      <MessageCircle className="h-6 w-6 text-zinc-200" strokeWidth={1.75} />
                     </button>
                     <button
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-300 drop-shadow-md transition-colors hover:text-orange-500"
+                      className="inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
                       aria-label="Compartilhar"
                     >
-                      <Send className="h-6 w-6" strokeWidth={1.75} />
+                      <Send className="h-6 w-6 text-zinc-200" strokeWidth={1.75} />
                     </button>
                   </div>
                   <button
@@ -438,21 +438,21 @@ export function GalleryInspirationGrid({
                       toggleBookmarked(item.id);
                     }}
                     className={cn(
-                      'inline-flex h-11 w-11 items-center justify-center drop-shadow-md transition-colors hover:text-orange-500',
-                      isBookmarked ? 'text-orange-500' : 'text-zinc-300'
+                      'inline-flex h-11 w-11 items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
+                      isBookmarked ? 'text-orange-500' : 'text-zinc-200'
                     )}
                     aria-label="Salvar"
                     aria-pressed={isBookmarked}
                   >
                     <Bookmark
-                      className="h-6 w-6"
+                      className="h-6 w-6 text-zinc-200"
                       strokeWidth={1.75}
                       fill={isBookmarked ? 'currentColor' : 'none'}
                     />
                   </button>
                 </div>
 
-                <div className="px-4 pt-5 pb-8">
+                <div className="flex flex-col gap-1 px-4 pt-4">
                   <p className="text-[13px] font-bold tracking-wide text-zinc-200">{likeLabel}</p>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
                     <span className="mr-2 text-[11px] font-bold uppercase tracking-wider text-zinc-100">

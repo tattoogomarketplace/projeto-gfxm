@@ -81,7 +81,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-[#050505] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(249,115,22,0.05),rgba(255,255,255,0))] text-white [-webkit-overflow-scrolling:touch]">
+    <div className="relative flex w-full flex-col bg-[#050505] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(249,115,22,0.05),rgba(255,255,255,0))] text-white">
       <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-[#050505]/70 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 pt-4 pb-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
@@ -101,7 +101,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </div>
       </header>
 
-      <div className="flex w-full flex-col px-0 pb-24">
+      <div className="flex w-full flex-col px-0">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
