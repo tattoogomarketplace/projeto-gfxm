@@ -82,23 +82,21 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="relative flex w-full flex-col text-white">
-      <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-black/40 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+      <header className="sticky top-0 z-40 border-b border-zinc-900/80 bg-[#030303]/80 px-4 pt-4 pb-4 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+        <div className="flex items-center gap-3 pb-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
             <Images className="h-5 w-5" strokeWidth={1.75} />
           </span>
           <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
         </div>
-        <div className="px-4 pb-2">
-          <PortfolioFilterBar
-            style={style}
-            bodyPart={bodyPart}
-            healed={healed}
-            onStyleChange={setStyle}
-            onBodyPartChange={setBodyPart}
-            onHealingChange={setHealed}
-          />
-        </div>
+        <PortfolioFilterBar
+          style={style}
+          bodyPart={bodyPart}
+          healed={healed}
+          onStyleChange={setStyle}
+          onBodyPartChange={setBodyPart}
+          onHealingChange={setHealed}
+        />
       </header>
 
       <div className="flex w-full flex-col px-0">
