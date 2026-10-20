@@ -6,11 +6,13 @@ import Image from 'next/image';
 import { ArrowLeft, BadgeCheck, MapPin, Star } from 'lucide-react';
 import { FeedbackCard } from '@/components/features/feedback-card';
 import { reviewDestination } from '@/components/features/home-feedback-carousel';
+import { QuoteRequestSheet } from '@/components/features/quote-request-sheet';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
+import { useUiStore } from '@/hooks/use-ui-store';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import type { GeoAddress } from '@/lib/types/geo';
@@ -28,10 +30,13 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const { triggerHaptic } = useHapticFeedback();
+  const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
+  const setActiveTabNav = useUiStore((s) => s.setActiveTab);
 
   const { artist, items, reviews } = vitrine;
   const [activeTab, setActiveTab] = useState<ProfileTab>('portfolio');
   const [preview, setPreview] = useState<ReviewDto | null>(null);
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const longPress = useLongPressPreview();
 
   const goBack = () => {
@@ -69,6 +74,21 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
     triggerHaptic('light');
     router.push(reviewDestination(review));
   };
+
+  const openQuoteSheet = () => {
+    triggerHaptic('medium');
+    setQuoteOpen(true);
+  };
+
+  const closeQuoteSheet = useCallback(() => setQuoteOpen(false), []);
+
+  const submitQuote = useCallback(() => {
+    triggerHaptic('medium');
+    setQuoteOpen(false);
+    setPendingChatPeer(artist.id);
+    setActiveTabNav('chat');
+    router.push(`/dashboard/chat?artistId=${encodeURIComponent(artist.id)}`);
+  }, [artist.id, router, setActiveTabNav, setPendingChatPeer, triggerHaptic]);
 
   const dismissPreview = useCallback(() => setPreview(null), []);
 
@@ -155,6 +175,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
           <button
             type="button"
+            onClick={openQuoteSheet}
             className="mt-5 flex min-h-12 w-full items-center justify-center rounded-2xl bg-orange-500 px-4 text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
           >
             {t('vitrine.requestQuote')}
@@ -292,6 +313,12 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         review={preview}
         onDismiss={dismissPreview}
         onViewFull={viewFullReview}
+      />
+
+      <QuoteRequestSheet
+        open={quoteOpen}
+        onClose={closeQuoteSheet}
+        onSubmit={submitQuote}
       />
     </div>
   );
