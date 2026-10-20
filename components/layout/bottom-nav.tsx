@@ -62,6 +62,9 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
   );
 }
 
+const PILL_CLASS =
+  'fixed left-1/2 z-[999] w-[92%] max-w-[400px] -translate-x-1/2 bottom-[max(env(safe-area-inset-bottom),_1.25rem)] md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-6 py-3.5';
+
 const NavIcon = memo(function NavIcon({
   icon: Icon,
 }: {
@@ -149,17 +152,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   return (
     <nav
-      className={cn(
-        'fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto max-w-md md:hidden',
-        'glass-chrome rounded-2xl border border-black/[0.04] dark:border-white/[0.05]',
-        'shadow-2xl',
-        'flex transform-gpu items-center px-1 py-1.5',
-        conceal && 'pointer-events-none invisible'
-      )}
+      className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="grid h-11 w-full grid-cols-4">
+      <ul className="flex w-full items-center justify-between">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -176,15 +173,15 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 scroll={false}
                 onClick={() => handleSelect(item.tab, href)}
                 className={cn(
-                  'group flex min-h-11 w-full min-w-11 transform-gpu flex-col items-center justify-center gap-0.5',
+                  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
-                  'rounded-xl transition-[transform,color] duration-150 ease-out active:scale-95',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
-                  active ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400'
+                  'active:scale-90 transition-transform duration-200',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
+                  active ? 'text-orange-400' : 'text-zinc-500'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
-                <span className="flex transform-gpu items-center justify-center transition-transform duration-150 ease-out group-active:scale-95">
+                <span className="flex items-center justify-center">
                   <NavIcon icon={item.icon} />
                 </span>
                 <span>{t(item.labelKey)}</span>
@@ -218,17 +215,12 @@ function BottomNavFallbackInner() {
   if (shouldHideNav(pathname, false)) return null;
 
   return (
-    <nav
-      aria-hidden
-      className={cn(
-        'glass-chrome fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 z-[60] mx-auto flex max-w-md transform-gpu items-center rounded-2xl border border-black/[0.04] px-1 py-1.5 shadow-2xl dark:border-white/[0.05] md:hidden'
-      )}
-    >
-      <ul className="grid h-11 w-full grid-cols-4">
+    <nav aria-hidden className={PILL_CLASS}>
+      <ul className="flex w-full items-center justify-between">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
-            <span className="flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-none tracking-tight text-zinc-500 dark:text-zinc-400">
-              <span className="flex transform-gpu items-center justify-center">
+            <span className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-none tracking-tight text-zinc-500">
+              <span className="flex items-center justify-center">
                 <NavIcon icon={item.icon} />
               </span>
               <span>{t(item.labelKey)}</span>
