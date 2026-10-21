@@ -243,7 +243,7 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-                className="flex flex-col w-full mb-0 pb-0 relative bg-transparent"
+              className="relative mb-16 flex w-full flex-col bg-transparent"
             >
               <div className="mb-3 flex w-full items-center justify-between px-4">
                 <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-              className="flex flex-col w-full mb-0 pb-0 relative bg-transparent"
+                className="relative mb-16 flex w-full flex-col bg-transparent"
               >
                 <div className="mb-3 flex w-full items-center justify-between px-4">
                   <div className="flex min-w-0 items-center gap-3">
