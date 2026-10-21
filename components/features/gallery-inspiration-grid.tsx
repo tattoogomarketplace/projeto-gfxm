@@ -239,39 +239,35 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex w-full flex-col" aria-hidden>
+        <div className="flex w-full flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="flex flex-col w-full mb-0 relative"
+              className="flex flex-col w-full relative mb-8"
             >
-              <div className="w-full relative aspect-[4/5] bg-black">
-                <Skeleton className="absolute inset-0 h-full w-full rounded-none" />
-                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-10"></div>
-                <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent pointer-events-none z-10"></div>
-                <div className="absolute top-4 inset-x-4 z-20 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full object-cover ring-2 ring-white/20" />
-                    <div className="flex flex-col gap-1">
-                      <Skeleton className="h-3 w-28" />
-                      <Skeleton className="h-2.5 w-20" />
-                    </div>
+              <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full object-cover ring-1 ring-white/10" />
+                  <div className="flex flex-col gap-1">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-2.5 w-20" />
                   </div>
-                  <Skeleton className="h-8 w-[5.5rem] rounded-full" />
                 </div>
-                <div className="absolute bottom-6 inset-x-4 z-20 flex items-center justify-between px-6 py-3.5 bg-black/40 supports-[backdrop-filter]:bg-black/20 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-                  <div className="flex items-center gap-8">
-                    <Skeleton className="h-6 w-6 rounded-md" />
-                    <Skeleton className="h-6 w-6 rounded-md" />
-                  </div>
+                <Skeleton className="h-8 w-[5.5rem] rounded-full" />
+              </div>
+              <Skeleton className="w-full aspect-[4/5] relative bg-[#050505] rounded-none" />
+              <div className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-b border-white/[0.05]">
+                <div className="flex items-center gap-8">
+                  <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
                 </div>
+                <Skeleton className="h-6 w-6 rounded-md" />
               </div>
-              <div className="px-4 pt-5 pb-8 flex flex-col gap-1.5 bg-[#050505]">
+              <div className="px-4 pt-4 pb-2 flex flex-col gap-1.5">
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
-              <div className="w-full h-12 flex items-center justify-center gap-2 mt-8 mb-16 opacity-70 select-none">
+              <div className="w-full flex items-center justify-center gap-2 px-6 py-6 opacity-70 select-none">
                 <div className="flex items-end gap-[3px]">
                   <div className="w-[1px] h-2 bg-zinc-600"></div>
                   <div className="w-[1px] h-3 bg-zinc-500"></div>
@@ -309,7 +305,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -339,11 +335,42 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="flex flex-col w-full mb-0 relative"
+                className="flex flex-col w-full relative mb-8"
               >
+                <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {item.artistAvatarUrl ? (
+                      <OptimizedImage
+                        src={item.artistAvatarUrl}
+                        alt={artistName}
+                        className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+                      />
+                    ) : (
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 ring-1 ring-white/10">
+                        {artistInitial}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-zinc-100">
+                        {artistName}
+                      </p>
+                      {metaLine ? (
+                        <p className="truncate text-xs text-zinc-400">{metaLine}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Link
+                    href={profileHref}
+                    data-gallery-action=""
+                    className="shrink-0 px-5 py-2 bg-orange-500/10 backdrop-blur-xl rounded-full text-xs font-bold text-orange-500 border border-orange-500/30 uppercase tracking-widest active:scale-95 transition-all"
+                  >
+                    VISITAR
+                  </Link>
+                </div>
+
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="w-full relative aspect-[4/5] bg-black"
+                  className="w-full aspect-[4/5] relative bg-[#050505]"
                 >
                     <motion.div
                       layout="position"
@@ -355,7 +382,7 @@ export function GalleryInspirationGrid({
                       <OptimizedImage
                         src={item.imageUrl}
                         alt={`${styleLabel(item.style)} — ${artistName}`}
-                        className="h-full w-full object-cover"
+                        className="object-cover w-full h-full"
                       />
                     </motion.div>
                     <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
@@ -378,92 +405,61 @@ export function GalleryInspirationGrid({
                         ) : null}
                       </AnimatePresence>
                     </div>
-                    <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none z-10"></div>
-                    <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent pointer-events-none z-10"></div>
-                    <div className="absolute top-4 inset-x-4 z-20 flex items-center justify-between">
-                      <div className="flex min-w-0 items-center gap-3">
-                        {item.artistAvatarUrl ? (
-                          <OptimizedImage
-                            src={item.artistAvatarUrl}
-                            alt={artistName}
-                            className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-white/20"
-                          />
-                        ) : (
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 ring-2 ring-white/20">
-                            {artistInitial}
-                          </span>
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-zinc-100">
-                            {artistName}
-                          </p>
-                          {metaLine ? (
-                            <p className="truncate text-xs text-zinc-400">{metaLine}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <Link
-                        href={profileHref}
-                        data-gallery-action=""
-                        className="shrink-0 px-5 py-2 bg-orange-500/10 backdrop-blur-xl rounded-full text-xs font-bold text-orange-500 border border-orange-500/30 uppercase tracking-widest active:scale-95 transition-all"
-                      >
-                        VISITAR
-                      </Link>
-                    </div>
-                    <div className="absolute bottom-6 inset-x-4 z-20 flex items-center justify-between px-6 py-3.5 bg-black/40 supports-[backdrop-filter]:bg-black/20 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-                      <div className="flex items-center gap-8">
-                        {showLike ? (
-                          <button
-                            type="button"
-                            data-gallery-action=""
-                            onClick={() => {
-                              triggerHaptic('light');
-                              toggleSaved(item.id);
-                            }}
-                            className={cn(
-                              'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-all hover:text-orange-500 hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]',
-                              isSaved && 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]'
-                            )}
-                            aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
-                            aria-pressed={isSaved}
-                          >
-                            <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6" />
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          data-gallery-action=""
-                          onClick={() => shareInspiration(item)}
-                          className="inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-all hover:text-orange-500 hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]"
-                          aria-label="Compartilhar"
-                        >
-                          <Send className="h-6 w-6" strokeWidth={2} />
-                        </button>
-                      </div>
+                  </div>
+
+                <div className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-b border-white/[0.05]">
+                  <div className="flex items-center gap-8">
+                    {showLike ? (
                       <button
                         type="button"
                         data-gallery-action=""
                         onClick={() => {
                           triggerHaptic('light');
-                          toggleBookmarked(item.id);
+                          toggleSaved(item.id);
                         }}
                         className={cn(
-                          'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-all hover:text-orange-500 hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]',
-                          isBookmarked && 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]'
+                          'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
+                          isSaved && 'text-orange-500'
                         )}
-                        aria-label="Salvar"
-                        aria-pressed={isBookmarked}
+                        aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
+                        aria-pressed={isSaved}
                       >
-                        <Bookmark
-                          className="h-6 w-6"
-                          strokeWidth={2}
-                          fill={isBookmarked ? 'currentColor' : 'none'}
-                        />
+                        <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6" />
                       </button>
-                    </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      onClick={() => shareInspiration(item)}
+                      className="inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
+                      aria-label="Compartilhar"
+                    >
+                      <Send className="h-6 w-6" strokeWidth={2} />
+                    </button>
                   </div>
+                  <button
+                    type="button"
+                    data-gallery-action=""
+                    onClick={() => {
+                      triggerHaptic('light');
+                      toggleBookmarked(item.id);
+                    }}
+                    className={cn(
+                      'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
+                      isBookmarked && 'text-orange-500'
+                    )}
+                    aria-label="Salvar"
+                    aria-pressed={isBookmarked}
+                  >
+                    <Bookmark
+                      className="h-6 w-6"
+                      strokeWidth={2}
+                      fill={isBookmarked ? 'currentColor' : 'none'}
+                    />
+                  </button>
+                </div>
 
-                <div className="px-4 pt-5 pb-8 flex flex-col gap-1.5 bg-[#050505]">
+                <div className="px-4 pt-4 pb-2 flex flex-col gap-1.5">
                   <p className="text-[13px] font-semibold text-white tracking-wide">{likeLabel}</p>
                   <p className="text-[13px] leading-relaxed">
                     <span className="font-extrabold text-white mr-2">
@@ -472,7 +468,7 @@ export function GalleryInspirationGrid({
                     <span className="text-zinc-400 font-light">{caption}</span>
                   </p>
                 </div>
-                <div className="w-full h-12 flex items-center justify-center gap-2 mt-8 mb-16 opacity-70 select-none">
+                <div className="w-full flex items-center justify-center gap-2 px-6 py-6 opacity-70 select-none">
                   <div className="flex items-end gap-[3px]">
                     <div className="w-[1px] h-2 bg-zinc-600"></div>
                     <div className="w-[1px] h-3 bg-zinc-500"></div>
