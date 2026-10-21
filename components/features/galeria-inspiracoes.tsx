@@ -81,7 +81,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
   }, [liveItems, style]);
 
   return (
-    <div className="relative flex w-full flex-col text-white">
+    <div className="relative flex w-full max-w-none flex-col px-0 mx-0 text-white">
       <div className="relative px-4 pt-6 pb-2 w-full flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
           <Images className="h-5 w-5" strokeWidth={1.75} />
@@ -99,7 +99,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         />
       </div>
 
-      <div className="flex w-full max-w-none flex-col px-0">
+      <div className="flex w-full max-w-none flex-col px-0 mx-0">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
