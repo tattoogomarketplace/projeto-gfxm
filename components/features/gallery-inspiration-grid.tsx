@@ -60,33 +60,32 @@ function DnaLiveLed() {
 
 function HudVNotchAccent() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-visible">
-      <span className="absolute -left-3 top-4 bottom-0 w-px bg-gradient-to-b from-white/0 via-white/20 to-[#FF6600]/45" />
-      <span className="absolute -right-3 top-4 bottom-0 w-px bg-gradient-to-b from-white/0 via-white/20 to-[#FF6600]/45" />
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex w-full justify-center overflow-visible"
+    >
       <svg
-        viewBox="0 0 400 20"
-        preserveAspectRatio="none"
-        className="absolute -bottom-[14px] -left-3 -right-3 h-[14px] drop-shadow-[0_0_6px_rgba(255,102,0,0.22)]"
+        viewBox="0 0 48 12"
+        preserveAspectRatio="xMidYMid meet"
+        className="h-3 w-12 translate-y-[6px] drop-shadow-[0_0_6px_rgba(255,102,0,0.28)]"
       >
         <path
-          d="M1 1 L200 18 L399 1"
+          d="M2 2 L24 10 L46 2"
           fill="none"
           stroke="rgba(255,255,255,0.22)"
-          strokeWidth="1"
+          strokeWidth="1.15"
           strokeLinecap="round"
           strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
         />
         <path
-          d="M1 1 L200 18 L399 1"
+          d="M2 2 L24 10 L46 2"
           fill="none"
-          stroke="rgba(255,102,0,0.38)"
-          strokeWidth="0.5"
+          stroke="rgba(255,102,0,0.55)"
+          strokeWidth="0.6"
           strokeLinecap="round"
           strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
         />
-        <circle cx="200" cy="18" r="1.6" fill="#FF6600" opacity="0.75" />
+        <circle cx="24" cy="10" r="1.35" fill="#FF6600" opacity="0.85" />
       </svg>
     </div>
   );
