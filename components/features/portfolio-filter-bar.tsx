@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, RotateCcw } from 'lucide-react';
+import { ChevronDown, RotateCcw, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import {
@@ -238,7 +238,24 @@ export function PortfolioFilterBar({
                 maxHeight: dropdownPosition.maxHeight,
               }}
             >
-              <div className="max-h-72 overflow-y-auto p-2" style={{ maxHeight: dropdownPosition.maxHeight }}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                <span className="text-sm font-semibold tracking-tight text-zinc-100">
+                  {openCategory === 'style'
+                    ? t('gallery.style')
+                    : openCategory === 'body'
+                      ? t('gallery.bodyPart')
+                      : t('gallery.healing')}
+                </span>
+                <button
+                  type="button"
+                  aria-label={t('gallery.closeFilter')}
+                  onClick={closeDropdown}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </button>
+              </div>
+              <div className="max-h-72 overflow-y-auto p-2" style={{ maxHeight: Math.max(120, dropdownPosition.maxHeight - 56) }}>
                 {openCategory === 'style' ? (
                   <>
                     <FilterOption selected={!style} onClick={() => applyStyle('')}>
