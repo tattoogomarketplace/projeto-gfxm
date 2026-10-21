@@ -3,12 +3,118 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Search, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Search, Sparkles, TrendingDown, X } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useI18n } from '@/hooks/use-i18n';
 
 const subscribe = () => () => {};
 
 const sheetSpring = { type: 'spring', damping: 25, stiffness: 200 } as const;
+
+type RecommendedArtist = {
+  id: string;
+  name: string;
+  location: string;
+  style: string;
+  avatarUrl: string;
+  savingsLabel: string;
+  priceRange: string;
+  thumbnails: string[];
+};
+
+const RECOMMENDED_ARTISTS: RecommendedArtist[] = [
+  {
+    id: 'bianca-souza',
+    name: 'Bianca Souza',
+    location: 'São Paulo/SP',
+    style: 'Realismo',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
+    savingsLabel: '~20% menor',
+    priceRange: 'R$ 640 - R$ 960',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400&q=80&auto=format&fit=crop',
+    ],
+  },
+  {
+    id: 'marina-costa',
+    name: 'Marina Costa',
+    location: 'Campinas/SP',
+    style: 'Realismo',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
+    savingsLabel: '~18% menor',
+    priceRange: 'R$ 660 - R$ 980',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1542727365-19732a80dcfd?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=400&q=80&auto=format&fit=crop',
+    ],
+  },
+  {
+    id: 'helena-dias',
+    name: 'Helena Dias',
+    location: 'Guarulhos/SP',
+    style: 'Realismo',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
+    savingsLabel: '~25% menor',
+    priceRange: 'R$ 580 - R$ 900',
+    thumbnails: [
+      'https://images.unsplash.com/photo-1560707854-fb9a10eeaace?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=400&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&q=80&auto=format&fit=crop',
+    ],
+  },
+];
+
+function RecommendedArtistCard({ artist }: { artist: RecommendedArtist }) {
+  return (
+    <article className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#121214] p-4 shadow-lg">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <OptimizedImage
+            src={artist.avatarUrl}
+            alt={artist.name}
+            className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">{artist.name}</p>
+            <p className="truncate text-xs text-zinc-400">
+              {artist.location} · {artist.style}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-zinc-500">{artist.priceRange}</p>
+          </div>
+        </div>
+        <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+          <TrendingDown size={12} strokeWidth={2.5} />
+          {artist.savingsLabel}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {artist.thumbnails.map((src) => (
+          <OptimizedImage
+            key={src}
+            src={src}
+            alt={`Trabalho de ${artist.name}`}
+            className="aspect-square h-20 w-full overflow-hidden rounded-lg border border-white/5 bg-zinc-900"
+          />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:border-orange-500 hover:bg-orange-500 hover:text-black active:scale-[0.98]"
+      >
+        Ver Perfil e Cotar
+        <ArrowUpRight size={14} strokeWidth={2.5} />
+      </button>
+    </article>
+  );
+}
 
 type BudgetEstimatorSheetProps = {
   open: boolean;
@@ -207,8 +313,19 @@ export function BudgetEstimatorSheet({
               </h2>
               <Sparkles className="size-4 shrink-0 text-orange-500" />
             </header>
-            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-              {/* Artist Cards will go here */}
+            <div className="flex flex-1 flex-col overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+              <div className="mb-5 flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3.5 text-xs font-medium text-orange-400">
+                <Sparkles className="size-3.5 shrink-0" strokeWidth={2.25} />
+                <p>
+                  Exibindo 3 artistas do mesmo estilo com faixas de orçamento abaixo da média
+                  informada.
+                </p>
+              </div>
+              <div className="flex flex-col gap-4">
+                {RECOMMENDED_ARTISTS.map((artist) => (
+                  <RecommendedArtistCard key={artist.id} artist={artist} />
+                ))}
+              </div>
             </div>
           </motion.div>
         ) : null}
