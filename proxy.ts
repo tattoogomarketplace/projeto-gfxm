@@ -1,8 +1,18 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { isNonNavigablePath, USERNAME_SETUP_PATH } from '@/lib/utils/auth-redirect';
+import { isNonNavigablePath, LOGIN_PATH, USERNAME_SETUP_PATH } from '@/lib/utils/auth-redirect';
 
-const AUTH_PAGES = ['/login', '/register', '/forgot-password'];
+const AUTH_PAGES = ['/login', '/register', '/forgot-password'] as const;
+
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/login(.*)',
+  '/register(.*)',
+  '/forgot-password(.*)',
+  '/termos(.*)',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+]);
 
 /**
  * Superfícies de ESCRITA do @username (Fase 12 — Etapa 1).
@@ -32,26 +42,30 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  // Bypass explícito do gatekeeper para a escrita do @username. Reafirma o
-  // `x-pathname` (consumido pelo `UsernameGate` do layout) e segue sem
-  // qualquer proteção/redirect que intercepte a gravação antes do handler.
+  // Bypass explícito do gatekeeper de identidade para a escrita do @username.
+  // Sessão continua obrigatória: anônimos não podem abrir o degrau de handle.
   const isUsernameWritePath = USERNAME_WRITE_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
   if (isUsernameWritePath) {
+    await auth.protect({ unauthenticatedUrl: LOGIN_PATH });
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set('x-pathname', pathname);
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
+  const { userId } = await auth();
+
   // Clerk hosted paths flash during post-OTP limbo; catch-all to app routes.
   const isSignInPath = pathname === '/sign-in' || pathname.startsWith('/sign-in/');
   const isSignUpPath = pathname === '/sign-up' || pathname.startsWith('/sign-up/');
   if (isSignInPath) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(userId ? '/dashboard' : LOGIN_PATH, req.url));
   }
   if (isSignUpPath) {
-    return NextResponse.redirect(new URL('/dashboard/onboarding', req.url));
+    return NextResponse.redirect(
+      new URL(userId ? '/dashboard/onboarding' : '/register', req.url)
+    );
   }
 
   // Usuário autenticado nunca renderiza a raiz pública ("Acessar Plataforma")
@@ -61,13 +75,14 @@ export default clerkMiddleware(async (auth, req) => {
   const isAuthPage = AUTH_PAGES.some(
     (page) => pathname === page || pathname.startsWith(`${page}/`)
   );
-  if (isRootPath || isAuthPage) {
-    const { userId } = await auth();
-    if (userId) {
-      // O cliente deve navegar para o próximo degrau obrigatório (onboarding,
-      // documentos ou @username) a partir do `/dashboard`, nunca daqui.
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+  if ((isRootPath || isAuthPage) && userId) {
+    // O cliente deve navegar para o próximo degrau obrigatório (onboarding,
+    // documentos ou @username) a partir do `/dashboard`, nunca daqui.
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  if (!isPublicRoute(req)) {
+    await auth.protect({ unauthenticatedUrl: LOGIN_PATH });
   }
 
   // Expoe o pathname para Server Components (layouts) que precisam dele para
