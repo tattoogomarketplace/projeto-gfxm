@@ -26,6 +26,7 @@ export default function GaleriaLoading() {
             <div className="h-7 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]" />
           </div>
           <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-[12px] border border-white/10 overflow-hidden" />
+          <div className="relative flex flex-col gap-3 py-3 w-full before:absolute before:inset-0 before:-z-10 before:bg-gradient-to-b before:from-white/[0.04] before:via-white/[0.01] before:to-transparent before:border-t before:border-white/[0.05]">
           <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-8">
@@ -43,6 +44,7 @@ export default function GaleriaLoading() {
             <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
             <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
             <div className="flex-shrink-0 h-6 w-[7rem] rounded-md bg-white/[0.03] border border-white/5" />
+          </div>
           </div>
         </article>
       </div>
