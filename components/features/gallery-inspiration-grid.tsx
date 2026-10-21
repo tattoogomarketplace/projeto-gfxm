@@ -253,19 +253,19 @@ export function GalleryInspirationGrid({
                     <Skeleton className="h-2.5 w-20" />
                   </div>
                 </div>
-                <Skeleton className="h-8 w-[5.5rem] rounded-full" />
+                <Skeleton className="h-7 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]" />
               </div>
               <Skeleton className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border-l-0 border-r-0 px-0 mx-0 mb-0" />
               <div className="w-full max-w-none mt-0 px-0 mx-0 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-y border-white/[0.04] border-l-0 border-r-0 rounded-none">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
-                    <Skeleton className="h-6 w-6 rounded-md" />
-                    <Skeleton className="h-6 w-6 rounded-md" />
+                    <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
                   </div>
-                  <Skeleton className="h-6 w-6 rounded-md" />
+                  <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
                 </div>
               </div>
-              <div className="px-4 pt-4 pb-8 flex flex-col gap-1.5">
+              <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[20px] p-4 mx-4 mt-2 mb-4 flex flex-col gap-1.5">
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
@@ -353,7 +353,7 @@ export function GalleryInspirationGrid({
                   <Link
                     href={profileHref}
                     data-gallery-action=""
-                    className="shrink-0 px-5 py-2 bg-orange-500/10 backdrop-blur-xl rounded-full text-xs font-bold text-orange-500 border border-orange-500/30 uppercase tracking-widest active:scale-95 transition-all"
+                    className="shrink-0 px-4 py-1.5 rounded-full border border-orange-500/30 text-orange-500 font-bold text-xs uppercase bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]"
                   >
                     VISITAR
                   </Link>
@@ -410,8 +410,8 @@ export function GalleryInspirationGrid({
                           toggleSaved(item.id);
                         }}
                         className={cn(
-                          'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
-                          isSaved && 'text-orange-500'
+                          'flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all',
+                          isSaved && 'text-orange-500 border-orange-500/50'
                         )}
                         aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
                         aria-pressed={isSaved}
@@ -423,7 +423,7 @@ export function GalleryInspirationGrid({
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className="inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500"
+                      className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6" strokeWidth={2} />
@@ -437,8 +437,8 @@ export function GalleryInspirationGrid({
                       toggleBookmarked(item.id);
                     }}
                     className={cn(
-                      'inline-flex cursor-pointer items-center justify-center text-zinc-200 transition-colors hover:text-orange-500',
-                      isBookmarked && 'text-orange-500'
+                      'flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all',
+                      isBookmarked && 'text-orange-500 border-orange-500/50'
                     )}
                     aria-label="Salvar"
                     aria-pressed={isBookmarked}
@@ -452,7 +452,7 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="px-4 pt-4 pb-8 flex flex-col gap-1.5">
+                <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[20px] p-4 mx-4 mt-2 mb-4 flex flex-col gap-1.5">
                   <p className="text-[13px] font-semibold text-zinc-100 tracking-wide">{likeLabel}</p>
                   <p className="text-[13px] leading-relaxed">
                     <span className="font-bold text-zinc-100 mr-2">
