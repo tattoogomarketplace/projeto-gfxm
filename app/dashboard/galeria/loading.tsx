@@ -28,7 +28,7 @@ export default function GaleriaLoading() {
           <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-[12px] border border-white/10 overflow-hidden">
             <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
           </div>
-          <div className="relative flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
+          <div className="relative z-20 -mt-8 flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
           <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-8">
