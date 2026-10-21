@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 const LOGIN_PATH = '/login';
 const SIGN_UP_PATH = '/register';
+const POST_AUTH_PATH = '/dashboard';
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -15,6 +16,15 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
   '/session-tasks(.*)',
   '/__clerk(.*)',
+]);
+
+const isAuthSurface = createRouteMatcher([
+  '/',
+  '/login(.*)',
+  '/register(.*)',
+  '/forgot-password(.*)',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
 ]);
 
 function isPlatformPath(pathname: string): boolean {
@@ -41,11 +51,14 @@ export default clerkMiddleware(
       return nextWithPathname(req, pathname);
     }
 
-    if (!isPublicRoute(req)) {
-      const { userId } = await auth();
-      if (!userId) {
-        return NextResponse.redirect(new URL(LOGIN_PATH, req.url));
-      }
+    const { userId } = await auth({ treatPendingAsSignedOut: false });
+
+    if (userId && isAuthSurface(req)) {
+      return NextResponse.redirect(new URL(POST_AUTH_PATH, req.url));
+    }
+
+    if (!isPublicRoute(req) && !userId) {
+      return NextResponse.redirect(new URL(LOGIN_PATH, req.url));
     }
 
     return nextWithPathname(req, pathname);

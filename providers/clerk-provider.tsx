@@ -25,8 +25,8 @@ export function LocalizedClerkProvider({ children }: { children: React.ReactNode
       appearance={CLERK_DARK_LUXURY_APPEARANCE}
       signInUrl="/login"
       signUpUrl="/register"
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
       afterSignOutUrl="/"
       taskUrls={CLERK_TASK_URLS}
     >
