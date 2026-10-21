@@ -35,26 +35,15 @@ export default function GaleriaLoading() {
               <div className="h-6 w-6 rounded bg-zinc-700" />
             </div>
           </div>
-          <div className="px-4 pt-4 pb-2 flex flex-col gap-1.5">
+          <div className="px-4 pt-4 pb-8 flex flex-col gap-1.5">
             <div className="h-3 w-40 rounded bg-zinc-800" />
             <div className="h-3 w-full rounded bg-zinc-900" />
           </div>
-          <div className="w-full flex items-center justify-center gap-2 px-6 py-6 opacity-70 select-none">
-            <div className="flex items-end gap-[3px]">
-              <div className="w-[1px] h-2 bg-zinc-600"></div>
-              <div className="w-[1px] h-3 bg-zinc-500"></div>
-              <div className="w-[1px] h-4 bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-              <div className="w-[1px] h-2 bg-zinc-600"></div>
-            </div>
-            <div className="flex-1 mx-6 relative flex items-center justify-center">
-              <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-orange-500/40 to-transparent"></div>
-              <div className="absolute w-3/4 h-8 bg-orange-500/10 blur-xl rounded-full pointer-events-none"></div>
-            </div>
-            <div className="flex items-center gap-[4px]">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-              <div className="w-1 h-1 rounded-full bg-zinc-500"></div>
-              <div className="w-[2px] h-[2px] rounded-full bg-zinc-600"></div>
-            </div>
+          <div className="w-full h-16 flex items-center justify-center gap-1.5 opacity-80 mb-6 mt-2">
+            <div className="w-[1px] h-3 bg-zinc-700"></div>
+            <div className="w-[2px] h-5 bg-orange-600 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
+            <div className="w-[1px] h-3 bg-zinc-700"></div>
+            <div className="flex-1 max-w-[120px] h-[1px] bg-gradient-to-r from-orange-500/50 via-zinc-800 to-transparent mx-3"></div>
           </div>
         </article>
       </div>
