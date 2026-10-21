@@ -57,13 +57,7 @@ function FeedPinchZoom({ children }: { children: ReactNode }) {
       wheel={{ disabled: true }}
       panning={{ disabled: true, velocityDisabled: false }}
       pinch={{ disabled: false, allowPanning: true }}
-      doubleClick={{
-        disabled: false,
-        step: 0.8,
-        mode: 'zoomIn',
-        animationTime: FEED_ZOOM_SNAP_MS,
-        animationType: 'easeOut',
-      }}
+      doubleClick={{ disabled: true }}
       autoAlignment={{
         disabled: false,
         animationTime: FEED_ZOOM_SNAP_MS,
@@ -436,7 +430,7 @@ export function GalleryInspirationGrid({
                       />
                     </motion.div>
                     </FeedPinchZoom>
-                    <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
+                    <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                       <AnimatePresence>
                         {likeBurst?.id === item.id ? (
                           <motion.span
@@ -445,12 +439,12 @@ export function GalleryInspirationGrid({
                             animate={{ scale: [0, 1.2, 1], opacity: 1 }}
                             exit={{ scale: 0.8, opacity: 0 }}
                             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                            className="flex h-24 w-24 items-center justify-center rounded-full bg-black/25 backdrop-blur-md transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                            className="flex h-24 w-24 items-center justify-center transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
                             style={{ backfaceVisibility: 'hidden' }}
                           >
                             <TattooMachineLikeGlyph
                               liked
-                              className="h-16 w-16 text-orange-500 drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+                              className="h-24 w-24 text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]"
                             />
                           </motion.span>
                         ) : null}
