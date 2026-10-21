@@ -205,13 +205,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5',
+                  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-2xl',
                   'text-[10px] font-medium leading-none tracking-tight',
                   'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
                   active
-                    ? 'bg-[#2a1105] text-orange-500 shadow-[inset_0_1px_3px_rgba(249,115,22,0.2)] rounded-2xl'
-                    : 'text-zinc-500'
+                    ? 'bg-orange-500/15 text-orange-500'
+                    : 'bg-transparent text-zinc-500'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
@@ -256,7 +256,7 @@ function BottomNavFallbackInner() {
       <ul className="flex w-full items-center justify-between">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
-            <span className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-none tracking-tight text-zinc-500">
+            <span className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
               <span className="flex items-center justify-center">
                 <NavIcon icon={item.icon} />
               </span>
