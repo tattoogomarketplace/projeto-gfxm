@@ -337,8 +337,11 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-7 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]" />
               </div>
-              <Skeleton className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border border-white/10 overflow-hidden" />
-                <div className="relative flex flex-col gap-3 pt-4 pb-2 w-full bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-transparent border-t border-white/[0.12]">
+              <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border border-white/10 overflow-hidden">
+                <Skeleton className="h-full w-full rounded-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
+              </div>
+                <div className="relative flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
               <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
@@ -457,6 +460,7 @@ export function GalleryInspirationGrid({
                       />
                     </motion.div>
                     </FeedPinchZoom>
+                    <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
                     <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                       <AnimatePresence>
                         {likeBurst?.id === item.id ? (
@@ -479,7 +483,7 @@ export function GalleryInspirationGrid({
                     </div>
                   </div>
 
-              <div className="relative flex flex-col gap-3 pt-4 pb-2 w-full bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-transparent border-t border-white/[0.12]">
+              <div className="relative flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
                 <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                   <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
