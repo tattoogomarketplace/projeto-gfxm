@@ -104,7 +104,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       gainNode.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.05);
-    } catch (e) {
+    } catch {
       console.log('Feedback suppressed');
     }
   };
