@@ -27,24 +27,28 @@ function isPlatformPath(pathname: string): boolean {
   );
 }
 
+function nextWithPathname(req: Request, pathname: string) {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export default clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
 
     if (isPlatformPath(pathname)) {
-      return NextResponse.next();
+      return nextWithPathname(req, pathname);
     }
 
     if (!isPublicRoute(req)) {
-      await auth.protect({ unauthenticatedUrl: LOGIN_PATH });
+      const { userId } = await auth();
+      if (!userId) {
+        return NextResponse.redirect(new URL(LOGIN_PATH, req.url));
+      }
     }
 
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set('x-pathname', pathname);
-
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    });
+    return nextWithPathname(req, pathname);
   },
   {
     signInUrl: LOGIN_PATH,
