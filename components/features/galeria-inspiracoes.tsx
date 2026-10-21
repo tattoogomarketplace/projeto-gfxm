@@ -82,24 +82,22 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="relative flex w-full flex-col text-white">
-      <header className="sticky top-0 z-40 border-b border-white/[0.04] bg-black/40 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
-            <Images className="h-5 w-5" strokeWidth={1.75} />
-          </span>
-          <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
-        </div>
-        <div className="px-4 pb-2">
-          <PortfolioFilterBar
-            style={style}
-            bodyPart={bodyPart}
-            healed={healed}
-            onStyleChange={setStyle}
-            onBodyPartChange={setBodyPart}
-            onHealingChange={setHealed}
-          />
-        </div>
-      </header>
+      <div className="relative px-4 pt-6 pb-2 w-full flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
+          <Images className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
+      </div>
+      <div className="sticky top-0 z-50 w-full px-4 pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl border-b border-white/[0.04] shadow-md flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <PortfolioFilterBar
+          style={style}
+          bodyPart={bodyPart}
+          healed={healed}
+          onStyleChange={setStyle}
+          onBodyPartChange={setBodyPart}
+          onHealingChange={setHealed}
+        />
+      </div>
 
       <div className="flex w-full flex-col px-0">
         <GalleryInspirationGrid

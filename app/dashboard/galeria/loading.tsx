@@ -4,16 +4,14 @@ export default function GaleriaLoading() {
       aria-hidden
       className="min-h-[100dvh] w-full bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[calc(env(safe-area-inset-bottom)+8rem)] overflow-y-auto"
     >
-      <div className="sticky top-0 z-40 border-b border-white/[0.04] bg-black/40 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-          <div className="h-10 w-10 rounded-lg bg-orange-500/10" />
-          <div className="h-6 w-56 rounded-lg bg-zinc-800" />
-        </div>
-        <div className="flex gap-3 overflow-hidden px-4 pb-2">
-          <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
-          <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
-          <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
-        </div>
+      <div className="relative px-4 pt-6 pb-2 w-full flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-orange-500/10" />
+        <div className="h-6 w-56 rounded-lg bg-zinc-800" />
+      </div>
+      <div className="sticky top-0 z-50 w-full px-4 pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl border-b border-white/[0.04] shadow-md flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
+        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
+        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
       </div>
       <div className="flex w-full flex-col px-0">
         <article className="flex flex-col w-full mb-0 pb-0 relative bg-transparent">
