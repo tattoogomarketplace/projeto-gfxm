@@ -318,14 +318,14 @@ export function BudgetEstimatorSheet({
               exit={{ y: '100%' }}
               transition={sheetSpring}
               onClick={(event) => event.stopPropagation()}
-              className="relative w-full max-w-2xl transform-gpu rounded-t-[32px] border-t border-white/10 bg-[#0a0a0c] p-6 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom)))] shadow-2xl will-change-transform"
+              className="relative w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden transform-gpu rounded-t-[32px] border-t border-white/10 bg-[#0a0a0c] px-6 pt-6 shadow-2xl will-change-transform"
             >
               <span
                 aria-hidden
-                className="mx-auto mb-6 block h-1.5 w-12 rounded-full bg-white/20"
+                className="mx-auto mb-6 block h-1.5 w-12 shrink-0 rounded-full bg-white/20"
               />
 
-              <header className="mb-6 flex items-center justify-between gap-3">
+              <header className="mb-6 flex shrink-0 items-center justify-between gap-3">
                 <h2
                   id="budget-estimator-title"
                   className="text-[17px] font-semibold tracking-tight text-zinc-100"
@@ -342,6 +342,7 @@ export function BudgetEstimatorSheet({
                 </button>
               </header>
 
+              <div className="min-h-0 flex-1 overflow-y-auto hide-scrollbar pb-safe">
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <dt className="text-sm text-zinc-400">Estilo</dt>
@@ -407,6 +408,7 @@ export function BudgetEstimatorSheet({
                   </button>
                 </div>
               </div>
+              </div>
             </motion.section>
           </motion.div>
         ) : null}
@@ -423,7 +425,7 @@ export function BudgetEstimatorSheet({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={sheetSpring}
-            className="fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col bg-[#0a0a0c] transform-gpu will-change-transform"
+            className="fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0a0a0c] transform-gpu will-change-transform"
           >
             <header className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
               <button
@@ -442,7 +444,7 @@ export function BudgetEstimatorSheet({
               </h2>
               <Sparkles className="size-4 shrink-0 text-orange-500" />
             </header>
-            <div className="flex flex-1 flex-col overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="min-h-0 flex-1 overflow-y-auto hide-scrollbar p-4 pb-safe">
               <div className="mb-5 flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3.5 text-xs font-medium text-orange-400">
                 <Sparkles className="size-3.5 shrink-0" strokeWidth={2.25} />
                 <p>
