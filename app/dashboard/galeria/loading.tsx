@@ -25,8 +25,8 @@ export default function GaleriaLoading() {
             </div>
             <div className="h-7 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]" />
           </div>
-          <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border-l-0 border-r-0 px-0 mx-0 mb-0" />
-          <div className="w-full max-w-none mt-0 px-0 mx-0 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-y border-white/[0.04] border-l-0 border-r-0 rounded-none">
+          <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border-l-0 border-r-0 border-b border-white/10 px-0 mx-0 mb-0" />
+          <div className="w-full max-w-none mt-0 px-0 mx-0 border-y border-white/10 bg-zinc-950/40 backdrop-blur-md border-l-0 border-r-0 rounded-none">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-8">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
@@ -35,7 +35,7 @@ export default function GaleriaLoading() {
               <div className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
             </div>
           </div>
-          <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[20px] p-4 mx-4 mt-2 mb-4 flex flex-col gap-1.5">
+          <div className="px-4 pt-4 pb-8 flex flex-col gap-1.5">
             <div className="h-3 w-40 rounded bg-zinc-800" />
             <div className="h-3 w-full rounded bg-zinc-900" />
           </div>
