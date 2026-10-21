@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Send } from 'lucide-react';
+import { Bookmark, FileText, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -481,6 +481,17 @@ export function GalleryInspirationGrid({
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6" strokeWidth={2} />
+                    </button>
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      onClick={() => {
+                        console.log('Open Budget AI Modal');
+                      }}
+                      className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
+                      aria-label={t('chat.quotes')}
+                    >
+                      <FileText className="h-6 w-6" strokeWidth={2} />
                     </button>
                   </div>
                   <button
