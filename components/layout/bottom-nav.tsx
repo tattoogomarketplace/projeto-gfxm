@@ -67,10 +67,12 @@ const PILL_CLASS =
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
+  className,
 }: {
   icon: typeof Home;
+  className?: string;
 }) {
-  return <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />;
+  return <Icon className={cn('h-5 w-5', className)} strokeWidth={1.75} aria-hidden />;
 });
 
 function BottomNavInner({ hidden = false }: BottomNavProps) {
@@ -82,6 +84,30 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+
+  const playPremiumFeedback = () => {
+    try {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(5);
+      }
+      const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+      gainNode.gain.setValueAtTime(0.02, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } catch (e) {
+      console.log('Feedback suppressed');
+    }
+  };
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -174,18 +200,26 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 href={href}
                 prefetch
                 scroll={false}
-                onClick={() => handleSelect(item.tab, href)}
+                onClick={() => {
+                  playPremiumFeedback();
+                  handleSelect(item.tab, href);
+                }}
                 className={cn(
                   'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
-                  'active:scale-90 transition-transform duration-200',
+                  'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
-                  active ? 'text-orange-500' : 'text-zinc-500'
+                  active
+                    ? 'bg-[#2a1105] text-orange-500 shadow-[inset_0_1px_3px_rgba(249,115,22,0.2)] rounded-2xl'
+                    : 'text-zinc-500'
                 )}
                 aria-current={active ? 'page' : undefined}
               >
                 <span className="flex items-center justify-center">
-                  <NavIcon icon={item.icon} />
+                  <NavIcon
+                    icon={item.icon}
+                    className={active ? 'drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : undefined}
+                  />
                 </span>
                 <span>{t(item.labelKey)}</span>
               </Link>
