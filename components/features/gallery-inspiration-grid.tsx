@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, FileText, Send } from 'lucide-react';
+import { Bookmark, Clock, Droplet, FileText, PenTool, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -36,6 +36,28 @@ import { artistProfileHref } from '@/lib/artist-profile';
 import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
+
+const TATTOO_DNA_PILL_CLASS =
+  'flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/5 text-zinc-400 text-[11px] font-medium tracking-wide uppercase transition-colors hover:bg-white/[0.06] hover:text-white';
+
+function TattooDnaSpecsBar() {
+  return (
+    <div className="flex items-center gap-2 mt-3 mb-2 overflow-x-auto hide-scrollbar scroll-smooth px-4">
+      <div className={TATTOO_DNA_PILL_CLASS}>
+        <Clock size={12} />
+        Sessão: 4h
+      </div>
+      <div className={TATTOO_DNA_PILL_CLASS}>
+        <PenTool size={12} />
+        Agulha: 3RL
+      </div>
+      <div className={TATTOO_DNA_PILL_CLASS}>
+        <Droplet size={12} />
+        Blackwash
+      </div>
+    </div>
+  );
+}
 
 const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
@@ -329,12 +351,7 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-3 w-40" />
                 <Skeleton className="h-3 w-full" />
               </div>
-              <div className="w-full h-16 flex items-center justify-center gap-1.5 opacity-80 mb-6 mt-2">
-                <div className="w-[1px] h-3 bg-zinc-700"></div>
-                <div className="w-[2px] h-5 bg-orange-600 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-                <div className="w-[1px] h-3 bg-zinc-700"></div>
-                <div className="flex-1 max-w-[120px] h-[1px] bg-gradient-to-r from-orange-500/50 via-zinc-800 to-transparent mx-3"></div>
-              </div>
+              <TattooDnaSpecsBar />
             </article>
           ))}
         </div>
@@ -535,12 +552,7 @@ export function GalleryInspirationGrid({
                     <span className="text-[13px] text-zinc-400 font-light leading-relaxed">{caption}</span>
                   </p>
                 </div>
-                <div className="w-full h-16 flex items-center justify-center gap-1.5 opacity-80 mb-6 mt-2">
-                  <div className="w-[1px] h-3 bg-zinc-700"></div>
-                  <div className="w-[2px] h-5 bg-orange-600 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-                  <div className="w-[1px] h-3 bg-zinc-700"></div>
-                  <div className="flex-1 max-w-[120px] h-[1px] bg-gradient-to-r from-orange-500/50 via-zinc-800 to-transparent mx-3"></div>
-                </div>
+                <TattooDnaSpecsBar />
               </article>
             );
           }

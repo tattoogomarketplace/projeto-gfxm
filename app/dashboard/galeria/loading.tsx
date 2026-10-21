@@ -39,11 +39,10 @@ export default function GaleriaLoading() {
             <div className="h-3 w-40 rounded bg-zinc-800" />
             <div className="h-3 w-full rounded bg-zinc-900" />
           </div>
-          <div className="w-full h-16 flex items-center justify-center gap-1.5 opacity-80 mb-6 mt-2">
-            <div className="w-[1px] h-3 bg-zinc-700"></div>
-            <div className="w-[2px] h-5 bg-orange-600 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
-            <div className="w-[1px] h-3 bg-zinc-700"></div>
-            <div className="flex-1 max-w-[120px] h-[1px] bg-gradient-to-r from-orange-500/50 via-zinc-800 to-transparent mx-3"></div>
+          <div className="flex items-center gap-2 mt-3 mb-2 overflow-x-auto hide-scrollbar scroll-smooth px-4">
+            <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
+            <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
+            <div className="flex-shrink-0 h-6 w-[7rem] rounded-md bg-white/[0.03] border border-white/5" />
           </div>
         </article>
       </div>
