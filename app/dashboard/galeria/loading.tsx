@@ -14,7 +14,7 @@ export default function GaleriaLoading() {
         <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
       </div>
       <div className="flex w-full max-w-none flex-col px-0 mx-0">
-        <article className="flex flex-col w-full max-w-none relative mb-8 px-0 mx-0">
+        <article className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0">
           <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-zinc-800 object-cover ring-1 ring-white/10" />
