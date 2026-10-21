@@ -328,7 +328,7 @@ export function GalleryInspirationGrid({
                 onContextMenu={(event) => event.preventDefault()}
               className="flex flex-col w-full max-w-none relative mb-8 px-0 mx-0"
               >
-                <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
+                <div className="flex items-center justify-between w-full px-4 py-3 mb-3 rounded-[12px] border border-white/10 bg-gradient-to-r from-zinc-950 via-[#0a0a0c] to-[#1a0c05] shadow-sm">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
