@@ -28,6 +28,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { useUiStore } from '@/hooks/use-ui-store';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
@@ -109,6 +110,7 @@ export function GalleryInspirationGrid({
   loading = false,
   skeletonCount = 6,
   onExploreStyle,
+  onStartConversation,
   layout = 'masonry',
   showLike = true,
   actionCard,
@@ -117,11 +119,15 @@ export function GalleryInspirationGrid({
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
+  const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
+  const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [budgetItem, setBudgetItem] = useState<InspirationItem | null>(null);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -487,7 +493,10 @@ export function GalleryInspirationGrid({
                     <button
                       type="button"
                       data-gallery-action=""
-                      onClick={() => setIsBudgetModalOpen(true)}
+                      onClick={() => {
+                        setBudgetItem(item);
+                        setIsBudgetModalOpen(true);
+                      }}
                       className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
                       aria-label={t('chat.quotes')}
                     >
@@ -634,6 +643,23 @@ export function GalleryInspirationGrid({
       <BudgetEstimatorSheet
         open={isBudgetModalOpen}
         onClose={() => setIsBudgetModalOpen(false)}
+        onRequestQuote={() => {
+          const item = budgetItem;
+          setIsBudgetModalOpen(false);
+          if (!item?.artistId) return;
+          if (onStartConversation) {
+            onStartConversation(item.artistId, item.id);
+            return;
+          }
+          setPendingChatPeer(item.artistId);
+          setPendingChatArtwork(item.id);
+          setActiveTab('chat');
+          const params = new URLSearchParams({
+            artistId: item.artistId,
+            artworkId: item.id,
+          });
+          router.push(`/dashboard/chat?${params.toString()}`);
+        }}
       />
     </>
   );
