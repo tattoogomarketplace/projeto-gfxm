@@ -156,7 +156,7 @@ export function PortfolioFilterBar({
   return (
     <div className="flex w-full flex-col">
       <div className="relative w-full">
-        <div className="relative z-30 flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+        <div className="relative z-30 w-full flex items-center justify-center gap-2 overflow-x-auto pb-2 no-scrollbar">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
