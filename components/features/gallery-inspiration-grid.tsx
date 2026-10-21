@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Clock, Droplet, FileText, PenTool, Send } from 'lucide-react';
+import { Bookmark, FileText, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -37,23 +37,44 @@ import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
+const HUD_CURATORSHIP_CLASS =
+  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-hidden border border-white/10 shadow-2xl';
+
+const HUD_CURATORSHIP_STYLE = {
+  backgroundColor: 'rgba(18, 18, 20, 0.4)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  backgroundImage:
+    'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
+  backgroundSize: '16px 16px',
+} as const;
+
 const TATTOO_DNA_PILL_CLASS =
-  'flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/5 text-zinc-400 text-[11px] font-medium tracking-wide uppercase transition-colors hover:bg-white/[0.06] hover:text-white';
+  'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5';
+
+function DnaLiveLed() {
+  return (
+    <div className="w-1.5 h-1.5 rounded-full bg-[#FF6600] shadow-[0_0_8px_rgba(255,102,0,0.8)] animate-pulse"></div>
+  );
+}
 
 function TattooDnaSpecsBar() {
   return (
-    <div className="flex items-center gap-2 mt-3 mb-2 overflow-x-auto hide-scrollbar scroll-smooth px-4">
+    <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth">
       <div className={TATTOO_DNA_PILL_CLASS}>
-        <Clock size={12} />
-        Sessão: 4h
+        <DnaLiveLed />
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Sessão</span>
+        <span className="font-mono text-xs text-white">4H</span>
       </div>
       <div className={TATTOO_DNA_PILL_CLASS}>
-        <PenTool size={12} />
-        Agulha: 3RL
+        <DnaLiveLed />
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Agulha</span>
+        <span className="font-mono text-xs text-white">3RL</span>
       </div>
       <div className={TATTOO_DNA_PILL_CLASS}>
-        <Droplet size={12} />
-        Blackwash
+        <DnaLiveLed />
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Tinta</span>
+        <span className="font-mono text-xs text-white">Blackwash</span>
       </div>
     </div>
   );
@@ -341,7 +362,14 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-full w-full rounded-none" />
                 <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
               </div>
-                <div className="relative z-20 -mt-8 flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
+              <motion.div
+                className={HUD_CURATORSHIP_CLASS}
+                style={HUD_CURATORSHIP_STYLE}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                viewport={{ once: true, margin: '-20px' }}
+              >
               <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
@@ -356,7 +384,7 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-3 w-full" />
               </div>
               <TattooDnaSpecsBar />
-              </div>
+              </motion.div>
             </article>
           ))}
         </div>
@@ -483,7 +511,14 @@ export function GalleryInspirationGrid({
                     </div>
                   </div>
 
-              <div className="relative z-20 -mt-8 flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
+              <motion.div
+                className={HUD_CURATORSHIP_CLASS}
+                style={HUD_CURATORSHIP_STYLE}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                viewport={{ once: true, margin: '-20px' }}
+              >
                 <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                   <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
@@ -560,7 +595,7 @@ export function GalleryInspirationGrid({
                   </p>
                 </div>
                 <TattooDnaSpecsBar />
-                </div>
+              </motion.div>
               </article>
             );
           }

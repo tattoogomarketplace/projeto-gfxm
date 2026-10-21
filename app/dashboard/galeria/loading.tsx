@@ -28,7 +28,17 @@ export default function GaleriaLoading() {
           <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-[12px] border border-white/10 overflow-hidden">
             <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
           </div>
-          <div className="relative z-20 -mt-8 flex flex-col gap-3 pt-4 pb-2 w-full border-t border-white/[0.12]">
+          <div
+            className="relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-hidden border border-white/10 shadow-2xl"
+            style={{
+              backgroundColor: 'rgba(18, 18, 20, 0.4)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              backgroundImage:
+                'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
+              backgroundSize: '16px 16px',
+            }}
+          >
           <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-8">
@@ -42,10 +52,22 @@ export default function GaleriaLoading() {
             <div className="h-3 w-40 rounded bg-zinc-800" />
             <div className="h-3 w-full rounded bg-zinc-900" />
           </div>
-          <div className="flex items-center gap-2 mt-3 mb-2 overflow-x-auto hide-scrollbar scroll-smooth px-4">
-            <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
-            <div className="flex-shrink-0 h-6 w-[7.5rem] rounded-md bg-white/[0.03] border border-white/5" />
-            <div className="flex-shrink-0 h-6 w-[7rem] rounded-md bg-white/[0.03] border border-white/5" />
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth">
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FF6600] shadow-[0_0_8px_rgba(255,102,0,0.8)]" />
+              <div className="h-2.5 w-10 rounded bg-zinc-700" />
+              <div className="h-3 w-6 rounded bg-zinc-600" />
+            </div>
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FF6600] shadow-[0_0_8px_rgba(255,102,0,0.8)]" />
+              <div className="h-2.5 w-10 rounded bg-zinc-700" />
+              <div className="h-3 w-8 rounded bg-zinc-600" />
+            </div>
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FF6600] shadow-[0_0_8px_rgba(255,102,0,0.8)]" />
+              <div className="h-2.5 w-8 rounded bg-zinc-700" />
+              <div className="h-3 w-16 rounded bg-zinc-600" />
+            </div>
           </div>
           </div>
         </article>
