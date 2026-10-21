@@ -353,7 +353,7 @@ export function GalleryInspirationGrid({
                   <Link
                     href={profileHref}
                     data-gallery-action=""
-                    className="px-5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[11px] font-bold uppercase tracking-wider backdrop-blur-sm transition-all duration-300 active:scale-95 hover:bg-orange-500/20 hover:border-orange-500/40 hover:shadow-[0_0_12px_rgba(249,115,22,0.15)] flex-shrink-0"
+                    className="flex items-center justify-center text-center px-5 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[11px] font-bold uppercase tracking-wider backdrop-blur-sm transition-all duration-300 active:scale-95 hover:bg-orange-500/20 hover:border-orange-500/40 hover:shadow-[0_0_12px_rgba(249,115,22,0.15)] flex-shrink-0"
                   >
                     VISITAR
                   </Link>
