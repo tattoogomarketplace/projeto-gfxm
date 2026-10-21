@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Send } from 'lucide-react';
+import { TransformComponent, TransformWrapper, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
@@ -32,6 +33,12 @@ const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]'
 
 const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
+const ZOOM_SNAP_MS = 220;
+
+function snapFeedZoom(ref: ReactZoomPanPinchRef) {
+  if (ref.state.scale === 1 && ref.state.positionX === 0 && ref.state.positionY === 0) return;
+  void ref.resetTransform(ZOOM_SNAP_MS, 'easeOut');
+}
 
 function aspectFor(index: number): string {
   return ASPECTS[index % ASPECTS.length];
@@ -361,21 +368,61 @@ export function GalleryInspirationGrid({
 
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-[12px] border border-white/10 overflow-hidden"
+                  className="w-full aspect-[4/5] relative rounded-[12px] border border-white/10 overflow-hidden bg-[#050505]"
                 >
-                    <motion.div
-                      layout="position"
-                      layoutId={galleryPreviewLayoutId(item.id)}
-                      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
-                      style={{ backfaceVisibility: 'hidden' }}
-                      className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                    <TransformWrapper
+                      initialScale={1}
+                      minScale={1}
+                      maxScale={4}
+                      centerOnInit
+                      limitToBounds
+                      disablePadding
+                      smooth
+                      wheel={{ disabled: true }}
+                      pinch={{ disabled: false, allowPanning: true }}
+                      panning={{ disabled: true, velocityDisabled: false }}
+                      doubleClick={{
+                        disabled: false,
+                        step: 0.7,
+                        mode: 'zoomIn',
+                        animationTime: ZOOM_SNAP_MS,
+                        animationType: 'easeOut',
+                      }}
+                      autoAlignment={{
+                        disabled: false,
+                        animationTime: ZOOM_SNAP_MS,
+                        animationType: 'easeOut',
+                      }}
+                      velocityAnimation={{
+                        disabled: false,
+                        animationTime: ZOOM_SNAP_MS,
+                        animationType: 'easeOut',
+                      }}
+                      onPinchStart={cancelLongPress}
+                      onPinchStop={snapFeedZoom}
+                      onPanningStop={snapFeedZoom}
                     >
-                      <OptimizedImage
-                        src={item.imageUrl}
-                        alt={`${styleLabel(item.style)} — ${artistName}`}
-                        className="object-cover w-full h-full"
-                      />
-                    </motion.div>
+                      <TransformComponent
+                        wrapperClass="!h-full !w-full"
+                        contentClass="!h-full !w-full"
+                        wrapperStyle={{ width: '100%', height: '100%' }}
+                        contentStyle={{ width: '100%', height: '100%' }}
+                      >
+                        <motion.div
+                          layout="position"
+                          layoutId={galleryPreviewLayoutId(item.id)}
+                          transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
+                          style={{ backfaceVisibility: 'hidden' }}
+                          className="relative h-full w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                        >
+                          <OptimizedImage
+                            src={item.imageUrl}
+                            alt={`${styleLabel(item.style)} — ${artistName}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </motion.div>
+                      </TransformComponent>
+                    </TransformWrapper>
                     <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
                       <AnimatePresence>
                         {likeBurst?.id === item.id ? (
