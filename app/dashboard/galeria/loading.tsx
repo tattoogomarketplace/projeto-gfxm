@@ -29,9 +29,9 @@ export default function GaleriaLoading() {
           <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
           <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
         </div>
-        <div className="flex w-full flex-col px-0">
-          <article className="relative mb-16 flex w-full flex-col bg-transparent">
-            <div className="mb-3 flex w-full items-center justify-between px-4">
+        <div className="flex w-full flex-col px-4">
+          <article className="relative mx-auto mb-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-[32px] border border-white/[0.06] bg-[#121214] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/[0.04] bg-[#121214] px-5 py-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-zinc-800 object-cover ring-1 ring-white/10" />
                 <div className="flex flex-col gap-1">
@@ -39,38 +39,33 @@ export default function GaleriaLoading() {
                   <div className="h-2.5 w-20 rounded bg-zinc-900" />
                 </div>
               </div>
-              <div className="h-8 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/10" />
+              <div className="h-8 w-[5.5rem] rounded-full border border-orange-500/30 bg-transparent" />
             </div>
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-none border-y border-white/5 bg-zinc-950 shadow-2xl sm:rounded-3xl" />
-            <div className="mt-3 mx-0 flex w-full items-center justify-between border-y border-white/10 bg-zinc-900/90 px-6 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-2xl supports-[backdrop-filter]:bg-zinc-900/50">
-              <div className="flex items-center gap-8">
-                <div className="h-6 w-6 rounded bg-zinc-700" />
-                <div className="h-6 w-6 rounded bg-zinc-700" />
+            <div className="relative aspect-[4/5] w-full bg-zinc-950" />
+            <div className="flex flex-col gap-4 bg-[#121214] px-5 py-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                </div>
+                <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
               </div>
-              <div className="h-6 w-6 rounded bg-zinc-700" />
-            </div>
-            <div className="flex flex-col gap-1.5 px-4 pt-4">
-              <div className="h-3 w-40 rounded bg-zinc-800" />
-              <div className="h-3 w-full rounded bg-zinc-900" />
-            </div>
-            <div className="flex w-full select-none items-center justify-between px-6 py-10 opacity-90">
-              <div className="flex items-end gap-[3px]">
-                <div className="h-2 w-[1px] bg-zinc-600" />
-                <div className="h-3 w-[1px] bg-zinc-500" />
-                <div className="h-4 w-[1px] bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                <div className="h-2 w-[1px] bg-zinc-600" />
-              </div>
-              <div className="relative mx-6 flex flex-1 items-center justify-center">
-                <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
-                <div className="pointer-events-none absolute h-8 w-3/4 rounded-full bg-orange-500/10 blur-xl" />
-              </div>
-              <div className="flex items-center gap-[4px]">
-                <div className="h-1.5 w-1.5 rounded-full bg-orange-500/80 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                <div className="h-1 w-1 rounded-full bg-zinc-500" />
-                <div className="h-[2px] w-[2px] rounded-full bg-zinc-600" />
+              <div className="flex flex-col gap-1.5">
+                <div className="h-3 w-40 rounded bg-zinc-800" />
+                <div className="h-3 w-full rounded bg-zinc-900" />
               </div>
             </div>
           </article>
+          <div className="mb-10 flex h-12 w-full items-center justify-center gap-2 opacity-60">
+            <div className="h-3 w-[2px] rounded-full bg-orange-600" />
+            <div className="h-5 w-[2px] rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+            <div className="h-3 w-[2px] rounded-full bg-orange-600" />
+            <div className="mx-2 h-[1px] max-w-[150px] flex-1 bg-gradient-to-r from-orange-500/80 to-transparent" />
+            <div className="flex gap-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.8)]" />
+              <div className="h-1 w-1 rounded-full bg-zinc-600" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
