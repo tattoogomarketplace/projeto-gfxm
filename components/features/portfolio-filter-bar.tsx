@@ -41,11 +41,11 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'flex min-h-11 min-w-[110px] shrink-0 flex-col whitespace-nowrap rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-left transition-colors active:scale-[0.98]',
+        'flex min-h-11 min-w-[110px] shrink-0 flex-col rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-left transition-colors active:scale-[0.98]',
         active ? 'border-orange-500/60' : 'hover:border-zinc-700'
       )}
     >
-      <span className="whitespace-nowrap text-[10px] font-bold uppercase text-zinc-500">{label}</span>
+      <span className="truncate text-[10px] font-bold uppercase text-zinc-500">{label}</span>
       <span className="mt-0.5 flex items-center justify-between gap-2 text-sm text-zinc-200">
         <span className="min-w-0 truncate">{value ?? t('gallery.all')}</span>
         <ChevronDown
@@ -156,7 +156,7 @@ export function PortfolioFilterBar({
   return (
     <div className="flex w-full flex-col">
       <div className="relative w-full">
-        <div className="relative z-30 flex w-max min-w-full gap-3 overflow-x-auto pb-2 scrollbar-none">
+        <div className="relative z-30 flex gap-3 overflow-x-auto pb-2 scrollbar-none">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
