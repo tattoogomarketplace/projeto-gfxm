@@ -17,6 +17,7 @@ import {
   TransformWrapper,
   type ReactZoomPanPinchRef,
 } from 'react-zoom-pan-pinch';
+import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
 import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
@@ -120,6 +121,7 @@ export function GalleryInspirationGrid({
   const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -485,9 +487,7 @@ export function GalleryInspirationGrid({
                     <button
                       type="button"
                       data-gallery-action=""
-                      onClick={() => {
-                        console.log('Open Budget AI Modal');
-                      }}
+                      onClick={() => setIsBudgetModalOpen(true)}
                       className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
                       aria-label={t('chat.quotes')}
                     >
@@ -629,6 +629,11 @@ export function GalleryInspirationGrid({
         onVisitProfile={visitPreviewProfile}
         onExploreStyles={explorePreviewStyles}
         showLike={showLike}
+      />
+
+      <BudgetEstimatorSheet
+        open={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
       />
     </>
   );
