@@ -8,10 +8,10 @@ export default function GaleriaLoading() {
         <div className="h-10 w-10 rounded-lg bg-orange-500/10" />
         <div className="h-6 w-56 rounded-lg bg-zinc-800" />
       </div>
-      <div className="sticky top-0 z-50 w-[calc(100%-2rem)] mx-auto px-4 pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
-        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
-        <div className="h-14 min-w-[110px] rounded-xl border border-zinc-800 bg-zinc-900" />
+      <div className="sticky top-0 z-50 w-full pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md flex items-center gap-3 overflow-x-auto no-scrollbar">
+        <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
+        <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
+        <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
       </div>
       <div className="flex w-full max-w-none flex-col px-0 mx-0">
         <article className="flex flex-col w-full max-w-none relative mb-8 px-0 mx-0">
