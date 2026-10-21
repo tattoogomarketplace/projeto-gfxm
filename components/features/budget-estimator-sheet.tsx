@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 
 const subscribe = () => () => {};
@@ -100,6 +100,30 @@ export function BudgetEstimatorSheet({ open, onClose }: BudgetEstimatorSheetProp
                 <dd className="font-medium text-white">Rafael Lima</dd>
               </div>
             </dl>
+
+            <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 p-5 shadow-inner">
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent"
+              />
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="size-4 text-orange-500" />
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-orange-500">
+                  Estimativa Inteligente IA
+                </h4>
+              </div>
+              <p className="mb-5 text-[13px] leading-relaxed text-zinc-400">
+                Nossa inteligência artificial analisou o mercado para este estilo e região. Este é um cálculo simulado para te dar previsibilidade financeira antes de solicitar o orçamento final ao artista.
+              </p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-white/5 bg-black/40 p-4">
+                <span className="mb-1 text-xs uppercase tracking-wider text-zinc-500">
+                  Média de mercado
+                </span>
+                <span className="text-3xl font-bold tracking-tight text-white">
+                  R$ 800 - R$ 1.200
+                </span>
+              </div>
+            </div>
           </motion.section>
         </motion.div>
       ) : null}
