@@ -13,6 +13,11 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Send } from 'lucide-react';
 import {
+  TransformComponent,
+  TransformWrapper,
+  type ReactZoomPanPinchRef,
+} from 'react-zoom-pan-pinch';
+import {
   GalleryHapticPreview,
   galleryPreviewLayoutId,
   type GalleryPreviewItem,
@@ -32,6 +37,59 @@ const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]'
 
 const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
+const FEED_ZOOM_SNAP_MS = 220;
+
+function snapFeedZoom(ref: ReactZoomPanPinchRef) {
+  if (ref.state.scale === 1 && ref.state.positionX === 0 && ref.state.positionY === 0) {
+    return;
+  }
+  void ref.resetTransform(FEED_ZOOM_SNAP_MS, 'easeOut');
+}
+
+function FeedPinchZoom({ children }: { children: ReactNode }) {
+  return (
+    <TransformWrapper
+      minScale={1}
+      maxScale={4}
+      limitToBounds
+      disablePadding
+      centerZoomedOut
+      wheel={{ disabled: true }}
+      panning={{ disabled: true, velocityDisabled: false }}
+      pinch={{ disabled: false, allowPanning: true }}
+      doubleClick={{
+        disabled: false,
+        step: 0.8,
+        mode: 'zoomIn',
+        animationTime: FEED_ZOOM_SNAP_MS,
+        animationType: 'easeOut',
+      }}
+      autoAlignment={{
+        disabled: false,
+        animationTime: FEED_ZOOM_SNAP_MS,
+        animationType: 'easeOut',
+      }}
+      velocityAnimation={{
+        disabled: false,
+        sensitivityTouch: 1.15,
+        animationTime: 280,
+        animationType: 'easeOut',
+      }}
+      onPinchStop={snapFeedZoom}
+      onPanningStop={snapFeedZoom}
+      onZoomStop={snapFeedZoom}
+    >
+      <TransformComponent
+        wrapperClass="!absolute !inset-0 !h-full !w-full"
+        contentClass="!flex !h-full !w-full"
+        wrapperStyle={{ width: '100%', height: '100%', overflow: 'hidden' }}
+        contentStyle={{ width: '100%', height: '100%' }}
+      >
+        {children}
+      </TransformComponent>
+    </TransformWrapper>
+  );
+}
 
 function aspectFor(index: number): string {
   return ASPECTS[index % ASPECTS.length];
@@ -363,12 +421,13 @@ export function GalleryInspirationGrid({
                   onPointerUp={handleFeedImagePointerUp(item)}
                   className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-[12px] border border-white/10 overflow-hidden"
                 >
+                    <FeedPinchZoom>
                     <motion.div
                       layout="position"
                       layoutId={galleryPreviewLayoutId(item.id)}
                       transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
                       style={{ backfaceVisibility: 'hidden' }}
-                      className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                      className="relative h-full w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
                     >
                       <OptimizedImage
                         src={item.imageUrl}
@@ -376,6 +435,7 @@ export function GalleryInspirationGrid({
                         className="object-cover w-full h-full"
                       />
                     </motion.div>
+                    </FeedPinchZoom>
                     <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
                       <AnimatePresence>
                         {likeBurst?.id === item.id ? (
