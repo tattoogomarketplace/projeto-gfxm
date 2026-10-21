@@ -88,7 +88,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         </span>
         <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
       </div>
-      <div className="sticky top-0 z-50 w-full flex items-center justify-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
+      <div className="sticky top-0 z-50 w-full flex items-center justify-center gap-2 overflow-visible pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
         <PortfolioFilterBar
           style={style}
           bodyPart={bodyPart}

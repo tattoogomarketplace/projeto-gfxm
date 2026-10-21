@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, RotateCcw } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -20,6 +21,15 @@ const HEALING_OPTIONS: { value: Exclude<PortfolioHealingFilter, 'all'>; labelKey
 ];
 
 type FilterCategory = 'style' | 'body' | 'healing' | null;
+
+type DropdownPosition = {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+};
+
+const subscribe = () => () => {};
 
 function FilterTrigger({
   label,
@@ -79,7 +89,7 @@ function FilterOption({
         'flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold tracking-tight transition-colors active:scale-[0.99]',
         selected
           ? 'bg-orange-500/15 text-orange-300'
-          : 'text-neutral-700 hover:bg-black/[0.04] hover:text-neutral-900 dark:text-zinc-300 dark:hover:bg-white/[0.04] dark:hover:text-white'
+          : 'text-zinc-300 hover:bg-white/[0.04] hover:text-white'
       )}
     >
       {children}
@@ -106,37 +116,93 @@ export function PortfolioFilterBar({
   const { t } = useI18n();
   const { styleLabel, bodyPartLabel } = portfolioLabelResolver(t);
   const [openCategory, setOpenCategory] = useState<FilterCategory>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const mounted = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
+
+  const closeDropdown = useCallback(() => {
+    setOpenCategory(null);
+  }, []);
+
+  const measureDropdownPosition = useCallback((): DropdownPosition | null => {
+    const el = barRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const gutter = 12;
+    const width = Math.min(rect.width, window.innerWidth - gutter * 2);
+    const left = Math.min(Math.max(gutter, rect.left), window.innerWidth - width - gutter);
+    const top = rect.bottom + 8;
+    const maxHeight = Math.max(160, window.innerHeight - top - 24);
+    return { top, left, width, maxHeight };
+  }, []);
+
+  const updateDropdownPosition = useCallback(() => {
+    const next = measureDropdownPosition();
+    if (next) setDropdownPosition(next);
+  }, [measureDropdownPosition]);
+
+  useEffect(() => {
+    if (!openCategory) return;
+    const onReposition = () => {
+      updateDropdownPosition();
+    };
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [openCategory, updateDropdownPosition]);
+
+  useEffect(() => {
+    if (!openCategory) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [openCategory]);
 
   useEffect(() => {
     if (!openCategory) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpenCategory(null);
+      if (event.key === 'Escape') closeDropdown();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [openCategory]);
+  }, [openCategory, closeDropdown]);
 
   const toggleCategory = (category: Exclude<FilterCategory, null>) => {
     triggerHaptic('light');
-    setOpenCategory((current) => (current === category ? null : category));
+    if (openCategory === category) {
+      setOpenCategory(null);
+      return;
+    }
+    const next = measureDropdownPosition();
+    if (next) setDropdownPosition(next);
+    setOpenCategory(category);
   };
 
   const applyStyle = (value: string) => {
     triggerHaptic('light');
     onStyleChange(value);
-    setOpenCategory(null);
+    closeDropdown();
   };
 
   const applyBodyPart = (value: string) => {
     triggerHaptic('light');
     onBodyPartChange(value);
-    setOpenCategory(null);
+    closeDropdown();
   };
 
   const applyHealing = (value: PortfolioHealingFilter) => {
     triggerHaptic('light');
     onHealingChange(value);
-    setOpenCategory(null);
+    closeDropdown();
   };
 
   const clearFilters = () => {
@@ -144,7 +210,7 @@ export function PortfolioFilterBar({
     onStyleChange('');
     onBodyPartChange('');
     onHealingChange('all');
-    setOpenCategory(null);
+    closeDropdown();
   };
 
   const hasFilters = Boolean(style || bodyPart || healed !== 'all');
@@ -153,43 +219,26 @@ export function PortfolioFilterBar({
   const healingValue =
     healed === 'fresh' ? t('gallery.fresh') : healed === 'healed' ? t('gallery.healed') : null;
 
-  return (
-    <div className="flex w-full flex-col">
-      <div className="relative w-full">
-        <div className="relative z-30 w-full flex items-center justify-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-          <FilterTrigger
-            label={t('gallery.style')}
-            value={styleValue}
-            open={openCategory === 'style'}
-            onClick={() => toggleCategory('style')}
-          />
-          <FilterTrigger
-            label={t('gallery.bodyPart')}
-            value={bodyValue}
-            open={openCategory === 'body'}
-            onClick={() => toggleCategory('body')}
-          />
-          <FilterTrigger
-            label={t('gallery.healing')}
-            value={healingValue}
-            open={openCategory === 'healing'}
-            onClick={() => toggleCategory('healing')}
-          />
-        </div>
-
-        {openCategory ? (
+  const dropdownMenu =
+    mounted && openCategory && dropdownPosition
+      ? createPortal(
           <>
-            <button
-              type="button"
-              aria-label={t('gallery.closeFilter')}
-              className="fixed inset-0 z-20 cursor-default"
-              onClick={() => setOpenCategory(null)}
-            />
+            <div
+              className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-md transition-opacity"
+              onClick={closeDropdown}
+              aria-hidden="true"
+            ></div>
             <div
               role="listbox"
-              className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-2xl border border-black/[0.06] bg-white/85 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/70 dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+              className="fixed z-[9999] bg-[#121214] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+              style={{
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width,
+                maxHeight: dropdownPosition.maxHeight,
+              }}
             >
-              <div className="max-h-72 overflow-y-auto p-2">
+              <div className="max-h-72 overflow-y-auto p-2" style={{ maxHeight: dropdownPosition.maxHeight }}>
                 {openCategory === 'style' ? (
                   <>
                     <FilterOption selected={!style} onClick={() => applyStyle('')}>
@@ -242,8 +291,34 @@ export function PortfolioFilterBar({
                 ) : null}
               </div>
             </div>
-          </>
-        ) : null}
+          </>,
+          document.body
+        )
+      : null;
+
+  return (
+    <div className="flex w-full flex-col">
+      <div ref={barRef} className="relative w-full">
+        <div className="relative z-30 w-full flex items-center justify-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+          <FilterTrigger
+            label={t('gallery.style')}
+            value={styleValue}
+            open={openCategory === 'style'}
+            onClick={() => toggleCategory('style')}
+          />
+          <FilterTrigger
+            label={t('gallery.bodyPart')}
+            value={bodyValue}
+            open={openCategory === 'body'}
+            onClick={() => toggleCategory('body')}
+          />
+          <FilterTrigger
+            label={t('gallery.healing')}
+            value={healingValue}
+            open={openCategory === 'healing'}
+            onClick={() => toggleCategory('healing')}
+          />
+        </div>
       </div>
 
       {hasFilters ? (
@@ -256,6 +331,8 @@ export function PortfolioFilterBar({
           {t('gallery.clearFilters')}
         </button>
       ) : null}
+
+      {dropdownMenu}
     </div>
   );
 }
