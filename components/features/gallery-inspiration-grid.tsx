@@ -438,7 +438,7 @@ export function GalleryInspirationGrid({
                 onContextMenu={(event) => event.preventDefault()}
               className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0"
               >
-                <div className="flex items-center justify-between w-full px-4 py-3 my-4 rounded-[12px] border border-white/10 bg-gradient-to-r from-zinc-950 via-[#0a0a0c] to-[#1a0c05] shadow-sm">
+                <div className="relative flex items-center justify-between w-full px-4 py-3 my-4 rounded-[12px] border border-white/10 border-t-white/15 bg-gradient-to-r from-zinc-950/80 via-[#0a0a0c]/75 to-[#1a0c05]/80 backdrop-blur-2xl shadow-[0_-1px_20px_rgba(255,255,255,0.02),0_12px_28px_-10px_rgba(0,0,0,0.55)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:rounded-t-[12px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-white/10 after:to-transparent">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
@@ -452,11 +452,11 @@ export function GalleryInspirationGrid({
                       </span>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-zinc-100">
+                      <p className="truncate text-sm font-bold tracking-tight text-white">
                         {artistName}
                       </p>
                       {metaLine ? (
-                        <p className="truncate text-xs text-zinc-400">{metaLine}</p>
+                        <p className="truncate text-xs tracking-wide text-zinc-400">{metaLine}</p>
                       ) : null}
                     </div>
                   </div>
