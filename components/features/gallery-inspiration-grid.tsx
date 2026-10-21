@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
 const HUD_CURATORSHIP_CLASS =
-  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-hidden border border-white/10 shadow-2xl';
+  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-visible border border-white/10 shadow-2xl';
 
 const HUD_CURATORSHIP_STYLE = {
   backgroundColor: 'rgba(18, 18, 20, 0.4)',
@@ -55,6 +55,40 @@ const TATTOO_DNA_PILL_CLASS =
 function DnaLiveLed() {
   return (
     <div className="w-1.5 h-1.5 rounded-full bg-[#FF6600] shadow-[0_0_8px_rgba(255,102,0,0.8)] animate-pulse"></div>
+  );
+}
+
+function HudVNotchAccent() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+      <span className="absolute -left-3 top-4 bottom-0 w-px bg-gradient-to-b from-white/0 via-white/20 to-[#FF6600]/45" />
+      <span className="absolute -right-3 top-4 bottom-0 w-px bg-gradient-to-b from-white/0 via-white/20 to-[#FF6600]/45" />
+      <svg
+        viewBox="0 0 400 20"
+        preserveAspectRatio="none"
+        className="absolute -bottom-[14px] -left-3 -right-3 h-[14px] drop-shadow-[0_0_6px_rgba(255,102,0,0.22)]"
+      >
+        <path
+          d="M1 1 L200 18 L399 1"
+          fill="none"
+          stroke="rgba(255,255,255,0.22)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d="M1 1 L200 18 L399 1"
+          fill="none"
+          stroke="rgba(255,102,0,0.38)"
+          strokeWidth="0.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        <circle cx="200" cy="18" r="1.6" fill="#FF6600" opacity="0.75" />
+      </svg>
+    </div>
   );
 }
 
@@ -370,6 +404,7 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
+              <HudVNotchAccent />
               <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
@@ -519,6 +554,7 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
+                <HudVNotchAccent />
                 <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                   <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-8">
