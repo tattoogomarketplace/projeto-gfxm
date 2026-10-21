@@ -1,76 +1,42 @@
 'use client';
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight, Search, Sparkles, TrendingDown, X } from 'lucide-react';
+import {
+  createBudgetQuoteRequest,
+  getBudgetEstimateAction,
+  getCheaperArtistsAction,
+} from '@/app/actions/budget';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useI18n } from '@/hooks/use-i18n';
+import { artistProfileHref } from '@/lib/artist-profile';
+import type { BudgetEstimateDto, CheaperArtistDto } from '@/lib/services/budget-estimator';
+import { toast } from '@/lib/toast';
 
 const subscribe = () => () => {};
 
 const sheetSpring = { type: 'spring', damping: 25, stiffness: 200 } as const;
 
-type RecommendedArtist = {
-  id: string;
-  name: string;
-  location: string;
-  style: string;
-  avatarUrl: string;
-  savingsLabel: string;
-  priceRange: string;
-  thumbnails: string[];
-};
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const RECOMMENDED_ARTISTS: RecommendedArtist[] = [
-  {
-    id: 'bianca-souza',
-    name: 'Bianca Souza',
-    location: 'São Paulo/SP',
-    style: 'Realismo',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
-    savingsLabel: '~20% menor',
-    priceRange: 'R$ 640 - R$ 960',
-    thumbnails: [
-      'https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=400&q=80&auto=format&fit=crop',
-    ],
-  },
-  {
-    id: 'marina-costa',
-    name: 'Marina Costa',
-    location: 'Campinas/SP',
-    style: 'Realismo',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
-    savingsLabel: '~18% menor',
-    priceRange: 'R$ 660 - R$ 980',
-    thumbnails: [
-      'https://images.unsplash.com/photo-1542727365-19732a80dcfd?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1595475207225-428b62bda831?w=400&q=80&auto=format&fit=crop',
-    ],
-  },
-  {
-    id: 'helena-dias',
-    name: 'Helena Dias',
-    location: 'Guarulhos/SP',
-    style: 'Realismo',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
-    savingsLabel: '~25% menor',
-    priceRange: 'R$ 580 - R$ 900',
-    thumbnails: [
-      'https://images.unsplash.com/photo-1560707854-fb9a10eeaace?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=400&q=80&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&q=80&auto=format&fit=crop',
-    ],
-  },
-];
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
 
-function RecommendedArtistCard({ artist }: { artist: RecommendedArtist }) {
+function RecommendedArtistCard({
+  artist,
+  pending,
+  onQuote,
+}: {
+  artist: CheaperArtistDto;
+  pending: boolean;
+  onQuote: (artist: CheaperArtistDto) => void;
+}) {
+  const thumbnails = artist.thumbnails.slice(0, 3);
   return (
     <article className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#121214] p-4 shadow-lg">
       <div className="flex items-start justify-between gap-3">
@@ -95,19 +61,28 @@ function RecommendedArtistCard({ artist }: { artist: RecommendedArtist }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {artist.thumbnails.map((src) => (
-          <OptimizedImage
-            key={src}
-            src={src}
-            alt={`Trabalho de ${artist.name}`}
-            className="aspect-square h-20 w-full overflow-hidden rounded-lg border border-white/5 bg-zinc-900"
-          />
-        ))}
+        {thumbnails.length > 0
+          ? thumbnails.map((src) => (
+              <OptimizedImage
+                key={src}
+                src={src}
+                alt={`Trabalho de ${artist.name}`}
+                className="aspect-square h-20 w-full overflow-hidden rounded-lg border border-white/5 bg-zinc-900"
+              />
+            ))
+          : [0, 1, 2].map((slot) => (
+              <div
+                key={slot}
+                className="aspect-square h-20 w-full rounded-lg border border-white/5 bg-zinc-900"
+              />
+            ))}
       </div>
 
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:border-orange-500 hover:bg-orange-500 hover:text-black active:scale-[0.98]"
+        disabled={pending}
+        onClick={() => onQuote(artist)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:border-orange-500 hover:bg-orange-500 hover:text-black active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
       >
         Ver Perfil e Cotar
         <ArrowUpRight size={14} strokeWidth={2.5} />
@@ -116,24 +91,112 @@ function RecommendedArtistCard({ artist }: { artist: RecommendedArtist }) {
   );
 }
 
+export type BudgetEstimatorItem = {
+  id: string;
+  style: string;
+  artistName: string;
+  artistId: string | null;
+  artistUsername?: string | null;
+  location?: string | null;
+  imageUrl?: string | null;
+};
+
 type BudgetEstimatorSheetProps = {
   open: boolean;
+  item: BudgetEstimatorItem | null;
   onClose: () => void;
-  onRequestQuote: () => void;
+  onRequestQuote: (payload: {
+    artistId: string;
+    artworkId: string;
+    estimateRange: string;
+  }) => void;
+  onQuoteAlternative?: (payload: {
+    artistId: string;
+    artworkId: string;
+    estimateRange: string;
+    profileHref: string;
+  }) => void;
 };
 
 export function BudgetEstimatorSheet({
   open,
+  item,
   onClose,
   onRequestQuote,
+  onQuoteAlternative,
 }: BudgetEstimatorSheetProps) {
   const { t } = useI18n();
   const [showCheaperOptions, setShowCheaperOptions] = useState(false);
+  const [estimateState, setEstimateState] = useState<{
+    key: string;
+    data: BudgetEstimateDto | null;
+  }>({ key: '', data: null });
+  const [cheaperState, setCheaperState] = useState<{
+    key: string;
+    artists: CheaperArtistDto[];
+  }>({ key: '', artists: [] });
+  const [isPending, startTransition] = useTransition();
   const mounted = useSyncExternalStore(
     subscribe,
     () => true,
     () => false
   );
+
+  const itemKey = item ? `${item.id}:${item.artistId ?? ''}` : '';
+  const estimate = estimateState.key === itemKey ? estimateState.data : null;
+  const loadingEstimate = Boolean(open && item && estimateState.key !== itemKey);
+  const cheaperKey = `${itemKey}:${estimate?.avgPrice ?? ''}:${estimate?.style ?? item?.style ?? ''}`;
+  const cheaperArtists = cheaperState.key === cheaperKey ? cheaperState.artists : [];
+  const loadingCheaper = Boolean(
+    open && showCheaperOptions && item && cheaperState.key !== cheaperKey
+  );
+
+  const closeSheet = useCallback(() => {
+    setShowCheaperOptions(false);
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!open || !item || !itemKey) return;
+    let cancelled = false;
+    void getBudgetEstimateAction({
+      style: item.style,
+      location: item.location,
+      artistId: item.artistId,
+      artworkId: item.id,
+      artistName: item.artistName,
+    })
+      .then((data) => {
+        if (!cancelled) setEstimateState({ key: itemKey, data });
+      })
+      .catch((error) => {
+        if (!cancelled) toast.error(error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, item, itemKey]);
+
+  useEffect(() => {
+    if (!open || !showCheaperOptions || !item || !cheaperKey) return;
+    let cancelled = false;
+    void getCheaperArtistsAction({
+      styleId: estimate?.style || item.style,
+      style: estimate?.style || item.style,
+      currentArtistId: estimate?.artistId || item.artistId,
+      maxPriceLimit: estimate?.avgPrice ?? null,
+      location: estimate?.location || item.location,
+    })
+      .then((artists) => {
+        if (!cancelled) setCheaperState({ key: cheaperKey, artists });
+      })
+      .catch((error) => {
+        if (!cancelled) toast.error(error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, showCheaperOptions, item, estimate, cheaperKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -152,12 +215,76 @@ export function BudgetEstimatorSheet({
         setShowCheaperOptions(false);
         return;
       }
-      setShowCheaperOptions(false);
-      onClose();
+      closeSheet();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose, showCheaperOptions]);
+  }, [open, showCheaperOptions, closeSheet]);
+
+  const styleLabel = estimate?.style || item?.style || '—';
+  const locationLabel = estimate?.location || item?.location || '—';
+  const artistLabel = estimate?.artistName || item?.artistName || '—';
+  const rangeLabel = estimate?.rangeLabel || 'R$ 800 - R$ 1.200';
+  const primaryArtistId = estimate?.artistId || item?.artistId || '';
+  const artworkId = estimate?.artworkId || item?.id || '';
+
+  const startOfficialQuote = () => {
+    if (!primaryArtistId || isPending) return;
+    startTransition(async () => {
+      try {
+        if (isUuid(primaryArtistId)) {
+          await createBudgetQuoteRequest({
+            artistId: primaryArtistId,
+            artworkId,
+            style: styleLabel,
+            estimateRange: rangeLabel,
+            imageUrl: item?.imageUrl,
+          });
+        }
+        onRequestQuote({
+          artistId: primaryArtistId,
+          artworkId,
+          estimateRange: rangeLabel,
+        });
+      } catch (error) {
+        toast.error(error);
+      }
+    });
+  };
+
+  const startAlternativeQuote = (artist: CheaperArtistDto) => {
+    if (isPending) return;
+    const profileHref = artistProfileHref({ id: artist.id, username: artist.username });
+    startTransition(async () => {
+      try {
+        if (isUuid(artist.id)) {
+          await createBudgetQuoteRequest({
+            artistId: artist.id,
+            artworkId,
+            style: artist.style || styleLabel,
+            estimateRange: artist.priceRange,
+            imageUrl: item?.imageUrl,
+          });
+        }
+        if (onQuoteAlternative) {
+          onQuoteAlternative({
+            artistId: artist.id,
+            artworkId,
+            estimateRange: artist.priceRange,
+            profileHref,
+          });
+          return;
+        }
+        onRequestQuote({
+          artistId: artist.id,
+          artworkId,
+          estimateRange: artist.priceRange,
+        });
+      } catch (error) {
+        toast.error(error);
+      }
+    });
+  };
 
   if (!mounted) return null;
 
@@ -179,15 +306,13 @@ export function BudgetEstimatorSheet({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                setShowCheaperOptions(false);
-                onClose();
-              }}
+              onClick={closeSheet}
             />
             <motion.section
               role="dialog"
               aria-modal="true"
               aria-labelledby="budget-estimator-title"
+              aria-busy={loadingEstimate || isPending}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -210,10 +335,7 @@ export function BudgetEstimatorSheet({
                 <button
                   type="button"
                   aria-label={t('common.close')}
-                  onClick={() => {
-                    setShowCheaperOptions(false);
-                    onClose();
-                  }}
+                  onClick={closeSheet}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
                 >
                   <X size={16} strokeWidth={2.5} />
@@ -223,15 +345,15 @@ export function BudgetEstimatorSheet({
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <dt className="text-sm text-zinc-400">Estilo</dt>
-                  <dd className="font-medium text-white">Realismo</dd>
+                  <dd className="font-medium text-white">{styleLabel}</dd>
                 </div>
                 <div className="flex flex-col gap-1">
                   <dt className="text-sm text-zinc-400">Localização</dt>
-                  <dd className="font-medium text-white">São Paulo/SP</dd>
+                  <dd className="font-medium text-white">{locationLabel}</dd>
                 </div>
                 <div className="flex flex-col gap-1">
                   <dt className="text-sm text-zinc-400">Artista</dt>
-                  <dd className="font-medium text-white">Rafael Lima</dd>
+                  <dd className="font-medium text-white">{artistLabel}</dd>
                 </div>
               </dl>
 
@@ -247,23 +369,30 @@ export function BudgetEstimatorSheet({
                   </h4>
                 </div>
                 <p className="mb-5 text-[13px] leading-relaxed text-zinc-400">
-                  Nossa inteligência artificial analisou o mercado para este estilo e região. Este é um cálculo simulado para te dar previsibilidade financeira antes de solicitar o orçamento final ao artista.
+                  {estimate?.usedFallback
+                    ? 'Ainda há poucos orçamentos históricos para este recorte. Exibimos uma faixa de referência para você seguir com previsibilidade.'
+                    : 'Nossa inteligência artificial analisou o mercado para este estilo e região com base em orçamentos reais registrados na plataforma.'}
                 </p>
                 <div className="flex flex-col items-center justify-center rounded-xl border border-white/5 bg-black/40 p-4">
                   <span className="mb-1 text-xs uppercase tracking-wider text-zinc-500">
                     Média de mercado
                   </span>
-                  <span className="text-3xl font-bold tracking-tight text-white">
-                    R$ 800 - R$ 1.200
-                  </span>
+                  {loadingEstimate ? (
+                    <Skeleton className="h-9 w-48 rounded-lg bg-white/10" />
+                  ) : (
+                    <span className="text-3xl font-bold tracking-tight text-white">
+                      {rangeLabel}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="mt-6 flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={onRequestQuote}
-                  className="flex w-full items-center justify-center rounded-xl bg-orange-500 py-3.5 text-[14px] font-bold tracking-wide text-black transition-all hover:bg-orange-400 active:scale-[0.98]"
+                  disabled={!primaryArtistId || isPending || loadingEstimate}
+                  onClick={startOfficialQuote}
+                  className="flex w-full items-center justify-center rounded-xl bg-orange-500 py-3.5 text-[14px] font-bold tracking-wide text-black transition-all hover:bg-orange-400 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
                 >
                   Solicitar Orçamento Oficial
                 </button>
@@ -317,14 +446,29 @@ export function BudgetEstimatorSheet({
               <div className="mb-5 flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3.5 text-xs font-medium text-orange-400">
                 <Sparkles className="size-3.5 shrink-0" strokeWidth={2.25} />
                 <p>
-                  Exibindo 3 artistas do mesmo estilo com faixas de orçamento abaixo da média
-                  informada.
+                  {loadingCheaper
+                    ? 'Buscando artistas do mesmo estilo com faixas abaixo da média informada.'
+                    : cheaperArtists.length > 0
+                      ? `Exibindo ${cheaperArtists.length} artista${cheaperArtists.length === 1 ? '' : 's'} do mesmo estilo com faixas de orçamento abaixo da média informada.`
+                      : 'Não encontramos artistas ativos abaixo desta média agora. A estimativa segue disponível para o artista original.'}
                 </p>
               </div>
               <div className="flex flex-col gap-4">
-                {RECOMMENDED_ARTISTS.map((artist) => (
-                  <RecommendedArtistCard key={artist.id} artist={artist} />
-                ))}
+                {loadingCheaper
+                  ? [0, 1, 2].map((slot) => (
+                      <Skeleton
+                        key={slot}
+                        className="h-56 w-full rounded-2xl border border-white/10 bg-[#121214]"
+                      />
+                    ))
+                  : cheaperArtists.map((artist) => (
+                      <RecommendedArtistCard
+                        key={artist.id}
+                        artist={artist}
+                        pending={isPending}
+                        onQuote={startAlternativeQuote}
+                      />
+                    ))}
               </div>
             </div>
           </motion.div>

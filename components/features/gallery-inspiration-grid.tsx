@@ -642,21 +642,37 @@ export function GalleryInspirationGrid({
 
       <BudgetEstimatorSheet
         open={isBudgetModalOpen}
+        item={budgetItem}
         onClose={() => setIsBudgetModalOpen(false)}
-        onRequestQuote={() => {
-          const item = budgetItem;
+        onRequestQuote={({ artistId, artworkId }) => {
           setIsBudgetModalOpen(false);
-          if (!item?.artistId) return;
+          if (!artistId) return;
           if (onStartConversation) {
-            onStartConversation(item.artistId, item.id);
+            onStartConversation(artistId, artworkId);
             return;
           }
-          setPendingChatPeer(item.artistId);
-          setPendingChatArtwork(item.id);
+          setPendingChatPeer(artistId);
+          setPendingChatArtwork(artworkId);
           setActiveTab('chat');
           const params = new URLSearchParams({
-            artistId: item.artistId,
-            artworkId: item.id,
+            artistId,
+            artworkId,
+          });
+          router.push(`/dashboard/chat?${params.toString()}`);
+        }}
+        onQuoteAlternative={({ artistId, artworkId }) => {
+          setIsBudgetModalOpen(false);
+          if (!artistId) return;
+          if (onStartConversation) {
+            onStartConversation(artistId, artworkId);
+            return;
+          }
+          setPendingChatPeer(artistId);
+          setPendingChatArtwork(artworkId);
+          setActiveTab('chat');
+          const params = new URLSearchParams({
+            artistId,
+            artworkId,
           });
           router.push(`/dashboard/chat?${params.toString()}`);
         }}
