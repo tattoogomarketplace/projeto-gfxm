@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sparkles, X } from 'lucide-react';
+import { Search, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/hooks/use-i18n';
 
 const subscribe = () => () => {};
@@ -122,6 +122,27 @@ export function BudgetEstimatorSheet({ open, onClose }: BudgetEstimatorSheetProp
                 <span className="text-3xl font-bold tracking-tight text-white">
                   R$ 800 - R$ 1.200
                 </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                className="flex w-full items-center justify-center rounded-xl bg-orange-500 py-3.5 text-[14px] font-bold tracking-wide text-black transition-all hover:bg-orange-400 active:scale-[0.98]"
+              >
+                Solicitar Orçamento Oficial
+              </button>
+              <div className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-white/10 via-orange-500/30 to-white/10 p-[1px] transition-all hover:from-white/20 hover:via-orange-500/50 hover:to-white/20">
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('Open Cheaper Alternatives Layout');
+                  }}
+                  className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-[#0a0a0c] py-3.5 text-[14px] font-medium text-zinc-300 transition-all group-hover:bg-zinc-900 active:scale-[0.98]"
+                >
+                  <Search size={16} className="text-orange-500" />
+                  Encontrar opções mais acessíveis
+                </button>
               </div>
             </div>
           </motion.section>
