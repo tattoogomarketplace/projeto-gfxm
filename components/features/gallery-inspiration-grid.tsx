@@ -239,11 +239,11 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex w-full flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]" aria-hidden>
+        <div className="flex w-full max-w-none flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="flex flex-col w-full relative mb-8"
+                className="flex flex-col w-full max-w-none relative mb-8"
             >
               <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
                 <div className="flex items-center gap-3">
@@ -255,8 +255,8 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-8 w-[5.5rem] rounded-full" />
               </div>
-              <Skeleton className="w-full aspect-[4/5] relative bg-[#050505] rounded-none" />
-              <div className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-b border-white/[0.05]">
+              <Skeleton className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border-l-0 border-r-0" />
+              <div className="w-full max-w-none flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-y border-white/[0.04] border-l-0 border-r-0 rounded-none">
                 <div className="flex items-center gap-8">
                   <Skeleton className="h-6 w-6 rounded-md" />
                   <Skeleton className="h-6 w-6 rounded-md" />
@@ -305,7 +305,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -335,7 +335,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-                className="flex flex-col w-full relative mb-8"
+              className="flex flex-col w-full max-w-none relative mb-8"
               >
                 <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
                   <div className="flex min-w-0 items-center gap-3">
@@ -370,7 +370,7 @@ export function GalleryInspirationGrid({
 
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="w-full aspect-[4/5] relative bg-[#050505]"
+                  className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border-l-0 border-r-0"
                 >
                     <motion.div
                       layout="position"
@@ -407,7 +407,7 @@ export function GalleryInspirationGrid({
                     </div>
                   </div>
 
-                <div className="w-full flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-b border-white/[0.05]">
+                <div className="w-full max-w-none flex items-center justify-between px-6 py-4 bg-zinc-900/90 supports-[backdrop-filter]:bg-zinc-900/60 backdrop-blur-2xl border-y border-white/[0.04] border-l-0 border-r-0 rounded-none">
                   <div className="flex items-center gap-8">
                     {showLike ? (
                       <button

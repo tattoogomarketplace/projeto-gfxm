@@ -99,7 +99,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
         />
       </div>
 
-      <div className="flex w-full flex-col px-0">
+      <div className="flex w-full max-w-none flex-col px-0">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
