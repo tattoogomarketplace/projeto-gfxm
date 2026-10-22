@@ -127,13 +127,13 @@ function ArtistProfileStructuralPillars() {
     <>
       <div
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 z-10 w-[1px] bg-[#FF6600]/40"
-        style={{ bottom: '-1rem' }}
+        className="pointer-events-none absolute left-0 top-full z-10 h-4 w-px"
+        style={{ backgroundColor: HUD_GLASS_RAIL_STROKE }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute right-0 top-0 z-10 w-[1px] bg-[#FF6600]/40"
-        style={{ bottom: '-1rem' }}
+        className="pointer-events-none absolute right-0 top-full z-10 h-4 w-px"
+        style={{ backgroundColor: HUD_GLASS_RAIL_STROKE }}
       />
     </>
   );
