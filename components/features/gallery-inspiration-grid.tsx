@@ -66,6 +66,10 @@ const HUD_GLASS_RAIL_STYLE = {
 
 const HUD_GLASS_RAIL_STROKE = 'rgba(249,115,22,0.13)';
 
+const PROFILE_STRUCTURAL_PILLAR_STYLE = {
+  backgroundColor: 'rgba(249,115,22,0.13)',
+} as const;
+
 function HudAmbientLightBridge() {
   return (
     <div
@@ -118,6 +122,24 @@ function HudArchitecturalRails() {
       <span className="absolute -right-1.5 top-0 bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
       <HudGlassRailElbow side="left" />
       <HudGlassRailElbow side="right" />
+    </div>
+  );
+}
+
+function ArtistProfileStructuralPillars() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 -bottom-4 z-0 overflow-visible"
+    >
+      <span
+        className="absolute left-0 top-0 h-full w-[1px]"
+        style={PROFILE_STRUCTURAL_PILLAR_STYLE}
+      />
+      <span
+        className="absolute right-0 top-0 h-full w-[1px]"
+        style={PROFILE_STRUCTURAL_PILLAR_STYLE}
+      />
     </div>
   );
 }
@@ -514,7 +536,9 @@ export function GalleryInspirationGrid({
                 onContextMenu={(event) => event.preventDefault()}
               className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0"
               >
-                <div className="relative flex items-center justify-between w-full px-4 py-3 my-4 rounded-[12px] border border-white/10 border-t-white/15 bg-gradient-to-r from-zinc-950/80 via-[#0a0a0c]/75 to-[#1a0c05]/80 backdrop-blur-2xl shadow-[0_-1px_20px_rgba(255,255,255,0.02),0_12px_28px_-10px_rgba(0,0,0,0.55)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:rounded-t-[12px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-white/10 after:to-transparent">
+                <div className="relative my-4 overflow-visible">
+                  <ArtistProfileStructuralPillars />
+                  <div className="relative flex items-center justify-between w-full px-4 py-3 rounded-[12px] border border-white/10 border-t-white/15 bg-gradient-to-r from-zinc-950/80 via-[#0a0a0c]/75 to-[#1a0c05]/80 backdrop-blur-2xl shadow-[0_-1px_20px_rgba(255,255,255,0.02),0_12px_28px_-10px_rgba(0,0,0,0.55)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:rounded-t-[12px] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-white/10 after:to-transparent">
                   <div className="flex min-w-0 items-center gap-3">
                     {item.artistAvatarUrl ? (
                       <OptimizedImage
@@ -543,6 +567,7 @@ export function GalleryInspirationGrid({
                   >
                     VISITAR PERFIL
                   </Link>
+                  </div>
                 </div>
 
                 <div
