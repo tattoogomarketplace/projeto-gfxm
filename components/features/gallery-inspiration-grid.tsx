@@ -60,11 +60,11 @@ function DnaLiveLed() {
 
 const HUD_GLASS_RAIL_STYLE = {
   backgroundColor: 'rgba(249,115,22,0.13)',
-  maskImage:
-    'linear-gradient(to bottom, transparent 0%, #000 12%, #000 48%, transparent 100%)',
-  WebkitMaskImage:
-    'linear-gradient(to bottom, transparent 0%, #000 12%, #000 48%, transparent 100%)',
+  maskImage: 'linear-gradient(to bottom, transparent 0%, #000 12%, #000 100%)',
+  WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 12%, #000 100%)',
 } as const;
+
+const HUD_GLASS_RAIL_STROKE = 'rgba(249,115,22,0.13)';
 
 function HudAmbientLightBridge() {
   return (
@@ -83,14 +83,41 @@ function HudAmbientLightBridge() {
   );
 }
 
+function HudGlassRailElbow({ side }: { side: 'left' | 'right' }) {
+  const isLeft = side === 'left';
+  return (
+    <svg
+      aria-hidden
+      className={
+        isLeft
+          ? 'absolute -left-1.5 -bottom-1.5 h-1.5 w-1.5 overflow-visible'
+          : 'absolute -right-1.5 -bottom-1.5 h-1.5 w-1.5 overflow-visible'
+      }
+      viewBox="0 0 6 6"
+      fill="none"
+    >
+      <path
+        d={isLeft ? 'M 0 6 L 6 0' : 'M 6 6 L 0 0'}
+        stroke={HUD_GLASS_RAIL_STROKE}
+        strokeWidth="1"
+        strokeLinecap="butt"
+        strokeLinejoin="miter"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
 function HudArchitecturalRails() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -inset-x-3 top-0 -bottom-10 z-0 overflow-visible"
+      className="pointer-events-none absolute inset-0 z-0 overflow-visible"
     >
-      <span className="absolute left-1.5 top-0 h-full w-px" style={HUD_GLASS_RAIL_STYLE} />
-      <span className="absolute right-1.5 top-0 h-full w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <span className="absolute -left-1.5 top-0 -bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <span className="absolute -right-1.5 top-0 -bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <HudGlassRailElbow side="left" />
+      <HudGlassRailElbow side="right" />
     </div>
   );
 }
