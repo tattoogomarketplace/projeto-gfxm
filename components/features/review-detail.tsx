@@ -56,7 +56,7 @@ export function ReviewDetail({ review }: ReviewDetailProps) {
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain bg-transparent pb-24 text-white">
-      <header className="sticky top-0 z-20 border-b border-white/[0.05] bg-neutral-950/70 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-white/[0.05] bg-neutral-950/70 px-4 pb-3 safe-header-pad backdrop-blur-xl backdrop-saturate-150">
         <div className="flex min-h-11 items-center gap-3">
           <button
             type="button"

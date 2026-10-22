@@ -314,7 +314,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       <header
         className={cn(
             'glass-chrome z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]',
-          'pt-[max(0.75rem,env(safe-area-inset-top))]'
+          'safe-header-pad'
         )}
       >
         <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">

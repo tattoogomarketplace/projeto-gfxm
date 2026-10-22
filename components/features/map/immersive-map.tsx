@@ -47,7 +47,7 @@ export function ImmersiveMap({ origin, artists }: ImmersiveMapProps) {
         selectedId={selectedArtist?.id ?? null}
         onSelect={selectArtist}
       />
-      <header className="absolute inset-x-0 top-0 z-40 bg-zinc-950/70 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
+      <header className="absolute inset-x-0 top-0 z-40 bg-zinc-950/70 safe-header-pad backdrop-blur-md">
         <div className="flex min-h-11 items-center gap-3 px-4 pb-3">
           <button
             type="button"

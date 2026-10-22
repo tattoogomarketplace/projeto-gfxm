@@ -82,13 +82,13 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
 
   return (
     <div className="relative flex w-full max-w-none flex-col px-0 mx-0 text-white">
-      <div className="relative px-4 pt-6 pb-2 w-full flex items-center gap-3">
+      <div className="relative px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2 w-full flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-500">
           <Images className="h-5 w-5" strokeWidth={1.75} />
         </span>
         <h1 className="text-xl font-bold text-zinc-100">{t('gallery.title')}</h1>
       </div>
-      <div className="sticky top-0 z-50 w-full flex items-center justify-center gap-2 overflow-visible pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
+      <div className="sticky top-[var(--safe-top)] z-50 w-full flex items-center justify-center gap-2 overflow-visible pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
         <PortfolioFilterBar
           style={style}
           bodyPart={bodyPart}

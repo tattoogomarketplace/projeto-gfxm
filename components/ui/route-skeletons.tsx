@@ -534,7 +534,7 @@ export function AiChatSkeleton({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="glass-chrome z-40 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.05]">
+      <div className="glass-chrome safe-header-pad z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]">
         <div className="flex min-h-11 items-center gap-2 px-4 pb-3">
           <Skeleton className="h-6 w-16 rounded-lg" />
           <Skeleton className="mx-auto h-4 w-20 rounded-full" />

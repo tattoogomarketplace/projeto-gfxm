@@ -210,7 +210,7 @@ export function ChatThread({
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
         {onBack ? (
-          <header className="glass-chrome shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06] lg:hidden">
+          <header className="glass-chrome safe-header-pad shrink-0 border-b border-black/[0.04] dark:border-white/[0.06] lg:hidden">
             <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
               <button
                 type="button"
@@ -241,7 +241,7 @@ export function ChatThread({
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
       {/* Header — sticky, glassmorphism, safe-area aware. */}
-      <header className="glass-chrome sticky top-0 z-30 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.06]">
+      <header className="glass-chrome safe-header-pad sticky top-0 z-30 shrink-0 border-b border-black/[0.04] dark:border-white/[0.06]">
         <div className="flex items-center gap-2 px-2 pb-3 sm:px-3">
           {onBack ? (
             <button

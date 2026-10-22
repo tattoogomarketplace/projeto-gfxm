@@ -47,6 +47,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
+    --header-safe-top: max(0.75rem, env(safe-area-inset-top, 0px));
     --dock-height: 4.5rem;
     --dock-offset: max(1.25rem, env(safe-area-inset-bottom, 0px));
     --dock-clearance: calc(env(safe-area-inset-bottom, 0px) + 6rem);
@@ -249,6 +250,14 @@
     padding-bottom: var(--safe-bottom);
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
+  }
+
+  .safe-header-pad {
+    padding-top: var(--header-safe-top);
+  }
+
+  .safe-sticky-top {
+    top: var(--safe-top);
   }
 
   .app-frame {

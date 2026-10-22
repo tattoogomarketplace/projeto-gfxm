@@ -129,7 +129,7 @@ export const ToastContainer = memo(function ToastContainer() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-4 safe-header-pad"
       aria-live="polite"
       aria-atomic="false"
     >

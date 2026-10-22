@@ -427,7 +427,7 @@ export function BudgetEstimatorSheet({
             transition={sheetSpring}
             className="fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0a0a0c] transform-gpu will-change-transform"
           >
-            <header className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <header className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 safe-header-pad">
               <button
                 type="button"
                 onClick={() => setShowCheaperOptions(false)}

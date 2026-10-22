@@ -77,7 +77,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
       className="luxury-canvas relative flex h-[100dvh] max-h-[100dvh] min-h-[100dvh] min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white"
     >
       <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
-        <header className="glass-chrome z-40 shrink-0 border-b border-black/[0.04] pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.05]">
+        <header className="glass-chrome safe-header-pad z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]">
           <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
             <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
             <div className="flex shrink-0 items-center gap-2">

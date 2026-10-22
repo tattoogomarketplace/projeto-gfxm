@@ -4,11 +4,11 @@ export default function GaleriaLoading() {
       aria-hidden
       className="min-h-[100dvh] w-full max-w-none px-0 mx-0 bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[calc(env(safe-area-inset-bottom)+8rem)] overflow-y-auto"
     >
-      <div className="relative px-4 pt-6 pb-2 w-full flex items-center gap-3">
+      <div className="relative px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2 w-full flex items-center gap-3">
         <div className="h-10 w-10 rounded-lg bg-orange-500/10" />
         <div className="h-6 w-56 rounded-lg bg-zinc-800" />
       </div>
-      <div className="sticky top-0 z-50 w-full flex items-center justify-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
+      <div className="sticky top-[var(--safe-top)] z-50 w-full flex items-center justify-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-3 bg-[#0a0a0c]/80 supports-[backdrop-filter]:bg-[#0a0a0c]/60 backdrop-blur-3xl rounded-[12px] border border-white/10 shadow-md">
         <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
         <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
         <div className="h-14 min-w-[110px] shrink-0 rounded-xl border border-zinc-800 bg-zinc-900" />
