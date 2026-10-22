@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
 const HUD_CURATORSHIP_CLASS =
-  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-white/10 shadow-2xl';
+  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-visible border border-white/10 shadow-2xl';
 
 const HUD_CURATORSHIP_STYLE = {
   backgroundColor: 'rgba(18, 18, 20, 0.4)',
@@ -60,20 +60,14 @@ function DnaLiveLed() {
 
 function HudVNotchAccent() {
   return (
-    <div className="absolute left-0 w-full -bottom-[6px] h-[6px] overflow-visible pointer-events-none">
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 10"
-        preserveAspectRatio="none"
-        className="absolute top-0 left-0"
-      >
+    <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[100%] flex items-start justify-center pointer-events-none">
+      <svg width="28" height="10" viewBox="0 0 28 10" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
-          d="M0,0 L50,10 L100,0"
-          fill="none"
-          stroke="rgba(255, 102, 0, 0.5)"
-          strokeWidth="1"
-          vectorEffect="non-scaling-stroke"
+          d="M0 0 L14 8 L28 0"
+          stroke="rgba(255, 102, 0, 0.8)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     </div>
