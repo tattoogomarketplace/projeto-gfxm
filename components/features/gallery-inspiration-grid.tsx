@@ -58,6 +58,14 @@ function DnaLiveLed() {
   );
 }
 
+const HUD_GLASS_RAIL_STYLE = {
+  backgroundColor: 'rgba(249,115,22,0.13)',
+  maskImage:
+    'linear-gradient(to bottom, transparent 0%, #000 12%, #000 48%, transparent 100%)',
+  WebkitMaskImage:
+    'linear-gradient(to bottom, transparent 0%, #000 12%, #000 48%, transparent 100%)',
+} as const;
+
 function HudAmbientLightBridge() {
   return (
     <div
@@ -75,10 +83,23 @@ function HudAmbientLightBridge() {
   );
 }
 
+function HudArchitecturalRails() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -inset-x-3 top-0 -bottom-10 z-0 overflow-visible"
+    >
+      <span className="absolute left-1.5 top-0 h-full w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <span className="absolute right-1.5 top-0 h-full w-px" style={HUD_GLASS_RAIL_STYLE} />
+    </div>
+  );
+}
+
 function HudCuratorshipFrame({ children }: { children: ReactNode }) {
   return (
     <div className="relative isolate mx-3 mb-4 mt-2">
       <HudAmbientLightBridge />
+      <HudArchitecturalRails />
       {children}
     </div>
   );
