@@ -66,10 +66,6 @@ const HUD_GLASS_RAIL_STYLE = {
 
 const HUD_GLASS_RAIL_STROKE = 'rgba(249,115,22,0.13)';
 
-const PROFILE_STRUCTURAL_PILLAR_STYLE = {
-  backgroundColor: 'rgba(249,115,22,0.13)',
-} as const;
-
 function HudAmbientLightBridge() {
   return (
     <div
@@ -128,19 +124,18 @@ function HudArchitecturalRails() {
 
 function ArtistProfileStructuralPillars() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 top-0 -bottom-4 z-0 overflow-visible"
-    >
-      <span
-        className="absolute left-0 top-0 h-full w-[1px]"
-        style={PROFILE_STRUCTURAL_PILLAR_STYLE}
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 z-10 w-[1px] bg-[#FF6600]/40"
+        style={{ bottom: '-1rem' }}
       />
-      <span
-        className="absolute right-0 top-0 h-full w-[1px]"
-        style={PROFILE_STRUCTURAL_PILLAR_STYLE}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-0 top-0 z-10 w-[1px] bg-[#FF6600]/40"
+        style={{ bottom: '-1rem' }}
       />
-    </div>
+    </>
   );
 }
 
@@ -442,7 +437,7 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-                className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0"
+              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0 overflow-visible"
             >
               <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
                 <div className="flex items-center gap-3">
@@ -504,7 +499,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col px-0 mx-0 pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col px-0 mx-0 overflow-visible pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -534,7 +529,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0"
+              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0 overflow-visible"
               >
                 <div className="relative my-4 overflow-visible">
                   <ArtistProfileStructuralPillars />
