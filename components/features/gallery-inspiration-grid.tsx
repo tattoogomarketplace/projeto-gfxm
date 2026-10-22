@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
 
 const HUD_CURATORSHIP_CLASS =
-  'relative mx-3 mb-4 mt-2 p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-b-0 border-white/10 shadow-2xl';
+  'relative z-[1] p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-b-0 border-white/10 shadow-2xl';
 
 const HUD_CURATORSHIP_STYLE = {
   backgroundColor: 'rgba(18, 18, 20, 0.4)',
@@ -58,27 +58,28 @@ function DnaLiveLed() {
   );
 }
 
-function HudVNotchAccent() {
+function HudAmbientLightBridge() {
   return (
-    <div className="absolute left-0 bottom-0 w-full flex items-start translate-y-[100%] pointer-events-none">
-      <div className="flex-1 h-px bg-[#FF6600]" />
-      <svg
-        width="28"
-        height="8"
-        viewBox="0 0 28 8"
-        fill="none"
-        className="h-2 w-7 shrink-0"
-        aria-hidden
-      >
-        <path
-          d="M0 0.5 L14 7.5 L28 0.5"
-          stroke="#FF6600"
-          strokeWidth="1"
-          strokeLinecap="butt"
-          strokeLinejoin="miter"
-        />
-      </svg>
-      <div className="flex-1 h-px bg-[#FF6600]" />
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -inset-x-3 -bottom-8 top-8 -z-10 overflow-visible"
+    >
+      <div
+        className="absolute inset-0 rounded-[48px] blur-3xl"
+        style={{
+          background:
+            'radial-gradient(ellipse 88% 72% at 50% 42%, rgba(249,115,22,0.22) 0%, rgba(249,115,22,0.10) 38%, rgba(249,115,22,0.04) 58%, transparent 74%)',
+        }}
+      />
+    </div>
+  );
+}
+
+function HudCuratorshipFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate mx-3 mb-4 mt-2">
+      <HudAmbientLightBridge />
+      {children}
     </div>
   );
 }
@@ -387,6 +388,7 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-full w-full rounded-none" />
                 <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
               </div>
+              <HudCuratorshipFrame>
               <motion.div
                 className={HUD_CURATORSHIP_CLASS}
                 style={HUD_CURATORSHIP_STYLE}
@@ -409,8 +411,8 @@ export function GalleryInspirationGrid({
                 <Skeleton className="h-3 w-full" />
               </div>
                 <TattooDnaSpecsBar />
-                <HudVNotchAccent />
               </motion.div>
+              </HudCuratorshipFrame>
             </article>
           ))}
         </div>
@@ -537,6 +539,7 @@ export function GalleryInspirationGrid({
                     </div>
                   </div>
 
+              <HudCuratorshipFrame>
               <motion.div
                 className={HUD_CURATORSHIP_CLASS}
                 style={HUD_CURATORSHIP_STYLE}
@@ -621,8 +624,8 @@ export function GalleryInspirationGrid({
                   </p>
                 </div>
               <TattooDnaSpecsBar />
-              <HudVNotchAccent />
               </motion.div>
+              </HudCuratorshipFrame>
               </article>
             );
           }
