@@ -90,14 +90,14 @@ function HudGlassRailElbow({ side }: { side: 'left' | 'right' }) {
       aria-hidden
       className={
         isLeft
-          ? 'absolute -left-1.5 -bottom-1.5 h-1.5 w-1.5 overflow-visible'
-          : 'absolute -right-1.5 -bottom-1.5 h-1.5 w-1.5 overflow-visible'
+          ? 'absolute -left-1.5 bottom-0 h-1.5 w-1.5 overflow-visible'
+          : 'absolute -right-1.5 bottom-0 h-1.5 w-1.5 overflow-visible'
       }
       viewBox="0 0 6 6"
       fill="none"
     >
       <path
-        d={isLeft ? 'M 0 6 L 6 0' : 'M 6 6 L 0 0'}
+        d={isLeft ? 'M 0 0 L 6 6' : 'M 6 0 L 0 6'}
         stroke={HUD_GLASS_RAIL_STROKE}
         strokeWidth="1"
         strokeLinecap="butt"
@@ -114,8 +114,8 @@ function HudArchitecturalRails() {
       aria-hidden
       className="pointer-events-none absolute inset-0 z-0 overflow-visible"
     >
-      <span className="absolute -left-1.5 top-0 -bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
-      <span className="absolute -right-1.5 top-0 -bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <span className="absolute -left-1.5 top-0 bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
+      <span className="absolute -right-1.5 top-0 bottom-1.5 w-px" style={HUD_GLASS_RAIL_STYLE} />
       <HudGlassRailElbow side="left" />
       <HudGlassRailElbow side="right" />
     </div>
