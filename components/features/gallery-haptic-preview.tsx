@@ -43,6 +43,7 @@ export function galleryPreviewLayoutId(id: string) {
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
 const PREVIEW_SPRING = { type: 'spring', stiffness: 380, damping: 28, mass: 0.8 } as const;
+const EXIT_SNAP = { duration: 0 } as const;
 const GPU_LAYER =
   'transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
@@ -102,8 +103,7 @@ function PreviewSurface({
   useEffect(() => {
     if (isPresent) return;
     dragY.set(0);
-    const timeout = window.setTimeout(() => safeToRemove?.(), 520);
-    return () => window.clearTimeout(timeout);
+    safeToRemove?.();
   }, [dragY, isPresent, safeToRemove]);
 
   useEffect(() => {
@@ -158,7 +158,7 @@ function PreviewSurface({
       className={`fixed inset-0 z-[120] flex touch-none items-center justify-center overflow-hidden overscroll-none contain-paint px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${GPU_LAYER}`}
       initial={false}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: EXIT_SNAP }}
       transition={PREVIEW_SPRING}
       style={{ pointerEvents: isPresent ? 'auto' : 'none', backfaceVisibility: 'hidden' }}
       onContextMenu={(event) => event.preventDefault()}
@@ -167,7 +167,7 @@ function PreviewSurface({
         className={`absolute inset-0 ${GPU_LAYER}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: isPresent ? 1 : 0 }}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, transition: EXIT_SNAP }}
         transition={PREVIEW_SPRING}
         onClick={handleBackdropClick}
         style={{ backfaceVisibility: 'hidden' }}
@@ -189,7 +189,7 @@ function PreviewSurface({
         aria-label={t('common.close')}
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: isPresent ? 1 : 0, scale: isPresent ? 1 : 0.92 }}
-        exit={{ opacity: 0, scale: 0.92 }}
+        exit={{ opacity: 0, scale: 0.92, transition: EXIT_SNAP }}
         transition={PREVIEW_SPRING}
         className={`absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white backdrop-blur-md ${GPU_LAYER}`}
         whileTap={{ scale: 0.9 }}
@@ -271,7 +271,7 @@ function PreviewSurface({
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: isPresent ? 1 : 0, y: isPresent ? 0 : 12 }}
-          exit={{ opacity: 0, y: 12 }}
+          exit={{ opacity: 0, y: 12, transition: EXIT_SNAP }}
           transition={PREVIEW_SPRING}
           className={`mt-5 w-full ${GPU_LAYER}`}
           style={{ backfaceVisibility: 'hidden' }}
