@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 
 interface OptimizedImageProps {
@@ -5,6 +6,12 @@ interface OptimizedImageProps {
   alt?: string | null;
   className?: string;
 }
+
+const NATIVE_APP_IMAGE_STYLE = {
+  WebkitUserDrag: 'none',
+  WebkitTouchCallout: 'none',
+  userSelect: 'none',
+} as CSSProperties;
 
 function resolveSrc(src?: string | null): string | null {
   if (src == null || typeof src !== 'string') return null;
@@ -45,7 +52,9 @@ export function OptimizedImage({ src, alt, className }: OptimizedImageProps) {
         alt={alt?.trim() || 'Imagem'}
         fill
         sizes="(max-width: 480px) 100vw, 480px"
-        className="object-cover transition-opacity duration-300"
+        className="object-cover select-none transition-opacity duration-300"
+        style={NATIVE_APP_IMAGE_STYLE}
+        draggable={false}
         loading="lazy"
         quality={75}
         unoptimized={isDataUrl}
