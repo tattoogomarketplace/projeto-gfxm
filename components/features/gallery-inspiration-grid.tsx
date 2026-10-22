@@ -60,19 +60,13 @@ function DnaLiveLed() {
 
 function HudVNotchAccent() {
   return (
-    <div className="absolute left-0 bottom-0 w-full flex items-start pointer-events-none">
-      <div className="flex-1 h-[1px] bg-[#FF6600]/50"></div>
-      <svg width="28" height="9" viewBox="0 0 28 9" fill="none" className="shrink-0 -mt-[1px]">
-        <path
-          d="M0 1 L14 8 L28 1"
-          stroke="rgba(255, 102, 0, 0.5)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <div className="flex-1 h-[1px] bg-[#FF6600]/50"></div>
-    </div>
+    <div
+      className="absolute left-0 bottom-0 w-full h-[8px] bg-[#FF6600] pointer-events-none"
+      style={{
+        clipPath:
+          'polygon(0 0, calc(50% - 20px) 0, 50% 6px, calc(50% + 20px) 0, 100% 0, 100% 1px, calc(50% + 20px) 1px, 50% 7px, calc(50% - 20px) 1px, 0 1px)',
+      }}
+    ></div>
   );
 }
 
