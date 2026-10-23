@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, FileText, Send } from 'lucide-react';
+import { Bookmark, FileText, Heart, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -488,9 +488,10 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
               </div>
-              <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mx-4 mt-2 mb-4 shadow-lg">
-                <Skeleton className="h-3 w-40" />
-                <Skeleton className="h-3 w-full" />
+              <div className="w-full max-w-none bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="mt-1.5 h-3 w-full" />
+                <Skeleton className="mt-2 h-3 w-24" />
               </div>
                 <TattooDnaSpecsBar />
               </motion.div>
@@ -701,14 +702,22 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mx-4 mt-2 mb-4 shadow-lg">
-                  <p className="text-[13px] font-semibold text-zinc-100 tracking-wide">{likeLabel}</p>
-                  <p className="text-[13px] leading-relaxed">
-                    <span className="font-bold text-zinc-100 mr-2">
+                <div className="w-full max-w-none bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
+                  <p className="leading-tight">
+                    <span className="mr-2 font-bold text-[14px] text-white">
                       {artistName}
                     </span>
-                    <span className="text-[13px] text-zinc-400 font-light leading-relaxed">{caption}</span>
+                    <span className="text-[13px] leading-tight text-gray-400">{caption}</span>
                   </p>
+                  <button
+                    type="button"
+                    data-gallery-action=""
+                    aria-label={likeLabel}
+                    className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
+                    <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
+                  </button>
                 </div>
               <TattooDnaSpecsBar />
               </motion.div>

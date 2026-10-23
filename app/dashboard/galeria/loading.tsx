@@ -63,9 +63,10 @@ export default function GaleriaLoading() {
               </div>
             </div>
           </div>
-          <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mx-4 mt-2 mb-4 shadow-lg">
-            <div className="h-3 w-40 rounded bg-zinc-800" />
-            <div className="h-3 w-full rounded bg-zinc-900" />
+          <div className="w-full max-w-none bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
+            <div className="h-3.5 w-32 rounded bg-zinc-800" />
+            <div className="mt-1.5 h-3 w-full rounded bg-zinc-900" />
+            <div className="mt-2 h-3 w-24 rounded bg-zinc-800" />
           </div>
           <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth">
             <div className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5">
