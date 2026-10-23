@@ -517,7 +517,7 @@ export default function RegisterPage() {
   }, [isEstudio, cnpjValue, razaoSocial, setValue, t]);
 
   return (
-    <AuthScreen>
+    <AuthScreen className="h-full w-full min-h-0 flex-1 overflow-y-auto overscroll-none pb-[120px] [-webkit-overflow-scrolling:touch]">
       <div
         id="clerk-captcha"
         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
@@ -555,7 +555,7 @@ export default function RegisterPage() {
           </button>
         </div>
       ) : (
-      <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-xl sm:p-8">
+      <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 pb-32 shadow-xl sm:p-8">
         <Link
           href="/login"
           className="-ml-2 mb-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-orange-500"
