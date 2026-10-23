@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
+import { AccountStatus } from '@prisma/client';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
+import { prisma } from '@/lib/prisma';
 import { ensurePerfilFromClerk, findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { parseMetadataRole, type AppRole } from '@/lib/utils/auth-redirect';
 
@@ -63,6 +65,27 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[clerk-webhook] assinatura Svix inválida.', error);
     return NextResponse.json({ error: 'assinatura_svix_invalida' }, { status: 400 });
+  }
+
+  if (event.type === 'user.deleted') {
+    const clerkId = String(event.data?.id || '').trim();
+    if (clerkId) {
+      after(() => {
+        void prisma.perfil
+          .updateMany({
+            where: { clerk_id: clerkId },
+            data: {
+              deleted_at: new Date(),
+              agenda_bloqueada: true,
+              statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
+            },
+          })
+          .catch((error) => {
+            console.error('[clerk-webhook] falha ao aplicar user.deleted', { clerkId, error });
+          });
+      });
+    }
+    return NextResponse.json({ received: true }, { status: 202 });
   }
 
   if (event.type !== 'user.created' && event.type !== 'user.updated') {

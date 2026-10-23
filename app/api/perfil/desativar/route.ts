@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { describeRequestAuth, resolvePerfilSession } from '@/lib/services/perfil-session';
@@ -32,30 +32,30 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    await prisma.perfil.updateMany({
-      where: { clerk_id: userId, deleted_at: null },
-      data: { deleted_at: new Date(), agenda_bloqueada: true },
-    });
+  after(() => {
+    void (async () => {
+      try {
+        await prisma.perfil.updateMany({
+          where: { clerk_id: userId, deleted_at: null },
+          data: { deleted_at: new Date(), agenda_bloqueada: true },
+        });
 
-    try {
-      const client = await clerkClient();
-      await client.users.deleteUser(userId);
-    } catch (error) {
-      if (!isNotFoundError(error)) {
-        throw error;
+        try {
+          const client = await clerkClient();
+          await client.users.deleteUser(userId);
+        } catch (error) {
+          if (!isNotFoundError(error)) {
+            throw error;
+          }
+        }
+      } catch (error) {
+        console.error('[perfil/desativar] falha ao desativar conta em background', {
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-    }
+    })();
+  });
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error('[perfil/desativar] falha ao desativar conta', {
-      userId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json(
-      { success: false, erro: 'Falha ao desativar a conta.' },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ success: true, accepted: true }, { status: 202 });
 }

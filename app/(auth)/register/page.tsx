@@ -29,7 +29,6 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { AuthScreen } from '@/components/layout/auth-screen';
 import { TurnstileGuard } from '@/components/auth/turnstile-guard';
-import api from '@/lib/api';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
@@ -37,8 +36,6 @@ import { formatAppError } from '@/lib/error-handler';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import type { TranslateFn } from '@/lib/utils/password-strength';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const MIN_AGE = MINIMUM_REGISTRATION_AGE;
 
@@ -348,21 +345,6 @@ export default function RegisterPage() {
     const officialName = isStudio ? razaoSocial.trim() : '';
     setStudioMeta(isStudio && officialName ? { cnpj: cnpjDigits, razaoSocial: officialName } : null);
     try {
-      setLoadingText(t('auth.checkingData'));
-
-      try {
-        await api.post(`${API_URL}/api/auth/check-duplicidade`, {
-          email: emailNorm,
-          ...(cpfDigits ? { cpf: cpfDigits } : {}),
-        });
-       } catch (dupErr: unknown) {
-         const axiosErr = dupErr as { response?: { status?: number } };
-         const statusCode = axiosErr.response?.status;
-         if (statusCode === 409 || statusCode === 400) {
-           throw dupErr;
-         }
-       }
-
       setLoadingText(t('auth.preparingProfile'));
       await wipeStaleSession();
       await signUp.create({

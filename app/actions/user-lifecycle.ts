@@ -2,6 +2,7 @@
 
 import { AccountStatus, type PerfilRole } from '@prisma/client';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { after } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
 import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
@@ -96,56 +97,85 @@ function resolveKycStatusForRole(role: AppRole): 'pendente' | 'nao_aplicavel' {
 
 export async function deactivateAccount(userId: string): Promise<LifecycleResult> {
   const actorUserId = await requireActorUserId();
-  const perfil = await findPerfilForLifecycle(userId);
-  if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
+  if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
 
-  const denied = denyUnlessOwner(actorUserId, perfil);
-  if (denied) return { ok: false, error: denied };
+  const targetId = String(userId || '').trim();
+  if (!targetId || targetId !== actorUserId) {
+    return { ok: false, error: 'Não autorizado.' };
+  }
 
-  const updated = await prisma.perfil.update({
-    where: { id: perfil.id },
-    data: {
-      statusConta: AccountStatus.DESATIVADO,
-      agenda_bloqueada: true,
-    },
-    select: { id: true, statusConta: true, dataFim: true },
+  after(() => {
+    void (async () => {
+      try {
+        const perfil = await findPerfilForLifecycle(targetId);
+        if (!perfil) return;
+        const denied = denyUnlessOwner(actorUserId, perfil);
+        if (denied) return;
+        await prisma.perfil.update({
+          where: { id: perfil.id },
+          data: {
+            statusConta: AccountStatus.DESATIVADO,
+            agenda_bloqueada: true,
+          },
+        });
+      } catch (error) {
+        console.error('[user-lifecycle] falha ao desativar conta em background', {
+          userId: targetId,
+          error,
+        });
+      }
+    })();
   });
 
   return {
     ok: true,
-    userId: updated.id,
-    statusConta: updated.statusConta,
-    dataFim: updated.dataFim,
+    userId: targetId,
+    statusConta: AccountStatus.DESATIVADO,
   };
 }
 
 export async function scheduleAccountDeletion(userId: string): Promise<LifecycleResult> {
   const actorUserId = await requireActorUserId();
-  const perfil = await findPerfilForLifecycle(userId);
-  if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
+  if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
 
-  const denied = denyUnlessOwner(actorUserId, perfil);
-  if (denied) return { ok: false, error: denied };
+  const targetId = String(userId || '').trim();
+  if (!targetId || targetId !== actorUserId) {
+    return { ok: false, error: 'Não autorizado.' };
+  }
 
   const dataFim = new Date(Date.now() + NINETY_DAYS_MS);
   const now = new Date();
 
-  const updated = await prisma.perfil.update({
-    where: { id: perfil.id },
-    data: {
-      statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
-      dataFim,
-      deleted_at: perfil.deleted_at ?? now,
-      agenda_bloqueada: true,
-    },
-    select: { id: true, statusConta: true, dataFim: true },
+  after(() => {
+    void (async () => {
+      try {
+        const perfil = await findPerfilForLifecycle(targetId);
+        if (!perfil) return;
+        const denied = denyUnlessOwner(actorUserId, perfil);
+        if (denied) return;
+        await prisma.perfil.update({
+          where: { id: perfil.id },
+          data: {
+            statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
+            dataFim,
+            deleted_at: perfil.deleted_at ?? now,
+            agenda_bloqueada: true,
+          },
+        });
+      } catch (error) {
+        console.error('[user-lifecycle] falha ao agendar exclusão em background', {
+          userId: targetId,
+          error,
+        });
+      }
+    })();
   });
 
   return {
     ok: true,
-    userId: updated.id,
-    statusConta: updated.statusConta,
-    dataFim: updated.dataFim,
+    userId: targetId,
+    statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
+    dataFim,
   };
 }
 
