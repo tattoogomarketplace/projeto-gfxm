@@ -97,16 +97,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  themeColor: "#121212",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
-  // Deep Graphite hardcoded (canvas da marca, `--background` dark e splash):
-  // o boot e SEMPRE escuro, entao o WebKit nunca pinta um frame branco antes
-  // do CSS — inclusive em aparelhos configurados em Light Mode.
-  themeColor: "#0a0a0a",
   colorScheme: "dark light",
 };
 
@@ -116,7 +113,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-      <html lang="pt-BR" className="fixed inset-0 flex w-full flex-col overflow-hidden overscroll-none bg-[#0a0a0a] select-none" suppressHydrationWarning>
+      <html lang="pt-BR" className="h-[100dvh] min-h-[100dvh] w-full overflow-hidden overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -124,7 +121,7 @@ export default function RootLayout({
             }}
           />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-          <meta name="theme-color" content="#0a0a0a" />
+          <meta name="theme-color" content="#121212" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-title" content={BRAND_NAME} />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -140,7 +137,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas app-frame fixed inset-0 mb-0 flex w-full flex-col overflow-hidden overscroll-none bg-[#0a0a0a] pb-0 font-sans antialiased text-neutral-900 select-none dark:bg-[#0a0a0a] dark:text-white">
+        <body className="luxury-canvas app-frame mb-0 flex h-[100dvh] min-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212] pb-0 font-sans antialiased text-neutral-900 select-none dark:bg-[#121212] dark:text-white">
           <LocalizedClerkProvider>
           <SplashGate />
           <Providers>
@@ -151,7 +148,7 @@ export default function RootLayout({
               <StrictSessionGuard />
               <SingleSessionEnforcer />
               <SessionTaskGuard />
-              <main className="app-scroll relative z-0 mb-0 flex min-h-0 h-full w-full flex-1 flex-col overflow-hidden overscroll-none">
+              <main className="app-scroll relative z-0 mb-0 flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none">
                 {/* Fase 25.6 — Zero CLS no handoff de autenticação:
                     o `<ClerkLoading>` NÃO retorna `null` (Fase 25.5) e agora
                     também NÃO pinta um esqueleto genérico. Ele renderiza o
