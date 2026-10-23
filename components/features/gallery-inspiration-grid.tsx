@@ -681,7 +681,7 @@ export function GalleryInspirationGrid({
     }
     if (isFeed) {
       return (
-        <div className="flex w-full max-w-none flex-col px-0 mx-0 pb-[calc(env(safe-area-inset-bottom)+8rem)]" aria-hidden>
+        <div className="flex w-full max-w-none flex-col px-0 mx-0" aria-hidden>
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
@@ -759,7 +759,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col px-0 mx-0 overflow-visible pb-[calc(env(safe-area-inset-bottom)+8rem)]' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col px-0 mx-0 overflow-visible' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
