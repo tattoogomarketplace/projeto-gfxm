@@ -12,9 +12,9 @@ export default function GaleriaLoading() {
       </div>
       <div className="sticky top-0 z-50 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)] pointer-events-none">
         <div className="flex w-full items-center justify-center gap-2 overflow-x-auto no-scrollbar">
-          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/10 bg-[#121212]/80 backdrop-blur-md" />
-          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/10 bg-[#121212]/80 backdrop-blur-md" />
-          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/10 bg-[#121212]/80 backdrop-blur-md" />
+          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
+          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
+          <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
         </div>
       </div>
       <div className="flex w-full max-w-none flex-col px-0 mx-0">

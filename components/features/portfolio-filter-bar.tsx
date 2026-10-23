@@ -51,16 +51,16 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'pointer-events-auto flex min-h-11 min-w-[96px] shrink-0 flex-col whitespace-nowrap rounded-full border border-white/10 bg-[#121212]/80 px-3 py-1.5 text-left backdrop-blur-md transition-colors active:scale-[0.98]',
-        active ? 'border-orange-500/60' : 'hover:border-white/20'
+        'pointer-events-auto flex min-h-11 min-w-[96px] shrink-0 flex-col whitespace-nowrap rounded-full border border-white/15 bg-[#121212]/20 px-3 py-1.5 text-left backdrop-blur-lg transition-colors active:scale-[0.98]',
+        active ? 'border-orange-500/60' : 'hover:border-white/25'
       )}
     >
-      <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider text-zinc-500">{label}</span>
-      <span className="mt-px flex items-center justify-between gap-1.5 text-xs leading-tight text-zinc-200">
+      <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider text-gray-100 [text-shadow:_0_1px_2px_rgb(0_0_0_/_80%)]">{label}</span>
+      <span className="mt-px flex items-center justify-between gap-1.5 text-xs leading-tight text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_80%)]">
         <span className="whitespace-nowrap">{value ?? t('gallery.all')}</span>
         <ChevronDown
           className={cn(
-            'h-3.5 w-3.5 shrink-0 text-zinc-500 transition-transform duration-200',
+            'h-3.5 w-3.5 shrink-0 text-white drop-shadow-md transition-transform duration-200',
             open && 'rotate-180 text-orange-400'
           )}
           strokeWidth={1.75}
