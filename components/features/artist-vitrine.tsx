@@ -8,7 +8,7 @@ import { FeedbackCard } from '@/components/features/feedback-card';
 import { reviewDestination } from '@/components/features/home-feedback-carousel';
 import { QuoteRequestSheet } from '@/components/features/quote-request-sheet';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
@@ -238,7 +238,11 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
                   alt={styleLabel(item.style)}
                   fill
                   sizes="(max-width: 768px) 33vw, 240px"
-                  className="object-cover"
+                  className="object-cover select-none"
+                  style={NATIVE_APP_IMAGE_STYLE}
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                  onContextMenu={(event) => event.preventDefault()}
                 />
               </li>
             ))}

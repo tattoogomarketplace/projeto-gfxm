@@ -1,3 +1,5 @@
+'use client';
+
 import type { CSSProperties } from 'react';
 import Image from 'next/image';
 
@@ -7,10 +9,11 @@ interface OptimizedImageProps {
   className?: string;
 }
 
-const NATIVE_APP_IMAGE_STYLE = {
+export const NATIVE_APP_IMAGE_STYLE = {
   WebkitUserDrag: 'none',
   WebkitTouchCallout: 'none',
   userSelect: 'none',
+  WebkitUserSelect: 'none',
 } as CSSProperties;
 
 function resolveSrc(src?: string | null): string | null {
@@ -55,6 +58,8 @@ export function OptimizedImage({ src, alt, className }: OptimizedImageProps) {
         className="object-cover select-none transition-opacity duration-300"
         style={NATIVE_APP_IMAGE_STYLE}
         draggable={false}
+        onDragStart={(event) => event.preventDefault()}
+        onContextMenu={(event) => event.preventDefault()}
         loading="lazy"
         quality={75}
         unoptimized={isDataUrl}

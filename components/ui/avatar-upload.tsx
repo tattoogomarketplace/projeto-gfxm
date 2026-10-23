@@ -13,6 +13,7 @@ import {
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { Camera } from 'lucide-react';
 import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
+import { NATIVE_APP_IMAGE_STYLE } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
 
 /**
@@ -334,7 +335,10 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(
               src={resolvedSrc as string}
               alt={name?.trim() || 'Avatar'}
               draggable={false}
-              className="h-full w-full rounded-full object-cover"
+              onDragStart={(event) => event.preventDefault()}
+              onContextMenu={(event) => event.preventDefault()}
+              className="h-full w-full rounded-full object-cover select-none"
+              style={NATIVE_APP_IMAGE_STYLE}
               onError={() => {
                 if (resolvedSrc) setBrokenSrc(resolvedSrc);
               }}

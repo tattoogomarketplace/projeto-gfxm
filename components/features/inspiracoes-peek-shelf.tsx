@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Images } from 'lucide-react';
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { artistProfileHref } from '@/lib/artist-profile';
@@ -146,7 +146,7 @@ export function InspiracoesPeekShelf() {
               onClick={onCardClick(item)}
               onContextMenu={(event) => event.preventDefault()}
               className="relative aspect-[9/16] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-zinc-800/50 bg-zinc-900/40 text-left select-none touch-manipulation"
-              style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+              style={NATIVE_APP_IMAGE_STYLE}
             >
               <OptimizedImage
                 src={item.imageUrl}
@@ -182,7 +182,10 @@ export function InspiracoesPeekShelf() {
                     animate={{ scale: 1.05, opacity: 1 }}
                     exit={{ scale: 0.8, opacity: 0 }}
                     draggable={false}
+                    onDragStart={(event) => event.preventDefault()}
+                    onContextMenu={(event) => event.preventDefault()}
                     className="max-h-[88dvh] w-auto aspect-[9/16] select-none object-cover"
+                    style={NATIVE_APP_IMAGE_STYLE}
                   />
                 </motion.div>
               ) : null}

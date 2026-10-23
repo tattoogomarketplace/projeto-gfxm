@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { NATIVE_APP_IMAGE_STYLE } from '@/components/ui/optimized-image';
 import { cn } from '@/lib/utils';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 
@@ -66,7 +67,10 @@ export function SplashScreen({ isVisible = true }: SplashScreenProps) {
                 height={MACHINE_LOGO_SIZE}
                 priority
                 sizes="(max-width: 640px) 35vw, 200px"
-                className="splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] rounded-full overflow-hidden object-cover ring-1 ring-brand-copper/25 shadow-[0_0_30px_rgba(217,70,14,0.28),0_0_60px_rgba(249,115,22,0.14)]"
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+                className="splash-icon-enter relative aspect-square w-[35vw] min-w-[130px] max-w-[200px] rounded-full overflow-hidden object-cover select-none ring-1 ring-brand-copper/25 shadow-[0_0_30px_rgba(217,70,14,0.28),0_0_60px_rgba(249,115,22,0.14)]"
+                style={NATIVE_APP_IMAGE_STYLE}
               />
             </div>
           </div>

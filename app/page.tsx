@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/nextjs';
 import { TermsModal } from '@/components/shared/terms-modal';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
+import { NATIVE_APP_IMAGE_STYLE } from '@/components/ui/optimized-image';
 
 /**
  * Fallback de boot da raiz pública.
@@ -37,7 +38,10 @@ function AuthBootFallback() {
         width={512}
         height={512}
         priority
-        className="aspect-square w-[35vw] min-w-[130px] max-w-[200px] rounded-full object-cover ring-1 ring-brand-copper/25 shadow-[0_0_30px_rgba(217,70,14,0.28),0_0_60px_rgba(249,115,22,0.14)]"
+        draggable={false}
+        onDragStart={(event) => event.preventDefault()}
+        className="aspect-square w-[35vw] min-w-[130px] max-w-[200px] rounded-full object-cover select-none ring-1 ring-brand-copper/25 shadow-[0_0_30px_rgba(217,70,14,0.28),0_0_60px_rgba(249,115,22,0.14)]"
+        style={NATIVE_APP_IMAGE_STYLE}
       />
       <span className="mt-6 text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight text-white">
         {BRAND_WORDMARK.main}

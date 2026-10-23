@@ -134,6 +134,17 @@
     transition: background-color 220ms ease, color 220ms ease;
   }
 
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   html.light body {
     background-color: #FAFAFA;
   }
