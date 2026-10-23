@@ -63,7 +63,11 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'fixed left-1/2 z-[999] w-[92%] max-w-[400px] -translate-x-1/2 bottom-[max(env(safe-area-inset-bottom),_1.25rem)] md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-6 py-3.5';
+  'fixed left-1/2 z-[999] w-[92%] max-w-[400px] -translate-x-1/2 md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-5 py-2';
+
+const PILL_BOTTOM_STYLE = {
+  bottom: 'max(env(safe-area-inset-bottom), 1rem)',
+} as const;
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -72,7 +76,7 @@ const NavIcon = memo(function NavIcon({
   icon: typeof Home;
   className?: string;
 }) {
-  return <Icon className={cn('h-5 w-5', className)} strokeWidth={1.75} aria-hidden />;
+  return <Icon className={cn('h-[18px] w-[18px]', className)} strokeWidth={1.75} aria-hidden />;
 });
 
 function BottomNavInner({ hidden = false }: BottomNavProps) {
@@ -180,6 +184,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
+      style={PILL_BOTTOM_STYLE}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
@@ -205,7 +210,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-2xl',
+                  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-px px-3 py-1.5 rounded-2xl',
                   'text-[10px] font-medium leading-none tracking-tight',
                   'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
@@ -252,11 +257,11 @@ function BottomNavFallbackInner() {
   if (shouldHideNav(pathname, false)) return null;
 
   return (
-    <nav aria-hidden className={PILL_CLASS}>
+    <nav aria-hidden className={PILL_CLASS} style={PILL_BOTTOM_STYLE}>
       <ul className="flex w-full items-center justify-between">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
-            <span className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-4 py-2 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
+            <span className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-px px-3 py-1.5 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
               <span className="flex items-center justify-center">
                 <NavIcon icon={item.icon} />
               </span>
