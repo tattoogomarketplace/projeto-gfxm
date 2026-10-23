@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { BadgeCheck, ChevronRight, Compass, MapPin, Sparkles, type LucideIcon } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
+import { InspiracoesPeekShelf } from '@/components/features/inspiracoes-peek-shelf';
 import {
   GalleryHapticPreview,
   type GalleryPreviewItem,
@@ -420,6 +421,8 @@ export function HomeDiscover() {
           </div>
         </ErrorBoundary>
       </section>
+
+      <InspiracoesPeekShelf />
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-region">
         <SectionHeader

@@ -306,6 +306,7 @@ export type MessageKey =
   | 'home.noTrendingStyles'
   | 'home.inspirationGallery'
   | 'home.inspirationGallerySubtitle'
+  | 'home.inspiracoes'
   | 'home.featuredReviews'
   | 'home.reviews'
   | 'home.reviewsSubtitle'
