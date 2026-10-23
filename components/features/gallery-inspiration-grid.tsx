@@ -12,6 +12,7 @@ import {
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, FileText, Heart, Send } from 'lucide-react';
 import {
@@ -189,10 +190,36 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
-function FeedSaveButton({ onSaved }: { onSaved: () => void }) {
+function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => void }) {
   const [isSaved, setIsSaved] = useState(false);
   const [saveCount, setSaveCount] = useState(850);
   const { triggerHaptic } = useHapticFeedback();
+  const { getToken } = useAuth();
+
+  const persistSave = useCallback(
+    async (previousState: boolean) => {
+      try {
+        const clerkToken = await getToken().catch(() => null);
+        const stored =
+          typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+        const token = clerkToken || stored;
+        const res = await fetch(`/api/inspirations/${encodeURIComponent(postId)}/save`, {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        setIsSaved(previousState);
+        setSaveCount((prev) => Math.max(0, prev + (previousState ? 1 : -1)));
+      }
+    },
+    [getToken, postId]
+  );
 
   return (
     <button
@@ -200,10 +227,12 @@ function FeedSaveButton({ onSaved }: { onSaved: () => void }) {
       data-gallery-action=""
       onClick={() => {
         triggerHaptic('light');
+        const previousState = isSaved;
         const nextSaved = !isSaved;
         setIsSaved(nextSaved);
         setSaveCount((count) => Math.max(0, count + (nextSaved ? 1 : -1)));
         if (nextSaved) onSaved();
+        void persistSave(previousState);
       }}
       className={cn(
         FEED_ACTION_BTN_CLASS,
@@ -881,7 +910,10 @@ export function GalleryInspirationGrid({
                       <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_ACTION_METRIC_CLASS}>45</span>
                     </button>
-                    <FeedSaveButton onSaved={() => setIsSaveToastOpen(true)} />
+                    <FeedSaveButton
+                      postId={item.id}
+                      onSaved={() => setIsSaveToastOpen(true)}
+                    />
                   </div>
                 </div>
 
