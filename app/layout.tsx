@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: BRAND_NAME,
+    title: "TattooGo MK",
   },
   twitter: {
     card: "summary_large_image",
@@ -97,14 +97,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  interactiveWidget: "resizes-content",
-  colorScheme: "dark light",
+  themeColor: "#121212",
 };
 
 export default function RootLayout({
@@ -113,7 +111,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-      <html lang="pt-BR" className="h-[100dvh] min-h-[100dvh] w-full overflow-hidden overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
+      <html lang="pt-BR" className="h-[100dvh] w-full overflow-hidden overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -137,7 +135,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas app-frame mb-0 flex h-[100dvh] min-h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212] pb-0 font-sans antialiased text-neutral-900 select-none dark:bg-[#121212] dark:text-white">
+        <body className="luxury-canvas app-frame flex h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212] font-sans antialiased text-neutral-900 select-none dark:bg-[#121212] dark:text-white">
           <LocalizedClerkProvider>
           <SplashGate />
           <Providers>
