@@ -10,9 +10,15 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export function OnboardingSkeleton() {
   return (
-    <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background">
-      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center overflow-hidden px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="w-full" aria-hidden aria-busy="true">
+    <div
+      className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-background"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 1rem)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+      }}
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-32 [-webkit-overflow-scrolling:touch]">
+        <div className="flex min-h-full w-full flex-col items-center justify-center" aria-hidden aria-busy="true">
           <div className="flex flex-col items-center space-y-2.5 text-center sm:space-y-3">
             <Skeleton className="h-20 w-20 min-h-20 min-w-20 rounded-full sm:h-24 sm:w-24" />
             <Skeleton className="h-3 w-36 rounded-full" />
@@ -34,7 +40,7 @@ export function OnboardingSkeleton() {
         </div>
       </div>
 
-      <div className="w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 pt-3">
         <Skeleton className="mx-auto h-14 w-full max-w-md rounded-2xl" />
       </div>
     </div>

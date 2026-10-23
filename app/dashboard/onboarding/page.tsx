@@ -160,8 +160,15 @@ export default function DashboardOnboardingPage() {
   const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
 
   return (
-    <div className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-white">
-      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center overflow-hidden px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
+    <div
+      className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-white"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 1rem)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+      }}
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-32 [-webkit-overflow-scrolling:touch]">
+        <div className="flex min-h-full w-full flex-col items-center justify-center">
         <header className="flex w-full flex-col items-center space-y-2.5 text-center sm:space-y-3">
           <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
             <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
@@ -203,9 +210,10 @@ export default function DashboardOnboardingPage() {
             {submitError}
           </div>
         ) : null}
+        </div>
       </div>
 
-      <div className="w-full px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 pt-3">
         <button
           type="button"
           onClick={handleAdvance}
