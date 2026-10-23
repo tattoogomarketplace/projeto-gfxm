@@ -288,13 +288,15 @@
     bottom: 0;
     left: 0;
     width: 100%;
+    height: auto;
+    max-height: none;
     margin: 0;
     margin-bottom: 0;
     border-radius: 0;
     transform: none;
     overflow: visible;
-    background-color: rgb(9 9 11 / 0.92);
-    background-clip: padding-box;
+    background-color: #121212;
+    background-clip: border-box;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
   }
 
@@ -305,7 +307,7 @@
     bottom: 0;
     left: 0;
     height: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
-    background-color: rgb(9 9 11);
+    background-color: #121212;
     pointer-events: none;
     z-index: 0;
   }

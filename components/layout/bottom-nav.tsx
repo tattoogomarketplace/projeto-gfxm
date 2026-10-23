@@ -63,7 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed bottom-0 left-0 right-0 z-[999] w-full overflow-visible rounded-none md:hidden bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800 shadow-2xl shadow-black/50 px-5 pt-1';
+  'bottom-nav-dock fixed bottom-0 left-0 right-0 z-50 h-auto max-h-none w-full overflow-visible rounded-none md:hidden bg-[#121212] border-t border-zinc-800 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]';
 
 const DOCK_PAD = {
   paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)',
