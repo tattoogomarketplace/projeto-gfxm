@@ -111,7 +111,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-      <html lang="pt-BR" className="h-[100dvh] w-full overflow-hidden overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
+      <html lang="pt-BR" className="min-h-screen w-full overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
@@ -135,7 +135,7 @@ export default function RootLayout({
           <meta property="og:image:type" content="image/png" />
           <meta name="twitter:image" content="https://tattoogomk.com.br/opengraph-image.png?v=20261005" />
         </head>
-        <body className="luxury-canvas app-frame flex h-[100dvh] w-full flex-col overflow-hidden overscroll-none bg-[#121212] font-sans antialiased text-neutral-900 select-none dark:bg-[#121212] dark:text-white">
+        <body className="luxury-canvas app-frame flex min-h-screen w-full flex-col overscroll-none bg-[#121212] font-sans antialiased text-neutral-900 select-none dark:bg-[#121212] dark:text-white">
           <LocalizedClerkProvider>
           <SplashGate />
           <Providers>
