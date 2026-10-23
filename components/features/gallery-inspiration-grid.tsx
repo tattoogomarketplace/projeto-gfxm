@@ -96,10 +96,10 @@ const FEED_LIKES_PLACEHOLDERS = [
   },
 ] as const;
 
-const likesSheetSubscribe = () => () => {};
+const clientMountedSubscribe = () => () => {};
 
 function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const mounted = useSyncExternalStore(likesSheetSubscribe, () => true, () => false);
+  const mounted = useSyncExternalStore(clientMountedSubscribe, () => true, () => false);
 
   useEffect(() => {
     if (!open) return;
@@ -182,6 +182,73 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
               ))}
             </div>
           </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
+function FeedSaveButton({ onSaved }: { onSaved: () => void }) {
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveCount, setSaveCount] = useState(850);
+  const { triggerHaptic } = useHapticFeedback();
+
+  return (
+    <button
+      type="button"
+      data-gallery-action=""
+      onClick={() => {
+        triggerHaptic('light');
+        const nextSaved = !isSaved;
+        setIsSaved(nextSaved);
+        setSaveCount((count) => Math.max(0, count + (nextSaved ? 1 : -1)));
+        if (nextSaved) onSaved();
+      }}
+      className={cn(
+        FEED_ACTION_BTN_CLASS,
+        isSaved && 'text-[#FF6600] border-[#FF6600]/50'
+      )}
+      aria-label="Salvar"
+      aria-pressed={isSaved}
+    >
+      <Bookmark
+        className="h-6 w-6 shrink-0"
+        strokeWidth={2}
+        fill={isSaved ? 'currentColor' : 'none'}
+      />
+      <span className={FEED_ACTION_METRIC_CLASS}>{saveCount}</span>
+    </button>
+  );
+}
+
+function FeedSaveToast({ open }: { open: boolean }) {
+  const mounted = useSyncExternalStore(clientMountedSubscribe, () => true, () => false);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="feed-save-toast"
+          role="status"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.8 }}
+          className="pointer-events-auto fixed inset-x-0 z-[90] flex justify-center px-4"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5.75rem)' }}
+        >
+          <div className="flex w-full max-w-[360px] items-center justify-between gap-3 rounded-full border border-white/10 bg-[#121212]/90 px-4 py-2 text-[12px] text-white backdrop-blur-lg">
+            <span className="font-medium tracking-wide">Salvo nas inspirações</span>
+            <button
+              type="button"
+              className="shrink-0 font-semibold text-[#FF6600] transition-transform active:scale-95"
+            >
+              Alterar pasta
+            </button>
+          </div>
         </motion.div>
       ) : null}
     </AnimatePresence>,
@@ -397,7 +464,7 @@ export function GalleryInspirationGrid({
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
+  const [isSaveToastOpen, setIsSaveToastOpen] = useState(false);
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
@@ -481,9 +548,11 @@ export function GalleryInspirationGrid({
     setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleBookmarked = (id: string) => {
-    setBookmarked((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  useEffect(() => {
+    if (!isSaveToastOpen) return;
+    const timer = window.setTimeout(() => setIsSaveToastOpen(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [isSaveToastOpen]);
 
   const shareInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
@@ -671,7 +740,6 @@ export function GalleryInspirationGrid({
             const caption =
               item.description?.trim() ||
               `${styleLabel(item.style)} disponível para orçamento.`;
-            const isBookmarked = Boolean(bookmarked[item.id]);
 
             return (
               <article
@@ -813,27 +881,7 @@ export function GalleryInspirationGrid({
                       <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_ACTION_METRIC_CLASS}>45</span>
                     </button>
-                    <button
-                      type="button"
-                      data-gallery-action=""
-                      onClick={() => {
-                        triggerHaptic('light');
-                        toggleBookmarked(item.id);
-                      }}
-                      className={cn(
-                        FEED_ACTION_BTN_CLASS,
-                        isBookmarked && 'text-orange-500 border-orange-500/50'
-                      )}
-                      aria-label="Salvar"
-                      aria-pressed={isBookmarked}
-                    >
-                      <Bookmark
-                        className="h-6 w-6 shrink-0"
-                        strokeWidth={2}
-                        fill={isBookmarked ? 'currentColor' : 'none'}
-                      />
-                      <span className={FEED_ACTION_METRIC_CLASS}>850</span>
-                    </button>
+                    <FeedSaveButton onSaved={() => setIsSaveToastOpen(true)} />
                   </div>
                 </div>
 
@@ -959,6 +1007,8 @@ export function GalleryInspirationGrid({
         onExploreStyles={explorePreviewStyles}
         showLike={showLike}
       />
+
+      <FeedSaveToast open={isSaveToastOpen} />
 
       <FeedLikesSheet
         open={isLikesModalOpen}
