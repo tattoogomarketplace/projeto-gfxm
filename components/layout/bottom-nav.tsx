@@ -63,10 +63,12 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'fixed left-1/2 z-[999] w-[92%] max-w-[400px] -translate-x-1/2 md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-5 py-1';
+  'fixed left-1/2 z-[999] mb-0 w-[92%] max-w-[400px] -translate-x-1/2 md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-5 py-1';
 
 const PILL_BOTTOM_STYLE = {
-  bottom: 'max(env(safe-area-inset-bottom), 0.3rem)',
+  bottom: 'max(env(safe-area-inset-bottom, 0px), 0.3rem)',
+  marginBottom: 0,
+  top: 'auto',
 } as const;
 
 const NavIcon = memo(function NavIcon({
