@@ -292,7 +292,22 @@
     margin-bottom: 0;
     border-radius: 0;
     transform: none;
+    overflow: visible;
+    background-color: rgb(9 9 11 / 0.92);
+    background-clip: padding-box;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+
+  .bottom-nav-dock::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+    background-color: rgb(9 9 11);
+    pointer-events: none;
+    z-index: 0;
   }
 
   .touch-target {
