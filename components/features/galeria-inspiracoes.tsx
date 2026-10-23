@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Images } from 'lucide-react';
+import { ChevronRight, Compass, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
 import { useGaleria } from '@/hooks/use-galeria';
@@ -85,7 +85,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
       <div className="px-4 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/5 border-l-2 border-l-[#F97316] bg-[#121212]/60 p-3 backdrop-blur-sm">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500/10 p-1.5 text-orange-500">
-            <Images className="h-4 w-4" strokeWidth={1.75} />
+            <Compass className="h-4 w-4" strokeWidth={1.75} />
           </span>
           <h1 className="text-base font-semibold tracking-tight text-zinc-100">{t('gallery.title')}</h1>
         </div>
