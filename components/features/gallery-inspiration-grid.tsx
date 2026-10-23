@@ -5,9 +5,11 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -54,6 +56,138 @@ const FEED_ACTION_BTN_CLASS =
 
 const FEED_ACTION_METRIC_CLASS =
   'text-[11px] font-semibold tracking-wide text-gray-300 whitespace-nowrap';
+
+const FEED_LIKES_PLACEHOLDERS = [
+  {
+    id: 'like-marina',
+    username: '@marina_costa',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
+  },
+  {
+    id: 'like-rafael',
+    username: '@rafael_lima',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop',
+  },
+  {
+    id: 'like-bianca',
+    username: '@bianca_souza',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
+  },
+  {
+    id: 'like-diego',
+    username: '@diego_martins',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&q=80&auto=format&fit=crop',
+  },
+  {
+    id: 'like-camila',
+    username: '@camila_rocha',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
+  },
+  {
+    id: 'like-lucas',
+    username: '@lucas_ferreira',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&q=80&auto=format&fit=crop',
+  },
+] as const;
+
+const likesSheetSubscribe = () => () => {};
+
+function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const mounted = useSyncExternalStore(likesSheetSubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="likes-sheet"
+          className="fixed inset-0 z-[60] flex h-[100dvh] w-full flex-col justify-end overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <motion.button
+            type="button"
+            aria-label="Fechar"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="absolute inset-0 cursor-default bg-black/40"
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="likes-sheet-title"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
+            className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#121212]/80 backdrop-blur-xl shadow-[0_-24px_60px_rgba(0,0,0,0.55)]"
+          >
+            <span
+              aria-hidden
+              className="mx-auto mt-3 block h-1 w-10 shrink-0 rounded-full bg-white/20"
+            />
+            <header className="shrink-0 px-5 pb-2 pt-4">
+              <h2
+                id="likes-sheet-title"
+                className="text-[15px] font-semibold tracking-tight text-orange-500"
+              >
+                2.418 Curtidas
+              </h2>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              {FEED_LIKES_PLACEHOLDERS.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center gap-3 border-b border-white/5 py-3 last:border-b-0"
+                >
+                  <OptimizedImage
+                    src={user.avatarUrl}
+                    alt={user.username}
+                    className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  />
+                  <span className="truncate text-[14px] font-medium text-zinc-100">
+                    {user.username}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>,
+    document.body
+  );
+}
 
 const TATTOO_DNA_PILL_CLASS =
   'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5';
@@ -268,6 +402,7 @@ export function GalleryInspirationGrid({
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [budgetItem, setBudgetItem] = useState<InspirationItem | null>(null);
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -713,6 +848,10 @@ export function GalleryInspirationGrid({
                     type="button"
                     data-gallery-action=""
                     aria-label={likeLabel}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setIsLikesModalOpen(true);
+                    }}
                     className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
                   >
                     <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
@@ -819,6 +958,11 @@ export function GalleryInspirationGrid({
         onVisitProfile={visitPreviewProfile}
         onExploreStyles={explorePreviewStyles}
         showLike={showLike}
+      />
+
+      <FeedLikesSheet
+        open={isLikesModalOpen}
+        onClose={() => setIsLikesModalOpen(false)}
       />
 
       <BudgetEstimatorSheet
