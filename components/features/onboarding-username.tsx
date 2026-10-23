@@ -383,7 +383,7 @@ const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
               aria-label="Escolha seu @username"
               aria-invalid={tone === 'bad'}
               placeholder="seu_username"
-              className="absolute left-[46px] right-4 top-1/2 h-6 -translate-y-1/2 appearance-none bg-transparent !p-0 !m-0 outline-none border-none shadow-none text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-6"
+              className="absolute left-[46px] right-4 top-1/2 h-6 -translate-y-1/2 appearance-none bg-transparent !p-0 !m-0 outline-none border-none shadow-none text-[16px] text-zinc-100 placeholder:text-zinc-500 caret-orange-500 leading-6"
             />
 
             {/* Slot fixo de status — largura imutável (CLS = 0). */}
@@ -511,19 +511,13 @@ export function OnboardingUsername({
   return (
     <div
       className={cn(
-        'gpu-layer relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden overscroll-none px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+        'relative flex h-full min-h-[100dvh] w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0a] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]',
         className
       )}
-      style={{ background: 'radial-gradient(120% 120% at 50% 0%, #131313 0%, #0a0a0a 55%, #050505 100%)' }}
     >
       <AmbientGlow />
 
-      <motion.div
-        initial={{ opacity: 0, y: 18, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 220, damping: 26, mass: 0.9 }}
-        className="relative z-10 w-full max-w-md"
-      >
+      <div className="relative z-10 mx-auto my-auto flex w-full max-w-md flex-1 flex-col justify-center">
         {/* Glassmorphism card */}
         <div
           className="relative overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.045] p-6 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.85)] sm:p-7"
@@ -572,7 +566,7 @@ export function OnboardingUsername({
             Identidade protegida por trava de 30 dias.
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Premium confirmation bottom sheet */}
       <AnimatePresence>

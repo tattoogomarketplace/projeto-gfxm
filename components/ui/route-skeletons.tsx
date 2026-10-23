@@ -587,13 +587,9 @@ export function UsernameOnboardingSkeleton({ className }: { className?: string }
       aria-live="polite"
       aria-label="Preparando sua identidade..."
       className={cn(
-        'fixed inset-0 z-50 flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden overscroll-none bg-background px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+        'relative flex h-full min-h-[100dvh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0a] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]',
         className
       )}
-      style={{
-        background:
-          'radial-gradient(120% 120% at 50% 0%, #131313 0%, #0a0a0a 55%, #050505 100%)',
-      }}
     >
       <div className="relative flex flex-col items-center gap-6">
         <span className="relative flex h-16 w-16 items-center justify-center">

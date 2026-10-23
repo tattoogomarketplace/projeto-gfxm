@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
-import { AnimatePresence, motion } from 'framer-motion';
 import { OnboardingUsername } from '@/components/features/onboarding-username';
 import { UsernameOnboardingSkeleton } from '@/components/ui/route-skeletons';
 import { authedFetch } from '@/lib/utils/authed-fetch';
@@ -83,34 +82,16 @@ function UsernameOnboardingInner() {
     };
   }, [getToken, user]);
 
+  if (checking || !role) {
+    return <UsernameOnboardingSkeleton />;
+  }
+
   return (
-    <AnimatePresence initial={false}>
-      {checking || !role ? (
-        <motion.div
-          key="username-loader"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.32, ease: 'easeOut' }}
-        >
-          <UsernameOnboardingSkeleton />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="username-form"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.32, ease: 'easeOut' }}
-        >
-          <OnboardingUsername
-            role={role}
-            flow={flow}
-            onCompleted={() => assignAppPath(dashboardPathForRole(role))}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <OnboardingUsername
+      role={role}
+      flow={flow}
+      onCompleted={() => assignAppPath(dashboardPathForRole(role))}
+    />
   );
 }
 
