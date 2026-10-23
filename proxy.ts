@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { enforceApiRateLimit } from '@/lib/security/rate-limit';
 
 const LOGIN_PATH = '/login';
 const SIGN_UP_PATH = '/register';
@@ -46,6 +47,9 @@ function nextWithPathname(req: Request, pathname: string) {
 export default clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
+
+    const limited = await enforceApiRateLimit(req);
+    if (limited) return limited;
 
     if (isPlatformPath(pathname)) {
       return nextWithPathname(req, pathname);
