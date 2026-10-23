@@ -131,4 +131,4 @@ export const CLERK_DARK_LUXURY_APPEARANCE = {
 } as const;
 
 export const AUTH_SHELL_CLASS =
-  'min-h-[100dvh] h-full w-full bg-[#0a0a0a] flex flex-col items-center justify-center p-6 overflow-y-auto overscroll-none text-white';
+  'min-h-[100dvh] h-full w-full bg-[#0a0a0a] flex flex-col items-center px-6 overflow-y-auto overscroll-contain text-white [-webkit-overflow-scrolling:touch]';

@@ -11,7 +11,7 @@ type AuthScreenProps = {
 
 function AuthScreenBase({ children, className }: AuthScreenProps) {
   return (
-    <div className={cn('w-full max-w-md text-white select-none', className)}>
+    <div className={cn('relative w-full max-w-md overflow-y-visible text-white select-none', className)}>
       {children}
     </div>
   );
