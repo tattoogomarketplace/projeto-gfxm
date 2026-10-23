@@ -1,9 +1,8 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { after } from 'next/server';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
 import { UsernameGate } from '@/components/layout/username-gate';
 import { BRAND_NAME } from '@/lib/i18n/brands';
-import { ensurePerfilFromClerk } from '@/lib/services/ensure-perfil';
+import { ensurePerfilFromClerk, findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { buildProfileSource } from '@/lib/services/perfil-session';
 import { parseMetadataRole } from '@/lib/utils/auth-redirect';
 
@@ -59,19 +58,18 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-async function syncAuthenticatedPerfil() {
-  try {
-    const { userId } = await auth();
-    if (!userId) return;
+async function reconcileAuthenticatedPerfil() {
+  const { userId } = await auth();
+  if (!userId) return;
 
-    const user = await currentUser();
-    await ensurePerfilFromClerk(
-      buildProfileSource(userId, user),
-      parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata)
-    );
-  } catch {
-    // Upsert concorrente com o webhook é idempotente; o casco nunca bloqueia.
-  }
+  const existing = await findPerfilByClerkId(userId);
+  if (existing) return;
+
+  const user = await currentUser();
+  await ensurePerfilFromClerk(
+    buildProfileSource(userId, user),
+    parseMetadataRole(user?.publicMetadata, user?.unsafeMetadata)
+  );
 }
 
 export default async function DashboardLayout({
@@ -79,11 +77,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // A sincronização do perfil (rede Clerk `currentUser()` + upsert Prisma) é um
-  // efeito colateral idempotente do boot: NÃO deve bloquear a resposta. Agendar
-  // via `after()` remove a chamada de rede e as escritas do caminho crítico,
-  // permitindo que o casco (header + dock + skeletons de rota) faça streaming na
-  // hora. O conteúdo é revalidado pelo `AppShell`/guards no cliente.
-  after(syncAuthenticatedPerfil);
+  try {
+    await reconcileAuthenticatedPerfil();
+  } catch {
+    // Upsert concorrente com o webhook é idempotente; o casco nunca bloqueia.
+  }
   return <DashboardShell>{children}</DashboardShell>;
 }
