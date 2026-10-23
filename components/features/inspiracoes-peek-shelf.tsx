@@ -11,7 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Images } from 'lucide-react';
+import { ArrowRight, Bookmark } from 'lucide-react';
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -127,7 +127,7 @@ export function InspiracoesPeekShelf() {
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-inspiracoes">
         <div className="mb-4 flex w-full items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
-            <Images className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={1.9} aria-hidden />
+            <Bookmark className="h-5 w-5 shrink-0 text-[#FF6600]" strokeWidth={1.9} fill="currentColor" aria-hidden />
             <h2 id="discover-inspiracoes" className="truncate text-lg font-bold text-zinc-100 md:text-xl">
               {t('home.inspiracoes')}
             </h2>
