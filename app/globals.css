@@ -49,7 +49,7 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --header-safe-top: max(0.75rem, env(safe-area-inset-top, 0px));
     --dock-height: 2.75rem;
-    --dock-offset: max(0.3rem, env(safe-area-inset-bottom, 0px));
+    --dock-offset: env(safe-area-inset-bottom, 0px);
     --dock-clearance: calc(var(--dock-offset) + var(--dock-height) + 0.5rem);
   }
 

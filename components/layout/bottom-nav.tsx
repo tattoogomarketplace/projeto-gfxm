@@ -63,13 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'fixed left-1/2 z-[999] mb-0 w-[92%] max-w-[400px] -translate-x-1/2 md:hidden bg-zinc-950/75 backdrop-blur-xl border border-zinc-800 rounded-full shadow-2xl shadow-black/50 flex justify-between items-center px-5 py-1';
-
-const PILL_BOTTOM_STYLE = {
-  bottom: 'max(env(safe-area-inset-bottom, 0px), 0.3rem)',
-  marginBottom: 0,
-  top: 'auto',
-} as const;
+  'fixed bottom-0 left-0 right-0 z-[999] mb-0 md:hidden bg-zinc-950/75 backdrop-blur-xl border-t border-zinc-800 shadow-2xl shadow-black/50 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -186,11 +180,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   return (
     <nav
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
-      style={PILL_BOTTOM_STYLE}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="flex w-full items-center justify-between">
+      <ul className="mx-auto flex w-full max-w-[400px] items-center justify-between">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -259,8 +252,8 @@ function BottomNavFallbackInner() {
   if (shouldHideNav(pathname, false)) return null;
 
   return (
-    <nav aria-hidden className={PILL_CLASS} style={PILL_BOTTOM_STYLE}>
-      <ul className="flex w-full items-center justify-between">
+    <nav aria-hidden className={PILL_CLASS}>
+      <ul className="mx-auto flex w-full max-w-[400px] items-center justify-between">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
             <span className="flex min-h-0 min-w-11 flex-col items-center justify-center gap-px px-3 py-1 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
