@@ -226,7 +226,10 @@ export function MagicUsernameInput({
         });
 
   const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
+    const next = event.target.value.toLowerCase();
+    if (/^[a-z0-9_]*$/.test(next)) {
+      onChange(next);
+    }
   };
 
   return (

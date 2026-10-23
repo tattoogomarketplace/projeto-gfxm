@@ -318,7 +318,10 @@ const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
     );
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRawUsername(event.target.value);
+      const next = event.target.value.toLowerCase();
+      if (/^[a-z0-9_]*$/.test(next)) {
+        setRawUsername(next);
+      }
     };
 
     const handleGlyphActivate = (event: React.MouseEvent) => {
