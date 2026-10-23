@@ -298,14 +298,17 @@ async function persistArtistPromotion(input: {
   const nome = !input.currentName && input.extractedName ? input.extractedName : undefined;
   const nextRole = input.currentRole === 'estudio' ? 'estudio' : 'tatuador';
 
-  await prisma.perfil.update({
-    where: { id: input.perfilId },
+  const mutated = await prisma.perfil.updateMany({
+    where: { id: input.perfilId, clerk_id: input.clerkId, deleted_at: null },
     data: {
       kyc_status: 'aprovado' as KycStatusValue,
       role: nextRole,
       ...(nome ? { nome } : {}),
     },
   });
+  if (mutated.count === 0) {
+    throw new Error('Perfil não encontrado.');
+  }
 
   try {
     const client = await clerkClient();
@@ -392,8 +395,8 @@ export async function POST(request: Request) {
     });
 
     if (!ALLOWED_MIME.has(pessoalForensic.mimeType) || !pessoalForensic.ok) {
-      await prisma.perfil.update({
-        where: { id: perfil.id },
+      await prisma.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null },
         data: { kyc_status: 'rejeitado' },
       });
       return NextResponse.json(
@@ -411,8 +414,8 @@ export async function POST(request: Request) {
     }
 
     if (!ALLOWED_MIME.has(habilidadeForensic.mimeType) || !habilidadeForensic.ok) {
-      await prisma.perfil.update({
-        where: { id: perfil.id },
+      await prisma.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null },
         data: { kyc_status: 'rejeitado' },
       });
       return NextResponse.json(
@@ -429,8 +432,8 @@ export async function POST(request: Request) {
       );
     }
 
-    await prisma.perfil.update({
-      where: { id: perfil.id },
+    await prisma.perfil.updateMany({
+      where: { id: perfil.id, clerk_id: userId, deleted_at: null },
       data: { kyc_status: 'em_analise' },
     });
 
@@ -446,8 +449,8 @@ export async function POST(request: Request) {
     );
 
     if (!verdict.approved) {
-      await prisma.perfil.update({
-        where: { id: perfil.id },
+      await prisma.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null },
         data: { kyc_status: verdict.status },
       });
       return NextResponse.json(

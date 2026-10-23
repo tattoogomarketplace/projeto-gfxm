@@ -47,8 +47,8 @@ async function persistirCompliance({ userId, cnpj, razaoSocial, enderecoOficial,
     },
   });
 
-  await prisma.perfil.update({
-    where: { id: userId },
+  await prisma.perfil.updateMany({
+    where: { id: userId, deleted_at: null, role: "estudio" },
     data: { cnpj },
   });
 }
@@ -192,15 +192,15 @@ async function aceitarConvite({ tatuadorUser, conviteId, otp }) {
     }
 
     if (convite.expires_at.getTime() < agora.getTime()) {
-      await tx.estudioConvite.update({
-        where: { id: convite.id },
+      await tx.estudioConvite.updateMany({
+        where: { id: convite.id, tatuador_id: tatuadorUser.id, deleted_at: null },
         data: { status: "expirado" },
       });
       throw httpError(410, "Convite expirado (TTL de 7 dias).");
     }
 
-    await tx.perfil.update({
-      where: { id: tatuadorUser.id },
+    await tx.perfil.updateMany({
+      where: { id: tatuadorUser.id, deleted_at: null, role: "tatuador" },
       data: { studio_id: convite.estudio_id },
     });
 
@@ -219,15 +219,23 @@ async function aceitarConvite({ tatuadorUser, conviteId, otp }) {
       },
     });
 
-    const aceito = await tx.estudioConvite.update({
-      where: { id: convite.id },
+    const aceito = await tx.estudioConvite.updateMany({
+      where: {
+        id: convite.id,
+        tatuador_id: tatuadorUser.id,
+        status: "pendente",
+        deleted_at: null,
+      },
       data: { status: "aceito", accepted_at: agora },
     });
+    if (aceito.count === 0) {
+      throw httpError(404, "Convite nao encontrado.");
+    }
 
     return {
       sucesso: true,
       studio_id: convite.estudio_id,
-      convite: aceito,
+      convite: { ...convite, status: "aceito", accepted_at: agora },
     };
   });
 }
@@ -485,11 +493,17 @@ async function decidirAfiliacao({ user, conviteId, action }) {
 
     if (action === "cancel") {
       if (!isArtist) throw httpError(403, "Apenas o artista pode cancelar este pedido.");
-      const canceled = await tx.estudioConvite.update({
-        where: { id: convite.id },
+      const canceled = await tx.estudioConvite.updateMany({
+        where: {
+          id: convite.id,
+          tatuador_id: user.id,
+          status: "pendente",
+          deleted_at: null,
+        },
         data: { status: "recusado" },
       });
-      return { sucesso: true, status: canceled.status };
+      if (canceled.count === 0) throw httpError(404, "Pedido não encontrado.");
+      return { sucesso: true, status: "recusado" };
     }
 
     if (!isStudio) {
@@ -497,11 +511,17 @@ async function decidirAfiliacao({ user, conviteId, action }) {
     }
 
     if (action === "reject") {
-      const rejected = await tx.estudioConvite.update({
-        where: { id: convite.id },
+      const rejected = await tx.estudioConvite.updateMany({
+        where: {
+          id: convite.id,
+          estudio_id: user.id,
+          status: "pendente",
+          deleted_at: null,
+        },
         data: { status: "recusado" },
       });
-      return { sucesso: true, status: rejected.status };
+      if (rejected.count === 0) throw httpError(404, "Pedido não encontrado.");
+      return { sucesso: true, status: "recusado" };
     }
 
     const tatuador = await tx.perfil.findFirst({
@@ -515,8 +535,8 @@ async function decidirAfiliacao({ user, conviteId, action }) {
       throw httpError(409, "Tatuador já vinculado a outro estúdio.");
     }
 
-    await tx.perfil.update({
-      where: { id: tatuador.id },
+    await tx.perfil.updateMany({
+      where: { id: tatuador.id, deleted_at: null, role: "tatuador" },
       data: { studio_id: convite.estudio_id },
     });
 
@@ -545,12 +565,18 @@ async function decidirAfiliacao({ user, conviteId, action }) {
       data: { status: "expirado" },
     });
 
-    const accepted = await tx.estudioConvite.update({
-      where: { id: convite.id },
+    const accepted = await tx.estudioConvite.updateMany({
+      where: {
+        id: convite.id,
+        estudio_id: user.id,
+        status: "pendente",
+        deleted_at: null,
+      },
       data: { status: "aceito", accepted_at: new Date() },
     });
+    if (accepted.count === 0) throw httpError(404, "Pedido não encontrado.");
 
-    return { sucesso: true, status: accepted.status, studio_id: convite.estudio_id };
+    return { sucesso: true, status: "aceito", studio_id: convite.estudio_id };
   });
 }
 

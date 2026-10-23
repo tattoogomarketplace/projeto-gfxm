@@ -310,11 +310,19 @@ export async function decideAffiliation(
       if (!isArtist) {
         throw new AffiliationError('Apenas o artista pode cancelar este pedido.', 403);
       }
-      const canceled = await tx.estudioConvite.update({
-        where: { id: convite.id },
+      const canceled = await tx.estudioConvite.updateMany({
+        where: {
+          id: convite.id,
+          tatuador_id: actor.id,
+          status: 'pendente',
+          deleted_at: null,
+        },
         data: { status: 'recusado' },
       });
-      return { status: canceled.status };
+      if (canceled.count === 0) {
+        throw new AffiliationError('Pedido não encontrado.', 404);
+      }
+      return { status: 'recusado' as const };
     }
 
     if (!isStudio) {
@@ -322,11 +330,19 @@ export async function decideAffiliation(
     }
 
     if (action === 'reject') {
-      const rejected = await tx.estudioConvite.update({
-        where: { id: convite.id },
+      const rejected = await tx.estudioConvite.updateMany({
+        where: {
+          id: convite.id,
+          estudio_id: actor.id,
+          status: 'pendente',
+          deleted_at: null,
+        },
         data: { status: 'recusado' },
       });
-      return { status: rejected.status };
+      if (rejected.count === 0) {
+        throw new AffiliationError('Pedido não encontrado.', 404);
+      }
+      return { status: 'recusado' as const };
     }
 
     const tatuador = await tx.perfil.findFirst({
@@ -340,8 +356,8 @@ export async function decideAffiliation(
       throw new AffiliationError('Tatuador já vinculado a outro estúdio.', 409);
     }
 
-    await tx.perfil.update({
-      where: { id: tatuador.id },
+    await tx.perfil.updateMany({
+      where: { id: tatuador.id, deleted_at: null, role: 'tatuador' },
       data: { studio_id: convite.estudio_id },
     });
 
@@ -370,12 +386,20 @@ export async function decideAffiliation(
       data: { status: 'expirado' },
     });
 
-    const accepted = await tx.estudioConvite.update({
-      where: { id: convite.id },
+    const accepted = await tx.estudioConvite.updateMany({
+      where: {
+        id: convite.id,
+        estudio_id: actor.id,
+        status: 'pendente',
+        deleted_at: null,
+      },
       data: { status: 'aceito', accepted_at: new Date() },
     });
+    if (accepted.count === 0) {
+      throw new AffiliationError('Pedido não encontrado.', 404);
+    }
 
-    return { status: accepted.status, studio_id: convite.estudio_id };
+    return { status: 'aceito' as const, studio_id: convite.estudio_id };
   });
 }
 

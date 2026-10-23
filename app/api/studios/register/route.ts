@@ -108,6 +108,14 @@ export async function POST(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const mutated = await tx.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null, role: 'estudio' },
+        data: { cnpj: empresa.cnpj },
+      });
+      if (mutated.count === 0) {
+        throw new Error('PERFIL_NOT_FOUND');
+      }
+
       await tx.estudioCompliance.upsert({
         where: { id: perfil.id },
         update: {
@@ -124,13 +132,11 @@ export async function POST(request: Request) {
           status_receita: statusReceita,
         },
       });
-
-      await tx.perfil.update({
-        where: { id: perfil.id },
-        data: { cnpj: empresa.cnpj },
-      });
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'PERFIL_NOT_FOUND') {
+      return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+    }
     if (isUniqueConstraintError(error)) {
       return NextResponse.json(
         { sucesso: false, erro: 'Este CNPJ já está vinculado a outro estúdio.' },

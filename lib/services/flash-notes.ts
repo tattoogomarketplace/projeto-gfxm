@@ -171,12 +171,12 @@ export async function updateFlashNote(params: {
     throw new ChatError(404, 'Flash Note não encontrada.');
   }
 
-  const existing = await prisma.flashNote.findUnique({
-    where: { id: params.noteId },
+  const existing = await prisma.flashNote.findFirst({
+    where: { id: params.noteId, userId: params.actorId },
     select: { id: true, userId: true, content: true, backgroundId: true, fontClass: true, alignClass: true },
   });
 
-  if (!existing || existing.userId !== params.actorId) {
+  if (!existing) {
     throw new ChatError(404, 'Flash Note não encontrada.');
   }
 
@@ -189,8 +189,8 @@ export async function updateFlashNote(params: {
     alignClass: params.alignClass ?? existing.alignClass,
   });
 
-  const updated = await prisma.flashNote.update({
-    where: { id: existing.id },
+  const mutated = await prisma.flashNote.updateMany({
+    where: { id: existing.id, userId: params.actorId },
     data: {
       content,
       backgroundId: style.backgroundId,
@@ -198,12 +198,22 @@ export async function updateFlashNote(params: {
       alignClass: style.alignClass,
       expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
     },
+  });
+  if (mutated.count === 0) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
+
+  const updated = await prisma.flashNote.findFirst({
+    where: { id: existing.id, userId: params.actorId },
     include: {
       user: {
         select: { id: true, nome: true, role: true, cidade: true, estado: true },
       },
     },
   });
+  if (!updated) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
 
   return toFlashNoteDto(updated);
 }
@@ -231,17 +241,11 @@ export async function deleteFlashNote(params: {
     throw new ChatError(404, 'Flash Note não encontrada.');
   }
 
-  const existing = await prisma.flashNote.findUnique({
-    where: { id: params.noteId },
-    select: { id: true, userId: true },
-  });
-
-  if (!existing || existing.userId !== params.actorId) {
-    throw new ChatError(404, 'Flash Note não encontrada.');
-  }
-
-  await prisma.flashNote.update({
-    where: { id: existing.id },
+  const mutated = await prisma.flashNote.updateMany({
+    where: { id: params.noteId, userId: params.actorId },
     data: { ativa: false },
   });
+  if (mutated.count === 0) {
+    throw new ChatError(404, 'Flash Note não encontrada.');
+  }
 }

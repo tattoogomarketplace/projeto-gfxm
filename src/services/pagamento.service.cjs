@@ -293,18 +293,21 @@ async function registrarPagamentoPresencial({ agendamentoId, userId }) {
     const pendencias = Math.min((perfil?.agendamentos_pendentes_repasse || 0) + 1, 2);
     const bloquear = pendencias >= 2;
 
-    await tx.perfil.update({
-      where: { id: agendamento.tatuador_id },
+    await tx.perfil.updateMany({
+      where: { id: agendamento.tatuador_id, deleted_at: null },
       data: {
         agendamentos_pendentes_repasse: pendencias,
         ...(bloquear ? { agenda_bloqueada: true } : {}),
       },
     });
 
-    await tx.agendamento.update({
-      where: { id: agendamentoId },
+    const marked = await tx.agendamento.updateMany({
+      where: { id: agendamentoId, cliente_id: userId, deleted_at: null },
       data: { pagamento_restante_presencial: true },
     });
+    if (marked.count === 0) {
+      throw httpError(404, "Agendamento não encontrado.");
+    }
 
     return { sucesso: true, agenda_bloqueada: bloquear };
   }, SERIALIZABLE);

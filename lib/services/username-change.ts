@@ -95,16 +95,21 @@ export async function changeUsername(
 
       // Atualizacao atomica: handle + timestamp na MESMA instrucao.
       const now = new Date();
-      const updated = await tx.perfil.update({
-        where: { id: perfil.id },
+      const mutated = await tx.perfil.updateMany({
+        where: { id: perfil.id, deleted_at: null },
         data: { username: nextUsername, last_username_change: now },
+      });
+      if (mutated.count === 0) return { status: 'not_found' } as const;
+
+      const updated = await tx.perfil.findFirst({
+        where: { id: perfil.id, deleted_at: null },
         select: { username: true, last_username_change: true },
       });
 
       return {
         status: 'ok',
-        username: updated.username ?? nextUsername,
-        lastUsernameChange: updated.last_username_change ?? now,
+        username: updated?.username ?? nextUsername,
+        lastUsernameChange: updated?.last_username_change ?? now,
       } as const;
     });
   } catch (error) {

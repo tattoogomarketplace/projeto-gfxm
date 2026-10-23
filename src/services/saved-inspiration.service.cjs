@@ -46,7 +46,9 @@ async function toggleSave(userIdRaw, postIdRaw) {
 
       if (existingSave) {
         await tx.savedInspiration.delete({
-          where: { id: existingSave.id },
+          where: {
+            userId_postId: { userId, postId },
+          },
         });
         return {
           isSaved: false,

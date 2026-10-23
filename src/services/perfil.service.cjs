@@ -72,10 +72,13 @@ async function verificarDuplicidade({ email, cpf }) {
 }
 
 async function aceitarTermos(userId) {
-  await prisma.perfil.update({
-    where: { id: userId },
+  const mutated = await prisma.perfil.updateMany({
+    where: { id: userId, deleted_at: null },
     data: { has_seen_welcome_notice: true },
   });
+  if (mutated.count === 0) {
+    throw httpError(404, "Perfil não encontrado.");
+  }
   return { sucesso: true };
 }
 
@@ -112,8 +115,8 @@ async function desativarConta(userId) {
     return { sucesso: true, ja_desativada: true };
   }
 
-  await prisma.perfil.update({
-    where: { id: userId },
+  await prisma.perfil.updateMany({
+    where: { id: userId, deleted_at: null },
     data: {
       deleted_at: new Date(),
       agenda_bloqueada: true,

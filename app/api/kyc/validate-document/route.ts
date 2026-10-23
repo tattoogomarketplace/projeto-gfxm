@@ -206,7 +206,13 @@ export async function POST(request: Request) {
     }
 
     try {
-      await prisma.perfil.update({ where: { id: perfil.id }, data });
+      const updated = await prisma.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null },
+        data,
+      });
+      if (updated.count === 0) {
+        return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+      }
     } catch (error) {
       console.error('[kyc/validate-document] falha ao persistir status de Documentos Pessoais', {
         userId,

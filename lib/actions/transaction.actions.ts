@@ -503,8 +503,10 @@ export async function processDepositPayment(input: {
           await tx.agendamento.updateMany({
             where: {
               id: sessionId,
+              cliente_id: actorPerfilId,
               status: AgendamentoStatus.aguardando_sinal,
               sinal_pago: false,
+              deleted_at: null,
             },
             data: { status: AgendamentoStatus.cancelado, deleted_at: agora },
           });
@@ -521,8 +523,10 @@ export async function processDepositPayment(input: {
         const confirmed = await tx.agendamento.updateMany({
           where: {
             id: sessionId,
+            cliente_id: actorPerfilId,
             status: AgendamentoStatus.aguardando_sinal,
             sinal_pago: false,
+            deleted_at: null,
           },
           data: {
             status: AgendamentoStatus.confirmado,
@@ -671,6 +675,8 @@ export async function cancelAndRefundSession(input: {
         const cancelled = await tx.agendamento.updateMany({
           where: {
             id: sessionId,
+            deleted_at: null,
+            OR: [{ cliente_id: actorPerfilId }, { tatuador_id: actorPerfilId }],
             status: {
               in: [
                 AgendamentoStatus.rascunho,
@@ -735,8 +741,12 @@ export async function cancelAndRefundSession(input: {
           refundTransactionId = reversal.id;
           refundAmount = round2(Number(deposit.valor_bruto));
 
-          await tx.transacaoPagamento.update({
-            where: { id: deposit.id },
+          await tx.transacaoPagamento.updateMany({
+            where: {
+              id: deposit.id,
+              agendamento_id: sessionId,
+              tipo: TransactionType.DEPOSIT,
+            },
             data: { status: 'reembolsado' },
           });
         }
@@ -895,7 +905,12 @@ export async function validateStudioSessionPass(
         const split = buildSplit(payoutBase, rates, currency);
 
         const completed = await tx.agendamento.updateMany({
-          where: { id: normalizedSessionId, status: { in: allowedStatuses } },
+          where: {
+            id: normalizedSessionId,
+            tatuador_id: agendamento.tatuador_id,
+            deleted_at: null,
+            status: { in: allowedStatuses },
+          },
           data: { status: AgendamentoStatus.concluido, mutex_expira_em: null },
         });
         if (completed.count === 0) {

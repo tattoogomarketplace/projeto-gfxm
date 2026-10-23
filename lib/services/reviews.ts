@@ -326,26 +326,31 @@ export async function replyToReview(
     throw new ReviewError(400, 'A resposta excede o limite permitido.');
   }
 
-  const existing = await prisma.review.findFirst({
-    where: { id: reviewId, deleted_at: null },
-    select: { id: true, target_id: true },
-  });
-
-  if (!existing) {
-    throw new ReviewError(404, 'Avaliação não encontrada.');
-  }
-  if (existing.target_id !== actor.id) {
-    throw new ReviewError(403, 'Você só pode responder avaliações do seu perfil.');
-  }
-
-  const updated = await prisma.review.update({
-    where: { id: reviewId },
+  const mutated = await prisma.review.updateMany({
+    where: { id: reviewId, target_id: actor.id, deleted_at: null },
     data: {
       artist_reply: reply,
       replied_at: new Date(),
     },
+  });
+  if (mutated.count === 0) {
+    const exists = await prisma.review.findFirst({
+      where: { id: reviewId, deleted_at: null },
+      select: { id: true },
+    });
+    if (!exists) {
+      throw new ReviewError(404, 'Avaliação não encontrada.');
+    }
+    throw new ReviewError(403, 'Você só pode responder avaliações do seu perfil.');
+  }
+
+  const updated = await prisma.review.findFirst({
+    where: { id: reviewId, target_id: actor.id, deleted_at: null },
     select: REVIEW_SELECT,
   });
+  if (!updated) {
+    throw new ReviewError(404, 'Avaliação não encontrada.');
+  }
 
   return toReviewDto(updated as ReviewRow);
 }

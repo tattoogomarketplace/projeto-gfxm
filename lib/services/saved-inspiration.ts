@@ -70,7 +70,9 @@ export async function toggleSavedInspiration(
 
       if (existingSave) {
         await tx.savedInspiration.delete({
-          where: { id: existingSave.id },
+          where: {
+            userId_postId: { userId: perfilId, postId },
+          },
         });
         return {
           isSaved: false,

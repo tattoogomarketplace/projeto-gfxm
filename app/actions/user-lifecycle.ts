@@ -111,8 +111,8 @@ export async function deactivateAccount(userId: string): Promise<LifecycleResult
         if (!perfil) return;
         const denied = denyUnlessOwner(actorUserId, perfil);
         if (denied) return;
-        await prisma.perfil.update({
-          where: { id: perfil.id },
+        await prisma.perfil.updateMany({
+          where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
           data: {
             statusConta: AccountStatus.DESATIVADO,
             agenda_bloqueada: true,
@@ -153,8 +153,8 @@ export async function scheduleAccountDeletion(userId: string): Promise<Lifecycle
         if (!perfil) return;
         const denied = denyUnlessOwner(actorUserId, perfil);
         if (denied) return;
-        await prisma.perfil.update({
-          where: { id: perfil.id },
+        await prisma.perfil.updateMany({
+          where: { id: perfil.id, clerk_id: actorUserId },
           data: {
             statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
             dataFim,
@@ -181,22 +181,30 @@ export async function scheduleAccountDeletion(userId: string): Promise<Lifecycle
 
 export async function reactivateAccount(userId: string): Promise<LifecycleResult> {
   const actorUserId = await requireActorUserId();
+  if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
+
   const perfil = await findPerfilForLifecycle(userId);
   if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
 
   const denied = denyUnlessOwner(actorUserId, perfil);
   if (denied) return { ok: false, error: denied };
 
-  const updated = await prisma.perfil.update({
-    where: { id: perfil.id },
+  const mutated = await prisma.perfil.updateMany({
+    where: { id: perfil.id, clerk_id: actorUserId },
     data: {
       statusConta: AccountStatus.ATIVO,
       dataFim: null,
       deleted_at: null,
       agenda_bloqueada: false,
     },
+  });
+  if (mutated.count === 0) return { ok: false, error: 'Perfil não encontrado.' };
+
+  const updated = await prisma.perfil.findFirst({
+    where: { id: perfil.id, clerk_id: actorUserId },
     select: { id: true, statusConta: true, dataFim: true, role: true },
   });
+  if (!updated) return { ok: false, error: 'Perfil não encontrado.' };
 
   return {
     ok: true,
@@ -213,6 +221,8 @@ export async function migrateUserRole(
   extraData?: RoleMigrationExtraData
 ): Promise<LifecycleResult> {
   const actorUserId = await requireActorUserId();
+  if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
+
   const perfil = await findPerfilForLifecycle(userId);
   if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
 
@@ -238,8 +248,8 @@ export async function migrateUserRole(
 
   const roleChanged = perfil.role !== role;
 
-  const updated = await prisma.perfil.update({
-    where: { id: perfil.id },
+  const mutated = await prisma.perfil.updateMany({
+    where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
     data: {
       role,
       ...(role === 'estudio' && cnpj ? { cnpj } : {}),
@@ -251,8 +261,14 @@ export async function migrateUserRole(
           }
         : {}),
     },
+  });
+  if (mutated.count === 0) return { ok: false, error: 'Perfil não encontrado.' };
+
+  const updated = await prisma.perfil.findFirst({
+    where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
     select: { id: true, clerk_id: true, role: true, statusConta: true, dataFim: true, cnpj: true },
   });
+  if (!updated) return { ok: false, error: 'Perfil não encontrado.' };
 
   const clerkId = updated.clerk_id;
   if (clerkId) {

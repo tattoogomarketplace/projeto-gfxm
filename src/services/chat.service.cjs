@@ -191,12 +191,15 @@ async function marcarEntregue({ mensagemId, userId }) {
   });
   if (!mensagem || mensagem.status === "lido") return mensagem;
 
-  return prisma.mensagemChat.update({
-    where: { id: mensagemId },
+  await prisma.mensagemChat.updateMany({
+    where: { id: mensagemId, destinatario_id: userId, deleted_at: null },
     data: {
       status: "entregue",
       entregue_em: mensagem.entregue_em || new Date(),
     },
+  });
+  return prisma.mensagemChat.findFirst({
+    where: { id: mensagemId, destinatario_id: userId, deleted_at: null },
   });
 }
 
@@ -206,13 +209,16 @@ async function marcarLido({ mensagemId, userId }) {
   });
   if (!mensagem) return null;
 
-  return prisma.mensagemChat.update({
-    where: { id: mensagemId },
+  await prisma.mensagemChat.updateMany({
+    where: { id: mensagemId, destinatario_id: userId, deleted_at: null },
     data: {
       status: "lido",
       entregue_em: mensagem.entregue_em || new Date(),
       lido_em: new Date(),
     },
+  });
+  return prisma.mensagemChat.findFirst({
+    where: { id: mensagemId, destinatario_id: userId, deleted_at: null },
   });
 }
 

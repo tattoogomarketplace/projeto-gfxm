@@ -110,13 +110,22 @@ async function incrementLike(userId, portfolioId) {
       });
     }
 
-    const updated = await tx.portfolio.update({
-      where: { id: portfolioId },
+    const mutated = await tx.portfolio.updateMany({
+      where: { id: portfolioId, deleted_at: null },
       data: { likes_count: { increment: 1 } },
+    });
+    if (mutated.count === 0) {
+      const error = new Error("Obra não encontrada.");
+      error.status = 404;
+      throw error;
+    }
+
+    const updated = await tx.portfolio.findFirst({
+      where: { id: portfolioId, deleted_at: null },
       select: { likes_count: true },
     });
 
-    return updated.likes_count;
+    return updated?.likes_count || 0;
   });
 }
 

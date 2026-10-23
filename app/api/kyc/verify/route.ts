@@ -235,12 +235,15 @@ export async function POST(request: Request) {
         ? { cnpj: identity.normalizedDocument }
         : { cpf: identity.normalizedDocument };
 
-    await prisma.$transaction([
-      prisma.perfil.update({
-        where: { id: perfil.id },
+    await prisma.$transaction(async (tx) => {
+      const mutated = await tx.perfil.updateMany({
+        where: { id: perfil.id, clerk_id: userId, deleted_at: null },
         data: { kyc_status: status, ...documentPatch },
-      }),
-      prisma.kycProfile.upsert({
+      });
+      if (mutated.count === 0) {
+        throw new Error('PERFIL_NOT_FOUND');
+      }
+      await tx.kycProfile.upsert({
         where: { user_id: perfil.id },
         create: {
           user_id: perfil.id,
@@ -263,8 +266,8 @@ export async function POST(request: Request) {
           rejection_reason: verdict.reason ?? null,
           reviewed_at: reviewedAt,
         },
-      }),
-    ]);
+      });
+    });
 
     const httpStatus = status === 'aprovado' ? 200 : status === 'em_analise' ? 202 : 422;
 
@@ -298,6 +301,9 @@ export async function POST(request: Request) {
       { status: httpStatus }
     );
   } catch (error) {
+    if (error instanceof Error && error.message === 'PERFIL_NOT_FOUND') {
+      return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json(
         { sucesso: false, erro: 'Este documento já está vinculado a outra conta.' },

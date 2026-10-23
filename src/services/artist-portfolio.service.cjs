@@ -240,15 +240,14 @@ async function publishMine(tatuadorId, raw) {
   return toPortfolioItemDto(created);
 }
 
-async function findOwnedItem(tatuadorId, itemId) {
-  const existing = await prisma.portfolio.findFirst({
+async function mutateOwnedItem(tatuadorId, itemId, data) {
+  const result = await prisma.portfolio.updateMany({
     where: { id: itemId, tatuador_id: tatuadorId, deleted_at: null },
-    select: { id: true },
+    data,
   });
-  if (!existing) {
+  if (result.count === 0) {
     throw httpError(404, "Obra não encontrada.");
   }
-  return existing;
 }
 
 function parseUpdatePayload(raw) {
@@ -286,31 +285,30 @@ function parseUpdatePayload(raw) {
 
 async function updateMine(tatuadorId, itemId, raw) {
   const payload = parseUpdatePayload(raw);
-  await findOwnedItem(tatuadorId, itemId);
   const descricao = composeStudioCaption(payload);
 
-  const updated = await prisma.portfolio.update({
-    where: { id: itemId },
-    data: {
-      estilo: payload.style,
-      body_part: payload.bodyPart,
-      session_duration: payload.sessionDuration,
-      is_healed: payload.isHealed,
-      descricao,
-    },
+  await mutateOwnedItem(tatuadorId, itemId, {
+    estilo: payload.style,
+    body_part: payload.bodyPart,
+    session_duration: payload.sessionDuration,
+    is_healed: payload.isHealed,
+    descricao,
+  });
+
+  const updated = await prisma.portfolio.findFirst({
+    where: { id: itemId, tatuador_id: tatuadorId, deleted_at: null },
     select: ITEM_SELECT,
   });
+  if (!updated) {
+    throw httpError(404, "Obra não encontrada.");
+  }
 
   await cacheDel("feed:portfolios:v2");
   return toPortfolioItemDto(updated);
 }
 
 async function archiveMine(tatuadorId, itemId) {
-  await findOwnedItem(tatuadorId, itemId);
-  await prisma.portfolio.update({
-    where: { id: itemId },
-    data: { deleted_at: new Date() },
-  });
+  await mutateOwnedItem(tatuadorId, itemId, { deleted_at: new Date() });
   await cacheDel("feed:portfolios:v2");
 }
 
