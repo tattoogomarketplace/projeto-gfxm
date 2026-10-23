@@ -130,6 +130,16 @@ export function InspiracoesPeekShelf() {
               {t('home.inspiracoes')}
             </h2>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('light');
+              router.push('/dashboard/galeria');
+            }}
+            className="min-h-11 shrink-0 text-[13px] font-semibold text-orange-500 active:opacity-70 transition-opacity"
+          >
+            {t('home.viewAll')}
+          </button>
         </div>
         <div className={SHELF_CLASS} role="list" aria-label={t('home.inspiracoes')}>
           {PEEK_CARDS.map((item) => (

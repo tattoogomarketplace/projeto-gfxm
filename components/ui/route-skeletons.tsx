@@ -85,18 +85,6 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
         </div>
       </section>
 
-      <section className="min-w-0 w-full space-y-3">
-        <div className="flex items-center gap-2 px-0.5">
-          <Skeleton className="h-5 w-5 rounded-md" />
-          <Skeleton className="h-4 w-28 rounded-full" />
-        </div>
-        <div className="flex gap-3 overflow-hidden pb-2">
-          {[0, 1, 2, 3].map((index) => (
-            <Skeleton key={index} className="aspect-[9/16] w-[10.5rem] shrink-0 rounded-2xl" />
-          ))}
-        </div>
-      </section>
-
       <div className="flex gap-2 overflow-hidden py-3">
         {[0, 1, 2, 3, 4].map((index) => (
           <Skeleton
@@ -120,6 +108,21 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
               key={index}
               className={cn('mb-4 w-full break-inside-avoid rounded-xl', aspect)}
             />
+          ))}
+        </div>
+      </section>
+
+      <section className="min-w-0 w-full space-y-3">
+        <div className="flex items-center justify-between gap-3 px-0.5">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded-md" />
+            <Skeleton className="h-4 w-28 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-14 rounded-full" />
+        </div>
+        <div className="flex gap-3 overflow-hidden pb-2">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="aspect-[9/16] w-[10.5rem] shrink-0 rounded-2xl" />
           ))}
         </div>
       </section>

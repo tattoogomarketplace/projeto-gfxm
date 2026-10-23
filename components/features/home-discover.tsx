@@ -422,8 +422,6 @@ export function HomeDiscover() {
         </ErrorBoundary>
       </section>
 
-      <InspiracoesPeekShelf />
-
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-region">
         <SectionHeader
           id="discover-region"
@@ -524,6 +522,8 @@ export function HomeDiscover() {
       </section>
 
       <HomeFeedbackCarousel />
+
+      <InspiracoesPeekShelf />
 
       <ErrorBoundary fallback={null}>
         <GalleryHapticPreview
