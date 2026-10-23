@@ -11,7 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Images } from 'lucide-react';
+import { ArrowRight, Images } from 'lucide-react';
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -21,7 +21,9 @@ import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 const PEEK_DELAY_MS = 400;
 const MOVE_TOLERANCE_PX = 10;
-const PEEK_CARDS = PLACEHOLDER_INSPIRATIONS.slice(0, 5);
+const PEEK_CARDS = PLACEHOLDER_INSPIRATIONS.slice(0, 4);
+const CARD_SHELL =
+  'relative aspect-[9/16] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl';
 
 const SHELF_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none scrollbar-hide sm:-mx-6 sm:px-6';
@@ -155,7 +157,7 @@ export function InspiracoesPeekShelf() {
               onPointerCancel={onPointerEnd}
               onClick={onCardClick(item)}
               onContextMenu={(event) => event.preventDefault()}
-              className="relative aspect-[9/16] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-zinc-800/50 bg-zinc-900/40 text-left select-none touch-manipulation"
+              className={`${CARD_SHELL} border border-zinc-800/50 bg-zinc-900/40 text-left select-none touch-manipulation`}
               style={NATIVE_APP_IMAGE_STYLE}
             >
               <OptimizedImage
@@ -163,13 +165,31 @@ export function InspiracoesPeekShelf() {
                 alt={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
                 className="h-full w-full"
               />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent px-3 pb-3 pt-10">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 rounded-b-2xl bg-gradient-to-t from-black/80 via-black/20 to-transparent"
+              />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] px-3 pb-3">
                 <span className="block truncate text-[12px] font-semibold tracking-tight text-white">
                   {item.style ? styleLabel(item.style) : t('home.inspiracoes')}
                 </span>
               </span>
             </motion.button>
           ))}
+          <button
+            type="button"
+            role="listitem"
+            onClick={() => {
+              triggerHaptic('light');
+              router.push('/dashboard/galeria');
+            }}
+            className={`${CARD_SHELL} flex cursor-pointer flex-col items-center justify-center gap-3 border border-white/10 bg-[#121212]/50 backdrop-blur-md transition-transform active:scale-95`}
+          >
+            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/15 text-orange-500">
+              <ArrowRight className="h-5 w-5" strokeWidth={1.9} aria-hidden />
+            </span>
+            <span className="text-[12px] font-semibold text-gray-300">Ver todas</span>
+          </button>
         </div>
       </section>
 

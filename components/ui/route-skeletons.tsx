@@ -121,7 +121,7 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
           <Skeleton className="h-3 w-14 rounded-full" />
         </div>
         <div className="flex gap-3 overflow-hidden pb-2">
-          {[0, 1, 2, 3].map((index) => (
+          {[0, 1, 2, 3, 4].map((index) => (
             <Skeleton key={index} className="aspect-[9/16] w-[10.5rem] shrink-0 rounded-2xl" />
           ))}
         </div>
