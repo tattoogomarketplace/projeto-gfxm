@@ -157,23 +157,23 @@ export default function DashboardOnboardingPage() {
     return <OnboardingSkeleton />;
   }
 
-  const firstName = (profileName || '').trim().split(/\s+/)[0] ?? '';
+  const firstName =
+    (user?.firstName || '').trim() ||
+    (profileName || '').trim().split(/\s+/).find(Boolean) ||
+    '';
 
   return (
-    <div
-      className="gpu-layer relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden overscroll-none bg-background text-white"
-      style={{
-        paddingTop: 'max(env(safe-area-inset-top), 1rem)',
-        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
-      }}
-    >
-      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 pb-32 [-webkit-overflow-scrolling:touch]">
-        <div className="flex min-h-full w-full flex-col items-center justify-center">
-        <header className="flex w-full flex-col items-center space-y-2.5 text-center sm:space-y-3">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 shadow-[0_0_24px_rgba(249,115,22,0.2)] sm:h-24 sm:w-24">
-            <Sparkles className="h-8 w-8 text-orange-500 sm:h-9 sm:w-9" strokeWidth={1.5} />
+    <div className="gpu-layer relative flex h-full min-h-[100dvh] w-full flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-background text-white [-webkit-overflow-scrolling:touch]">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <header className="flex w-full shrink-0 flex-col items-center space-y-2.5 pt-2 text-center sm:space-y-3">
+          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-zinc-950/55 shadow-[0_0_28px_rgba(255,102,0,0.28)] backdrop-blur-xl sm:h-20 sm:w-20">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_35%,rgba(255,102,0,0.22),transparent_68%)]"
+            />
+            <Sparkles className="relative h-7 w-7 text-[#FF6600] sm:h-8 sm:w-8" strokeWidth={1.5} />
           </div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-500">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#FF6600]">
             {t(content.badge, { brand: BRAND_NAME })}
           </p>
           <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
@@ -181,17 +181,17 @@ export default function DashboardOnboardingPage() {
           </p>
         </header>
 
-        <div className="w-full space-y-3 py-3 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+        <div className="w-full shrink-0 space-y-3 py-4 text-center">
+          <h1 className="max-w-full text-balance text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
             {firstName ? t('onboarding.helloNamed', { name: firstName }) : t('onboarding.hello')}
           </h1>
-          <p className="text-base font-semibold text-zinc-200">{t(content.journey.present)}</p>
-          <p className="mx-auto max-w-sm text-sm leading-relaxed text-zinc-400">
+          <p className="text-balance text-base font-semibold text-zinc-200">{t(content.journey.present)}</p>
+          <p className="mx-auto max-w-sm text-pretty text-sm leading-relaxed text-zinc-400">
             {t(content.journey.future)}
           </p>
         </div>
 
-        <section className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
+        <section className="w-full shrink-0 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <RoleSelector
             value={role}
             onChange={(nextRole) => {
@@ -205,20 +205,21 @@ export default function DashboardOnboardingPage() {
         {submitError ? (
           <div
             role="alert"
-            className="mt-4 w-full rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+            className="mt-4 w-full shrink-0 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-pretty text-sm leading-relaxed text-red-200"
           >
             {submitError}
           </div>
         ) : null}
-        </div>
+
+        <div className="min-h-4 flex-1" />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 pt-3">
+      <div className="mx-auto w-full max-w-md shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <button
           type="button"
           onClick={handleAdvance}
           disabled={saving}
-          className="mx-auto flex h-14 w-full max-w-md items-center justify-center rounded-2xl bg-orange-500 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
+          className="mx-auto flex h-14 min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
           {saving ? <TattooMachineLoader compact label={t(content.activating)} /> : t(content.cta)}
         </button>

@@ -100,9 +100,9 @@ export function RoleSelector({ value, onChange, lockedRole = null }: RoleSelecto
         })}
       </div>
       {isLocked ? (
-        <p className="flex items-center gap-1.5 text-[11px] leading-relaxed text-zinc-500">
-          <Lock className="h-3 w-3" strokeWidth={2} />
-          {t('role.lockedHint')}
+        <p className="flex items-start gap-1.5 px-0.5 text-[11px] leading-relaxed text-zinc-500">
+          <Lock className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={2} />
+          <span className="min-w-0 flex-1 text-pretty text-balance">{t('role.lockedHint')}</span>
         </p>
       ) : null}
     </div>
