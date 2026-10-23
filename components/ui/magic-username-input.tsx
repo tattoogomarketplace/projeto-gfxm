@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, X } from 'lucide-react';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { authedFetch } from '@/lib/utils/authed-fetch';
@@ -33,7 +34,7 @@ export interface MagicUsernameInputProps {
   'aria-label'?: string;
 }
 
-const DEBOUNCE_MS = 450;
+const DEBOUNCE_MS = 500;
 
 const STATUS_MESSAGE_KEY: Record<Exclude<UsernameAvailability, 'idle'>, MessageKey> = {
   checking: 'username.checking',
@@ -87,6 +88,38 @@ function TattooMachineGlyph() {
   );
 }
 
+const UsernameStatusMessage = memo(function UsernameStatusMessage({
+  status,
+  tone,
+  message,
+  hint,
+}: {
+  status: UsernameAvailability;
+  tone: Tone;
+  message: string | null;
+  hint: string;
+}) {
+  return (
+    <div className="mt-1.5 min-h-[18px] px-1">
+      <AnimatePresence initial={false} mode="wait">
+        <motion.p
+          key={status === 'idle' ? 'hint' : status}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          className={cn(
+            'text-[12px] leading-tight',
+            status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE_CLASS[tone]
+          )}
+        >
+          {message ?? hint}
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+});
+
 export function MagicUsernameInput({
   value,
   onChange,
@@ -103,6 +136,7 @@ export function MagicUsernameInput({
   const { t } = useI18n();
 
   const [focused, setFocused] = useState(false);
+  const debouncedUsername = useDebounce(value, DEBOUNCE_MS);
   const [remote, setRemote] = useState<{
     username: string;
     status: Extract<UsernameAvailability, 'available' | 'taken' | 'forbidden' | 'error'>;
@@ -123,35 +157,31 @@ export function MagicUsernameInput({
     []
   );
 
-  const validation = validateUsername(value.trim());
+  const liveValidation = validateUsername(value);
+  const debouncedValidation = validateUsername(debouncedUsername);
+  const debouncedHandle = debouncedValidation.valid ? debouncedValidation.username : '';
   const status: UsernameAvailability = !value.trim()
     ? 'idle'
-    : !validation.valid
-      ? validation.reason === 'reserved'
+    : !liveValidation.valid
+      ? liveValidation.reason === 'reserved'
         ? 'reserved'
         : 'invalid'
-      : remote && remote.username === validation.username
-        ? remote.status
-        : 'checking';
+      : value !== debouncedUsername
+        ? 'checking'
+        : remote && remote.username === debouncedHandle
+          ? remote.status
+          : 'checking';
 
-  // Repassa a disponibilidade ao consumidor somente quando o estado derivado
-  // muda — sem `setState` local dentro do efeito.
   useEffect(() => {
     statusCallbackRef.current?.(status);
   }, [status]);
 
-  // Validação remota com debounce. Só agenda a chamada quando o formato é
-  // válido; o `setRemote` acontece no callback assíncrono (permitido).
   useEffect(() => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!debouncedValidation.valid || !debouncedHandle) return;
 
-    const parsed = validateUsername(trimmed);
-    if (!parsed.valid) return;
-
-    const username = parsed.username;
+    const username = debouncedHandle;
     const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
+    const run = async () => {
       try {
         const res = await authedFetch(
           `/api/user/username?username=${encodeURIComponent(username)}`,
@@ -164,6 +194,7 @@ export function MagicUsernameInput({
           reason?: string;
         };
 
+        if (controller.signal.aborted) return;
         if (json.allowed === false || json.reason === 'forbidden') {
           setRemote({ username, status: 'forbidden' });
           return;
@@ -178,21 +209,24 @@ export function MagicUsernameInput({
         if ((err as Error)?.name === 'AbortError') return;
         setRemote({ username, status: 'error' });
       }
-    }, DEBOUNCE_MS);
+    };
+    void run();
 
     return () => {
-      window.clearTimeout(timer);
       controller.abort();
     };
-  }, [value, tokenFn]);
+  }, [debouncedHandle, debouncedValidation.valid, tokenFn]);
 
   const tone: Tone = status === 'idle' ? 'neutral' : STATUS_TONE[status];
-  const message = status === 'idle' ? null : t(STATUS_MESSAGE_KEY[status], { username: value });
+  const message =
+    status === 'idle'
+      ? null
+      : t(STATUS_MESSAGE_KEY[status], {
+          username: debouncedHandle || value,
+        });
 
-  const handleInput = (raw: string) => {
-    // Canonico: minusculas e sem espacos. Caracteres especiais permanecem
-    // para que a validacao os sinalize.
-    onChange(raw.replace(/\s+/g, '').toLowerCase());
+  const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(event.target.value);
   };
 
   return (
@@ -260,7 +294,7 @@ export function MagicUsernameInput({
           aria-label={ariaLabel ?? t('username.placeholder')}
           aria-invalid={tone === 'bad' || tone === 'warn'}
           placeholder={t('username.placeholder')}
-          onChange={(event) => handleInput(event.target.value)}
+          onChange={handleInput}
           onFocus={() => {
             setFocused(true);
             triggerHaptic('light');
@@ -323,24 +357,12 @@ export function MagicUsernameInput({
         </span>
       </div>
 
-      {/* Área de mensagem com altura reservada: zero layout shifting. */}
-      <div className="mt-1.5 min-h-[18px] px-1">
-        <AnimatePresence initial={false} mode="wait">
-          <motion.p
-            key={status === 'idle' ? 'hint' : status}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
-            className={cn(
-              'text-[12px] leading-tight',
-              status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE_CLASS[tone]
-            )}
-          >
-            {message ?? t('username.hint')}
-          </motion.p>
-        </AnimatePresence>
-      </div>
+      <UsernameStatusMessage
+        status={status}
+        tone={tone}
+        message={message}
+        hint={t('username.hint')}
+      />
     </div>
   );
 }

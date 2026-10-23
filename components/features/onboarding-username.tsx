@@ -14,10 +14,16 @@ import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { Check, Loader2, ShieldCheck, X } from 'lucide-react';
 import { updateUsername } from '@/app/actions/username-actions';
 import { UsernameMorphGlyph } from '@/components/ui/username-glyph';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { authedFetch } from '@/lib/utils/authed-fetch';
-import { sanitizeUsernameBody, validateUsername } from '@/lib/username';
+import {
+  RESERVED_USERNAMES,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  validateUsername,
+} from '@/lib/username';
 import { cn } from '@/lib/utils';
 import type { AppRole } from '@/lib/utils/auth-redirect';
 import { BRAND_NAME } from '@/lib/i18n/brands';
@@ -35,10 +41,12 @@ import type { MessageKey } from '@/lib/i18n/types';
  * SearchBar): fora do `<input>`, ele se metamorfoseia na máquina de tatuagem 3D
  * ao focar, sem deslocar texto nem caret.
  *
- * Performance (60fps): o estado de digitação (`body`) vive ISOLADO no
- * `UsernameField` (memoizado). O componente-pai só é notificado em transições
- * de disponibilidade — nunca a cada tecla — então o fundo animado, o card de
- * vidro e a bottom sheet não voltam a renderizar enquanto o usuário digita.
+ * Performance (60fps): o estado de digitação (`rawUsername`) vive ISOLADO no
+ * `UsernameField` (memoizado) e atualiza o `<input>` no mesmo frame. A checagem
+ * remota só observa `debouncedUsername` (500ms). O componente-pai só é
+ * notificado em transições de disponibilidade — nunca a cada tecla — então o
+ * fundo animado, o card de vidro e a bottom sheet não voltam a renderizar
+ * enquanto o usuário digita.
  */
 
 const DEBOUNCE_MS = 500;
@@ -149,41 +157,80 @@ interface UsernameFieldProps {
   submitError: string | null;
 }
 
+function localUsernameStatus(raw: string): Availability | 'ok' {
+  if (!raw) return 'idle';
+  if (/[^a-z0-9_]/.test(raw)) return 'invalid';
+  if (raw.length < USERNAME_MIN_LENGTH || raw.length > USERNAME_MAX_LENGTH) return 'invalid';
+  if (RESERVED_USERNAMES.has(raw)) return 'reserved';
+  return 'ok';
+}
+
+const UsernameFieldFeedback = memo(function UsernameFieldFeedback({
+  status,
+  submitError,
+  message,
+  tone,
+}: {
+  status: Availability;
+  submitError: string | null;
+  message: string | null;
+  tone: Tone;
+}) {
+  return (
+    <div className="mt-2 min-h-[20px] px-1">
+      <AnimatePresence initial={false} mode="wait">
+        <motion.p
+          key={submitError ? 'submit-error' : status}
+          initial={{ opacity: 0, y: -2 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2 }}
+          transition={{ duration: 0.16 }}
+          className={cn(
+            'text-[12px] leading-tight',
+            submitError ? 'text-red-400' : status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE[tone]
+          )}
+        >
+          {submitError ?? message ?? '3–20 caracteres. Letras minúsculas, números e underline.'}
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+});
+
 /**
  * Campo de @username auto-contido. É o ÚNICO componente que re-renderiza a cada
  * tecla; o `onStateChange` só emite em transições reais de disponibilidade, de
  * modo que digitar nunca repinta a página inteira.
  */
-const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
+const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
   function UsernameField({ onStateChange, submitError }, ref) {
     const { getToken } = useAuth();
     const { triggerHaptic } = useHapticFeedback();
     const { t } = useI18n();
 
-    const [body, setBody] = useState('');
+    const [rawUsername, setRawUsername] = useState('');
+    const debouncedUsername = useDebounce(rawUsername, DEBOUNCE_MS);
     const [focused, setFocused] = useState(false);
     const [remote, setRemote] = useState<{
       username: string;
-      status: Extract<Availability, 'checking' | 'available' | 'taken' | 'forbidden' | 'error'>;
+      status: Extract<Availability, 'available' | 'taken' | 'forbidden' | 'error'>;
     } | null>(null);
 
     const inputRef = useRef<HTMLInputElement>(null);
-    const pendingCaret = useRef<number | null>(null);
     const shakeControls = useAnimationControls();
 
-    const validation = validateUsername(body);
-    const trimmed = validation.valid ? validation.username : '';
+    const localStatus = localUsernameStatus(rawUsername);
+    const debouncedValidation = validateUsername(debouncedUsername);
+    const trimmed = debouncedValidation.valid ? debouncedValidation.username : '';
 
-    // Estado derivado: evita qualquer `setState` síncrono dentro de efeitos.
-    const status: Availability = !body
-      ? 'idle'
-      : !validation.valid
-        ? validation.reason === 'reserved'
-          ? 'reserved'
-          : 'invalid'
-        : remote && remote.username === validation.username
-          ? remote.status
-          : 'checking';
+    const status: Availability =
+      localStatus !== 'ok'
+        ? localStatus
+        : rawUsername !== debouncedUsername
+          ? 'checking'
+          : remote && remote.username === trimmed
+            ? remote.status
+            : 'checking';
 
     const getTokenRef = useRef(getToken);
     useEffect(() => {
@@ -191,22 +238,11 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
     }, [getToken]);
     const tokenFn = useCallback(() => getTokenRef.current({ skipCache: true }).catch(() => null), []);
 
-    // Reafirma o caret após o mascaramento remover caracteres inválidos no mesmo
-    // tick — mantém a digitação fluindo sem o cursor saltar para o fim.
     useEffect(() => {
-      const pos = pendingCaret.current;
-      if (pos === null || !inputRef.current) return;
-      inputRef.current.setSelectionRange(pos, pos);
-      pendingCaret.current = null;
-    }, [body]);
-
-    // Validação remota com debounce de 500ms. Só agenda a chamada quando o
-    // formato é válido; o `setRemote` acontece no callback assíncrono (permitido).
-    useEffect(() => {
-      if (!validation.valid || !trimmed) return;
+      if (!debouncedValidation.valid || !trimmed) return;
       const username = trimmed;
       const controller = new AbortController();
-      const timer = window.setTimeout(async () => {
+      const run = async () => {
         try {
           const res = await authedFetch(
             `/api/user/username?username=${encodeURIComponent(username)}`,
@@ -232,12 +268,12 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
           if ((err as Error)?.name === 'AbortError') return;
           setRemote({ username, status: 'error' });
         }
-      }, DEBOUNCE_MS);
+      };
+      void run();
       return () => {
-        window.clearTimeout(timer);
         controller.abort();
       };
-    }, [validation.valid, trimmed, tokenFn]);
+    }, [debouncedValidation.valid, trimmed, tokenFn]);
 
     // Haptics + shake reativos à transição de estado (sem setState no efeito).
     const prevStatus = useRef<Availability>('idle');
@@ -248,8 +284,6 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
         triggerHaptic('light');
       } else if (status === 'taken' || status === 'error' || status === 'forbidden') {
         triggerHaptic('heavy');
-        void shakeControls.start(SHAKE);
-      } else if (status === 'invalid' || status === 'reserved') {
         void shakeControls.start(SHAKE);
       }
     }, [status, triggerHaptic, shakeControls]);
@@ -283,13 +317,8 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
       [shakeControls]
     );
 
-    const handleChange = (raw: string) => {
-      const next = sanitizeUsernameBody(raw);
-      if (next !== raw) {
-        const caretRaw = inputRef.current?.selectionStart ?? raw.length;
-        pendingCaret.current = sanitizeUsernameBody(raw.slice(0, caretRaw)).length;
-      }
-      setBody(next);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setRawUsername(event.target.value);
     };
 
     const handleGlyphActivate = (event: React.MouseEvent) => {
@@ -344,8 +373,8 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
               autoComplete="off"
               enterKeyHint="done"
               maxLength={20}
-              value={body}
-              onChange={(event) => handleChange(event.target.value)}
+              value={rawUsername}
+              onChange={handleChange}
               onFocus={() => {
                 setFocused(true);
                 triggerHaptic('light');
@@ -408,28 +437,16 @@ const UsernameField = forwardRef<UsernameFieldHandle, UsernameFieldProps>(
           </div>
         </motion.div>
 
-        {/* Mensagem com altura reservada — zero layout shifting. */}
-        <div className="mt-2 min-h-[20px] px-1">
-          <AnimatePresence initial={false} mode="wait">
-            <motion.p
-              key={submitError ? 'submit-error' : status}
-              initial={{ opacity: 0, y: -2 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -2 }}
-              transition={{ duration: 0.16 }}
-              className={cn(
-                'text-[12px] leading-tight',
-                submitError ? 'text-red-400' : status === 'idle' ? 'text-zinc-500' : MESSAGE_TONE[tone]
-              )}
-            >
-              {submitError ?? message ?? '3–20 caracteres. Letras minúsculas, números e underline.'}
-            </motion.p>
-          </AnimatePresence>
-        </div>
+        <UsernameFieldFeedback
+          status={status}
+          submitError={submitError}
+          message={message}
+          tone={tone}
+        />
       </>
     );
   }
-);
+));
 
 export function OnboardingUsername({
   flow,
