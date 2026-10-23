@@ -75,6 +75,16 @@ async function toggleSave(userIdRaw, postIdRaw) {
         message: "Inspiração removida dos salvos.",
       };
     }
+    if (err.code === "P2003") {
+      throw httpError(404, "Inspiração não encontrada.");
+    }
+    if (err.code === "P2021" || err.code === "P2010") {
+      console.error("[saved-inspiration] tabela saved_inspirations indisponível", {
+        code: err.code,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      throw httpError(500, "Persistência de salvos indisponível.");
+    }
     throw err;
   }
 }

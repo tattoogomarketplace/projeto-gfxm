@@ -199,7 +199,7 @@ function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => vo
   const persistSave = useCallback(
     async (previousState: boolean) => {
       try {
-        const clerkToken = await getToken().catch(() => null);
+        const clerkToken = await getToken({ skipCache: true }).catch(() => null);
         const stored =
           typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
         const token = clerkToken || stored;
@@ -212,8 +212,17 @@ function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => vo
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         });
-        if (!res.ok) throw new Error();
-      } catch {
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as
+            | { erro?: string; message?: string }
+            | null;
+          throw new Error(payload?.erro || payload?.message || `HTTP ${res.status}`);
+        }
+      } catch (error) {
+        console.error('[save-inspiration] falha ao persistir', {
+          postId,
+          error: error instanceof Error ? error.message : String(error),
+        });
         setIsSaved(previousState);
         setSaveCount((prev) => Math.max(0, prev + (previousState ? 1 : -1)));
       }

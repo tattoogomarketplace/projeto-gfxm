@@ -32,7 +32,7 @@ async function toggle(req, res) {
     return res.status(500).json({
       success: false,
       sucesso: false,
-      erro: "Falha ao salvar a inspiração.",
+      erro: err?.message || "Falha ao salvar a inspiração.",
     });
   }
 }
