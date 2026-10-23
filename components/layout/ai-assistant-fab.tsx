@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
@@ -21,6 +21,23 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   const router = useRouter();
   const { t } = useI18n();
   const constraintsRef = useRef<HTMLDivElement>(null);
+  const [isAwake, setIsAwake] = useState(false);
+  const [wakeToken, setWakeToken] = useState(0);
+
+  const wake = useCallback(() => {
+    setIsAwake(true);
+    setWakeToken((token) => token + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!isAwake) return undefined;
+    const timeoutId = window.setTimeout(() => {
+      setIsAwake(false);
+    }, 4000);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isAwake, wakeToken]);
 
   return (
     <div
@@ -40,7 +57,11 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
         dragConstraints={constraintsRef}
         dragElastic={0.06}
         dragMomentum={false}
-        onClick={() => router.push('/dashboard/ai')}
+        onPointerDown={wake}
+        onClick={() => {
+          wake();
+          router.push('/dashboard/ai');
+        }}
         aria-label={t('aria.aiOpen')}
         style={{ touchAction: 'none' }}
         className={cn(
@@ -50,7 +71,10 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
           'shadow-[0_0_18px_rgba(249,115,22,0.35),0_8px_24px_rgba(0,0,0,0.45)]',
           'hover:border-[#F97316] hover:shadow-[0_0_28px_rgba(249,115,22,0.55)]',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]',
-          'ai-fab-pulse cursor-grab active:cursor-grabbing'
+          'cursor-grab active:cursor-grabbing',
+          isAwake
+            ? 'opacity-100 animate-pulse ring-4 ring-[#F97316]/30 transition-all duration-200'
+            : 'opacity-30 transition-all duration-700 ease-in-out'
         )}
       >
         <span
