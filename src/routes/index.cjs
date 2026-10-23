@@ -13,12 +13,14 @@ const artistPortfolioRoutes = require("./artist-portfolio.routes.cjs");
 const galeriaRoutes = require("./galeria.routes.cjs");
 const artistasRoutes = require("./artistas.routes.cjs");
 const budgetRoutes = require("./budget.routes.cjs");
+const savedInspirationRoutes = require("./saved-inspiration.routes.cjs");
 
 const router = Router();
 
 router.use("/catalogo", catalogoRoutes);
 router.use("/budget", budgetRoutes);
 router.use("/galeria", galeriaRoutes);
+router.use("/inspirations", savedInspirationRoutes);
 router.use("/artistas", artistasRoutes);
 router.use("/auth", authRoutes);
 router.use("/chat", chatRoutes);
