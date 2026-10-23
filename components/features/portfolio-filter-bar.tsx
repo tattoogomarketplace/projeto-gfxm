@@ -51,7 +51,7 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'flex min-h-11 min-w-[96px] shrink-0 flex-col whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-left transition-colors active:scale-[0.98]',
+        'pointer-events-auto flex min-h-11 min-w-[96px] shrink-0 flex-col whitespace-nowrap rounded-full border border-white/10 bg-[#121212]/80 px-3 py-1.5 text-left backdrop-blur-md transition-colors active:scale-[0.98]',
         active ? 'border-orange-500/60' : 'hover:border-white/20'
       )}
     >
@@ -314,9 +314,9 @@ export function PortfolioFilterBar({
       : null;
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="pointer-events-none flex w-full flex-col">
       <div ref={barRef} className="relative w-full">
-        <div className="relative z-30 w-full flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="relative z-30 flex w-full items-center justify-center gap-2 overflow-x-auto no-scrollbar">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
@@ -342,7 +342,7 @@ export function PortfolioFilterBar({
         <button
           type="button"
           onClick={clearFilters}
-          className="mt-0.5 inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-lg px-1 text-[11px] font-semibold text-zinc-500 transition-colors hover:text-orange-400"
+          className="pointer-events-auto mt-0.5 inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-lg px-1 text-[11px] font-semibold text-zinc-500 transition-colors hover:text-orange-400"
         >
           <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
           {t('gallery.clearFilters')}
