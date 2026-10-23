@@ -63,7 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed inset-x-0 bottom-0 z-[999] w-full rounded-none md:hidden bg-zinc-950/75 backdrop-blur-xl border-t border-zinc-800 shadow-2xl shadow-black/50 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]';
+  'bottom-nav-dock fixed bottom-0 left-0 right-0 z-[999] w-full rounded-none md:hidden bg-zinc-950/75 backdrop-blur-xl border-t border-zinc-800 shadow-2xl shadow-black/50 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
