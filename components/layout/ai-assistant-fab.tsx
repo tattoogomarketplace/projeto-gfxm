@@ -7,6 +7,17 @@ import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 
+const FAB_SIZE_PX = 48;
+
+type DragBounds = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
+const REST_DRAG_BOUNDS: DragBounds = { top: 0, bottom: 0, left: 0, right: 0 };
+
 /**
  * FAB do Atelier IA.
  *
@@ -23,6 +34,7 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   const constraintsRef = useRef<HTMLDivElement>(null);
   const [isAwake, setIsAwake] = useState(false);
   const [wakeToken, setWakeToken] = useState(0);
+  const [dragBounds, setDragBounds] = useState(REST_DRAG_BOUNDS);
 
   const wake = useCallback(() => {
     setIsAwake(true);
@@ -39,6 +51,32 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
     };
   }, [isAwake, wakeToken]);
 
+  const syncDragBounds = useCallback(() => {
+    const box = constraintsRef.current;
+    if (!box) return;
+    const maxUp = Math.max(0, box.getBoundingClientRect().height - FAB_SIZE_PX);
+    setDragBounds({ top: -maxUp, bottom: 0, left: 0, right: 0 });
+  }, []);
+
+  useEffect(() => {
+    syncDragBounds();
+    const box = constraintsRef.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' && box
+        ? new ResizeObserver(() => {
+            syncDragBounds();
+          })
+        : null;
+    if (box && observer) observer.observe(box);
+    window.addEventListener('resize', syncDragBounds);
+    window.visualViewport?.addEventListener('resize', syncDragBounds);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', syncDragBounds);
+      window.visualViewport?.removeEventListener('resize', syncDragBounds);
+    };
+  }, [syncDragBounds]);
+
   return (
     <div
       ref={constraintsRef}
@@ -48,14 +86,14 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
         !visible && 'invisible pointer-events-none'
       )}
       style={{
-        top: 'calc(env(safe-area-inset-top) + 4.5rem)',
+        top: 'calc(env(safe-area-inset-top) + 7rem)',
       }}
     >
       <motion.button
         type="button"
         drag="y"
-        dragConstraints={constraintsRef}
-        dragElastic={0.06}
+        dragConstraints={dragBounds}
+        dragElastic={0}
         dragMomentum={false}
         onPointerDown={wake}
         onClick={() => {
