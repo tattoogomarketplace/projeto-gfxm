@@ -51,12 +51,12 @@ function FilterTrigger({
       aria-expanded={open}
       aria-haspopup="listbox"
       className={cn(
-        'flex min-h-11 min-w-[110px] shrink-0 flex-col whitespace-nowrap rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-left transition-colors active:scale-[0.98]',
-        active ? 'border-orange-500/60' : 'hover:border-zinc-700'
+        'flex min-h-11 min-w-[96px] shrink-0 flex-col whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-left transition-colors active:scale-[0.98]',
+        active ? 'border-orange-500/60' : 'hover:border-white/20'
       )}
     >
-      <span className="whitespace-nowrap text-[10px] font-bold uppercase text-zinc-500">{label}</span>
-      <span className="mt-0.5 flex items-center justify-between gap-2 text-sm text-zinc-200">
+      <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider text-zinc-500">{label}</span>
+      <span className="mt-px flex items-center justify-between gap-1.5 text-xs leading-tight text-zinc-200">
         <span className="whitespace-nowrap">{value ?? t('gallery.all')}</span>
         <ChevronDown
           className={cn(
@@ -316,7 +316,7 @@ export function PortfolioFilterBar({
   return (
     <div className="flex w-full flex-col">
       <div ref={barRef} className="relative w-full">
-        <div className="relative z-30 w-full flex items-center justify-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="relative z-30 w-full flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar">
           <FilterTrigger
             label={t('gallery.style')}
             value={styleValue}
@@ -342,7 +342,7 @@ export function PortfolioFilterBar({
         <button
           type="button"
           onClick={clearFilters}
-          className="mt-1 inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-xl px-1 text-xs font-semibold text-zinc-500 transition-colors hover:text-orange-400"
+          className="mt-0.5 inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-lg px-1 text-[11px] font-semibold text-zinc-500 transition-colors hover:text-orange-400"
         >
           <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
           {t('gallery.clearFilters')}
