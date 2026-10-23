@@ -49,6 +49,12 @@ const HUD_CURATORSHIP_STYLE = {
   backgroundSize: '16px 16px',
 } as const;
 
+const FEED_ACTION_BTN_CLASS =
+  'flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.02] px-1.5 text-zinc-300 transition-all hover:border-orange-500/50';
+
+const FEED_ACTION_METRIC_CLASS =
+  'text-[11px] font-semibold tracking-wide text-gray-300 whitespace-nowrap';
+
 const TATTOO_DNA_PILL_CLASS =
   'flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/50 border border-white/5';
 
@@ -463,12 +469,23 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
               <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex items-center justify-between px-6 py-4">
-                  <div className="flex items-center gap-8">
-                    <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
-                    <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="flex w-full items-center justify-between gap-1 px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="h-3 w-7" />
                   </div>
-                  <Skeleton className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="h-3 w-6" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="h-3 w-5" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="h-3 w-6" />
+                  </div>
                 </div>
               </div>
               <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mx-4 mt-2 mb-4 shadow-lg">
@@ -617,8 +634,7 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
                 <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex items-center justify-between px-6 py-4">
-                  <div className="flex items-center gap-8">
+                  <div className="flex w-full items-center justify-between gap-1 px-4 py-3">
                     {showLike ? (
                       <button
                         type="button"
@@ -628,23 +644,25 @@ export function GalleryInspirationGrid({
                           toggleSaved(item.id);
                         }}
                         className={cn(
-                          'flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all',
+                          FEED_ACTION_BTN_CLASS,
                           isSaved && 'text-orange-500 border-orange-500/50'
                         )}
                         aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
                         aria-pressed={isSaved}
                       >
-                        <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6" />
+                        <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6 shrink-0" />
+                        <span className={FEED_ACTION_METRIC_CLASS}>2.4k</span>
                       </button>
                     ) : null}
                     <button
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
+                      className={FEED_ACTION_BTN_CLASS}
                       aria-label="Compartilhar"
                     >
-                      <Send className="h-6 w-6" strokeWidth={2} />
+                      <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <span className={FEED_ACTION_METRIC_CLASS}>128</span>
                     </button>
                     <button
                       type="button"
@@ -653,32 +671,33 @@ export function GalleryInspirationGrid({
                         setBudgetItem(item);
                         setIsBudgetModalOpen(true);
                       }}
-                      className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all"
+                      className={FEED_ACTION_BTN_CLASS}
                       aria-label={t('chat.quotes')}
                     >
-                      <FileText className="h-6 w-6" strokeWidth={2} />
+                      <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <span className={FEED_ACTION_METRIC_CLASS}>45</span>
                     </button>
-                  </div>
-                  <button
-                    type="button"
-                    data-gallery-action=""
-                    onClick={() => {
-                      triggerHaptic('light');
-                      toggleBookmarked(item.id);
-                    }}
-                    className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02] text-zinc-300 hover:border-orange-500/50 transition-all',
-                      isBookmarked && 'text-orange-500 border-orange-500/50'
-                    )}
-                    aria-label="Salvar"
-                    aria-pressed={isBookmarked}
-                  >
-                    <Bookmark
-                      className="h-6 w-6"
-                      strokeWidth={2}
-                      fill={isBookmarked ? 'currentColor' : 'none'}
-                    />
-                  </button>
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      onClick={() => {
+                        triggerHaptic('light');
+                        toggleBookmarked(item.id);
+                      }}
+                      className={cn(
+                        FEED_ACTION_BTN_CLASS,
+                        isBookmarked && 'text-orange-500 border-orange-500/50'
+                      )}
+                      aria-label="Salvar"
+                      aria-pressed={isBookmarked}
+                    >
+                      <Bookmark
+                        className="h-6 w-6 shrink-0"
+                        strokeWidth={2}
+                        fill={isBookmarked ? 'currentColor' : 'none'}
+                      />
+                      <span className={FEED_ACTION_METRIC_CLASS}>850</span>
+                    </button>
                   </div>
                 </div>
 

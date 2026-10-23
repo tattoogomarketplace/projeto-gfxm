@@ -44,12 +44,23 @@ export default function GaleriaLoading() {
             }}
           >
           <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-8">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+            <div className="flex w-full items-center justify-between gap-1 px-4 py-3">
+              <div className="flex items-center gap-1.5">
+                <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="h-3 w-7 rounded bg-zinc-800" />
               </div>
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+              <div className="flex items-center gap-1.5">
+                <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="h-3 w-6 rounded bg-zinc-800" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="h-3 w-5 rounded bg-zinc-800" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="h-3 w-6 rounded bg-zinc-800" />
+              </div>
             </div>
           </div>
           <div className="bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mx-4 mt-2 mb-4 shadow-lg">
