@@ -2,12 +2,13 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { animate, motion, useMotionValue, type PanInfo } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 
 const FAB_SIZE_PX = 48;
+const DRAG_CLICK_SLOP_PX = 6;
 
 type DragBounds = {
   top: number;
@@ -17,6 +18,8 @@ type DragBounds = {
 };
 
 const REST_DRAG_BOUNDS: DragBounds = { top: 0, bottom: 0, left: 0, right: 0 };
+
+const SNAP_SPRING = { type: 'spring', stiffness: 520, damping: 36, mass: 0.7 } as const;
 
 /**
  * FAB do Atelier IA.
@@ -32,9 +35,12 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   const router = useRouter();
   const { t } = useI18n();
   const constraintsRef = useRef<HTMLDivElement>(null);
+  const dragMovedRef = useRef(false);
   const [isAwake, setIsAwake] = useState(false);
   const [wakeToken, setWakeToken] = useState(0);
   const [dragBounds, setDragBounds] = useState(REST_DRAG_BOUNDS);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
   const wake = useCallback(() => {
     setIsAwake(true);
@@ -54,9 +60,13 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   const syncDragBounds = useCallback(() => {
     const box = constraintsRef.current;
     if (!box) return;
-    const maxUp = Math.max(0, box.getBoundingClientRect().height - FAB_SIZE_PX);
-    setDragBounds({ top: -maxUp, bottom: 0, left: 0, right: 0 });
-  }, []);
+    const rect = box.getBoundingClientRect();
+    const maxUp = Math.max(0, rect.height - FAB_SIZE_PX);
+    const maxLeft = Math.min(0, FAB_SIZE_PX - rect.width);
+    setDragBounds({ top: -maxUp, bottom: 0, left: maxLeft, right: 0 });
+    const targetX = x.get() < maxLeft / 2 ? maxLeft : 0;
+    x.set(targetX);
+  }, [x]);
 
   useEffect(() => {
     syncDragBounds();
@@ -77,12 +87,39 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
     };
   }, [syncDragBounds]);
 
+  const handleDragStart = useCallback(() => {
+    dragMovedRef.current = false;
+    wake();
+  }, [wake]);
+
+  const handleDrag = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (
+      Math.abs(info.offset.x) > DRAG_CLICK_SLOP_PX ||
+      Math.abs(info.offset.y) > DRAG_CLICK_SLOP_PX
+    ) {
+      dragMovedRef.current = true;
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const box = constraintsRef.current;
+      if (!box) return;
+      const width = box.getBoundingClientRect().width;
+      const leftX = Math.min(0, FAB_SIZE_PX - width);
+      const targetX = info.point.x < window.innerWidth / 2 ? leftX : 0;
+      void animate(x, targetX, SNAP_SPRING);
+      wake();
+    },
+    [wake, x]
+  );
+
   return (
     <div
       ref={constraintsRef}
       aria-hidden={!visible}
       className={cn(
-        'pointer-events-none fixed bottom-[calc(var(--dock-clearance)+0.25rem)] right-[max(1.25rem,env(safe-area-inset-right))] z-[60] w-12 md:bottom-5',
+        'pointer-events-none fixed left-[max(1.25rem,env(safe-area-inset-left))] right-[max(1.25rem,env(safe-area-inset-right))] z-[60] bottom-[calc(var(--dock-clearance)+0.25rem)] md:bottom-5',
         !visible && 'invisible pointer-events-none'
       )}
       style={{
@@ -91,17 +128,28 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
     >
       <motion.button
         type="button"
-        drag="y"
+        drag
         dragConstraints={dragBounds}
-        dragElastic={0}
+        dragElastic={0.16}
         dragMomentum={false}
-        onPointerDown={wake}
-        onClick={() => {
-          wake();
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        onClick={(e) => {
+          if (dragMovedRef.current) {
+            e.preventDefault();
+            dragMovedRef.current = false;
+            return;
+          }
+          if (!isAwake) {
+            e.preventDefault();
+            setIsAwake(true);
+            return;
+          }
           router.push('/dashboard/ai');
         }}
         aria-label={t('aria.aiOpen')}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', x, y }}
         className={cn(
           'pointer-events-auto absolute bottom-0 right-0 flex h-12 w-12 min-h-11 min-w-11 items-center justify-center rounded-full',
           'bg-white text-[#F97316] dark:bg-[#1a1a1a]',
