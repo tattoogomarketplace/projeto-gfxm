@@ -104,7 +104,7 @@ export function CinematicPeekModal({ post, onClose, onQuote }: CinematicPeekModa
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={PEEK_TRANSITION}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/70 p-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur-3xl"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-black/70 p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] backdrop-blur-3xl"
           onClick={onClose}
           onContextMenu={(event) => event.preventDefault()}
         >
@@ -113,16 +113,16 @@ export function CinematicPeekModal({ post, onClose, onQuote }: CinematicPeekModa
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={PEEK_TRANSITION}
-            className="flex w-full max-w-[320px] flex-col items-center transform-gpu will-change-transform"
+            className="flex h-full min-h-0 w-full max-w-[340px] max-h-full flex-col items-center justify-center gap-4 transform-gpu will-change-transform"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative aspect-[9/16] w-full max-w-[320px] overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <div className="relative aspect-[9/16] h-full min-h-0 w-auto max-h-[55dvh] shrink overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)]">
               <Image
                 src={post.imageUrl}
                 alt={post.style || 'Peek'}
                 fill
-                sizes="320px"
-                className="h-full w-full object-cover select-none"
+                sizes="340px"
+                className="object-cover select-none"
                 style={NATIVE_APP_IMAGE_STYLE}
                 draggable={false}
                 onDragStart={(event) => event.preventDefault()}
@@ -131,7 +131,7 @@ export function CinematicPeekModal({ post, onClose, onQuote }: CinematicPeekModa
               />
             </div>
 
-            <div className="mt-4 w-full max-w-[320px] divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-[#121212]/60 backdrop-blur-xl">
+            <div className="w-full shrink-0 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-[#121212]/60 backdrop-blur-xl">
               <button
                 type="button"
                 onClick={handleSave}
