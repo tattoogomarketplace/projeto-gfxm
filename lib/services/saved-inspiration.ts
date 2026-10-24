@@ -103,40 +103,63 @@ export async function toggleSavedInspiration(
   }
 }
 
+const POST_SELECT = {
+  id: true,
+  imageUrl: true,
+  authorName: true,
+  authorAvatar: true,
+  style: true,
+  viewsCount: true,
+} as const;
+
+async function listFallbackMockPosts(take: number): Promise<InspirationItem[]> {
+  const rows = await prisma.post.findMany({
+    orderBy: { createdAt: 'desc' },
+    take,
+    select: POST_SELECT,
+  });
+  return rows.map(mapPostToInspiration);
+}
+
 export async function listSavedInspirations(
   userId: string,
   options?: { take?: number }
 ): Promise<InspirationItem[]> {
-  const clerkUserId = normalizeId(userId);
-  if (!clerkUserId) return [];
-
   const take = options?.take;
   if (typeof take === 'number' && (!Number.isFinite(take) || take < 1)) {
     return [];
   }
-
-  await ensureMocksExist();
+  const fallbackTake = typeof take === 'number' ? take : 9;
 
   try {
-    const rows = await prisma.savedInspiration.findMany({
-      where: { userId: clerkUserId },
-      orderBy: { createdAt: 'desc' },
-      ...(typeof take === 'number' ? { take } : {}),
-      select: {
-        post: {
-          select: {
-            id: true,
-            imageUrl: true,
-            authorName: true,
-            authorAvatar: true,
-            style: true,
-            viewsCount: true,
+    await ensureMocksExist();
+  } catch (error) {
+    console.error('[saved-inspiration] auto-seed falhou', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const clerkUserId = normalizeId(userId);
+
+  try {
+    if (clerkUserId) {
+      const rows = await prisma.savedInspiration.findMany({
+        where: { userId: clerkUserId },
+        orderBy: { createdAt: 'desc' },
+        ...(typeof take === 'number' ? { take } : {}),
+        select: {
+          post: {
+            select: POST_SELECT,
           },
         },
-      },
-    });
+      });
 
-    return rows.map((row) => mapPostToInspiration(row.post));
+      if (rows.length > 0) {
+        return rows.map((row) => mapPostToInspiration(row.post));
+      }
+    }
+
+    return await listFallbackMockPosts(fallbackTake);
   } catch (error) {
     const code = prismaCode(error);
     if (code === 'P2021' || code === 'P2010') {
@@ -154,7 +177,13 @@ export async function listSavedInspirationIds(userId: string): Promise<string[]>
   const clerkUserId = normalizeId(userId);
   if (!clerkUserId) return [];
 
-  await ensureMocksExist();
+  try {
+    await ensureMocksExist();
+  } catch (error) {
+    console.error('[saved-inspiration] auto-seed falhou', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   try {
     const rows = await prisma.savedInspiration.findMany({

@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma';
 
 const VERTICAL_CROP = 'w=1080&h=1920&fit=crop&q=80&auto=format';
 
+export const GHOST_ARTIST_ID = '00000000-0000-4000-a000-000000000123';
+export const GHOST_ARTIST_CLERK_ID = 'ghost-artist-123';
+export const GHOST_ARTIST_EMAIL = 'ghost.artist@tattoogo.mock';
+export const GHOST_ARTIST_CPF = '00000000000';
+export const GHOST_ARTIST_NAME = 'Marina Costa (Mock)';
+export const GHOST_ARTIST_USERNAME = 'marina_costa_mock';
+
 export const RELATIONAL_MOCK_POSTS = [
   {
     imageUrl: `https://images.unsplash.com/photo-1605497788044-5a32c7078486?${VERTICAL_CROP}`,
@@ -78,14 +85,55 @@ export const RELATIONAL_MOCK_POSTS = [
   },
 ] as const;
 
+const GHOST_ARTIST_CREATE = {
+  id: GHOST_ARTIST_ID,
+  clerk_id: GHOST_ARTIST_CLERK_ID,
+  email: GHOST_ARTIST_EMAIL,
+  nome: GHOST_ARTIST_NAME,
+  username: GHOST_ARTIST_USERNAME,
+  cpf: GHOST_ARTIST_CPF,
+  role: 'tatuador' as const,
+  kyc_status: 'nao_aplicavel' as const,
+  accepted_terms: true,
+  onboarded: true,
+  language: 'pt-BR',
+  status_responsavel: 'dispensado' as const,
+  statusConta: 'ATIVO' as const,
+};
+
+const GHOST_ARTIST_UPDATE = {
+  deleted_at: null,
+  agenda_bloqueada: false,
+  nome: GHOST_ARTIST_NAME,
+  username: GHOST_ARTIST_USERNAME,
+  cpf: GHOST_ARTIST_CPF,
+  role: 'tatuador' as const,
+  kyc_status: 'nao_aplicavel' as const,
+  accepted_terms: true,
+  onboarded: true,
+  statusConta: 'ATIVO' as const,
+};
+
+export async function upsertGhostArtist() {
+  return prisma.perfil.upsert({
+    where: { clerk_id: GHOST_ARTIST_CLERK_ID },
+    create: GHOST_ARTIST_CREATE,
+    update: GHOST_ARTIST_UPDATE,
+    select: { id: true, nome: true },
+  });
+}
+
 export async function ensureMocksExist(): Promise<void> {
   const count = await prisma.post.count();
   if (count > 0) return;
 
+  const ghostArtist = await upsertGhostArtist();
+  const authorName = ghostArtist.nome ?? GHOST_ARTIST_NAME;
+
   await prisma.post.createMany({
     data: RELATIONAL_MOCK_POSTS.map((post) => ({
       imageUrl: post.imageUrl,
-      authorName: post.authorName,
+      authorName,
       authorAvatar: post.authorAvatar,
       style: post.style,
       viewsCount: post.viewsCount,

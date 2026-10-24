@@ -33,7 +33,13 @@ export function mapPostToInspiration(post: FeedPostRow): InspirationItem {
 }
 
 export async function getFeedPosts(): Promise<InspirationItem[]> {
-  await ensureMocksExist();
+  try {
+    await ensureMocksExist();
+  } catch (error) {
+    console.error('[feed-posts] auto-seed falhou', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   const rows = await prisma.post.findMany({
     orderBy: { createdAt: 'desc' },

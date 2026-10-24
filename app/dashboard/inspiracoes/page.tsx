@@ -20,7 +20,7 @@ export default async function InspiracoesPage() {
 
   let items: InspirationItem[] = [];
   try {
-    items = perfil.clerk_id ? await listSavedInspirations(perfil.clerk_id) : [];
+    items = await listSavedInspirations(perfil.clerk_id ?? '');
   } catch (error) {
     console.error('[dashboard/inspiracoes] falha ao listar salvos', error);
     items = [];

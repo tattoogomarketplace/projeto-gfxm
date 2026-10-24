@@ -38,9 +38,7 @@ export default async function ClienteDashboardPage({ searchParams }: DashboardPa
     feedItems = [];
   }
   try {
-    savedItems = clerkUserId
-      ? await listSavedInspirations(clerkUserId, { take: 5 })
-      : [];
+    savedItems = await listSavedInspirations(clerkUserId ?? '', { take: 5 });
   } catch (error) {
     console.error('[dashboard/cliente] falha ao listar inspirações salvas', error);
     savedItems = [];
