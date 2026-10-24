@@ -387,7 +387,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
             // (`--dock-clearance` definido em globals.css), presente já no
             // primeiro frame. A thread imersiva de chat (sem dock) é o único
             // caso sem clearance.
-            hideShellChrome ? '' : 'nav-safe-pad',
+            hideShellChrome || isGaleria ? '' : 'nav-safe-pad',
             isSelfScrollingRoute
               ? 'overflow-hidden'
               : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'
