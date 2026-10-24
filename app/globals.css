@@ -634,12 +634,118 @@
   .ai-fab-pulse {
     animation: ai-fab-pulse 2.6s ease-in-out infinite;
   }
+
+  .username-orb {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  .username-orb-a {
+    left: -25%;
+    top: -12%;
+    height: 50vmin;
+    width: 50vmin;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.28), transparent 66%);
+    filter: blur(48px);
+    animation: username-orb-a 18s ease-in-out infinite;
+  }
+
+  .username-orb-b {
+    right: -25%;
+    bottom: -14%;
+    height: 46vmin;
+    width: 46vmin;
+    background: radial-gradient(circle, rgba(161, 161, 170, 0.2), transparent 68%);
+    filter: blur(52px);
+    animation: username-orb-b 22s ease-in-out infinite;
+  }
+
+  .username-orb-c {
+    left: 50%;
+    top: 50%;
+    height: 36vmin;
+    width: 36vmin;
+    margin-left: -18vmin;
+    margin-top: -18vmin;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.12), transparent 70%);
+    filter: blur(56px);
+    animation: username-orb-c 16s ease-in-out infinite;
+  }
+}
+
+@keyframes username-orb-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(8%, 6%, 0) scale(1.08);
+    opacity: 0.72;
+  }
+}
+
+@keyframes username-orb-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate3d(-8%, -6%, 0) scale(1.06);
+    opacity: 0.58;
+  }
+}
+
+@keyframes username-orb-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.96);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+    opacity: 0.48;
+  }
+}
+
+@keyframes username-shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  16% {
+    transform: translate3d(-8px, 0, 0);
+  }
+  32% {
+    transform: translate3d(8px, 0, 0);
+  }
+  48% {
+    transform: translate3d(-5px, 0, 0);
+  }
+  64% {
+    transform: translate3d(5px, 0, 0);
+  }
+  80% {
+    transform: translate3d(-2px, 0, 0);
+  }
+}
+
+.username-shake {
+  animation: username-shake 0.38s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .screen-fade-in,
   .ai-fab-pulse,
-  .luxury-shimmer {
+  .luxury-shimmer,
+  .username-orb-a,
+  .username-orb-b,
+  .username-orb-c {
     animation: none;
   }
 

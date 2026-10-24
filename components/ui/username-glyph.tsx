@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { memo, useId } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 /**
@@ -179,7 +179,7 @@ export function MachineGlyph({ onLocked }: { onLocked?: () => void }) {
  * própria, garantindo que o texto e o caret a sua direita nunca se desloquem
  * (CLS = 0 absoluto). Tocar no glifo foca o input com o caret logo apos o `@`.
  */
-export function UsernameMorphGlyph({
+export const UsernameMorphGlyph = memo(function UsernameMorphGlyph({
   focused,
   onLocked,
   onActivate,
@@ -193,11 +193,11 @@ export function UsernameMorphGlyph({
       aria-hidden
       onMouseDown={onActivate}
       style={{ perspective: 640 }}
-      className="relative flex h-6 w-6 shrink-0 cursor-text items-center justify-center"
+      className="relative flex h-6 w-6 shrink-0 cursor-text items-center justify-center transform-gpu contain-paint"
     >
-      <AnimatePresence initial={false} mode="popLayout">
+      <AnimatePresence initial={false} mode="sync">
         {focused ? <MachineGlyph key="machine" onLocked={onLocked} /> : <AtGlyph key="at" />}
       </AnimatePresence>
     </span>
   );
-}
+});
