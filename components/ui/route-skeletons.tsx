@@ -4,7 +4,7 @@ import { BRAND_NAME } from '@/lib/i18n/brands';
 import { cn } from '@/lib/utils';
 
 const PROFILE_SCROLL_SHELL =
-  'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[max(10rem,env(safe-area-inset-bottom))] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform dark:text-white';
+  'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[var(--dock-clearance)] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform dark:text-white';
 
 function Shell({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -237,7 +237,7 @@ export function ClientIdentitySkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'relative flex h-full min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]',
+        'absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]',
         className
       )}
       aria-hidden
@@ -324,7 +324,7 @@ export function ChatInboxSkeleton({ className }: { className?: string }) {
 
       <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-4 lg:p-3">
         <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800 lg:bg-zinc-950">
-          <div className="space-y-2 p-2 pb-[calc(env(safe-area-inset-bottom)+7rem)]">
+          <div className="space-y-2 p-2 pb-[var(--dock-clearance)]">
             {[0, 1, 2, 3, 4, 5].map((index) => (
               <Skeleton key={index} className="h-16 w-full rounded-xl" />
             ))}

@@ -385,9 +385,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
             'absolute inset-0 flex min-h-0 min-w-0 flex-col',
             // Clearance da dock flutuante reservado em CSS PURO
             // (`--dock-clearance` definido em globals.css), presente já no
-            // primeiro frame. A thread imersiva de chat (sem dock) é o único
-            // caso sem clearance.
-            hideShellChrome || isGaleria ? '' : 'nav-safe-pad',
+            // primeiro frame. Rotas com scroller próprio (galeria, agenda,
+            // perfil, chat, vitrine) e a thread imersiva NÃO recebem o pad
+            // aqui: o scroller interno preenche o viewport para o conteúdo
+            // passar atrás do vidro, igual ao Início.
+            isSelfScrollingRoute ? '' : 'nav-safe-pad',
             isSelfScrollingRoute
               ? 'overflow-hidden'
               : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'

@@ -417,7 +417,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
-          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-[calc(env(safe-area-inset-bottom)+7rem)] [-webkit-overflow-scrolling:touch]">
+          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]">
             {renderPane('DIRECT')}
             {renderPane('BUDGET')}
           </div>

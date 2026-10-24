@@ -308,7 +308,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
 
   return (
     <>
-      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]">
+      <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]">
       <Link
         href="/dashboard/perfil/configuracoes"
         aria-label={t('settings.title')}

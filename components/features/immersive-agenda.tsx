@@ -18,7 +18,7 @@ export function ImmersiveAgenda({ sessions }: { sessions: UserSession[] }) {
   );
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+7rem)] text-white [-webkit-overflow-scrolling:touch]">
+    <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] text-white [-webkit-overflow-scrolling:touch]">
       <header className="sticky top-0 z-40 bg-zinc-950/85 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="px-4 pt-3">
           <SegmentedControl

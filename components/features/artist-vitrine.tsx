@@ -105,7 +105,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   );
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-24 text-white [-webkit-overflow-scrolling:touch]">
+    <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] text-white [-webkit-overflow-scrolling:touch]">
       <header className="relative">
         <div className="relative h-48 w-full md:h-64">
           {artist.coverUrl ? (
