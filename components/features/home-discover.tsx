@@ -26,9 +26,8 @@ import {
   PLACEHOLDER_INSPIRATIONS,
   type InspirationItem,
 } from '@/lib/gallery-mock';
-import { PORTFOLIO_STYLES, portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
-import { cn } from '@/lib/utils';
 import type { GaleriaItem } from '@/lib/types/galeria';
 
 /**
@@ -36,7 +35,6 @@ import type { GaleriaItem } from '@/lib/types/galeria';
  *
  * Ponto único de social, portfólio, galeria e descoberta do cliente:
  *  - Carrossel horizontal de "Artistas em Destaque" com snap nativo.
- *  - Barra sticky de filtros por estilo em glassmorphism.
  *  - Galeria de inspirações em carrossel horizontal com long-press preview.
  *  - Carrossel de avaliações em destaque com preview háptico sem like/reply.
  *
@@ -48,9 +46,6 @@ const CAROUSEL_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none sm:-mx-6 sm:px-6';
 
 const PREVIEW_SPRING = { type: 'spring', stiffness: 380, damping: 28, mass: 0.8 } as const;
-
-const STICKY_FILTER_CLASS =
-  'sticky top-0 z-20 -mx-4 border-y border-white/[0.04] bg-neutral-950/55 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-6 sm:px-6';
 
 type DiscoverArtist = {
   id: string;
@@ -240,13 +235,6 @@ export function HomeDiscover() {
     const derived = deriveArtists(items);
     const source = derived.length > 0 ? derived : PLACEHOLDER_ARTISTS;
     return source.slice(0, HOME_CAROUSEL_LIMIT);
-  }, [items]);
-
-  const styleOptions = useMemo<string[]>(() => {
-    const set = new Set<string>();
-    for (const item of items) if (item.style) set.add(item.style);
-    if (set.size === 0) PORTFOLIO_STYLES.slice(0, 5).forEach((style) => set.add(style));
-    return Array.from(set).slice(0, 6);
   }, [items]);
 
   const inspirations = useMemo<InspirationItem[]>(() => {
@@ -460,47 +448,6 @@ export function HomeDiscover() {
           </span>
         </Link>
       </section>
-
-      <div className={STICKY_FILTER_CLASS}>
-        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              setSelectedStyle(null);
-            }}
-            className={cn(
-              'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium backdrop-blur-md transition-all duration-200 active:scale-[0.96]',
-              selectedStyle === null
-                ? 'border-orange-500/60 bg-orange-500/15 font-semibold text-orange-300 shadow-[0_0_18px_rgba(249,115,22,0.25)]'
-                : 'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-orange-500/40 hover:text-orange-300'
-            )}
-          >
-            Tudo
-          </button>
-          {styleOptions.map((style) => {
-            const active = selectedStyle === style;
-            return (
-              <button
-                key={style}
-                type="button"
-                onClick={() => {
-                  triggerHaptic('light');
-                  setSelectedStyle(active ? null : style);
-                }}
-                className={cn(
-                  'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium backdrop-blur-md transition-all duration-200 active:scale-[0.96]',
-                  active
-                    ? 'border-orange-500/60 bg-orange-500/15 font-semibold text-orange-300 shadow-[0_0_18px_rgba(249,115,22,0.25)]'
-                    : 'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-orange-500/40 hover:text-orange-300'
-                )}
-              >
-                {styleLabel(style)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-inspirations">
         <SectionHeader

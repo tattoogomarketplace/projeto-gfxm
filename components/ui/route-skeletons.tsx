@@ -85,15 +85,6 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
         </div>
       </section>
 
-      <div className="flex gap-2 overflow-hidden py-3">
-        {[0, 1, 2, 3, 4].map((index) => (
-          <Skeleton
-            key={index}
-            className={cn('h-9 shrink-0 rounded-full', index === 0 ? 'w-16' : 'w-24')}
-          />
-        ))}
-      </div>
-
       <section className="min-w-0 w-full space-y-3">
         <div className="flex items-end justify-between gap-3 px-0.5">
           <div className="flex items-center gap-2.5">
