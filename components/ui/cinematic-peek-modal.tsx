@@ -106,6 +106,7 @@ export function CinematicPeekModal({ post, onClose, onQuote }: CinematicPeekModa
           transition={PEEK_TRANSITION}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-black/70 p-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)] backdrop-blur-3xl"
           onClick={onClose}
+          onPointerDown={onClose}
           onContextMenu={(event) => event.preventDefault()}
         >
           <motion.div
@@ -113,8 +114,9 @@ export function CinematicPeekModal({ post, onClose, onQuote }: CinematicPeekModa
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={PEEK_TRANSITION}
-            className="flex h-full min-h-0 w-full max-w-[340px] max-h-full flex-col items-center justify-center gap-4 transform-gpu will-change-transform"
+            className="flex w-full max-w-[340px] flex-col items-center justify-center gap-4 transform-gpu will-change-transform"
             onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
           >
             <div className="relative aspect-[9/16] h-full min-h-0 w-auto max-h-[55dvh] shrink overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)]">
               <Image
