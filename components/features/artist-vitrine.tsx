@@ -8,6 +8,7 @@ import { FeedbackCard } from '@/components/features/feedback-card';
 import { reviewDestination } from '@/components/features/home-feedback-carousel';
 import { QuoteRequestSheet } from '@/components/features/quote-request-sheet';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
+import { CinematicPeekModal } from '@/components/ui/cinematic-peek-modal';
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useHapticLongPress } from '@/hooks/use-haptic-long-press';
@@ -37,6 +38,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   const { artist, items, reviews } = vitrine;
   const [activeTab, setActiveTab] = useState<ProfileTab>('portfolio');
   const [preview, setPreview] = useState<ReviewDto | null>(null);
+  const [peekPost, setPeekPost] = useState<PortfolioItemDto | null>(null);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const longPress = useLongPressPreview();
 
@@ -95,6 +97,13 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   );
 
   const dismissPreview = useCallback(() => setPreview(null), []);
+  const closePeek = useCallback(() => setPeekPost(null), []);
+  const openPeek = useCallback((item: PortfolioItemDto) => {
+    setPeekPost(item);
+  }, []);
+  const quoteFromPeek = useCallback(() => {
+    setQuoteOpen(true);
+  }, []);
 
   const viewFullReview = useCallback(
     (review: ReviewDto) => {
@@ -237,6 +246,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
                 key={item.id}
                 item={item}
                 alt={styleLabel(item.style)}
+                onPeek={openPeek}
               />
             ))}
           </ul>
@@ -315,6 +325,12 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         onViewFull={viewFullReview}
       />
 
+      <CinematicPeekModal
+        post={peekPost}
+        onClose={closePeek}
+        onQuote={quoteFromPeek}
+      />
+
       <QuoteRequestSheet
         open={quoteOpen}
         artistId={artist.id}
@@ -325,10 +341,18 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   );
 }
 
-function PortfolioGridTile({ item, alt }: { item: PortfolioItemDto; alt: string }) {
+function PortfolioGridTile({
+  item,
+  alt,
+  onPeek,
+}: {
+  item: PortfolioItemDto;
+  alt: string;
+  onPeek: (item: PortfolioItemDto) => void;
+}) {
   const onHapticTrigger = useCallback(() => {
-    console.log('HAPTIC TRIGGER FIRED for post ID:', item.id);
-  }, [item.id]);
+    onPeek(item);
+  }, [item, onPeek]);
   const hapticPress = useHapticLongPress(onHapticTrigger);
 
   return (
