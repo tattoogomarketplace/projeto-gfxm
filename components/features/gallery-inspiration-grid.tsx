@@ -685,7 +685,7 @@ export function GalleryInspirationGrid({
           {Array.from({ length: skeletonCount }, (_, index) => (
             <article
               key={index}
-              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0 overflow-visible"
+              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0 overflow-hidden"
             >
               <div className="flex items-center justify-between px-4 py-3 w-full bg-transparent">
                 <div className="flex items-center gap-3">
@@ -759,7 +759,7 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'flex w-full max-w-none flex-col px-0 mx-0 overflow-visible' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 overflow-x-hidden' : 'columns-2 gap-4'
         }
       >
         {items.map((item, index) => {
@@ -788,7 +788,7 @@ export function GalleryInspirationGrid({
                 onPointerCancel={cancelLongPress}
                 onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => event.preventDefault()}
-              className="flex flex-col w-full max-w-none relative mb-2 px-0 mx-0 overflow-visible"
+              className="flex flex-col w-full max-w-none relative z-0 mb-2 px-0 mx-0 overflow-visible"
               >
                 <div className="relative my-4 overflow-visible">
                   <ArtistProfileStructuralPillars />
@@ -826,7 +826,7 @@ export function GalleryInspirationGrid({
 
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border border-white/10 overflow-hidden"
+                  className="relative isolate w-full max-w-none aspect-[4/5] bg-[#050505] rounded-none border border-white/10 overflow-hidden contain-paint"
                 >
                     <FeedPinchZoom>
                     <motion.div
@@ -834,7 +834,7 @@ export function GalleryInspirationGrid({
                       layoutId={galleryPreviewLayoutId(item.id)}
                       transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
                       style={{ backfaceVisibility: 'hidden' }}
-                      className="relative h-full w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+                      className="relative h-full w-full [backface-visibility:hidden]"
                     >
                       <OptimizedImage
                         src={item.imageUrl}
@@ -844,7 +844,7 @@ export function GalleryInspirationGrid({
                     </motion.div>
                     </FeedPinchZoom>
                     <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
-                    <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                    <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                       <AnimatePresence>
                         {likeBurst?.id === item.id ? (
                           <motion.span
