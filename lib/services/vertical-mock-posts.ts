@@ -1,13 +1,10 @@
-'use server';
-
-import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 
 const VERTICAL_CROP = 'w=1080&h=1920&fit=crop&q=80&auto=format';
 
 const VERTICAL_MOCK_POSTS = [
   {
-    imageUrl: `https://images.unsplash.com/photo-1605497788044-5a32c7078486?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?${VERTICAL_CROP}`,
     authorName: 'Rafael Lima',
     authorAvatar:
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop',
@@ -15,7 +12,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 18420,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1550684848-fac1c5b4e853?${VERTICAL_CROP}`,
     authorName: 'Marina Costa',
     authorAvatar:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
@@ -23,7 +20,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 12840,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?${VERTICAL_CROP}`,
     authorName: 'Bianca Souza',
     authorAvatar:
       'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
@@ -31,7 +28,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 22110,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1605497788044-5a32c7078486?${VERTICAL_CROP}`,
     authorName: 'Diego Martins',
     authorAvatar:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&q=80&auto=format&fit=crop',
@@ -39,7 +36,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 9732,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1610859923918-ee3d5c85c1d3?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1617791160505-6f00504e3519?${VERTICAL_CROP}`,
     authorName: 'Camila Rocha',
     authorAvatar:
       'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=240&q=80&auto=format&fit=crop',
@@ -47,7 +44,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 15601,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1612769727880-c8fe3bf2630e?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?${VERTICAL_CROP}`,
     authorName: 'Lucas Ferreira',
     authorAvatar:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&q=80&auto=format&fit=crop',
@@ -55,7 +52,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 6420,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1590246814883-57c511e48c6e?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?${VERTICAL_CROP}`,
     authorName: 'Marina Costa',
     authorAvatar:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&q=80&auto=format&fit=crop',
@@ -63,7 +60,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 20112,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1542727365-19732a80dcfd?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?${VERTICAL_CROP}`,
     authorName: 'Diego Martins',
     authorAvatar:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&q=80&auto=format&fit=crop',
@@ -71,7 +68,7 @@ const VERTICAL_MOCK_POSTS = [
     viewsCount: 8810,
   },
   {
-    imageUrl: `https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?${VERTICAL_CROP}`,
+    imageUrl: `https://images.unsplash.com/photo-1542727365-19732a80dcfd?${VERTICAL_CROP}`,
     authorName: 'Bianca Souza',
     authorAvatar:
       'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&q=80&auto=format&fit=crop',
@@ -80,32 +77,17 @@ const VERTICAL_MOCK_POSTS = [
   },
 ] as const;
 
-export type SeedVerticalMocksResult =
-  | { success: true; count: number }
-  | { success: false; error: string };
+export async function ensureVerticalMockPosts(): Promise<void> {
+  const count = await prisma.post.count();
+  if (count !== 0) return;
 
-export async function seedVerticalMocks(): Promise<SeedVerticalMocksResult> {
-  try {
-    const result = await prisma.post.createMany({
-      data: VERTICAL_MOCK_POSTS.map((post) => ({
-        imageUrl: post.imageUrl,
-        authorName: post.authorName,
-        authorAvatar: post.authorAvatar,
-        style: post.style,
-        viewsCount: post.viewsCount,
-      })),
-    });
-
-    revalidatePath('/');
-    revalidatePath('/dashboard/galeria');
-    revalidatePath('/dashboard/inspiracoes');
-    revalidatePath('/dashboard/cliente');
-
-    return { success: true, count: result.count };
-  } catch (error) {
-    console.error('[mock-seed] falha ao injetar mocks 9:16', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return { success: false, error: 'Falha ao injetar mocks 9:16.' };
-  }
+  await prisma.post.createMany({
+    data: VERTICAL_MOCK_POSTS.map((post) => ({
+      imageUrl: post.imageUrl,
+      authorName: post.authorName,
+      authorAvatar: post.authorAvatar,
+      style: post.style,
+      viewsCount: post.viewsCount,
+    })),
+  });
 }

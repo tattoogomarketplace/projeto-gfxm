@@ -18,7 +18,6 @@ import {
   Anchor,
   type LucideIcon,
 } from 'lucide-react';
-import { SeedVerticalMocksButton } from '@/components/features/seed-vertical-mocks-button';
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -109,7 +108,6 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
           </div>
         </div>
       </header>
-      <SeedVerticalMocksButton />
 
       <div className="sticky top-0 z-20 bg-[#121212]/80 px-4 pb-3 pt-1 backdrop-blur-md">
         <div className={FILTER_ROW_CLASS} role="listbox" aria-label={t('gallery.style')}>
