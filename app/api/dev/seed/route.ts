@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { RELATIONAL_MOCK_POSTS } from '@/lib/db/seed-mocks';
@@ -8,9 +9,14 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    await prisma.post.deleteMany({});
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const created = await prisma.post.createMany({
+    await prisma.savedInspiration.deleteMany({ where: { userId } });
+
+    const posts = await prisma.post.createManyAndReturn({
       data: RELATIONAL_MOCK_POSTS.map((post) => ({
         imageUrl: post.imageUrl,
         authorName: post.authorName,
@@ -20,12 +26,18 @@ export async function GET() {
       })),
     });
 
+    await prisma.savedInspiration.createMany({
+      data: posts.map((post) => ({
+        userId,
+        postId: post.id,
+      })),
+    });
+
     revalidatePath('/', 'layout');
 
     return NextResponse.json({
       success: true,
-      message: 'Database seeded and cache purged.',
-      count: created.count,
+      message: 'Posts created and saved to user profile.',
     });
   } catch (error) {
     console.error('[api/dev/seed] falha ao semear posts', {
