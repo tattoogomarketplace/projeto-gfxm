@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, MessageCircle } from 'lucide-react';
+import { FileText, MessageCircle } from 'lucide-react';
 import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatListCard } from '@/components/features/chat/chat-list-card';
@@ -19,10 +19,11 @@ import { ChatThread } from '@/components/features/chat/chat-thread';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
 import { SearchBar } from '@/components/ui/search-bar';
+import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
-import { useUiStore } from '@/hooks/use-ui-store';
+import { useSettingsDrawerOpen, useUiStore } from '@/hooks/use-ui-store';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
@@ -102,6 +103,8 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
   const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const settingsDrawerOpen = useSettingsDrawerOpen();
+  const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
   const serverHydrated = initialDirect !== undefined || initialBudget !== undefined;
 
@@ -309,13 +312,6 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
     void openBooking(selectedPeer.id, artworkId);
   }, [artworkId, bookingIntent, openBooking, selectedPeer?.id]);
 
-  const handleBackToDashboard = useCallback(() => {
-    triggerHaptic('light');
-    resetViewportScale({ forceBlur: true });
-    forceViewportRecalibration();
-    router.push(dashboardPathForRole(role));
-  }, [role, router, triggerHaptic]);
-
   const openPublicProfile = useCallback(
     (handle: string) => {
       triggerHaptic('light');
@@ -389,15 +385,11 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
         <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-900 bg-zinc-950/90 pt-[max(env(safe-area-inset-top),_1.5rem)] px-4 pb-2 backdrop-blur-xl">
           <div className="flex min-h-11 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleBackToDashboard}
-              className="-ml-1 flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-transform active:scale-95"
-              aria-label={t('common.back')}
-            >
-              <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
-            </button>
             <SearchBar onSelect={handleSearchSelect} className="min-w-0 flex-1" />
+            <TattooMachineMenuTrigger
+              open={settingsDrawerOpen}
+              onClick={toggleSettingsDrawer}
+            />
           </div>
           <div className="pt-3">
             <ChatCategoryTabs

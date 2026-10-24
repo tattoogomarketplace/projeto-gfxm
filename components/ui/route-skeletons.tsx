@@ -313,8 +313,8 @@ export function ChatInboxSkeleton({ className }: { className?: string }) {
       <div className="shrink-0">
         <div className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-4 pb-2 pt-[max(env(safe-area-inset-top),_1.5rem)] backdrop-blur-xl">
           <div className="flex min-h-11 items-center gap-2">
-            <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full" />
             <Skeleton className="h-10 min-h-10 flex-1 rounded-full" />
+            <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
           </div>
           <div className="pt-3">
             <Skeleton className="h-11 w-full rounded-2xl" />
