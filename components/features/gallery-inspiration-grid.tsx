@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
   useTransition,
+  type ComponentPropsWithoutRef,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
@@ -34,6 +35,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { useViewTracker } from '@/hooks/use-view-tracker';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import { toggleSave } from '@/actions/saved-actions';
 import type { InspirationItem } from '@/lib/gallery-mock';
@@ -442,6 +444,19 @@ function aspectFor(index: number): string {
   return ASPECTS[index % ASPECTS.length];
 }
 
+function TrackedPostCard({
+  postId,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<'article'> & { postId: string }) {
+  const viewRef = useViewTracker(postId);
+  return (
+    <article ref={viewRef} {...props}>
+      {children}
+    </article>
+  );
+}
+
 type GalleryInspirationGridProps = {
   items: InspirationItem[];
   loading?: boolean;
@@ -783,8 +798,9 @@ export function GalleryInspirationGrid({
               `${styleLabel(item.style)} disponível para orçamento.`;
 
             return (
-              <article
+              <TrackedPostCard
                 key={item.id}
+                postId={item.id}
                 onPointerDown={startLongPress(item)}
                 onPointerMove={moveLongPress}
                 onPointerUp={cancelLongPress}
@@ -955,13 +971,14 @@ export function GalleryInspirationGrid({
               <TattooDnaSpecsBar />
               </motion.div>
               </HudCuratorshipFrame>
-              </article>
+              </TrackedPostCard>
             );
           }
 
           return (
-            <article
+            <TrackedPostCard
               key={item.id}
+              postId={item.id}
               onPointerDown={startLongPress(item)}
               onPointerMove={moveLongPress}
               onPointerUp={cancelLongPress}
@@ -1040,7 +1057,7 @@ export function GalleryInspirationGrid({
                   </button>
                 </>
               )}
-            </article>
+            </TrackedPostCard>
           );
         })}
         {isCarousel ? actionCard : null}

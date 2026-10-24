@@ -500,12 +500,30 @@ model Post {
   authorName   String
   authorAvatar String
   style        String
+  viewsCount   Int      @default(0) @map("views_count")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   savedInspirations SavedInspiration[]
+  views             PostView[]
 
   @@index([createdAt], map: "posts_created_at_idx")
   @@map("posts")
+}
+
+model PostView {
+  id           String   @id @default(cuid())
+  postId       String   @map("post_id")
+  userId       String?  @map("user_id")
+  visitorToken String   @map("visitor_token")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([postId, userId], map: "post_views_post_user_unique")
+  @@unique([postId, visitorToken], map: "post_views_post_visitor_unique")
+  @@index([userId], map: "post_views_user_id_idx")
+  @@index([createdAt], map: "post_views_created_at_idx")
+  @@map("post_views")
 }
 
 model SavedInspiration {
