@@ -10,10 +10,11 @@ import { QuoteRequestSheet } from '@/components/features/quote-request-sheet';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useHapticLongPress } from '@/hooks/use-haptic-long-press';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { useUiStore } from '@/hooks/use-ui-store';
-import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { portfolioLabelResolver, type PortfolioItemDto } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import type { GeoAddress } from '@/lib/types/geo';
 import type { ReviewDto } from '@/lib/types/review';
@@ -232,19 +233,11 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         ) : (
           <ul className="grid w-full grid-cols-3 gap-[1px] md:gap-0.5">
             {items.map((item) => (
-              <li key={item.id} className="relative aspect-[9/16] w-full overflow-hidden bg-white/5">
-                <Image
-                  src={item.imageUrl}
-                  alt={styleLabel(item.style)}
-                  fill
-                  sizes="(max-width: 768px) 33vw, 240px"
-                  className="h-full w-full object-cover select-none transform-gpu will-change-transform"
-                  style={NATIVE_APP_IMAGE_STYLE}
-                  draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
-                  onContextMenu={(event) => event.preventDefault()}
-                />
-              </li>
+              <PortfolioGridTile
+                key={item.id}
+                item={item}
+                alt={styleLabel(item.style)}
+              />
             ))}
           </ul>
         )}
@@ -329,6 +322,39 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
         onSuccess={submitQuote}
       />
     </div>
+  );
+}
+
+function PortfolioGridTile({ item, alt }: { item: PortfolioItemDto; alt: string }) {
+  const onHapticTrigger = useCallback(() => {
+    console.log('HAPTIC TRIGGER FIRED for post ID:', item.id);
+  }, [item.id]);
+  const hapticPress = useHapticLongPress(onHapticTrigger);
+
+  return (
+    <li className="relative aspect-[9/16] w-full overflow-hidden bg-white/5">
+      <div
+        className="absolute inset-0 touch-manipulation select-none"
+        onPointerDown={hapticPress.onPointerDown}
+        onPointerMove={hapticPress.onPointerMove}
+        onPointerUp={hapticPress.onPointerUp}
+        onPointerCancel={hapticPress.onPointerCancel}
+        onPointerLeave={hapticPress.onPointerLeave}
+        onContextMenu={(event) => event.preventDefault()}
+      >
+        <Image
+          src={item.imageUrl}
+          alt={alt}
+          fill
+          sizes="(max-width: 768px) 33vw, 240px"
+          className="h-full w-full object-cover select-none transform-gpu will-change-transform"
+          style={NATIVE_APP_IMAGE_STYLE}
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+          onContextMenu={(event) => event.preventDefault()}
+        />
+      </div>
+    </li>
   );
 }
 
