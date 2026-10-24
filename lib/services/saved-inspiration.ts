@@ -1,4 +1,6 @@
+import type { InspirationItem } from '@/lib/gallery-mock';
 import { prisma } from '@/lib/prisma';
+import { resolvePortfolioLocation } from '@/lib/portfolio-metadata';
 
 export class SavedInspirationError extends Error {
   status: number;
@@ -111,6 +113,141 @@ export async function toggleSavedInspiration(
         error: error instanceof Error ? error.message : String(error),
       });
       throw new SavedInspirationError(500, 'Persistência de salvos indisponível.');
+    }
+    throw error;
+  }
+}
+
+function artistName(nome: string | null | undefined): string {
+  return (nome ?? '').trim();
+}
+
+function artistInitial(nome: string): string {
+  const letter = nome.charAt(0);
+  return letter ? letter.toUpperCase() : 'A';
+}
+
+function mapSavedPost(post: {
+  id: string;
+  url_imagem: string;
+  estilo: string;
+  descricao: string | null;
+  likes_count: number;
+  tatuador_id: string;
+  tatuador: {
+    id: string;
+    nome: string | null;
+    username: string | null;
+    cidade: string | null;
+    estado: string | null;
+    studio: { cidade: string | null; estado: string | null } | null;
+  };
+}): InspirationItem {
+  const name = artistName(post.tatuador.nome);
+  return {
+    id: post.id,
+    imageUrl: post.url_imagem,
+    style: post.estilo,
+    artistName: name,
+    artistId: post.tatuador_id,
+    artistUsername: post.tatuador.username ?? null,
+    likes: post.likes_count,
+    artistAvatarUrl: null,
+    artistInitial: artistInitial(name),
+    location: resolvePortfolioLocation({
+      studioCity: post.tatuador.studio?.cidade,
+      studioState: post.tatuador.studio?.estado,
+      artistCity: post.tatuador.cidade,
+      artistState: post.tatuador.estado,
+    }),
+    description: post.descricao,
+  };
+}
+
+export async function listSavedInspirations(
+  perfilId: string,
+  options?: { take?: number }
+): Promise<InspirationItem[]> {
+  if (!isUuid(perfilId)) return [];
+
+  const take = options?.take;
+  if (typeof take === 'number' && (!Number.isFinite(take) || take < 1)) {
+    return [];
+  }
+
+  try {
+    const rows = await prisma.savedInspiration.findMany({
+      where: {
+        userId: perfilId,
+        post: {
+          deleted_at: null,
+          tatuador: { deleted_at: null },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      ...(typeof take === 'number' ? { take } : {}),
+      select: {
+        post: {
+          select: {
+            id: true,
+            url_imagem: true,
+            estilo: true,
+            descricao: true,
+            likes_count: true,
+            tatuador_id: true,
+            tatuador: {
+              select: {
+                id: true,
+                nome: true,
+                username: true,
+                cidade: true,
+                estado: true,
+                studio: { select: { cidade: true, estado: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return rows.map((row) => mapSavedPost(row.post));
+  } catch (error) {
+    const code = prismaCode(error);
+    if (code === 'P2021' || code === 'P2010') {
+      console.error('[saved-inspiration] listagem indisponível', {
+        code,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return [];
+    }
+    throw error;
+  }
+}
+
+export async function listSavedInspirationIds(perfilId: string): Promise<string[]> {
+  if (!isUuid(perfilId)) return [];
+
+  try {
+    const rows = await prisma.savedInspiration.findMany({
+      where: {
+        userId: perfilId,
+        post: {
+          deleted_at: null,
+          tatuador: { deleted_at: null },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { postId: true },
+    });
+    return rows.map((row) => row.postId);
+  } catch (error) {
+    const code = prismaCode(error);
+    if (code === 'P2021' || code === 'P2010') {
+      console.error('[saved-inspiration] ids de salvos indisponíveis', {
+        code,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return [];
     }
     throw error;
   }

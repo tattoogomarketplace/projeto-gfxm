@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useOptimistic, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -21,8 +21,9 @@ import {
 import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { toggleSave } from '@/actions/saved-actions';
 import { artistProfileHref } from '@/lib/artist-profile';
-import { PLACEHOLDER_INSPIRATIONS } from '@/lib/gallery-mock';
+import type { InspirationItem } from '@/lib/gallery-mock';
 import { PORTFOLIO_STYLES, portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 
@@ -45,17 +46,41 @@ const FILTER_CHIP_BASE =
 const FILTER_ROW_CLASS =
   'flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] scrollbar-none scrollbar-hide hide-scrollbar transform-gpu will-change-transform';
 
-export function SavedInspirationsGallery() {
+export function SavedInspirationsGallery({ items = [] }: { items?: InspirationItem[] }) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const [style, setStyle] = useState('');
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const savedItems = useMemo(
+    () => items.filter((item) => !removedIds.includes(item.id)),
+    [items, removedIds]
+  );
+  const [optimisticItems, removeOptimistic] = useOptimistic(
+    savedItems,
+    (current, postId: string) => current.filter((item) => item.id !== postId)
+  );
+  const [, startTransition] = useTransition();
 
-  const items = useMemo(() => {
-    if (!style) return PLACEHOLDER_INSPIRATIONS;
-    return PLACEHOLDER_INSPIRATIONS.filter((item) => item.style === style);
-  }, [style]);
+  const visibleItems = useMemo(() => {
+    if (!style) return optimisticItems;
+    return optimisticItems.filter((item) => item.style === style);
+  }, [optimisticItems, style]);
+
+  const handleUnsave = (item: InspirationItem, event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
+    triggerHaptic('light');
+    startTransition(async () => {
+      removeOptimistic(item.id);
+      const result = await toggleSave(item.id);
+      if (!result.success) return;
+      setRemovedIds((prev) => {
+        if (result.isSaved) return prev.filter((id) => id !== item.id);
+        return prev.includes(item.id) ? prev : [...prev, item.id];
+      });
+    });
+  };
 
   const filters = useMemo(
     () => [{ value: '', label: t('gallery.all'), icon: LayoutGrid }, ...PORTFOLIO_STYLES.map((value) => ({
@@ -134,7 +159,7 @@ export function SavedInspirationsGallery() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {visibleItems.length === 0 ? (
         <div className="flex flex-1 items-center justify-center px-6 py-16 text-center">
           <p className="max-w-[28ch] text-sm font-medium text-zinc-400">
             {t('profile.emptySaved')}
@@ -142,25 +167,30 @@ export function SavedInspirationsGallery() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
-          {items.map((item) => (
-            <motion.button
+          {visibleItems.map((item) => (
+            <motion.article
               key={item.id}
-              type="button"
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                triggerHaptic('light');
-                router.push(
-                  artistProfileHref({ id: item.artistId, username: item.artistUsername })
-                );
-              }}
-              className="group relative aspect-square overflow-hidden bg-zinc-900 text-left select-none touch-manipulation transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+              className="group relative aspect-square overflow-hidden bg-zinc-900 text-left select-none transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
               style={NATIVE_APP_IMAGE_STYLE}
             >
-              <OptimizedImage
-                src={item.imageUrl}
-                alt={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
-                className="h-full w-full"
-              />
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  router.push(
+                    artistProfileHref({ id: item.artistId, username: item.artistUsername })
+                  );
+                }}
+                className="absolute inset-0 touch-manipulation"
+                aria-label={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
+              >
+                <OptimizedImage
+                  src={item.imageUrl}
+                  alt={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
+                  className="h-full w-full"
+                />
+              </button>
               <span
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
@@ -169,14 +199,22 @@ export function SavedInspirationsGallery() {
                 <span className="min-w-0 truncate text-[11px] font-semibold tracking-tight text-white">
                   {item.style ? styleLabel(item.style) : t('home.inspiracoes')}
                 </span>
+              </span>
+              <button
+                type="button"
+                onClick={(event) => handleUnsave(item, event)}
+                className="absolute bottom-1.5 right-1.5 z-[2] flex h-8 w-8 min-h-8 min-w-8 items-center justify-center rounded-full text-orange-400"
+                aria-label="Salvar"
+                aria-pressed
+              >
                 <Bookmark
-                  className="h-3.5 w-3.5 shrink-0 text-orange-400"
+                  className="h-3.5 w-3.5 shrink-0"
                   strokeWidth={1.9}
                   fill="currentColor"
                   aria-hidden
                 />
-              </span>
-            </motion.button>
+              </button>
+            </motion.article>
           ))}
         </div>
       )}

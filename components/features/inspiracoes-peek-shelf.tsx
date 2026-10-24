@@ -16,24 +16,24 @@ import { NATIVE_APP_IMAGE_STYLE, OptimizedImage } from '@/components/ui/optimize
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { artistProfileHref } from '@/lib/artist-profile';
-import { PLACEHOLDER_INSPIRATIONS } from '@/lib/gallery-mock';
+import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 const SAVED_GALLERY_HREF = '/dashboard/inspiracoes';
 const PEEK_DELAY_MS = 400;
 const MOVE_TOLERANCE_PX = 10;
-const PEEK_CARDS = PLACEHOLDER_INSPIRATIONS.slice(0, 5);
 const CARD_SHELL =
   'relative aspect-[3/4] w-[9.75rem] shrink-0 snap-start overflow-hidden rounded-2xl transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
 const SHELF_CLASS =
   '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none scrollbar-hide hide-scrollbar transform-gpu will-change-transform sm:-mx-6 sm:px-6';
 
-export function InspiracoesPeekShelf() {
+export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[] }) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
+  const peekCards = items.slice(0, 5);
   const [peekImage, setPeekImage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -112,7 +112,7 @@ export function InspiracoesPeekShelf() {
   };
 
   const onCardClick =
-    (item: (typeof PEEK_CARDS)[number]) => (event: ReactMouseEvent<HTMLButtonElement>) => {
+    (item: InspirationItem) => (event: ReactMouseEvent<HTMLButtonElement>) => {
       if (didPeek.current) {
         event.preventDefault();
         event.stopPropagation();
@@ -145,7 +145,7 @@ export function InspiracoesPeekShelf() {
           </button>
         </div>
         <div className={SHELF_CLASS} role="list" aria-label={t('home.inspiracoes')}>
-          {PEEK_CARDS.map((item) => (
+          {peekCards.map((item) => (
             <motion.button
               key={item.id}
               type="button"

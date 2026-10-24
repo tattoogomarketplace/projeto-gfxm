@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { GaleriaInspiracoes } from '@/components/features/galeria-inspiracoes';
 import { useUiStore } from '@/hooks/use-ui-store';
 
-export default function GaleriaClient() {
+export default function GaleriaClient({ savedIds = [] }: { savedIds?: string[] }) {
   const router = useRouter();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
@@ -12,6 +12,7 @@ export default function GaleriaClient() {
 
   return (
     <GaleriaInspiracoes
+      savedIds={savedIds}
       onStartConversation={(tatuadorId, artworkId) => {
         setPendingChatPeer(tatuadorId);
         setPendingChatArtwork(artworkId);

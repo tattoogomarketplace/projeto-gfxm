@@ -217,7 +217,7 @@ function artistDestination(artist: DiscoverArtist): string {
   return artistProfileHref(artist);
 }
 
-export function HomeDiscover() {
+export function HomeDiscover({ savedItems = [] }: { savedItems?: InspirationItem[] }) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
@@ -230,6 +230,7 @@ export function HomeDiscover() {
 
   const items = useMemo(() => data ?? [], [data]);
   const loading = isLoading && items.length === 0;
+  const savedIds = useMemo(() => savedItems.map((item) => item.id), [savedItems]);
 
   const artists = useMemo<DiscoverArtist[]>(() => {
     const derived = deriveArtists(items);
@@ -463,6 +464,7 @@ export function HomeDiscover() {
           skeletonCount={HOME_CAROUSEL_LIMIT}
           layout="carousel"
           showLike
+          savedIds={savedIds}
           onExploreStyle={(style) => setSelectedStyle(style || null)}
           actionCard={galleryAction}
         />
@@ -470,7 +472,7 @@ export function HomeDiscover() {
 
       <HomeFeedbackCarousel />
 
-      <InspiracoesPeekShelf />
+      <InspiracoesPeekShelf items={savedItems} />
 
       <ErrorBoundary fallback={null}>
         <GalleryHapticPreview

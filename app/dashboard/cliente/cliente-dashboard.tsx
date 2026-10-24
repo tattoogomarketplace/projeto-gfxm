@@ -6,14 +6,17 @@ import { HomeDiscoverSkeleton } from '@/components/ui/route-skeletons';
 import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
 import { useRouteTab } from '@/hooks/use-route-tab';
 import type { AppTab } from '@/hooks/use-ui-store';
+import type { InspirationItem } from '@/lib/gallery-mock';
 import type { AppRole } from '@/lib/utils/auth-redirect';
 
 export default function ClienteDashboard({
   role = 'cliente',
   initialTab = 'portfolio',
+  savedItems = [],
 }: {
   role?: AppRole;
   initialTab?: AppTab;
+  savedItems?: InspirationItem[];
 }) {
   // Aba derivada da ROTA (pathname + query), idêntica no SSR e no 1º frame do
   // cliente. Sem estado pós-hidratação: a aba "Agenda"/"Chat" já nasce correta
@@ -46,7 +49,7 @@ export default function ClienteDashboard({
           </section>
         ) : activeTab === 'portfolio' ? (
           <section key="portfolio" className="min-w-0 w-full flex-1">
-            <HomeDiscover />
+            <HomeDiscover savedItems={savedItems} />
           </section>
         ) : (
           // Fase transitória: pinta EXATAMENTE o skeleton do `loading.tsx`

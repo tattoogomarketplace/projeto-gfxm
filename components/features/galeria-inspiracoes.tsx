@@ -12,6 +12,7 @@ import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
+  savedIds?: string[];
 };
 
 const ENTRY_CARD_CLASS =
@@ -40,7 +41,7 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
   );
 }
 
-export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesProps) {
+export function GaleriaInspiracoes({ onStartConversation, savedIds = [] }: GaleriaInspiracoesProps) {
   const { t } = useI18n();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
@@ -108,6 +109,7 @@ export function GaleriaInspiracoes({ onStartConversation }: GaleriaInspiracoesPr
           skeletonCount={4}
           layout="feed"
           showLike
+          savedIds={savedIds}
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}
           onStartConversation={onStartConversation}
         />

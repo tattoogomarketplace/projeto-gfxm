@@ -3,16 +3,18 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
+  useOptimistic,
   useRef,
   useState,
   useSyncExternalStore,
+  useTransition,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, FileText, Heart, Send } from 'lucide-react';
 import {
@@ -33,6 +35,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
+import { toggleSave } from '@/actions/saved-actions';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
@@ -190,45 +193,18 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
-function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => void }) {
-  const [isSaved, setIsSaved] = useState(false);
-  const [saveCount, setSaveCount] = useState(850);
+function FeedSaveButton({
+  postId,
+  isSaved,
+  onToggle,
+  onSaved,
+}: {
+  postId: string;
+  isSaved: boolean;
+  onToggle: (postId: string) => void;
+  onSaved: () => void;
+}) {
   const { triggerHaptic } = useHapticFeedback();
-  const { getToken } = useAuth();
-
-  const persistSave = useCallback(
-    async (previousState: boolean) => {
-      try {
-        const clerkToken = await getToken({ skipCache: true }).catch(() => null);
-        const stored =
-          typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
-        const token = clerkToken || stored;
-        const res = await fetch(`/api/inspirations/${encodeURIComponent(postId)}/save`, {
-          method: 'POST',
-          credentials: 'include',
-          cache: 'no-store',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => null)) as
-            | { erro?: string; message?: string }
-            | null;
-          throw new Error(payload?.erro || payload?.message || `HTTP ${res.status}`);
-        }
-      } catch (error) {
-        console.error('[save-inspiration] falha ao persistir', {
-          postId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        setIsSaved(previousState);
-        setSaveCount((prev) => Math.max(0, prev + (previousState ? 1 : -1)));
-      }
-    },
-    [getToken, postId]
-  );
 
   return (
     <button
@@ -236,12 +212,8 @@ function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => vo
       data-gallery-action=""
       onClick={() => {
         triggerHaptic('light');
-        const previousState = isSaved;
-        const nextSaved = !isSaved;
-        setIsSaved(nextSaved);
-        setSaveCount((count) => Math.max(0, count + (nextSaved ? 1 : -1)));
-        if (nextSaved) onSaved();
-        void persistSave(previousState);
+        if (!isSaved) onSaved();
+        onToggle(postId);
       }}
       className={cn(
         FEED_ACTION_BTN_CLASS,
@@ -255,7 +227,7 @@ function FeedSaveButton({ postId, onSaved }: { postId: string; onSaved: () => vo
         strokeWidth={2}
         fill={isSaved ? 'currentColor' : 'none'}
       />
-      <span className={FEED_ACTION_METRIC_CLASS}>{saveCount}</span>
+      <span className={FEED_ACTION_METRIC_CLASS}>{isSaved ? 851 : 850}</span>
     </button>
   );
 }
@@ -479,6 +451,7 @@ type GalleryInspirationGridProps = {
   layout?: 'masonry' | 'carousel' | 'feed';
   showLike?: boolean;
   actionCard?: ReactNode;
+  savedIds?: string[];
 };
 
 const CAROUSEL_CLASS =
@@ -493,6 +466,7 @@ export function GalleryInspirationGrid({
   layout = 'masonry',
   showLike = true,
   actionCard,
+  savedIds = [],
 }: GalleryInspirationGridProps) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -501,7 +475,26 @@ export function GalleryInspirationGrid({
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setPendingChatPeer = useUiStore((s) => s.setPendingChatPeer);
   const setPendingChatArtwork = useUiStore((s) => s.setPendingChatArtwork);
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
+  const confirmedSaved = useMemo(() => {
+    const next = new Set(savedIds);
+    for (const [id, value] of Object.entries(savedOverrides)) {
+      if (value) next.add(id);
+      else next.delete(id);
+    }
+    return next;
+  }, [savedIds, savedOverrides]);
+  const [optimisticSaved, applyOptimisticSave] = useOptimistic(
+    confirmedSaved,
+    (current, postId: string) => {
+      const next = new Set(current);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    }
+  );
+  const [, startSaveTransition] = useTransition();
   const [isSaveToastOpen, setIsSaveToastOpen] = useState(false);
   const [preview, setPreview] = useState<GalleryPreviewItem | null>(null);
   const [likeBurst, setLikeBurst] = useState<{ id: string; nonce: number } | null>(null);
@@ -582,9 +575,18 @@ export function GalleryInspirationGrid({
     openInspiration(item);
   };
 
-  const toggleSaved = (id: string) => {
-    setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleLiked = (id: string) => {
+    setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const persistToggleSave = useCallback((postId: string) => {
+    startSaveTransition(async () => {
+      applyOptimisticSave(postId);
+      const result = await toggleSave(postId);
+      if (!result.success) return;
+      setSavedOverrides((prev) => ({ ...prev, [postId]: result.isSaved }));
+    });
+  }, [applyOptimisticSave]);
 
   useEffect(() => {
     if (!isSaveToastOpen) return;
@@ -608,7 +610,7 @@ export function GalleryInspirationGrid({
   const likeFromDoubleTap = useCallback(
     (id: string) => {
       cancelLongPress();
-      setSaved((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+      setLiked((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
       setLikeBurst((current) => ({
         id,
         nonce: current?.id === id ? current.nonce + 1 : 1,
@@ -763,7 +765,8 @@ export function GalleryInspirationGrid({
         }
       >
         {items.map((item, index) => {
-          const isSaved = Boolean(saved[item.id]);
+          const isLiked = Boolean(liked[item.id]);
+          const isSaved = optimisticSaved.has(item.id);
           const artistName = item.artistName || t('welcome.artistFallback');
 
           if (isFeed) {
@@ -773,7 +776,7 @@ export function GalleryInspirationGrid({
               username: item.artistUsername,
             });
             const metaLine = [styleLabel(item.style), item.location].filter(Boolean).join(' · ');
-            const likeCount = item.likes + (isSaved ? 1 : 0);
+            const likeCount = item.likes + (isLiked ? 1 : 0);
             const likeLabel = `Curtido por ${likeCount.toLocaleString('pt-BR')} pessoas`;
             const caption =
               item.description?.trim() ||
@@ -883,16 +886,16 @@ export function GalleryInspirationGrid({
                         data-gallery-action=""
                         onClick={() => {
                           triggerHaptic('light');
-                          toggleSaved(item.id);
+                          toggleLiked(item.id);
                         }}
                         className={cn(
                           FEED_ACTION_BTN_CLASS,
-                          isSaved && 'text-orange-500 border-orange-500/50'
+                          isLiked && 'text-orange-500 border-orange-500/50'
                         )}
-                        aria-label={isSaved ? t('aria.unlike') : t('aria.like')}
-                        aria-pressed={isSaved}
+                        aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
+                        aria-pressed={isLiked}
                       >
-                        <TattooMachineLikeGlyph liked={isSaved} className="h-6 w-6 shrink-0" />
+                        <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 shrink-0" />
                         <span className={FEED_ACTION_METRIC_CLASS}>2.4k</span>
                       </button>
                     ) : null}
@@ -921,6 +924,8 @@ export function GalleryInspirationGrid({
                     </button>
                     <FeedSaveButton
                       postId={item.id}
+                      isSaved={isSaved}
+                      onToggle={persistToggleSave}
                       onSaved={() => setIsSaveToastOpen(true)}
                     />
                   </div>
@@ -1000,7 +1005,7 @@ export function GalleryInspirationGrid({
                     {showLike ? (
                       <TattooLikeButton
                         liked={isSaved}
-                        onToggle={() => toggleSaved(item.id)}
+                        onToggle={() => persistToggleSave(item.id)}
                         showCount={false}
                         dataGalleryAction
                         ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}
@@ -1016,7 +1021,7 @@ export function GalleryInspirationGrid({
                     <div className="absolute right-3 top-3 z-[5]">
                       <TattooLikeButton
                         liked={isSaved}
-                        onToggle={() => toggleSaved(item.id)}
+                        onToggle={() => persistToggleSave(item.id)}
                         showCount={false}
                         dataGalleryAction
                         ariaLabel={isSaved ? t('aria.unlike') : t('aria.like')}

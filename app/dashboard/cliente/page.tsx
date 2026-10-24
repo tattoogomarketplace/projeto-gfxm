@@ -1,4 +1,6 @@
 import { SessionHydrating } from '@/components/features/session-hydrating';
+import type { InspirationItem } from '@/lib/gallery-mock';
+import { listSavedInspirations } from '@/lib/services/saved-inspiration';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import { parseAppTab } from '@/lib/utils/route-tab';
@@ -22,5 +24,14 @@ export default async function ClienteDashboardPage({ searchParams }: DashboardPa
     return <SessionHydrating />;
   }
   if (!perfil) return <SessionHydrating />;
-  return <ClienteDashboard initialTab={initialTab} />;
+
+  let savedItems: InspirationItem[] = [];
+  try {
+    savedItems = await listSavedInspirations(perfil.id, { take: 5 });
+  } catch (error) {
+    console.error('[dashboard/cliente] falha ao listar inspirações salvas', error);
+    savedItems = [];
+  }
+
+  return <ClienteDashboard initialTab={initialTab} savedItems={savedItems} />;
 }
