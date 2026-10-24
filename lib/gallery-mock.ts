@@ -6,6 +6,7 @@ export type InspirationItem = {
   artistId: string | null;
   artistUsername?: string | null;
   likes: number;
+  viewsCount?: number;
   artistAvatarUrl?: string | null;
   artistInitial?: string;
   location?: string | null;
@@ -24,6 +25,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-rafael',
     artistUsername: 'rafael_lima',
     likes: 3556,
+    viewsCount: 12840,
     location: 'São Paulo/SP',
     description: 'Realismo em pele, luz e sombra no detalhe.',
   },
@@ -35,6 +37,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-marina',
     artistUsername: 'marina_costa',
     likes: 2418,
+    viewsCount: 8732,
     location: 'Rio de Janeiro/RJ',
     description: 'Fine line delicada, traço limpo e contínuo.',
   },
@@ -46,6 +49,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-bianca',
     artistUsername: 'bianca_souza',
     likes: 4190,
+    viewsCount: 15601,
     location: 'Belo Horizonte/MG',
     description: 'Blackwork fechado, contraste alto e preenchimento sólido.',
   },
@@ -57,6 +61,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-diego',
     artistUsername: 'diego_martins',
     likes: 1876,
+    viewsCount: 6420,
     location: 'Curitiba/PR',
     description: 'Old school clássica, cores chapadas e contorno firme.',
   },
@@ -68,6 +73,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-camila',
     artistUsername: 'camila_rocha',
     likes: 2964,
+    viewsCount: 10112,
     location: 'Florianópolis/SC',
     description: 'Minimalista, poucos traços e muita intenção.',
   },
@@ -79,6 +85,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-lucas',
     artistUsername: 'lucas_ferreira',
     likes: 1632,
+    viewsCount: 4988,
     location: 'Porto Alegre/RS',
     description: 'Geometria simétrica, ritmo e precisão no encaixe.',
   },
@@ -90,6 +97,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-marina',
     artistUsername: 'marina_costa',
     likes: 1489,
+    viewsCount: 4210,
     location: 'Rio de Janeiro/RJ',
     description: 'Aquarela com transições suaves e bordas abertas.',
   },
@@ -101,6 +109,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-diego',
     artistUsername: 'diego_martins',
     likes: 2210,
+    viewsCount: 7804,
     location: 'Curitiba/PR',
     description: 'Lettering com peso, ritmo e leitura imediata.',
   },
@@ -112,6 +121,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-bianca',
     artistUsername: 'bianca_souza',
     likes: 5021,
+    viewsCount: 18440,
     location: 'Belo Horizonte/MG',
     description: 'Oriental com fluxo, escala e encaixe no corpo.',
   },
@@ -123,6 +133,7 @@ export const PLACEHOLDER_INSPIRATIONS: InspirationItem[] = [
     artistId: 'ph-rafael',
     artistUsername: 'rafael_lima',
     likes: 2744,
+    viewsCount: 9655,
     location: 'São Paulo/SP',
     description: 'Retrato em realismo, textura de pele e profundidade.',
   },

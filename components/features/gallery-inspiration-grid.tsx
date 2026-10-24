@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, FileText, Heart, Send } from 'lucide-react';
+import { Bookmark, Eye, FileText, Heart, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -38,6 +38,7 @@ import { useUiStore } from '@/hooks/use-ui-store';
 import { useViewTracker } from '@/hooks/use-view-tracker';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import { toggleSave } from '@/actions/saved-actions';
+import { getPostViewers, type PostViewerUser } from '@/actions/view-actions';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
@@ -58,12 +59,18 @@ const HUD_CURATORSHIP_STYLE = {
 } as const;
 
 const FEED_ACTION_BTN_CLASS =
-  'flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.02] px-1.5 text-zinc-300 transition-all hover:border-orange-500/50';
+  'flex h-10 shrink-0 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] px-2 text-zinc-300 transition-all hover:border-orange-500/50';
 
 const FEED_ACTION_METRIC_CLASS =
   'text-[11px] font-semibold tracking-wide text-gray-300 whitespace-nowrap';
 
-const FEED_LIKES_PLACEHOLDERS = [
+type FeedListUser = {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+};
+
+const FEED_LIKES_PLACEHOLDERS: FeedListUser[] = [
   {
     id: 'like-marina',
     username: '@marina_costa',
@@ -100,11 +107,69 @@ const FEED_LIKES_PLACEHOLDERS = [
     avatarUrl:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&q=80&auto=format&fit=crop',
   },
-] as const;
+];
 
 const clientMountedSubscribe = () => () => {};
 
-function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+function compactMetric(value: number): string {
+  if (value >= 1_000_000) {
+    const compact = value / 1_000_000;
+    return `${compact >= 10 ? compact.toFixed(0) : compact.toFixed(1).replace(/\.0$/, '')}M`;
+  }
+  if (value >= 1_000) {
+    const compact = value / 1_000;
+    return `${compact >= 10 ? compact.toFixed(0) : compact.toFixed(1).replace(/\.0$/, '')}k`;
+  }
+  return value.toLocaleString('pt-BR');
+}
+
+function handleSpotlightPreview(username: string) {
+  console.log('[spotlight]', username);
+}
+
+function FeedListUserRow({
+  user,
+  onSelect,
+}: {
+  user: FeedListUser;
+  onSelect: (username: string) => void;
+}) {
+  const initial = user.username.replace(/^@/, '').charAt(0).toUpperCase() || 'U';
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(user.username)}
+      className="flex min-h-11 w-full items-center gap-3 border-b border-white/5 py-3 text-left last:border-b-0 transition-colors hover:bg-white/[0.03] active:scale-[0.99]"
+    >
+      {user.avatarUrl ? (
+        <OptimizedImage
+          src={user.avatarUrl}
+          alt={user.username}
+          className="h-10 w-10 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold uppercase text-zinc-100 ring-1 ring-white/10">
+          {initial}
+        </span>
+      )}
+      <span className="truncate text-[14px] font-medium text-zinc-100">{user.username}</span>
+    </button>
+  );
+}
+
+function FeedEngagementSheet({
+  open,
+  onClose,
+  titleId,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  titleId: string;
+  title: string;
+  children: ReactNode;
+}) {
   const mounted = useSyncExternalStore(clientMountedSubscribe, () => true, () => false);
 
   useEffect(() => {
@@ -131,7 +196,7 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
     <AnimatePresence>
       {open ? (
         <motion.div
-          key="likes-sheet"
+          key={titleId}
           className="fixed inset-0 z-[60] flex h-[100dvh] w-full flex-col justify-end overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -146,17 +211,17 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 cursor-default bg-black/40"
+            className="absolute inset-0 cursor-default bg-black/55"
           />
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="likes-sheet-title"
+            aria-labelledby={titleId}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#121212]/80 backdrop-blur-xl shadow-[0_-24px_60px_rgba(0,0,0,0.55)]"
+            className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#121212]/88 backdrop-blur-xl shadow-[0_-24px_60px_rgba(0,0,0,0.55)]"
           >
             <span
               aria-hidden
@@ -164,34 +229,152 @@ function FeedLikesSheet({ open, onClose }: { open: boolean; onClose: () => void 
             />
             <header className="shrink-0 px-5 pb-2 pt-4">
               <h2
-                id="likes-sheet-title"
+                id={titleId}
                 className="text-[15px] font-semibold tracking-tight text-orange-500"
               >
-                2.418 Curtidas
+                {title}
               </h2>
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {FEED_LIKES_PLACEHOLDERS.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center gap-3 border-b border-white/5 py-3 last:border-b-0"
-                >
-                  <OptimizedImage
-                    src={user.avatarUrl}
-                    alt={user.username}
-                    className="h-10 w-10 shrink-0 rounded-full object-cover"
-                  />
-                  <span className="truncate text-[14px] font-medium text-zinc-100">
-                    {user.username}
-                  </span>
-                </div>
-              ))}
+              {children}
             </div>
           </motion.div>
         </motion.div>
       ) : null}
     </AnimatePresence>,
     document.body
+  );
+}
+
+function FeedLikesSheet({
+  open,
+  onClose,
+  likeCount,
+}: {
+  open: boolean;
+  onClose: () => void;
+  likeCount: number;
+}) {
+  return (
+    <FeedEngagementSheet
+      open={open}
+      onClose={onClose}
+      titleId="likes-sheet-title"
+      title={`${likeCount.toLocaleString('pt-BR')} Curtidas`}
+    >
+      {FEED_LIKES_PLACEHOLDERS.map((user) => (
+        <FeedListUserRow key={user.id} user={user} onSelect={handleSpotlightPreview} />
+      ))}
+    </FeedEngagementSheet>
+  );
+}
+
+function AnonymousExplorersRow({ count }: { count: number }) {
+  return (
+    <div
+      aria-hidden={false}
+      className="relative mb-4 overflow-hidden rounded-2xl border border-orange-500/25 bg-[linear-gradient(135deg,rgba(249,115,22,0.12),rgba(18,18,20,0.72)_46%,rgba(12,12,16,0.88))] p-4 shadow-[0_0_28px_rgba(249,115,22,0.12)]"
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-orange-500/20 blur-2xl animate-pulse"
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_50%,rgba(249,115,22,0.18),transparent_42%)]"
+      />
+      <div className="relative flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-orange-500/35 bg-black/45 text-orange-400 shadow-[0_0_16px_rgba(249,115,22,0.28)]">
+          <Eye className="h-5 w-5" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold tracking-wide text-orange-200">
+            Visitantes Anônimos
+          </p>
+          <p className="mt-0.5 text-[11px] tracking-wide text-zinc-400">
+            Exploradores ocultos nesta obra
+          </p>
+        </div>
+        <span className="shrink-0 font-mono text-[15px] font-semibold tabular-nums text-white">
+          {count.toLocaleString('pt-BR')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function FeedViewsSheet({
+  open,
+  onClose,
+  postId,
+  viewsCount,
+}: {
+  open: boolean;
+  onClose: () => void;
+  postId: string | null;
+  viewsCount: number;
+}) {
+  const [snapshot, setSnapshot] = useState<{
+    postId: string;
+    anonymousCount: number;
+    viewers: PostViewerUser[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open || !postId) return;
+    let cancelled = false;
+    void getPostViewers(postId).then((result) => {
+      if (cancelled) return;
+      if (!result.success) {
+        setSnapshot({
+          postId,
+          anonymousCount: Math.max(0, viewsCount),
+          viewers: [],
+        });
+        return;
+      }
+      setSnapshot({
+        postId,
+        anonymousCount: result.anonymousCount,
+        viewers: result.viewers,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, postId, viewsCount]);
+
+  const loading = !snapshot || snapshot.postId !== postId;
+  const anonymousCount = snapshot?.postId === postId ? snapshot.anonymousCount : 0;
+  const viewers = snapshot?.postId === postId ? snapshot.viewers : [];
+
+  return (
+    <FeedEngagementSheet
+      open={open}
+      onClose={onClose}
+      titleId="views-sheet-title"
+      title={`${viewsCount.toLocaleString('pt-BR')} Visualizações`}
+    >
+      <AnonymousExplorersRow count={anonymousCount} />
+      {loading ? (
+        <div className="space-y-3 py-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="flex items-center gap-3 py-2">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <Skeleton className="h-3.5 w-32" />
+            </div>
+          ))}
+        </div>
+      ) : viewers.length > 0 ? (
+        viewers.map((user) => (
+          <FeedListUserRow key={user.id} user={user} onSelect={handleSpotlightPreview} />
+        ))
+      ) : (
+        <p className="py-6 text-center text-[13px] text-zinc-500">
+          Nenhum perfil autenticado visualizou esta obra ainda.
+        </p>
+      )}
+    </FeedEngagementSheet>
   );
 }
 
@@ -516,6 +699,10 @@ export function GalleryInspirationGrid({
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [budgetItem, setBudgetItem] = useState<InspirationItem | null>(null);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const [likesSheetCount, setLikesSheetCount] = useState(0);
+  const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
+  const [viewsSheetPostId, setViewsSheetPostId] = useState<string | null>(null);
+  const [viewsSheetCount, setViewsSheetCount] = useState(0);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -727,8 +914,8 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
-              <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex w-full items-center justify-between gap-1 px-4 py-3">
+              <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
+                <div className="flex w-full items-center justify-between gap-1 px-5 py-4">
                   <div className="flex items-center gap-1.5">
                     <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
@@ -894,27 +1081,80 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
-                <div className="w-full max-w-none rounded-[12px] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex w-full items-center justify-between gap-1 px-4 py-3">
+                <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
+                  <div className="flex w-full items-center justify-between gap-1 px-5 py-4">
                     {showLike ? (
+                      <div className="flex min-w-0 items-center gap-1">
+                        <div
+                          className={cn(
+                            FEED_ACTION_BTN_CLASS,
+                            isLiked && 'text-orange-500 border-orange-500/50'
+                          )}
+                        >
+                          <button
+                            type="button"
+                            data-gallery-action=""
+                            onClick={() => {
+                              triggerHaptic('light');
+                              toggleLiked(item.id);
+                            }}
+                            className="flex h-10 min-w-8 items-center justify-center"
+                            aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
+                            aria-pressed={isLiked}
+                          >
+                            <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 shrink-0" />
+                          </button>
+                          <button
+                            type="button"
+                            data-gallery-action=""
+                            onClick={() => {
+                              triggerHaptic('light');
+                              setLikesSheetCount(likeCount);
+                              setIsLikesModalOpen(true);
+                            }}
+                            className={cn(FEED_ACTION_METRIC_CLASS, 'pr-0.5')}
+                            aria-label={likeLabel}
+                          >
+                            {compactMetric(likeCount)}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          data-gallery-action=""
+                          onClick={() => {
+                            triggerHaptic('light');
+                            setViewsSheetPostId(item.id);
+                            setViewsSheetCount(item.viewsCount ?? 0);
+                            setIsViewsModalOpen(true);
+                          }}
+                          className={FEED_ACTION_BTN_CLASS}
+                          aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
+                        >
+                          <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
+                          <span className={FEED_ACTION_METRIC_CLASS}>
+                            {compactMetric(item.viewsCount ?? 0)}
+                          </span>
+                        </button>
+                      </div>
+                    ) : (
                       <button
                         type="button"
                         data-gallery-action=""
                         onClick={() => {
                           triggerHaptic('light');
-                          toggleLiked(item.id);
+                          setViewsSheetPostId(item.id);
+                          setViewsSheetCount(item.viewsCount ?? 0);
+                          setIsViewsModalOpen(true);
                         }}
-                        className={cn(
-                          FEED_ACTION_BTN_CLASS,
-                          isLiked && 'text-orange-500 border-orange-500/50'
-                        )}
-                        aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
-                        aria-pressed={isLiked}
+                        className={FEED_ACTION_BTN_CLASS}
+                        aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
                       >
-                        <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 shrink-0" />
-                        <span className={FEED_ACTION_METRIC_CLASS}>2.4k</span>
+                        <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
+                        <span className={FEED_ACTION_METRIC_CLASS}>
+                          {compactMetric(item.viewsCount ?? 0)}
+                        </span>
                       </button>
-                    ) : null}
+                    )}
                     <button
                       type="button"
                       data-gallery-action=""
@@ -960,12 +1200,28 @@ export function GalleryInspirationGrid({
                     aria-label={likeLabel}
                     onClick={() => {
                       triggerHaptic('light');
+                      setLikesSheetCount(likeCount);
                       setIsLikesModalOpen(true);
                     }}
                     className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
                   >
                     <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
                     <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-gallery-action=""
+                    aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setViewsSheetPostId(item.id);
+                      setViewsSheetCount(item.viewsCount ?? 0);
+                      setIsViewsModalOpen(true);
+                    }}
+                    className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Eye className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                    <span>{(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações</span>
                   </button>
                 </div>
               <TattooDnaSpecsBar />
@@ -1075,7 +1331,15 @@ export function GalleryInspirationGrid({
 
       <FeedLikesSheet
         open={isLikesModalOpen}
+        likeCount={likesSheetCount}
         onClose={() => setIsLikesModalOpen(false)}
+      />
+
+      <FeedViewsSheet
+        open={isViewsModalOpen}
+        postId={viewsSheetPostId}
+        viewsCount={viewsSheetCount}
+        onClose={() => setIsViewsModalOpen(false)}
       />
 
       <BudgetEstimatorSheet

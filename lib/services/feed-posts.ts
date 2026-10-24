@@ -50,6 +50,7 @@ type FeedPostRow = {
   authorName: string;
   authorAvatar: string;
   style: string;
+  viewsCount: number;
 };
 
 function artistInitial(nome: string): string {
@@ -67,6 +68,7 @@ export function mapPostToInspiration(post: FeedPostRow): InspirationItem {
     artistId: null,
     artistUsername: null,
     likes: 0,
+    viewsCount: post.viewsCount ?? 0,
     artistAvatarUrl: post.authorAvatar,
     artistInitial: artistInitial(artistName),
   };
@@ -107,6 +109,7 @@ export async function getFeedPosts(): Promise<InspirationItem[]> {
       authorName: true,
       authorAvatar: true,
       style: true,
+      viewsCount: true,
     },
   });
 

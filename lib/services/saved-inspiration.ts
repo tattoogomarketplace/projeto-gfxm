@@ -127,6 +127,7 @@ export async function listSavedInspirations(
             authorName: true,
             authorAvatar: true,
             style: true,
+            viewsCount: true,
           },
         },
       },
