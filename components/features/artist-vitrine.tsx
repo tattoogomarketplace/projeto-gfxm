@@ -105,7 +105,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
   );
 
   return (
-    <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] text-white [-webkit-overflow-scrolling:touch]">
+    <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-white [-webkit-overflow-scrolling:touch]">
       <header className="relative">
         <div className="relative h-48 w-full md:h-64">
           {artist.coverUrl ? (
@@ -230,15 +230,15 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             {t('vitrine.empty')}
           </div>
         ) : (
-          <ul className="grid w-full grid-cols-3 gap-0.5 md:gap-1">
+          <ul className="grid w-full grid-cols-3 gap-[1px] md:gap-0.5">
             {items.map((item) => (
-              <li key={item.id} className="relative aspect-square w-full overflow-hidden bg-zinc-900">
+              <li key={item.id} className="relative aspect-[9/16] w-full overflow-hidden bg-white/5">
                 <Image
                   src={item.imageUrl}
                   alt={styleLabel(item.style)}
                   fill
                   sizes="(max-width: 768px) 33vw, 240px"
-                  className="object-cover select-none"
+                  className="h-full w-full object-cover select-none transform-gpu will-change-transform"
                   style={NATIVE_APP_IMAGE_STYLE}
                   draggable={false}
                   onDragStart={(event) => event.preventDefault()}
