@@ -32,6 +32,7 @@ import {
 import { TattooLikeButton, TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SpotlightModal, type SpotlightClient } from '@/components/ui/spotlight-modal';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore } from '@/hooks/use-ui-store';
@@ -123,22 +124,18 @@ function compactMetric(value: number): string {
   return value.toLocaleString('pt-BR');
 }
 
-function handleSpotlightPreview(username: string) {
-  console.log('[spotlight]', username);
-}
-
 function FeedListUserRow({
   user,
   onSelect,
 }: {
   user: FeedListUser;
-  onSelect: (username: string) => void;
+  onSelect: (client: SpotlightClient) => void;
 }) {
   const initial = user.username.replace(/^@/, '').charAt(0).toUpperCase() || 'U';
   return (
     <button
       type="button"
-      onClick={() => onSelect(user.username)}
+      onClick={() => onSelect({ username: user.username, avatarUrl: user.avatarUrl })}
       className="flex min-h-11 w-full items-center gap-3 border-b border-white/5 py-3 text-left last:border-b-0 transition-colors hover:bg-white/[0.03] active:scale-[0.99]"
     >
       {user.avatarUrl ? (
@@ -255,17 +252,22 @@ function FeedLikesSheet({
   onClose: () => void;
   likeCount: number;
 }) {
+  const [selectedClient, setSelectedClient] = useState<SpotlightClient | null>(null);
+
   return (
-    <FeedEngagementSheet
-      open={open}
-      onClose={onClose}
-      titleId="likes-sheet-title"
-      title={`${likeCount.toLocaleString('pt-BR')} Curtidas`}
-    >
-      {FEED_LIKES_PLACEHOLDERS.map((user) => (
-        <FeedListUserRow key={user.id} user={user} onSelect={handleSpotlightPreview} />
-      ))}
-    </FeedEngagementSheet>
+    <>
+      <FeedEngagementSheet
+        open={open}
+        onClose={onClose}
+        titleId="likes-sheet-title"
+        title={`${likeCount.toLocaleString('pt-BR')} Curtidas`}
+      >
+        {FEED_LIKES_PLACEHOLDERS.map((user) => (
+          <FeedListUserRow key={user.id} user={user} onSelect={setSelectedClient} />
+        ))}
+      </FeedEngagementSheet>
+      <SpotlightModal client={selectedClient} onClose={() => setSelectedClient(null)} />
+    </>
   );
 }
 
@@ -319,6 +321,7 @@ function FeedViewsSheet({
     anonymousCount: number;
     viewers: PostViewerUser[];
   } | null>(null);
+  const [selectedClient, setSelectedClient] = useState<SpotlightClient | null>(null);
 
   useEffect(() => {
     if (!open || !postId) return;
@@ -349,32 +352,35 @@ function FeedViewsSheet({
   const viewers = snapshot?.postId === postId ? snapshot.viewers : [];
 
   return (
-    <FeedEngagementSheet
-      open={open}
-      onClose={onClose}
-      titleId="views-sheet-title"
-      title={`${viewsCount.toLocaleString('pt-BR')} Visualizações`}
-    >
-      <AnonymousExplorersRow count={anonymousCount} />
-      {loading ? (
-        <div className="space-y-3 py-2">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="flex items-center gap-3 py-2">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <Skeleton className="h-3.5 w-32" />
-            </div>
-          ))}
-        </div>
-      ) : viewers.length > 0 ? (
-        viewers.map((user) => (
-          <FeedListUserRow key={user.id} user={user} onSelect={handleSpotlightPreview} />
-        ))
-      ) : (
-        <p className="py-6 text-center text-[13px] text-zinc-500">
-          Nenhum perfil autenticado visualizou esta obra ainda.
-        </p>
-      )}
-    </FeedEngagementSheet>
+    <>
+      <FeedEngagementSheet
+        open={open}
+        onClose={onClose}
+        titleId="views-sheet-title"
+        title={`${viewsCount.toLocaleString('pt-BR')} Visualizações`}
+      >
+        <AnonymousExplorersRow count={anonymousCount} />
+        {loading ? (
+          <div className="space-y-3 py-2">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="flex items-center gap-3 py-2">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-3.5 w-32" />
+              </div>
+            ))}
+          </div>
+        ) : viewers.length > 0 ? (
+          viewers.map((user) => (
+            <FeedListUserRow key={user.id} user={user} onSelect={setSelectedClient} />
+          ))
+        ) : (
+          <p className="py-6 text-center text-[13px] text-zinc-500">
+            Nenhum perfil autenticado visualizou esta obra ainda.
+          </p>
+        )}
+      </FeedEngagementSheet>
+      <SpotlightModal client={selectedClient} onClose={() => setSelectedClient(null)} />
+    </>
   );
 }
 
