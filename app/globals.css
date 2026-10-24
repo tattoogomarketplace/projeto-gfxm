@@ -293,9 +293,21 @@
     border-radius: 0;
     transform: none;
     overflow: visible;
-    background-color: #121212;
+    background-color: color-mix(in srgb, #121212 28%, transparent);
     background-clip: border-box;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-top-color: rgba(255, 255, 255, 0.06);
+    padding-top: 0.25rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.25rem);
+    transition: background-color 220ms ease, border-color 220ms ease;
+  }
+
+  .bottom-nav-dock.is-scrolling {
+    background-color: color-mix(in srgb, #121212 8%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    border-top-color: rgba(255, 255, 255, 0.03);
   }
 
   .bottom-nav-dock::after {
@@ -304,8 +316,8 @@
     right: 0;
     bottom: 0;
     left: 0;
-    height: calc(env(safe-area-inset-bottom, 0px) + 12px);
-    background-color: #121212;
+    height: env(safe-area-inset-bottom, 0px);
+    background-color: transparent;
     pointer-events: none;
     z-index: 0;
   }

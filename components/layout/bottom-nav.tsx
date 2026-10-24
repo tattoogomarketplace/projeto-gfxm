@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect } from 'react';
+import { memo, startTransition, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
@@ -63,12 +63,12 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed left-0 z-50 h-auto max-h-none w-full overflow-visible rounded-none md:hidden bg-[#121212] border-t border-zinc-800 px-5 pt-1';
+  'bottom-nav-dock fixed bottom-0 left-0 z-50 h-auto max-h-none w-full overflow-visible rounded-none md:hidden border-t border-white/[0.06] px-5 pt-1 pb-1';
 
 const DOCK_PAD = {
   bottom: '0px',
   marginBottom: '0px',
-  paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+  paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.25rem)',
 } as const;
 
 const NavIcon = memo(function NavIcon({
@@ -151,6 +151,34 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     warm.forEach((href) => router.prefetch(href));
   }, [router, homePath]);
 
+  const navRef = useRef<HTMLElement>(null);
+  const scrollIdleRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const root = document.querySelector('[data-viewport-root]');
+    const scrollers = [
+      root,
+      ...Array.from(document.querySelectorAll('.screen-page, .nav-safe-pad, [data-scroll-root]')),
+    ].filter((el): el is Element => Boolean(el));
+
+    const markScrolling = () => {
+      navRef.current?.classList.add('is-scrolling');
+      if (scrollIdleRef.current) window.clearTimeout(scrollIdleRef.current);
+      scrollIdleRef.current = window.setTimeout(() => {
+        navRef.current?.classList.remove('is-scrolling');
+      }, 180);
+    };
+
+    scrollers.forEach((el) => el.addEventListener('scroll', markScrolling, { passive: true }));
+    window.addEventListener('scroll', markScrolling, { passive: true });
+
+    return () => {
+      scrollers.forEach((el) => el.removeEventListener('scroll', markScrolling));
+      window.removeEventListener('scroll', markScrolling);
+      if (scrollIdleRef.current) window.clearTimeout(scrollIdleRef.current);
+    };
+  }, [pathname]);
+
   const handleSelect = useCallback(
     (tab: AppTab, href: string) => {
       triggerHaptic('light');
@@ -185,6 +213,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   return (
     <nav
+      ref={navRef}
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
       style={DOCK_PAD}
       aria-label={t('nav.home')}
@@ -217,7 +246,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
                   active
-                    ? 'bg-orange-500/15 text-orange-500'
+                    ? 'bg-orange-500/28 text-orange-400'
                     : 'bg-transparent text-zinc-500'
                 )}
                 aria-current={active ? 'page' : undefined}
@@ -225,7 +254,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 <span className="flex items-center justify-center">
                   <NavIcon
                     icon={item.icon}
-                    className={active ? 'drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : undefined}
+                    className={active ? 'drop-shadow-[0_0_10px_rgba(249,115,22,0.85)]' : undefined}
                   />
                 </span>
                 <span>{t(item.labelKey)}</span>
