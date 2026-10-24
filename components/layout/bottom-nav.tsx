@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useRef } from 'react';
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
@@ -63,7 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed bottom-0 left-0 z-50 h-auto max-h-none w-full overflow-visible rounded-none md:hidden border-t border-white/[0.06] px-5 pt-1 pb-1';
+  'bottom-nav-dock fixed bottom-0 left-0 z-50 h-auto max-h-none w-full overflow-visible rounded-none border-t border-white/[0.06] px-5 pt-1 pb-1';
 
 const DOCK_PAD = {
   bottom: '0px',
@@ -153,6 +153,36 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const navRef = useRef<HTMLElement>(null);
   const scrollIdleRef = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const applyDockMetrics = () => {
+      const height = Math.ceil(nav.getBoundingClientRect().height);
+      if (height <= 0) return;
+      const root = document.documentElement;
+      root.style.setProperty('--dock-height', `${height}px`);
+      root.style.setProperty('--dock-clearance', `calc(${height}px + 0.5rem)`);
+    };
+
+    applyDockMetrics();
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(applyDockMetrics) : null;
+    resizeObserver?.observe(nav);
+
+    window.addEventListener('resize', applyDockMetrics, { passive: true });
+    window.addEventListener('orientationchange', applyDockMetrics, { passive: true });
+    window.visualViewport?.addEventListener('resize', applyDockMetrics, { passive: true });
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', applyDockMetrics);
+      window.removeEventListener('orientationchange', applyDockMetrics);
+      window.visualViewport?.removeEventListener('resize', applyDockMetrics);
+    };
+  }, [conceal, pathname]);
 
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
