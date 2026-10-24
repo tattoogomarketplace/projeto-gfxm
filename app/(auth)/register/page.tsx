@@ -575,7 +575,7 @@ export default function RegisterPage() {
           onSubmit={handleSubmit(onSubmit, () => {
             toast.error(t('auth.reviewFields'));
           })}
-          className="relative space-y-4"
+          className="relative space-y-4 pb-40"
         >
           <RoleSelector
             value={roleValue}
