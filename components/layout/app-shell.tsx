@@ -299,6 +299,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     hideShellChrome ||
     isDedicatedChat ||
     isSettingsHub ||
+    isGaleria ||
     isArtistProfile ||
     isAgenda ||
     isProfileSettings;

@@ -2,7 +2,7 @@ export default function GaleriaLoading() {
   return (
     <div
       aria-hidden
-      className="relative z-0 isolate min-w-0 w-full max-w-none flex-1 -mx-4 sm:-mx-6 bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-4"
+      className="relative z-0 isolate min-h-0 w-full max-w-none flex-1 overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-4 [-webkit-overflow-scrolling:touch]"
     >
       <div className="px-4 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/5 border-l-2 border-l-[#F97316] bg-[#121212]/60 p-3 backdrop-blur-sm">
