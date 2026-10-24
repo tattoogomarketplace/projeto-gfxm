@@ -1,6 +1,6 @@
+import { ensureMocksExist } from '@/lib/db/seed-mocks';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { prisma } from '@/lib/prisma';
-import { ensureVerticalMockPosts } from '@/lib/services/vertical-mock-posts';
 
 type FeedPostRow = {
   id: string;
@@ -33,13 +33,7 @@ export function mapPostToInspiration(post: FeedPostRow): InspirationItem {
 }
 
 export async function getFeedPosts(): Promise<InspirationItem[]> {
-  try {
-    await ensureVerticalMockPosts();
-  } catch (error) {
-    console.error('[feed-posts] falha no auto-seed 9:16', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
+  await ensureMocksExist();
 
   const rows = await prisma.post.findMany({
     orderBy: { createdAt: 'desc' },

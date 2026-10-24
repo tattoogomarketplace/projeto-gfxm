@@ -1,3 +1,4 @@
+import { ensureMocksExist } from '@/lib/db/seed-mocks';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { mapPostToInspiration } from '@/lib/services/feed-posts';
 import { prisma } from '@/lib/prisma';
@@ -114,6 +115,8 @@ export async function listSavedInspirations(
     return [];
   }
 
+  await ensureMocksExist();
+
   try {
     const rows = await prisma.savedInspiration.findMany({
       where: { userId: clerkUserId },
@@ -150,6 +153,8 @@ export async function listSavedInspirations(
 export async function listSavedInspirationIds(userId: string): Promise<string[]> {
   const clerkUserId = normalizeId(userId);
   if (!clerkUserId) return [];
+
+  await ensureMocksExist();
 
   try {
     const rows = await prisma.savedInspiration.findMany({
