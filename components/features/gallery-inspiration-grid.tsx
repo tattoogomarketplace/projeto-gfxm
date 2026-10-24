@@ -52,7 +52,10 @@ import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
 import { cn } from '@/lib/utils';
 
-const ASPECTS = ['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'] as const;
+const ASPECTS = ['aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]'] as const;
+
+const GRID_CLASS = 'grid grid-cols-3 gap-[1px]';
+const GRID_TILE_CLASS = 'relative w-full aspect-[9/16] overflow-hidden bg-white/5';
 
 const HUD_CURATORSHIP_CLASS =
   'relative z-[1] p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-b-0 border-white/10 shadow-2xl';
@@ -867,7 +870,7 @@ export function GalleryInspirationGrid({
                 </div>
                 <Skeleton className="h-7 w-[5.5rem] rounded-full border border-orange-500/30 bg-orange-500/5 shadow-[0_0_10px_rgba(249,115,22,0.05)]" />
               </div>
-              <div className="w-full max-w-none aspect-[4/5] relative bg-[#050505] rounded-none border border-white/10 overflow-hidden">
+              <div className="relative w-full aspect-[9/16] overflow-hidden bg-white/5">
                 <Skeleton className="h-full w-full rounded-none" />
                 <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
               </div>
@@ -914,11 +917,11 @@ export function GalleryInspirationGrid({
       );
     }
     return (
-      <div className="columns-2 gap-4" aria-hidden>
+      <div className={GRID_CLASS} aria-hidden>
         {Array.from({ length: skeletonCount }, (_, index) => (
           <Skeleton
             key={index}
-            className={cn('mb-4 w-full break-inside-avoid rounded-xl', aspectFor(index))}
+            className={cn(GRID_TILE_CLASS, aspectFor(index))}
           />
         ))}
       </div>
@@ -929,10 +932,10 @@ export function GalleryInspirationGrid({
     <>
       <div
         className={
-          isCarousel ? CAROUSEL_CLASS : isFeed ? 'relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 overflow-x-hidden' : 'columns-2 gap-4'
+          isCarousel ? CAROUSEL_CLASS : isFeed ? 'relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 overflow-x-hidden' : GRID_CLASS
         }
       >
-        {items.map((item, index) => {
+        {items.map((item) => {
           const isLiked = Boolean(liked[item.id]);
           const isSaved = optimisticSaved.has(item.id);
           const artistName = item.artistName || t('welcome.artistFallback');
@@ -998,7 +1001,7 @@ export function GalleryInspirationGrid({
 
                 <div
                   onPointerUp={handleFeedImagePointerUp(item)}
-                  className="relative isolate w-full max-w-none aspect-[4/5] bg-[#050505] rounded-none border border-white/10 overflow-hidden contain-paint"
+                  className="relative isolate w-full aspect-[9/16] overflow-hidden bg-white/5 contain-paint"
                 >
                     <FeedPinchZoom>
                     <motion.div
@@ -1208,10 +1211,10 @@ export function GalleryInspirationGrid({
               onPointerLeave={cancelLongPress}
               onContextMenu={(event) => event.preventDefault()}
               className={cn(
-                'group relative select-none overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900/40',
+                'group relative select-none overflow-hidden',
                 isCarousel
-                  ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start'
-                  : cn('mb-4 break-inside-avoid', aspectFor(index))
+                  ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start rounded-xl border border-zinc-800/50 bg-zinc-900/40'
+                  : GRID_TILE_CLASS
               )}
             >
               <motion.div
@@ -1224,7 +1227,7 @@ export function GalleryInspirationGrid({
                 <OptimizedImage
                   src={item.imageUrl}
                   alt={`${styleLabel(item.style)} — ${artistName}`}
-                  className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
+                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-[1.04]"
                 />
               </motion.div>
               {isCarousel ? (

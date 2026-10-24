@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Compass, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
+import { SeedVerticalMocksButton } from '@/components/features/seed-vertical-mocks-button';
 import { useI18n } from '@/hooks/use-i18n';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
@@ -66,6 +67,7 @@ export function GaleriaInspiracoes({
           <h1 className="text-base font-semibold tracking-tight text-zinc-100">{t('gallery.title')}</h1>
         </div>
       </div>
+      <SeedVerticalMocksButton />
       <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)] pointer-events-none">
         <PortfolioFilterBar
           style={style}
@@ -81,8 +83,7 @@ export function GaleriaInspiracoes({
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
-          skeletonCount={4}
-          layout="feed"
+          skeletonCount={9}
           showLike
           savedIds={savedIds}
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}

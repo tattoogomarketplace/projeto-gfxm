@@ -20,9 +20,9 @@ export default function InspiracoesLoading() {
           <div className="h-11 w-24 shrink-0 rounded-2xl border border-white/10 bg-white/5" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-[1px]">
         {Array.from({ length: 9 }, (_, index) => (
-          <div key={index} className="aspect-square bg-zinc-900" />
+          <div key={index} className="relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
         ))}
       </div>
     </div>
