@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 const VERTICAL_CROP = 'w=1080&h=1920&fit=crop&q=80&auto=format';
 
-const RELATIONAL_MOCK_POSTS = [
+export const RELATIONAL_MOCK_POSTS = [
   {
     imageUrl: `https://images.unsplash.com/photo-1605497788044-5a32c7078486?${VERTICAL_CROP}`,
     authorName: 'Rafael Lima',

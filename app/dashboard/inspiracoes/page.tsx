@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { SavedInspirationsGallery } from '@/components/features/saved-inspirations-gallery';
 import { SessionHydrating } from '@/components/features/session-hydrating';
 import type { InspirationItem } from '@/lib/gallery-mock';

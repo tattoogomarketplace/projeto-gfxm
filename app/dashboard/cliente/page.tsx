@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { SessionHydrating } from '@/components/features/session-hydrating';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { getFeedPosts } from '@/lib/services/feed-posts';
