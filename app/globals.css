@@ -293,21 +293,37 @@
     border-radius: 0;
     transform: none;
     overflow: visible;
-    background-color: color-mix(in srgb, #121212 28%, transparent);
+    background-color: transparent;
     background-clip: border-box;
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
     border-top-color: rgba(255, 255, 255, 0.06);
     padding-top: 0.25rem;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.25rem);
-    transition: background-color 220ms ease, border-color 220ms ease;
+    transition: border-color 220ms ease;
+  }
+
+  .bottom-nav-dock::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: color-mix(in srgb, var(--background) 70%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    transition: background-color 220ms ease, backdrop-filter 220ms ease, -webkit-backdrop-filter 220ms ease;
   }
 
   .bottom-nav-dock.is-scrolling {
-    background-color: color-mix(in srgb, #121212 8%, transparent);
-    -webkit-backdrop-filter: blur(14px) saturate(140%);
-    backdrop-filter: blur(14px) saturate(140%);
     border-top-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .bottom-nav-dock.is-scrolling::before {
+    background-color: color-mix(in srgb, var(--background) 55%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
   }
 
   .bottom-nav-dock::after {
