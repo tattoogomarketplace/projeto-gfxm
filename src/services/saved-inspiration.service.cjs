@@ -1,16 +1,9 @@
 const { prisma } = require("./prisma.service.cjs");
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function httpError(status, message) {
   const error = new Error(message);
   error.status = status;
   return error;
-}
-
-function isUuid(value) {
-  return typeof value === "string" && UUID_RE.test(value.trim());
 }
 
 function normalizeId(value) {
@@ -24,12 +17,9 @@ async function toggleSave(userIdRaw, postIdRaw) {
   if (!userId || !postId) {
     throw httpError(400, "userId e postId são obrigatórios.");
   }
-  if (!isUuid(userId) || !isUuid(postId)) {
-    throw httpError(400, "Identificadores inválidos.");
-  }
 
-  const post = await prisma.portfolio.findFirst({
-    where: { id: postId, deleted_at: null },
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
     select: { id: true },
   });
   if (!post) {
@@ -81,7 +71,7 @@ async function toggleSave(userIdRaw, postIdRaw) {
       throw httpError(404, "Inspiração não encontrada.");
     }
     if (err.code === "P2021" || err.code === "P2010") {
-      console.error("[saved-inspiration] tabela saved_inspirations indisponível", {
+      console.error("[saved-inspiration] persistência indisponível", {
         code: err.code,
         error: err instanceof Error ? err.message : String(err),
       });

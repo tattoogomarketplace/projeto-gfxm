@@ -4,7 +4,6 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import {
-  loadSaveActor,
   SavedInspirationError,
   toggleSavedInspiration,
 } from '@/lib/services/saved-inspiration';
@@ -35,9 +34,8 @@ export async function POST(
       throw new SavedInspirationError(401, 'Não autenticado.');
     }
 
-    const actor = await loadSaveActor(userId);
     const { postId } = await params;
-    const result = await toggleSavedInspiration(actor.id, postId);
+    const result = await toggleSavedInspiration(userId, postId);
 
     return NextResponse.json({
       success: true,

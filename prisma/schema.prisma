@@ -174,7 +174,6 @@ model Perfil {
   flashNotes               FlashNote[]
   reviewsAuthored          Review[]             @relation("ReviewAuthor")
   reviewsReceived          Review[]             @relation("ReviewTarget")
-  savedInspirations        SavedInspiration[]
 
   @@unique([email], map: "perfis_email_unique_idx")
   @@index([role], map: "perfis_role_idx")
@@ -235,10 +234,9 @@ model Portfolio {
   updated_at       DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at       DateTime? @db.Timestamptz(6)
 
-  tatuador          Perfil             @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  likes             PortfolioLike[]
-  reviews           Review[]
-  savedInspirations SavedInspiration[]
+  tatuador Perfil          @relation(fields: [tatuador_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  likes    PortfolioLike[]
+  reviews  Review[]
 
   @@index([tatuador_id], map: "portfolios_tatuador_id_idx")
   @@index([estilo], map: "portfolios_estilo_idx")
@@ -496,14 +494,27 @@ model Review {
   @@map("reviews")
 }
 
-model SavedInspiration {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  userId    String   @map("user_id") @db.Uuid
-  postId    String   @map("post_id") @db.Uuid
+model Post {
+  id           String   @id @default(cuid())
+  imageUrl     String
+  authorName   String
+  authorAvatar String
+  style        String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user Perfil    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  post Portfolio @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  savedInspirations SavedInspiration[]
+
+  @@index([createdAt], map: "posts_created_at_idx")
+  @@map("posts")
+}
+
+model SavedInspiration {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([userId, postId], map: "saved_inspirations_user_post_unique")
   @@index([postId], map: "saved_inspirations_post_id_idx")

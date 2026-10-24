@@ -3,7 +3,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import {
-  loadSaveActor,
   SavedInspirationError,
   toggleSavedInspiration,
 } from '@/lib/services/saved-inspiration';
@@ -26,11 +25,12 @@ export async function toggleSave(postId: string): Promise<ToggleSaveResult> {
   }
 
   try {
-    const actor = await loadSaveActor(userId);
-    const result = await toggleSavedInspiration(actor.id, postId);
+    const result = await toggleSavedInspiration(userId, postId);
+    revalidatePath('/');
     revalidatePath('/dashboard/inspiracoes');
     revalidatePath('/dashboard/salvos');
     revalidatePath('/dashboard/cliente');
+    revalidatePath('/dashboard/galeria');
     return { success: true, isSaved: result.isSaved, message: result.message };
   } catch (error) {
     if (error instanceof SavedInspirationError) {

@@ -1,6 +1,6 @@
 import type { InspirationItem } from '@/lib/gallery-mock';
+import { mapPostToInspiration } from '@/lib/services/feed-posts';
 import { prisma } from '@/lib/prisma';
-import { resolvePortfolioLocation } from '@/lib/portfolio-metadata';
 
 export class SavedInspirationError extends Error {
   status: number;
@@ -12,16 +12,13 @@ export class SavedInspirationError extends Error {
   }
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export type SavedInspirationToggleResult = {
   isSaved: boolean;
   message: string;
 };
 
-function isUuid(value: string): boolean {
-  return UUID_RE.test(value);
+function normalizeId(value: string): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function prismaCode(error: unknown): string | undefined {
@@ -30,32 +27,19 @@ function prismaCode(error: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-export async function loadSaveActor(clerkId: string): Promise<{ id: string }> {
-  const actor = await prisma.perfil.findUnique({
-    where: { clerk_id: clerkId },
-    select: { id: true, deleted_at: true },
-  });
-  if (!actor || actor.deleted_at) {
-    throw new SavedInspirationError(404, 'Perfil não encontrado.');
-  }
-  return { id: actor.id };
-}
-
 export async function toggleSavedInspiration(
-  perfilId: string,
+  userIdRaw: string,
   postIdRaw: string
 ): Promise<SavedInspirationToggleResult> {
-  const postId = typeof postIdRaw === 'string' ? postIdRaw.trim() : '';
+  const userId = normalizeId(userIdRaw);
+  const postId = normalizeId(postIdRaw);
 
-  if (!perfilId || !postId) {
+  if (!userId || !postId) {
     throw new SavedInspirationError(400, 'userId e postId são obrigatórios.');
   }
-  if (!isUuid(perfilId) || !isUuid(postId)) {
-    throw new SavedInspirationError(400, 'Identificadores inválidos.');
-  }
 
-  const post = await prisma.portfolio.findFirst({
-    where: { id: postId, deleted_at: null },
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
     select: { id: true },
   });
   if (!post) {
@@ -66,14 +50,14 @@ export async function toggleSavedInspiration(
     return await prisma.$transaction(async (tx) => {
       const existingSave = await tx.savedInspiration.findUnique({
         where: {
-          userId_postId: { userId: perfilId, postId },
+          userId_postId: { userId, postId },
         },
       });
 
       if (existingSave) {
         await tx.savedInspiration.delete({
           where: {
-            userId_postId: { userId: perfilId, postId },
+            userId_postId: { userId, postId },
           },
         });
         return {
@@ -83,7 +67,7 @@ export async function toggleSavedInspiration(
       }
 
       await tx.savedInspiration.create({
-        data: { userId: perfilId, postId },
+        data: { userId, postId },
       });
       return {
         isSaved: true,
@@ -108,7 +92,7 @@ export async function toggleSavedInspiration(
       throw new SavedInspirationError(404, 'Inspiração não encontrada.');
     }
     if (code === 'P2021' || code === 'P2010') {
-      console.error('[saved-inspiration] tabela saved_inspirations indisponível', {
+      console.error('[saved-inspiration] persistência indisponível', {
         code,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -118,57 +102,12 @@ export async function toggleSavedInspiration(
   }
 }
 
-function artistName(nome: string | null | undefined): string {
-  return (nome ?? '').trim();
-}
-
-function artistInitial(nome: string): string {
-  const letter = nome.charAt(0);
-  return letter ? letter.toUpperCase() : 'A';
-}
-
-function mapSavedPost(post: {
-  id: string;
-  url_imagem: string;
-  estilo: string;
-  descricao: string | null;
-  likes_count: number;
-  tatuador_id: string;
-  tatuador: {
-    id: string;
-    nome: string | null;
-    username: string | null;
-    cidade: string | null;
-    estado: string | null;
-    studio: { cidade: string | null; estado: string | null } | null;
-  };
-}): InspirationItem {
-  const name = artistName(post.tatuador.nome);
-  return {
-    id: post.id,
-    imageUrl: post.url_imagem,
-    style: post.estilo,
-    artistName: name,
-    artistId: post.tatuador_id,
-    artistUsername: post.tatuador.username ?? null,
-    likes: post.likes_count,
-    artistAvatarUrl: null,
-    artistInitial: artistInitial(name),
-    location: resolvePortfolioLocation({
-      studioCity: post.tatuador.studio?.cidade,
-      studioState: post.tatuador.studio?.estado,
-      artistCity: post.tatuador.cidade,
-      artistState: post.tatuador.estado,
-    }),
-    description: post.descricao,
-  };
-}
-
 export async function listSavedInspirations(
-  perfilId: string,
+  userId: string,
   options?: { take?: number }
 ): Promise<InspirationItem[]> {
-  if (!isUuid(perfilId)) return [];
+  const clerkUserId = normalizeId(userId);
+  if (!clerkUserId) return [];
 
   const take = options?.take;
   if (typeof take === 'number' && (!Number.isFinite(take) || take < 1)) {
@@ -177,40 +116,23 @@ export async function listSavedInspirations(
 
   try {
     const rows = await prisma.savedInspiration.findMany({
-      where: {
-        userId: perfilId,
-        post: {
-          deleted_at: null,
-          tatuador: { deleted_at: null },
-        },
-      },
+      where: { userId: clerkUserId },
       orderBy: { createdAt: 'desc' },
       ...(typeof take === 'number' ? { take } : {}),
       select: {
         post: {
           select: {
             id: true,
-            url_imagem: true,
-            estilo: true,
-            descricao: true,
-            likes_count: true,
-            tatuador_id: true,
-            tatuador: {
-              select: {
-                id: true,
-                nome: true,
-                username: true,
-                cidade: true,
-                estado: true,
-                studio: { select: { cidade: true, estado: true } },
-              },
-            },
+            imageUrl: true,
+            authorName: true,
+            authorAvatar: true,
+            style: true,
           },
         },
       },
     });
 
-    return rows.map((row) => mapSavedPost(row.post));
+    return rows.map((row) => mapPostToInspiration(row.post));
   } catch (error) {
     const code = prismaCode(error);
     if (code === 'P2021' || code === 'P2010') {
@@ -224,18 +146,13 @@ export async function listSavedInspirations(
   }
 }
 
-export async function listSavedInspirationIds(perfilId: string): Promise<string[]> {
-  if (!isUuid(perfilId)) return [];
+export async function listSavedInspirationIds(userId: string): Promise<string[]> {
+  const clerkUserId = normalizeId(userId);
+  if (!clerkUserId) return [];
 
   try {
     const rows = await prisma.savedInspiration.findMany({
-      where: {
-        userId: perfilId,
-        post: {
-          deleted_at: null,
-          tatuador: { deleted_at: null },
-        },
-      },
+      where: { userId: clerkUserId },
       orderBy: { createdAt: 'desc' },
       select: { postId: true },
     });

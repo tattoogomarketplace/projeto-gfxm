@@ -13,7 +13,6 @@ import {
 } from '@/components/features/gallery-haptic-preview';
 import { HomeCarouselActionCard } from '@/components/features/home-carousel-action-card';
 import { HomeFeedbackCarousel } from '@/components/features/home-feedback-carousel';
-import { useGaleria } from '@/hooks/use-galeria';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
@@ -21,14 +20,9 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BRAND_NAME } from '@/lib/i18n/brands';
-import {
-  HOME_CAROUSEL_LIMIT,
-  PLACEHOLDER_INSPIRATIONS,
-  type InspirationItem,
-} from '@/lib/gallery-mock';
+import { HOME_CAROUSEL_LIMIT, type InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
-import type { GaleriaItem } from '@/lib/types/galeria';
 
 /**
  * TATTOOGO MK — HOME / DISCOVER (ENGINE DE DESCOBERTA)
@@ -168,21 +162,21 @@ function SectionHeader({
   );
 }
 
-function deriveArtists(items: GaleriaItem[]): DiscoverArtist[] {
+function deriveArtists(items: InspirationItem[]): DiscoverArtist[] {
   const map = new Map<string, DiscoverArtist & { counts: Map<string, number> }>();
   for (const item of items) {
-    const key = item?.tatuadorId;
+    const key = item.artistId || item.artistName;
     if (!key) continue;
     let entry = map.get(key);
     if (!entry) {
       entry = {
         id: key,
-        name: item.artist?.name || '',
-        username: item.artist?.username ?? null,
+        name: item.artistName || '',
+        username: item.artistUsername ?? null,
         specialty: item.style || '',
-        avatarUrl: item.artist?.avatarUrl ?? null,
-        initial: item.artist?.initial || (item.artist?.name || 'A').charAt(0).toUpperCase(),
-        verified: Boolean(item.artist?.studio),
+        avatarUrl: item.artistAvatarUrl ?? null,
+        initial: item.artistInitial || (item.artistName || 'A').charAt(0).toUpperCase(),
+        verified: false,
         counts: new Map<string, number>(),
       };
       map.set(key, entry);
@@ -217,19 +211,24 @@ function artistDestination(artist: DiscoverArtist): string {
   return artistProfileHref(artist);
 }
 
-export function HomeDiscover({ savedItems = [] }: { savedItems?: InspirationItem[] }) {
+export function HomeDiscover({
+  feedItems = [],
+  savedItems = [],
+}: {
+  feedItems?: InspirationItem[];
+  savedItems?: InspirationItem[];
+}) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
-  const { data, isLoading } = useGaleria({ healed: 'all' });
   const longPress = useLongPressPreview();
 
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [artistPreview, setArtistPreview] = useState<GalleryPreviewItem | null>(null);
 
-  const items = useMemo(() => data ?? [], [data]);
-  const loading = isLoading && items.length === 0;
+  const items = feedItems;
+  const loading = false;
   const savedIds = useMemo(() => savedItems.map((item) => item.id), [savedItems]);
 
   const artists = useMemo<DiscoverArtist[]>(() => {
@@ -239,20 +238,7 @@ export function HomeDiscover({ savedItems = [] }: { savedItems?: InspirationItem
   }, [items]);
 
   const inspirations = useMemo<InspirationItem[]>(() => {
-    const source: InspirationItem[] =
-      items.length > 0
-        ? items.map((item) => ({
-            id: item.id,
-            imageUrl: item.imageUrl,
-            style: item.style,
-            artistName: item.artist?.name || '',
-            artistId: item.tatuadorId,
-            artistUsername: item.artist?.username ?? null,
-            likes: item.likesCount,
-          }))
-        : PLACEHOLDER_INSPIRATIONS;
-
-    const filtered = selectedStyle ? source.filter((item) => item.style === selectedStyle) : source;
+    const filtered = selectedStyle ? items.filter((item) => item.style === selectedStyle) : items;
     return filtered.slice(0, HOME_CAROUSEL_LIMIT);
   }, [items, selectedStyle]);
 

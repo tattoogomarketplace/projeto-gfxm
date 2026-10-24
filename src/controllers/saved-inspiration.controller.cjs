@@ -2,7 +2,7 @@ const savedInspirationService = require("../services/saved-inspiration.service.c
 
 async function toggle(req, res) {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.clerkId;
     const postId = req.params?.postId || req.body?.postId;
 
     if (!userId || !postId) {

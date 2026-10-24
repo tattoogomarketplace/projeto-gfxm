@@ -25,6 +25,7 @@ async function getUserFromToken(token) {
 
     return {
       id: perfil.id,
+      clerkId,
       email: perfil.email,
       role: perfil.role,
     };

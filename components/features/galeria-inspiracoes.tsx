@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { ChevronRight, Compass, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
-import { useGaleria } from '@/hooks/use-galeria';
 import { useI18n } from '@/hooks/use-i18n';
-import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
+import type { InspirationItem } from '@/lib/gallery-mock';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 
 type GaleriaInspiracoesProps = {
   onStartConversation: (tatuadorId: string, artworkId: string) => void;
+  items?: InspirationItem[];
   savedIds?: string[];
 };
 
@@ -41,45 +41,20 @@ export function GaleriaEntryCard({ href = '/dashboard/galeria' }: { href?: strin
   );
 }
 
-export function GaleriaInspiracoes({ onStartConversation, savedIds = [] }: GaleriaInspiracoesProps) {
+export function GaleriaInspiracoes({
+  onStartConversation,
+  items = [],
+  savedIds = [],
+}: GaleriaInspiracoesProps) {
   const { t } = useI18n();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
 
-  const query = useMemo(
-    () => ({
-      style: style || undefined,
-      bodyPart: bodyPart || undefined,
-      healed,
-    }),
-    [style, bodyPart, healed]
-  );
-
-  const { data, isLoading } = useGaleria(query);
-  const liveItems = useMemo(() => data ?? [], [data]);
-  const loading = isLoading && liveItems.length === 0;
-
+  const loading = false;
   const inspirations = useMemo<InspirationItem[]>(() => {
-    const source: InspirationItem[] =
-      liveItems.length > 0
-        ? liveItems.map((item) => ({
-            id: item.id,
-            imageUrl: item.imageUrl,
-            style: item.style,
-            artistName: item.artist?.name || '',
-            artistId: item.tatuadorId,
-            artistUsername: item.artist?.username ?? null,
-            likes: item.likesCount,
-            artistAvatarUrl: item.artist?.avatarUrl ?? null,
-            artistInitial: item.artist?.initial,
-            location: item.location,
-            description: item.descricao,
-          }))
-        : PLACEHOLDER_INSPIRATIONS;
-
-    return style ? source.filter((item) => item.style === style) : source;
-  }, [liveItems, style]);
+    return style ? items.filter((item) => item.style === style) : items;
+  }, [items, style]);
 
   return (
     <div className="relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 text-white">

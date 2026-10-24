@@ -18,7 +18,7 @@ export default async function InspiracoesPage() {
 
   let items: InspirationItem[] = [];
   try {
-    items = await listSavedInspirations(perfil.id);
+    items = perfil.clerk_id ? await listSavedInspirations(perfil.clerk_id) : [];
   } catch (error) {
     console.error('[dashboard/inspiracoes] falha ao listar salvos', error);
     items = [];

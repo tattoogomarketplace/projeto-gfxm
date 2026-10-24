@@ -12,10 +12,12 @@ import type { AppRole } from '@/lib/utils/auth-redirect';
 export default function ClienteDashboard({
   role = 'cliente',
   initialTab = 'portfolio',
+  feedItems = [],
   savedItems = [],
 }: {
   role?: AppRole;
   initialTab?: AppTab;
+  feedItems?: InspirationItem[];
   savedItems?: InspirationItem[];
 }) {
   // Aba derivada da ROTA (pathname + query), idêntica no SSR e no 1º frame do
@@ -49,7 +51,7 @@ export default function ClienteDashboard({
           </section>
         ) : activeTab === 'portfolio' ? (
           <section key="portfolio" className="min-w-0 w-full flex-1">
-            <HomeDiscover savedItems={savedItems} />
+            <HomeDiscover feedItems={feedItems} savedItems={savedItems} />
           </section>
         ) : (
           // Fase transitória: pinta EXATAMENTE o skeleton do `loading.tsx`
