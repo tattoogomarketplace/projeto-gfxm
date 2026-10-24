@@ -17,19 +17,21 @@ export default function AuthLayout({
     <div
       className={cn(
         AUTH_SHELL_CLASS,
-        isRegister && 'h-[100dvh] max-h-[100dvh] min-h-0 overflow-y-hidden'
+        isRegister && 'h-[100dvh] max-h-[100dvh] min-h-0 overflow-hidden'
       )}
       data-auth-shell
       style={{
         colorScheme: 'dark',
-        paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)',
+        paddingTop: 'max(1.5rem, env(safe-area-inset-top, 0px))',
+        paddingBottom: isRegister
+          ? 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))'
+          : 'calc(env(safe-area-inset-bottom, 0px) + 5rem)',
       }}
     >
       <div
         className={cn(
           'flex w-full max-w-md flex-col items-center',
-          isRegister ? 'h-full min-h-0 flex-1' : 'my-auto'
+          isRegister ? 'h-full min-h-0 flex-1 overflow-hidden' : 'my-auto'
         )}
       >
         <div className="w-full shrink-0">

@@ -517,7 +517,7 @@ export default function RegisterPage() {
   }, [isEstudio, cnpjValue, razaoSocial, setValue, t]);
 
   return (
-    <AuthScreen className="h-full w-full min-h-0 flex-1 overflow-y-auto overscroll-none pb-[120px] [-webkit-overflow-scrolling:touch]">
+    <AuthScreen className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
       <div
         id="clerk-captcha"
         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
@@ -555,7 +555,8 @@ export default function RegisterPage() {
           </button>
         </div>
       ) : (
-      <div className="screen-fade-in w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 pb-32 shadow-xl sm:p-8">
+      <div className="screen-fade-in flex h-full min-h-0 w-full max-w-md flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-none p-6 pb-[max(12rem,calc(env(safe-area-inset-bottom,0px)+10rem))] [-webkit-overflow-scrolling:touch] sm:p-8 sm:pb-[max(12rem,calc(env(safe-area-inset-bottom,0px)+10rem))]">
         <Link
           href="/login"
           className="-ml-2 mb-4 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-zinc-400 transition-colors hover:text-orange-500"
@@ -575,7 +576,7 @@ export default function RegisterPage() {
           onSubmit={handleSubmit(onSubmit, () => {
             toast.error(t('auth.reviewFields'));
           })}
-          className="relative space-y-4 pb-40"
+          className="relative space-y-4"
         >
           <RoleSelector
             value={roleValue}
@@ -784,6 +785,7 @@ export default function RegisterPage() {
         <p className="mt-6 text-center text-sm text-zinc-500">
           {t('auth.alreadyElite')} <Link href="/login" className="text-orange-500 hover:underline">{t('auth.doLogin')}</Link>
         </p>
+        </div>
       </div>
       )}
       <TermsViewerModal
