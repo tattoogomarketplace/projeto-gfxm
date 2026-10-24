@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, FileText, Heart, Send } from 'lucide-react';
+import { Drawer } from 'vaul';
 import {
   TransformComponent,
   TransformWrapper,
@@ -160,86 +161,49 @@ function FeedEngagementSheet({
   titleId,
   title,
   children,
+  modal = true,
 }: {
   open: boolean;
   onClose: () => void;
   titleId: string;
   title: string;
   children: ReactNode;
+  modal?: boolean;
 }) {
-  const mounted = useSyncExternalStore(clientMountedSubscribe, () => true, () => false);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
-
-  if (!mounted) return null;
-
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          key={titleId}
-          className="fixed inset-0 z-[60] flex h-[100dvh] w-full flex-col justify-end overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      snapPoints={[0.6, 1]}
+      fadeFromIndex={0}
+      modal={modal}
+      dismissible={modal}
+      shouldScaleBackground={false}
+      setBackgroundColorOnScale={false}
+    >
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-[60] bg-black/55" />
+        <Drawer.Content
+          aria-labelledby={titleId}
+          className="fixed bottom-0 left-0 right-0 z-[61] mt-24 flex h-full max-h-[100dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212] outline-none shadow-[0_-10px_40px_rgba(0,0,0,0.8)]"
         >
-          <motion.button
-            type="button"
-            aria-label="Fechar"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="absolute inset-0 cursor-default bg-black/55"
-          />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#121212]/88 backdrop-blur-xl shadow-[0_-24px_60px_rgba(0,0,0,0.55)]"
-          >
-            <span
-              aria-hidden
-              className="mx-auto mt-3 block h-1 w-10 shrink-0 rounded-full bg-white/20"
-            />
-            <header className="shrink-0 px-5 pb-2 pt-4">
-              <h2
-                id={titleId}
-                className="text-[15px] font-semibold tracking-tight text-orange-500"
-              >
-                {title}
-              </h2>
-            </header>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {children}
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body
+          <Drawer.Handle className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-white/20" />
+          <header className="shrink-0 px-5 pb-2 pt-4">
+            <Drawer.Title
+              id={titleId}
+              className="text-[15px] font-semibold tracking-tight text-orange-500"
+            >
+              {title}
+            </Drawer.Title>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {children}
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }
 
@@ -258,9 +222,13 @@ function FeedLikesSheet({
     <>
       <FeedEngagementSheet
         open={open}
-        onClose={onClose}
+        onClose={() => {
+          setSelectedClient(null);
+          onClose();
+        }}
         titleId="likes-sheet-title"
         title={`${likeCount.toLocaleString('pt-BR')} Curtidas`}
+        modal={!selectedClient}
       >
         {FEED_LIKES_PLACEHOLDERS.map((user) => (
           <FeedListUserRow key={user.id} user={user} onSelect={setSelectedClient} />
@@ -355,9 +323,13 @@ function FeedViewsSheet({
     <>
       <FeedEngagementSheet
         open={open}
-        onClose={onClose}
+        onClose={() => {
+          setSelectedClient(null);
+          onClose();
+        }}
         titleId="views-sheet-title"
         title={`${viewsCount.toLocaleString('pt-BR')} Visualizações`}
+        modal={!selectedClient}
       >
         <AnonymousExplorersRow count={anonymousCount} />
         {loading ? (
