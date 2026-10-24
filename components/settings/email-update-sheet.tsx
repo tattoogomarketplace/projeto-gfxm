@@ -1,9 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSession, useUser } from '@clerk/nextjs';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import {
   ArrowLeft,
   Check,
@@ -54,8 +60,6 @@ export interface EmailUpdateSheetProps {
 }
 
 const OTP_LENGTH = 6;
-const DISMISS_DISTANCE = 128;
-const DISMISS_VELOCITY = 700;
 const SUCCESS_HOLD_MS = 1100;
 const ERROR_HOLD_MS = 2200;
 
@@ -104,12 +108,6 @@ export function EmailUpdateSheet({
   const { user, isLoaded: userLoaded } = useUser();
   const { session, isLoaded: sessionLoaded } = useSession();
 
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
   const [step, setStep] = useState<EmailUpdateStep>('reauthenticate');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -147,15 +145,6 @@ export function EmailUpdateSheet({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
     return () => {
       if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     };
@@ -177,18 +166,6 @@ export function EmailUpdateSheet({
     onClose();
     window.setTimeout(resetAll, 220);
   }, [onClose, resetAll, submitting, triggerHaptic, verifying]);
-
-  const handleDragEnd = useCallback(
-    (_event: unknown, info: PanInfo) => {
-      if (submitting || verifying) return;
-      if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) {
-        triggerHaptic('light');
-        onClose();
-        window.setTimeout(resetAll, 220);
-      }
-    },
-    [onClose, resetAll, submitting, triggerHaptic, verifying]
-  );
 
   /**
    * Passo 1 — reverificação de sessão REAL e obrigatória. Usamos a verificação
@@ -426,57 +403,25 @@ export function EmailUpdateSheet({
     }
   }, [step, submitting, triggerHaptic, verifying]);
 
-  if (!mounted) return null;
-
   const codeComplete = digits.every((digit) => digit !== '');
   const canGoBack = step === 'destination' || step === 'verify';
   const clerkReady = userLoaded && sessionLoaded;
+  const locked = submitting || verifying;
 
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          key="email-update-sheet"
-          className="fixed inset-0 z-[120] flex h-[100dvh] w-full flex-col justify-end overflow-hidden transform-gpu will-change-transform"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.button
-            type="button"
-            aria-label="Fechar"
-            onClick={dismiss}
-            className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          />
-
-          <motion.section
-            role="dialog"
-            aria-modal="true"
-            aria-label="Atualizar e-mail"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            drag={submitting || verifying ? false : 'y'}
-            dragDirectionLock
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.35 }}
-            onDragEnd={handleDragEnd}
-            className={cn(
-              'gpu-layer relative mx-auto flex w-full max-w-app transform-gpu flex-col overflow-hidden rounded-t-[28px] will-change-transform',
-              'border-t border-white/[0.08] bg-[#0d0d0d] text-white shadow-[0_-24px_60px_rgba(0,0,0,0.55)]'
-            )}
-          >
-            <span
-              aria-hidden
-              className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-white/15"
-            />
-
-            <header className="flex items-start justify-between gap-3 px-5 pt-4">
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) dismiss();
+      }}
+      dismissible={!locked}
+    >
+      <DrawerContent
+        overlayClassName="z-[120]"
+        className="z-[121] mt-24 h-auto max-h-[100dvh]"
+        aria-label="Atualizar e-mail"
+      >
+            <DrawerHeader className="flex items-start justify-between gap-3 px-5 pt-4">
               <div className="flex min-w-0 items-center gap-2.5">
                 {canGoBack ? (
                   <button
@@ -494,9 +439,9 @@ export function EmailUpdateSheet({
                     <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden />
                     Conta Segura
                   </p>
-                  <h2 className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-white">
+                  <DrawerTitle className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-white">
                     {STEP_TITLES[step]}
-                  </h2>
+                  </DrawerTitle>
                 </div>
               </div>
               <button
@@ -508,13 +453,11 @@ export function EmailUpdateSheet({
               >
                 <X className="h-5 w-5" strokeWidth={1.75} />
               </button>
-            </header>
+            </DrawerHeader>
 
             <StepProgress step={step} />
 
-            {/* Painel de altura estável — o `mode="wait"` troca o passo sem
-                deixar o sheet crescer/encolher entre as transições. */}
-            <div className="relative flex min-h-[21rem] flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
+            <DrawerBody className="relative flex min-h-[21rem] flex-col px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
               <AnimatePresence mode="wait" initial={false}>
                 {step === 'reauthenticate' ? (
                   <motion.div
@@ -752,12 +695,9 @@ export function EmailUpdateSheet({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-          </motion.section>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body
+            </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

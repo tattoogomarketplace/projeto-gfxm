@@ -1,21 +1,18 @@
 'use client';
 
-import { useEffect, useSyncExternalStore, useTransition } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useTransition } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { createQuoteRequest } from '@/app/actions/quote';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { useI18n } from '@/hooks/use-i18n';
 import { toast } from '@/lib/toast';
 import { PORTFOLIO_BODY_PARTS, portfolioLabelResolver } from '@/lib/portfolio-metadata';
-
-const subscribe = () => () => {};
-
-const backdropMotion = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-} as const;
 
 export type QuoteRequestSheetProps = {
   open: boolean;
@@ -33,31 +30,6 @@ export function QuoteRequestSheet({
   const { t } = useI18n();
   const { bodyPartLabel } = portfolioLabelResolver(t);
   const [isPending, startTransition] = useTransition();
-  const mounted = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isPending) onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose, isPending]);
-
-  if (!mounted) return null;
 
   const handleAction = (formData: FormData) => {
     if (isPending) return;
@@ -71,125 +43,102 @@ export function QuoteRequestSheet({
     });
   };
 
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          key="quote-request-sheet"
-          className="fixed inset-0 z-[140] flex h-[100dvh] w-full flex-col justify-end overflow-hidden transform-gpu will-change-transform"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.button
-            type="button"
-            aria-label={t('common.back')}
-            onClick={isPending ? undefined : onClose}
-            disabled={isPending}
-            className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm disabled:pointer-events-none"
-            {...backdropMotion}
-          />
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isPending) onClose();
+      }}
+      dismissible={!isPending}
+    >
+      <DrawerContent
+        overlayClassName="z-[140]"
+        className="z-[141] mt-24 h-auto max-h-[100dvh]"
+        aria-busy={isPending}
+        aria-label={t('vitrine.requestQuote')}
+      >
+        <DrawerHeader className="px-6 pt-4 text-center">
+          <DrawerTitle className="text-[17px] font-semibold tracking-tight text-zinc-100">
+            {t('vitrine.requestQuote')}
+          </DrawerTitle>
+        </DrawerHeader>
 
-          <motion.section
-            role="dialog"
-            aria-modal="true"
-            aria-busy={isPending}
-            aria-label={t('vitrine.requestQuote')}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            className="gpu-layer relative mx-auto flex w-full max-w-app transform-gpu flex-col overflow-hidden rounded-t-[28px] border-t border-zinc-800/80 bg-zinc-950 p-6 pb-[max(env(safe-area-inset-bottom),_1.5rem)] text-white shadow-[0_-24px_60px_rgba(0,0,0,0.55)]"
-          >
-            <span
-              aria-hidden
-              className="mx-auto h-1.5 w-12 shrink-0 rounded-full bg-zinc-700"
-            />
-
-            <header className="pt-4 text-center">
-              <h2 className="text-[17px] font-semibold tracking-tight text-zinc-100">
-                {t('vitrine.requestQuote')}
-              </h2>
-            </header>
-
-            <form className="mt-5 flex flex-col gap-4" action={handleAction}>
-              <input type="hidden" name="artistId" value={artistId} />
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+        <DrawerBody className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
+          <form className="mt-1 flex flex-col gap-4" action={handleAction}>
+            <input type="hidden" name="artistId" value={artistId} />
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+                {t('portfolio.bodyPart')}
+              </span>
+              <select
+                name="bodyPart"
+                required
+                defaultValue=""
+                disabled={isPending}
+                className="min-h-12 w-full appearance-none rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-[15px] text-zinc-100 outline-none focus:border-orange-500/50 disabled:opacity-60"
+              >
+                <option value="" disabled>
                   {t('portfolio.bodyPart')}
-                </span>
-                <select
-                  name="bodyPart"
-                  required
-                  defaultValue=""
-                  disabled={isPending}
-                  className="min-h-12 w-full appearance-none rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-[15px] text-zinc-100 outline-none focus:border-orange-500/50 disabled:opacity-60"
-                >
-                  <option value="" disabled>
-                    {t('portfolio.bodyPart')}
+                </option>
+                {PORTFOLIO_BODY_PARTS.map((part) => (
+                  <option key={part} value={part}>
+                    {bodyPartLabel(part)}
                   </option>
-                  {PORTFOLIO_BODY_PARTS.map((part) => (
-                    <option key={part} value={part}>
-                      {bodyPartLabel(part)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                ))}
+              </select>
+            </label>
 
-              <label className="flex flex-col gap-2">
-                <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
-                  {t('vitrine.estimatedSize')}
-                </span>
-                <input
-                  name="estimatedSize"
-                  type="text"
-                  required
-                  maxLength={40}
-                  inputMode="text"
-                  autoComplete="off"
-                  disabled={isPending}
-                  placeholder={t('vitrine.estimatedSizePlaceholder')}
-                  className="min-h-12 w-full rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-[15px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-orange-500/50 disabled:opacity-60"
-                />
-              </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+                {t('vitrine.estimatedSize')}
+              </span>
+              <input
+                name="estimatedSize"
+                type="text"
+                required
+                maxLength={40}
+                inputMode="text"
+                autoComplete="off"
+                disabled={isPending}
+                placeholder={t('vitrine.estimatedSizePlaceholder')}
+                className="min-h-12 w-full rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 text-[15px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-orange-500/50 disabled:opacity-60"
+              />
+            </label>
 
-              <div className="flex flex-col gap-2">
-                <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+            <div className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+                {t('vitrine.referenceImage')}
+              </span>
+              <div className="flex min-h-[8.5rem] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900/40">
+                <ImagePlus className="mb-2 h-6 w-6 text-zinc-500" strokeWidth={1.75} />
+                <span className="text-sm font-medium text-zinc-500">
                   {t('vitrine.referenceImage')}
                 </span>
-                <div className="flex min-h-[8.5rem] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900/40">
-                  <ImagePlus className="mb-2 h-6 w-6 text-zinc-500" strokeWidth={1.75} />
-                  <span className="text-sm font-medium text-zinc-500">
-                    {t('vitrine.referenceImage')}
-                  </span>
-                </div>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={isPending}
-                aria-busy={isPending}
-                className="relative mt-2 flex min-h-12 w-full items-center justify-center rounded-2xl bg-orange-500 px-4 text-[15px] font-semibold text-white transition-transform active:scale-[0.98] disabled:pointer-events-none disabled:opacity-80"
+            <button
+              type="submit"
+              disabled={isPending}
+              aria-busy={isPending}
+              className="relative mt-2 flex min-h-12 w-full items-center justify-center rounded-2xl bg-orange-500 px-4 text-[15px] font-semibold text-white transition-transform active:scale-[0.98] disabled:pointer-events-none disabled:opacity-80"
+            >
+              <span className={isPending ? 'invisible' : undefined}>
+                {t('vitrine.sendToArtist')}
+              </span>
+              <span
+                className={`absolute inset-0 inline-flex items-center justify-center gap-2 ${isPending ? '' : 'invisible'}`}
               >
-                <span className={isPending ? 'invisible' : undefined}>
-                  {t('vitrine.sendToArtist')}
-                </span>
                 <span
-                  className={`absolute inset-0 inline-flex items-center justify-center gap-2 ${isPending ? '' : 'invisible'}`}
-                >
-                  <span
-                    aria-hidden
-                    className="h-3.5 w-3.5 shrink-0 animate-pulse rounded-full bg-white/90"
-                  />
-                  {t('vitrine.sendingQuote')}
-                </span>
-              </button>
-            </form>
-          </motion.section>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body
+                  aria-hidden
+                  className="h-3.5 w-3.5 shrink-0 animate-pulse rounded-full bg-white/90"
+                />
+                {t('vitrine.sendingQuote')}
+              </span>
+            </button>
+          </form>
+        </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 }

@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, FileText, Heart, Send } from 'lucide-react';
-import { Drawer } from 'vaul';
 import {
   TransformComponent,
   TransformWrapper,
@@ -33,6 +32,13 @@ import {
 import { TattooLikeButton, TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { SpotlightModal, type SpotlightClient } from '@/components/ui/spotlight-modal';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -171,39 +177,21 @@ function FeedEngagementSheet({
   modal?: boolean;
 }) {
   return (
-    <Drawer.Root
+    <Drawer
       open={open}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) onClose();
       }}
-      snapPoints={[0.6, 1]}
-      fadeFromIndex={0}
       modal={modal}
       dismissible={modal}
-      shouldScaleBackground={false}
-      setBackgroundColorOnScale={false}
     >
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-[60] bg-black/55" />
-        <Drawer.Content
-          aria-labelledby={titleId}
-          className="fixed bottom-0 left-0 right-0 z-[61] mt-24 flex h-full max-h-[100dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212] outline-none shadow-[0_-10px_40px_rgba(0,0,0,0.8)]"
-        >
-          <Drawer.Handle className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-white/20" />
-          <header className="shrink-0 px-5 pb-2 pt-4">
-            <Drawer.Title
-              id={titleId}
-              className="text-[15px] font-semibold tracking-tight text-orange-500"
-            >
-              {title}
-            </Drawer.Title>
-          </header>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-none px-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            {children}
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+      <DrawerContent aria-labelledby={titleId}>
+        <DrawerHeader>
+          <DrawerTitle id={titleId}>{title}</DrawerTitle>
+        </DrawerHeader>
+        <DrawerBody>{children}</DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 }
 

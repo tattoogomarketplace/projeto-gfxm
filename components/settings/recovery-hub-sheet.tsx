@@ -5,12 +5,17 @@ import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSession, useUser } from '@clerk/nextjs';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import {
   ArrowLeft,
   AtSign,
@@ -73,8 +78,6 @@ export interface RecoveryHubSheetProps {
 }
 
 const OTP_LENGTH = 6;
-const DISMISS_DISTANCE = 128;
-const DISMISS_VELOCITY = 700;
 const SUCCESS_HOLD_MS = 1500;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -146,12 +149,6 @@ export function RecoveryHubSheet({
   const { user, isLoaded: userLoaded } = useUser();
   const { session, isLoaded: sessionLoaded } = useSession();
 
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
   const [step, setStep] = useState<RecoveryStep>('select');
   const [path, setPath] = useState<RecoveryPath | null>(null);
   const [passwordFlowOpen, setPasswordFlowOpen] = useState(false);
@@ -191,15 +188,6 @@ export function RecoveryHubSheet({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
     return () => {
       if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
     };
@@ -229,16 +217,6 @@ export function RecoveryHubSheet({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, dismiss]);
-
-  const handleDragEnd = useCallback(
-    (_event: unknown, info: PanInfo) => {
-      if (busy) return;
-      if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) {
-        dismiss();
-      }
-    },
-    [busy, dismiss]
-  );
 
   // ─────────────────────────────────────────────────────────────────────────
   // Path 2 — reautenticação + troca de e-mail
@@ -434,8 +412,6 @@ export function RecoveryHubSheet({
     }
   }, [busy, step, triggerHaptic]);
 
-  if (!mounted) return null;
-
   const canGoBack = step !== 'select' && step !== 'success';
   const showProgress = path === 'email' && step !== 'select' && step !== 'success';
   const clerkReady = userLoaded && sessionLoaded;
@@ -466,52 +442,19 @@ export function RecoveryHubSheet({
 
   return (
     <>
-      {!passwordFlowOpen
-        ? createPortal(
-            <AnimatePresence>
-              {open ? (
-                <motion.div
-                  key="recovery-hub-sheet"
-                  className="fixed inset-0 z-[130] flex h-[100dvh] w-full flex-col justify-end overflow-hidden transform-gpu will-change-transform"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <motion.button
-                    type="button"
-                    aria-label="Fechar"
-                    onClick={dismiss}
-                    className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  />
-
-                  <motion.section
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Recuperar acesso"
-                    initial={{ y: '100%' }}
-                    animate={{ y: 0 }}
-                    exit={{ y: '100%' }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-                    drag={busy ? false : 'y'}
-                    dragDirectionLock
-                    dragConstraints={{ top: 0, bottom: 0 }}
-                    dragElastic={{ top: 0, bottom: 0.35 }}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      'gpu-layer relative mx-auto flex max-h-[92dvh] w-full max-w-app transform-gpu flex-col overflow-hidden rounded-t-[28px] will-change-transform',
-                      'border-t border-zinc-800/80 bg-zinc-950 text-white shadow-[0_-24px_60px_rgba(0,0,0,0.55)]'
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-white/15"
-                    />
-
-                    <header className="flex items-start justify-between gap-3 px-5 pt-4">
+      <Drawer
+        open={open && !passwordFlowOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) dismiss();
+        }}
+        dismissible={!busy}
+      >
+        <DrawerContent
+          overlayClassName="z-[130]"
+          className="z-[131] mt-24 h-auto max-h-[92dvh]"
+          aria-label="Recuperar acesso"
+        >
+                    <DrawerHeader className="flex items-start justify-between gap-3 px-5 pt-4">
                       <div className="flex min-w-0 items-center gap-2.5">
                         {canGoBack ? (
                           <button
@@ -532,9 +475,9 @@ export function RecoveryHubSheet({
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-500">
                             {STEP_BADGES[step]}
                           </p>
-                          <h2 className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-white">
+                          <DrawerTitle className="mt-1 truncate text-[22px] font-bold leading-tight tracking-tight text-white">
                             {STEP_TITLES[step]}
-                          </h2>
+                          </DrawerTitle>
                         </div>
                       </div>
                       <button
@@ -546,13 +489,11 @@ export function RecoveryHubSheet({
                       >
                         <X className="h-5 w-5" strokeWidth={1.75} />
                       </button>
-                    </header>
+                    </DrawerHeader>
 
                     {showProgress ? <StepProgress steps={EMAIL_STEPS} current={step} /> : null}
 
-                    {/* Painel de altura estável: `mode="wait"` troca o passo sem deixar
-                        o sheet crescer/encolher de forma abrupta entre as transições. */}
-                    <div className="relative flex min-h-[24rem] min-w-0 flex-1 flex-col overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 [overscroll-behavior:contain]">
+                    <DrawerBody className="relative flex min-h-[24rem] min-w-0 flex-1 flex-col overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 [overscroll-behavior:contain]">
                       <AnimatePresence mode="wait" initial={false}>
                         {step === 'select' ? (
                           <motion.div
@@ -793,14 +734,9 @@ export function RecoveryHubSheet({
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </div>
-                  </motion.section>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>,
-            document.body
-          )
-        : null}
+                    </DrawerBody>
+        </DrawerContent>
+      </Drawer>
 
       <ForgotPasswordFlow
         open={passwordFlowOpen}

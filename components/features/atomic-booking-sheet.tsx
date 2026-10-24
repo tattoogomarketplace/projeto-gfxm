@@ -2,6 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { CalendarDays, X } from 'lucide-react';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+} from '@/components/ui/drawer';
 import { NeonButton } from '@/components/ui/neon-button';
 import { useCriarAgendamento } from '@/hooks/use-agendamentos';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -53,8 +60,6 @@ export function AtomicBookingSheet({
   const sinal = useMemo(() => Number((SESSION_HOLD_BRL * 0.25).toFixed(2)), []);
   const activeSlot = selectedSlot && slots.includes(selectedSlot) ? selectedSlot : slots[0] ?? null;
 
-  if (!open) return null;
-
   const confirm = async () => {
     if (!activeSlot || isPending) return;
     triggerHaptic('medium');
@@ -75,17 +80,27 @@ export function AtomicBookingSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
-      <div className="max-h-[min(88vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-black/[0.04] bg-white p-5 shadow-xl dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="mb-4 flex items-start justify-between gap-3">
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isPending) onClose();
+      }}
+      dismissible={!isPending}
+    >
+      <DrawerContent
+        overlayClassName="z-[80]"
+        className="z-[81] mt-24 h-auto max-h-[100dvh]"
+        aria-label={t('booking.atomicTitle')}
+      >
+        <DrawerHeader className="flex items-start justify-between gap-3 px-5 pb-2 pt-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-500">
               {t('booking.atomicTitle')}
             </p>
-            <h3 className="mt-1 text-lg font-semibold tracking-tight text-neutral-900 dark:text-white">
+            <h3 className="mt-1 text-lg font-semibold tracking-tight text-white">
               {t('chat.bookWith', { name: artistName })}
             </h3>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
               {t('booking.depositHint', {
                 amount: sinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
               })}
@@ -94,65 +109,71 @@ export function AtomicBookingSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-black/[0.04] text-neutral-500 hover:border-orange-500/40 hover:text-orange-500 dark:border-white/[0.05] dark:text-zinc-400"
+            className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/[0.05] text-zinc-400 hover:border-orange-500/40 hover:text-orange-500"
             aria-label={t('common.close')}
           >
             <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
-        </div>
+        </DrawerHeader>
 
-        {artworkLabel ? (
-          <p className="mb-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-neutral-600 dark:text-zinc-400">
-            {t('booking.reference', { label: artworkLabel })}
-          </p>
-        ) : null}
+        <DrawerBody>
+          {artworkLabel ? (
+            <p className="mb-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-zinc-400">
+              {t('booking.reference', { label: artworkLabel })}
+            </p>
+          ) : null}
 
-        {slots.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500 dark:border-white/[0.05] dark:text-zinc-400">
-            {t('booking.noSlots')}
-          </p>
-        ) : (
-          <ul className="grid grid-cols-2 gap-2">
-            {slots.map((slot) => {
-              const { day, time } = formatSlot(slot, t('booking.timeFallback'));
-               const selected = activeSlot === slot;
-              return (
-                <li key={slot}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setSelectedSlot(slot);
-                    }}
-                    className={cn(
-                      'flex min-h-11 w-full flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]',
-                      selected
-                        ? 'border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-300'
-                        : 'border-black/[0.04] bg-neutral-50 text-neutral-700 hover:border-orange-500/40 dark:border-white/[0.05] dark:bg-white/[0.04] dark:text-zinc-300'
-                    )}
-                  >
-                    <span className="w-full truncate text-[11px] font-semibold uppercase tracking-wide">{day}</span>
-                    <span className="text-sm font-semibold">{time}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+          {slots.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-white/[0.05] px-4 py-6 text-center text-sm text-zinc-400">
+              {t('booking.noSlots')}
+            </p>
+          ) : (
+            <ul className="grid grid-cols-2 gap-2">
+              {slots.map((slot) => {
+                const { day, time } = formatSlot(slot, t('booking.timeFallback'));
+                const selected = activeSlot === slot;
+                return (
+                  <li key={slot}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setSelectedSlot(slot);
+                      }}
+                      className={cn(
+                        'flex min-h-11 w-full flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]',
+                        selected
+                          ? 'border-orange-500/50 bg-orange-500/10 text-orange-300'
+                          : 'border-white/[0.05] bg-white/[0.04] text-zinc-300 hover:border-orange-500/40'
+                      )}
+                    >
+                      <span className="w-full truncate text-[11px] font-semibold uppercase tracking-wide">
+                        {day}
+                      </span>
+                      <span className="text-sm font-semibold">{time}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </DrawerBody>
 
-        <NeonButton
-          className="mt-5 w-full"
-          disabled={!activeSlot || isPending || slots.length === 0}
-          onClick={() => {
-            void confirm();
-          }}
-        >
-          <span className="inline-flex items-center justify-center gap-2">
-            <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
-            {isPending ? t('booking.reserving') : t('booking.confirm')}
-          </span>
-        </NeonButton>
-      </div>
-    </div>
+        <DrawerFooter>
+          <NeonButton
+            className="w-full"
+            disabled={!activeSlot || isPending || slots.length === 0}
+            onClick={() => {
+              void confirm();
+            }}
+          >
+            <span className="inline-flex items-center justify-center gap-2">
+              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+              {isPending ? t('booking.reserving') : t('booking.confirm')}
+            </span>
+          </NeonButton>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

@@ -13,6 +13,14 @@ import { useAuth } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Loader2, ShieldCheck, X } from 'lucide-react';
 import { updateUsername } from '@/app/actions/username-actions';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { UsernameMorphGlyph } from '@/components/ui/username-glyph';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
@@ -517,64 +525,53 @@ export function OnboardingUsername({
         </div>
       </div>
 
-      {/* Premium confirmation bottom sheet */}
-      <AnimatePresence>
-        {sheetOpen ? (
-          <motion.div
-            className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-sm sm:items-center"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Confirmar identidade única"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => {
-              if (!submitting) setSheetOpen(false);
-            }}
-          >
-            <motion.div
-              onClick={(event) => event.stopPropagation()}
-              initial={{ y: '110%', opacity: 0.6, scale: 0.98 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: '110%', opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }}
-              className="w-full max-w-md rounded-[26px] border border-white/[0.09] bg-zinc-950/95 p-6 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
+      <Drawer
+        open={sheetOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !submitting) setSheetOpen(false);
+        }}
+        dismissible={!submitting}
+      >
+        <DrawerContent
+          overlayClassName="z-[95]"
+          className="z-[96] mt-24 h-auto max-h-[100dvh]"
+          aria-label="Confirmar identidade única"
+        >
+          <DrawerHeader className="px-6 pt-2 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
+              <ShieldCheck className="h-6 w-6 text-orange-400" strokeWidth={1.75} />
+            </div>
+            <DrawerTitle className="text-center text-lg font-bold tracking-tight text-white">
+              Identidade Única
+            </DrawerTitle>
+          </DrawerHeader>
+          <DrawerBody className="px-6">
+            <p className="text-center text-sm leading-relaxed text-zinc-400">
+              Você só poderá alterar seu{' '}
+              <span className="font-semibold text-orange-400">@{trimmed}</span> novamente em{' '}
+              <span className="font-semibold text-white">30 dias</span>. Confirmar?
+            </p>
+          </DrawerBody>
+          <DrawerFooter className="px-6">
+            <button
+              type="button"
+              onClick={confirm}
+              disabled={submitting}
+              className="flex min-h-13 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-orange-500 to-orange-600 py-3.5 text-base font-bold text-white shadow-[0_0_26px_rgba(249,115,22,0.5)] transition-all duration-200 active:scale-[0.98] disabled:opacity-60"
             >
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/15" aria-hidden />
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
-                <ShieldCheck className="h-6 w-6 text-orange-400" strokeWidth={1.75} />
-              </div>
-              <h2 className="text-center text-lg font-bold tracking-tight text-white">
-                Identidade Única
-              </h2>
-              <p className="mt-2 text-center text-sm leading-relaxed text-zinc-400">
-                Você só poderá alterar seu{' '}
-                <span className="font-semibold text-orange-400">@{trimmed}</span> novamente em{' '}
-                <span className="font-semibold text-white">30 dias</span>. Confirmar?
-              </p>
-              <div className="mt-6 flex flex-col gap-2.5">
-                <button
-                  type="button"
-                  onClick={confirm}
-                  disabled={submitting}
-                  className="flex min-h-13 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-orange-500 to-orange-600 py-3.5 text-base font-bold text-white shadow-[0_0_26px_rgba(249,115,22,0.5)] transition-all duration-200 active:scale-[0.98] disabled:opacity-60"
-                >
-                  {submitting ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.6} /> : 'Confirmar'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSheetOpen(false)}
-                  disabled={submitting}
-                  className="flex min-h-12 w-full items-center justify-center rounded-2xl border border-white/[0.08] py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/20 disabled:opacity-60"
-                >
-                  Revisar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+              {submitting ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.6} /> : 'Confirmar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(false)}
+              disabled={submitting}
+              className="flex min-h-12 w-full items-center justify-center rounded-2xl border border-white/[0.08] py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/20 disabled:opacity-60"
+            >
+              Revisar
+            </button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useSyncExternalStore, useTransition } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight, Search, Sparkles, TrendingDown, X } from 'lucide-react';
 import {
@@ -9,16 +8,19 @@ import {
   getBudgetEstimateAction,
   getCheaperArtistsAction,
 } from '@/app/actions/budget';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useI18n } from '@/hooks/use-i18n';
 import { artistProfileHref } from '@/lib/artist-profile';
 import type { BudgetEstimateDto, CheaperArtistDto } from '@/lib/services/budget-estimator';
 import { toast } from '@/lib/toast';
-
-const subscribe = () => () => {};
-
-const sheetSpring = { type: 'spring', damping: 25, stiffness: 200 } as const;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -136,11 +138,6 @@ export function BudgetEstimatorSheet({
     artists: CheaperArtistDto[];
   }>({ key: '', artists: [] });
   const [isPending, startTransition] = useTransition();
-  const mounted = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
 
   const itemKey = item ? `${item.id}:${item.artistId ?? ''}` : '';
   const estimate = estimateState.key === itemKey ? estimateState.data : null;
@@ -200,26 +197,15 @@ export function BudgetEstimatorSheet({
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       if (showCheaperOptions) {
         setShowCheaperOptions(false);
-        return;
       }
-      closeSheet();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, showCheaperOptions, closeSheet]);
+  }, [open, showCheaperOptions]);
 
   const styleLabel = estimate?.style || item?.style || '—';
   const locationLabel = estimate?.location || item?.location || '—';
@@ -286,63 +272,39 @@ export function BudgetEstimatorSheet({
     });
   };
 
-  if (!mounted) return null;
-
-  return createPortal(
+  return (
     <>
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            key="budget-estimator-root"
-            className="fixed inset-0 z-[9998] flex items-end justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.div
-              aria-hidden
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeSheet}
-            />
-            <motion.section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="budget-estimator-title"
-              aria-busy={loadingEstimate || isPending}
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={sheetSpring}
-              onClick={(event) => event.stopPropagation()}
-              className="relative w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden transform-gpu rounded-t-[32px] border-t border-white/10 bg-[#0a0a0c] px-6 pt-6 shadow-2xl will-change-transform"
+      <Drawer
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeSheet();
+        }}
+        dismissible={!showCheaperOptions}
+      >
+        <DrawerContent
+          overlayClassName="z-[9998]"
+          className="z-[9998] mt-24 max-h-[90dvh]"
+          aria-labelledby="budget-estimator-title"
+          aria-busy={loadingEstimate || isPending}
+        >
+          <DrawerHeader className="mb-2 flex items-center justify-between gap-3 px-6">
+            <DrawerTitle
+              id="budget-estimator-title"
+              className="text-[17px] font-semibold tracking-tight text-zinc-100"
             >
-              <span
-                aria-hidden
-                className="mx-auto mb-6 block h-1.5 w-12 shrink-0 rounded-full bg-white/20"
-              />
+              Análise de Orçamento
+            </DrawerTitle>
+            <button
+              type="button"
+              aria-label={t('common.close')}
+              onClick={closeSheet}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
+            >
+              <X size={16} strokeWidth={2.5} />
+            </button>
+          </DrawerHeader>
 
-              <header className="mb-6 flex shrink-0 items-center justify-between gap-3">
-                <h2
-                  id="budget-estimator-title"
-                  className="text-[17px] font-semibold tracking-tight text-zinc-100"
-                >
-                  Análise de Orçamento
-                </h2>
-                <button
-                  type="button"
-                  aria-label={t('common.close')}
-                  onClick={closeSheet}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
-                >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
-              </header>
-
-              <div className="min-h-0 flex-1 overflow-y-auto hide-scrollbar pb-safe">
+          <DrawerBody className="hide-scrollbar px-6 pb-safe">
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="flex flex-col gap-1">
                   <dt className="text-sm text-zinc-400">Estilo</dt>
@@ -408,11 +370,9 @@ export function BudgetEstimatorSheet({
                   </button>
                 </div>
               </div>
-              </div>
-            </motion.section>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
 
       <AnimatePresence>
         {open && showCheaperOptions ? (
@@ -424,7 +384,7 @@ export function BudgetEstimatorSheet({
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={sheetSpring}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0a0a0c] transform-gpu will-change-transform"
           >
             <header className="flex shrink-0 items-center gap-3 border-b border-white/10 px-4 py-3 safe-header-pad">
@@ -476,7 +436,6 @@ export function BudgetEstimatorSheet({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </>,
-    document.body
+    </>
   );
 }

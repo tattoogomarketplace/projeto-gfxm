@@ -10,8 +10,14 @@ import {
   useSyncExternalStore,
   useTransition,
 } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import {
   AlignCenter,
   AlignLeft,
@@ -44,9 +50,6 @@ import {
 } from '@/lib/flash-notes-style';
 
 export { FLASH_NOTE_MAX_LENGTH };
-
-const DISMISS_DISTANCE = 128;
-const DISMISS_VELOCITY = 700;
 
 const ALIGN_ICONS: Record<FlashNoteAlignId, LucideIcon> = {
   left: AlignLeft,
@@ -316,12 +319,6 @@ export function FlashNoteCreatorSheet({
   const busy = isPending || isPublishing;
   const canPublish = hasText && !busy;
 
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
   // Mirror the store's emptiness into local state — but only flip it on the
   // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
   // re-render of the sheet shell or its framer-motion drag layer.
@@ -358,11 +355,8 @@ export function FlashNoteCreatorSheet({
       }
       onClose();
     };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, busy, onClose, confirmDelete]);
@@ -372,17 +366,6 @@ export function FlashNoteCreatorSheet({
     triggerHaptic('light');
     onClose();
   }, [busy, onClose, triggerHaptic]);
-
-  const handleDragEnd = useCallback(
-    (_event: unknown, info: PanInfo) => {
-      if (busy) return;
-      if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) {
-        triggerHaptic('light');
-        onClose();
-      }
-    },
-    [busy, onClose, triggerHaptic]
-  );
 
   const handleSelectBackground = useCallback(
     (id: FlashNoteBackgroundId) => {
@@ -450,62 +433,28 @@ export function FlashNoteCreatorSheet({
     });
   }, [alignment.className, backgroundId, busy, onClose, onPublish, store, t, triggerHaptic, typeface.className]);
 
-  if (!mounted) return null;
-
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          key="flash-note-creator"
-          className="fixed inset-0 z-[95] flex h-[100dvh] w-full flex-col justify-end overflow-hidden transform-gpu will-change-transform"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.button
-            type="button"
-            aria-label={t('common.close')}
-            onClick={dismiss}
-            className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          />
-
-          <motion.section
-            role="dialog"
-            aria-modal="true"
-            aria-label={isEditing ? t('flash.update') : t('flash.new')}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 380, damping: 42, mass: 0.9 }}
-            drag={busy || confirmDelete ? false : 'y'}
-            dragDirectionLock
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.35 }}
-            onDragEnd={handleDragEnd}
-            className={cn(
-              'relative mx-auto flex w-full max-w-app flex-col overflow-hidden rounded-t-[28px]',
-              'gpu-layer transform-gpu will-change-transform border-t border-white/[0.08] bg-[#0d0d0d] text-white',
-              'shadow-[0_-24px_60px_rgba(0,0,0,0.55)]'
-            )}
-          >
-            <span
-              aria-hidden
-              className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-white/15"
-            />
-
-            <header className="flex items-start justify-between gap-3 px-5 pt-4">
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) dismiss();
+      }}
+      dismissible={!busy && !confirmDelete}
+    >
+      <DrawerContent
+        overlayClassName="z-[95]"
+        className="z-[96] mt-24 h-auto max-h-[100dvh]"
+        aria-label={isEditing ? t('flash.update') : t('flash.new')}
+      >
+            <DrawerHeader className="flex items-start justify-between gap-3 px-5 pt-4">
               <div className="min-w-0">
                 <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-500">
                   <Radio className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden />
                   {t('flash.benchStatus')}
                 </p>
-                <h2 className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-white">
+                <DrawerTitle className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-white">
                   {isEditing ? t('flash.update') : t('flash.new')}
-                </h2>
+                </DrawerTitle>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {isEditing && onDelete ? (
@@ -529,9 +478,9 @@ export function FlashNoteCreatorSheet({
                   <X className="h-5 w-5" strokeWidth={1.75} />
                 </button>
               </div>
-            </header>
+            </DrawerHeader>
 
-            {/* Composer canvas — WYSIWYG surface, typography first. */}
+            <DrawerBody className="relative flex flex-col overflow-y-auto overscroll-none px-0 pb-0">
             <div className="px-5 pb-2 pt-4">
               <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
                 {/* Layer 0 — gradient background. Raw inline CSS keeps it immune
@@ -673,11 +622,9 @@ export function FlashNoteCreatorSheet({
                 </motion.div>
               ) : null}
             </AnimatePresence>
-          </motion.section>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body
+            </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
