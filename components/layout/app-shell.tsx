@@ -70,7 +70,10 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isProfileSettings = pathname.startsWith('/dashboard/perfil');
   const isDedicatedChat = pathname.startsWith('/dashboard/chat');
   const isSettingsHub = pathname.startsWith('/dashboard/perfil/configuracoes');
-  const isGaleria = pathname.startsWith('/dashboard/galeria');
+  const isGaleria =
+    pathname.startsWith('/dashboard/galeria') ||
+    pathname.startsWith('/dashboard/inspiracoes') ||
+    pathname.startsWith('/dashboard/salvos');
   const isPagamentos = pathname.startsWith('/dashboard/pagamentos');
   const isAgenda = pathname.startsWith('/dashboard/agenda');
   const isMapa = pathname.startsWith('/dashboard/mapa');

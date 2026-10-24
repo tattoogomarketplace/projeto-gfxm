@@ -164,6 +164,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       '/dashboard/chat',
       '/dashboard/perfil',
       '/dashboard/galeria',
+      '/dashboard/inspiracoes',
       '/dashboard/pagamentos',
       '/dashboard/agenda',
       `${homePath}?tab=portfolio`,

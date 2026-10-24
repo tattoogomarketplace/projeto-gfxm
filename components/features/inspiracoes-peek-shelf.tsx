@@ -19,14 +19,15 @@ import { artistProfileHref } from '@/lib/artist-profile';
 import { PLACEHOLDER_INSPIRATIONS } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
+const SAVED_GALLERY_HREF = '/dashboard/inspiracoes';
 const PEEK_DELAY_MS = 400;
 const MOVE_TOLERANCE_PX = 10;
-const PEEK_CARDS = PLACEHOLDER_INSPIRATIONS.slice(0, 4);
+const PEEK_CARDS = PLACEHOLDER_INSPIRATIONS.slice(0, 5);
 const CARD_SHELL =
-  'relative aspect-[9/16] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl';
+  'relative aspect-[3/4] w-[9.75rem] shrink-0 snap-start overflow-hidden rounded-2xl transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
 const SHELF_CLASS =
-  '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none scrollbar-hide sm:-mx-6 sm:px-6';
+  '-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [-webkit-overflow-scrolling:touch] scrollbar-none scrollbar-hide hide-scrollbar transform-gpu will-change-transform sm:-mx-6 sm:px-6';
 
 export function InspiracoesPeekShelf() {
   const { t } = useI18n();
@@ -136,7 +137,7 @@ export function InspiracoesPeekShelf() {
             type="button"
             onClick={() => {
               triggerHaptic('light');
-              router.push('/dashboard/galeria');
+              router.push(SAVED_GALLERY_HREF);
             }}
             className="min-h-11 shrink-0 text-[13px] font-semibold text-orange-500 active:opacity-70 transition-opacity"
           >
@@ -181,14 +182,16 @@ export function InspiracoesPeekShelf() {
             role="listitem"
             onClick={() => {
               triggerHaptic('light');
-              router.push('/dashboard/galeria');
+              router.push(SAVED_GALLERY_HREF);
             }}
-            className={`${CARD_SHELL} flex cursor-pointer flex-col items-center justify-center gap-3 border border-white/10 bg-[#121212]/50 backdrop-blur-md transition-transform active:scale-95`}
+            className={`${CARD_SHELL} flex cursor-pointer flex-col items-center justify-center gap-3 border border-white/10 bg-[#121212]/50 px-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition-transform active:scale-95`}
           >
-            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/15 text-orange-500">
+            <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-orange-500/15 text-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.28)]">
               <ArrowRight className="h-5 w-5" strokeWidth={1.9} aria-hidden />
             </span>
-            <span className="text-[12px] font-semibold text-gray-300">Ver todas</span>
+            <span className="text-[12px] font-semibold leading-snug tracking-tight text-gray-300">
+              {t('home.viewAllInspiracoes')}
+            </span>
           </button>
         </div>
       </section>
