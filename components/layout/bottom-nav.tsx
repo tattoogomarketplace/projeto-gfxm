@@ -90,30 +90,51 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastPlayedRef = useRef(0);
 
-  const playPremiumFeedback = () => {
+  const playPremiumFeedback = useCallback(() => {
     try {
-      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(5);
+      if (typeof window === 'undefined') return;
+      const now = Date.now();
+      if (now - lastPlayedRef.current < 120) return;
+      lastPlayedRef.current = now;
+
+      window.navigator?.vibrate?.(5);
+
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContextCtor();
       }
-      const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
-      gainNode.gain.setValueAtTime(0.02, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.05);
+      const ctx = audioCtxRef.current;
+
+      const play = () => {
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(0.02, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      };
+
+      if (ctx.state === 'suspended') {
+        void ctx.resume().then(play).catch(() => {});
+        return;
+      }
+      play();
     } catch {
       console.log('Feedback suppressed');
     }
-  };
+  }, []);
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -266,6 +287,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 href={href}
                 prefetch
                 scroll={false}
+                onPointerDown={playPremiumFeedback}
                 onClick={() => {
                   playPremiumFeedback();
                   handleSelect(item.tab, href);
