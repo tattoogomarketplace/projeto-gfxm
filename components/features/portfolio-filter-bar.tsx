@@ -86,10 +86,10 @@ function FilterOption({
       aria-selected={selected}
       onClick={onClick}
       className={cn(
-        'flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold tracking-tight transition-colors active:scale-[0.99]',
+        'flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold tracking-tight transition-colors active:scale-[0.99] [text-shadow:_0_1px_2px_rgb(0_0_0_/_80%)]',
         selected
           ? 'bg-orange-500/15 text-orange-300'
-          : 'text-zinc-300 hover:bg-white/[0.04] hover:text-white'
+          : 'text-white hover:bg-white/[0.04]'
       )}
     >
       {children}
@@ -224,13 +224,13 @@ export function PortfolioFilterBar({
       ? createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-md transition-opacity"
+              className="fixed inset-0 z-[9998] bg-transparent"
               onClick={closeDropdown}
               aria-hidden="true"
             ></div>
             <div
               role="listbox"
-              className="fixed z-[9999] bg-[#121214] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+              className="fixed z-[9999] isolate overflow-hidden rounded-2xl border border-white/15 bg-[#121212]/20 shadow-none backdrop-blur-xl backdrop-saturate-150"
               style={{
                 top: dropdownPosition.top,
                 left: dropdownPosition.left,
@@ -238,8 +238,8 @@ export function PortfolioFilterBar({
                 maxHeight: dropdownPosition.maxHeight,
               }}
             >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-                <span className="text-sm font-semibold tracking-tight text-zinc-100">
+              <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
+                <span className="text-sm font-semibold tracking-tight text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_80%)]">
                   {openCategory === 'style'
                     ? t('gallery.style')
                     : openCategory === 'body'
@@ -250,7 +250,7 @@ export function PortfolioFilterBar({
                   type="button"
                   aria-label={t('gallery.closeFilter')}
                   onClick={closeDropdown}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white transition-all hover:bg-white/10"
                 >
                   <X size={16} strokeWidth={2.5} />
                 </button>
