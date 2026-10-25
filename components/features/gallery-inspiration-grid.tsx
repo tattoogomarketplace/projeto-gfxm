@@ -71,10 +71,10 @@ const HUD_CURATORSHIP_STYLE = {
 } as const;
 
 const FEED_ACTION_BTN_CLASS =
-  'flex h-10 shrink-0 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] px-2 text-zinc-300 transition-all hover:border-orange-500/50';
+  'flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] px-2 py-1.5 text-zinc-300 transition-all hover:border-orange-500/50';
 
 const FEED_ACTION_METRIC_CLASS =
-  'text-[11px] font-semibold tracking-wide text-gray-300 whitespace-nowrap';
+  'text-xs font-semibold tracking-wide text-gray-300 whitespace-nowrap';
 
 type FeedListUser = {
   id: string;
@@ -123,17 +123,11 @@ const FEED_LIKES_PLACEHOLDERS: FeedListUser[] = [
 
 const clientMountedSubscribe = () => () => {};
 
-function compactMetric(value: number): string {
-  if (value >= 1_000_000) {
-    const compact = value / 1_000_000;
-    return `${compact >= 10 ? compact.toFixed(0) : compact.toFixed(1).replace(/\.0$/, '')}M`;
-  }
-  if (value >= 1_000) {
-    const compact = value / 1_000;
-    return `${compact >= 10 ? compact.toFixed(0) : compact.toFixed(1).replace(/\.0$/, '')}k`;
-  }
-  return value.toLocaleString('pt-BR');
-}
+const formatNumber = (num: number) => {
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return num.toString();
+};
 
 function FeedListUserRow({
   user,
@@ -382,7 +376,7 @@ function FeedSaveButton({
         strokeWidth={2}
         fill={isSaved ? 'currentColor' : 'none'}
       />
-      <span className={FEED_ACTION_METRIC_CLASS}>{isSaved ? 851 : 850}</span>
+      <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(isSaved ? 851 : 850)}</span>
     </button>
   );
 }
@@ -890,21 +884,25 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
               <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex w-full items-center justify-between gap-1 px-5 py-4">
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="flex w-full flex-row justify-between items-center gap-1 mt-3">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-5" />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                    <Skeleton className="h-3 w-6" />
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
                 </div>
@@ -1057,79 +1055,59 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
                 <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex w-full items-center justify-between gap-1 px-5 py-4">
+                  <div className="flex w-full flex-row justify-between items-center gap-1 mt-3">
                     {showLike ? (
-                      <div className="flex min-w-0 items-center gap-1">
-                        <div
-                          className={cn(
-                            FEED_ACTION_BTN_CLASS,
-                            isLiked && 'text-orange-500 border-orange-500/50'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            data-gallery-action=""
-                            onClick={() => {
-                              triggerHaptic('light');
-                              toggleLiked(item.id);
-                            }}
-                            className="flex h-10 min-w-8 items-center justify-center"
-                            aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
-                            aria-pressed={isLiked}
-                          >
-                            <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 shrink-0" />
-                          </button>
-                          <button
-                            type="button"
-                            data-gallery-action=""
-                            onClick={() => {
-                              triggerHaptic('light');
-                              setLikesSheetCount(likeCount);
-                              setIsLikesModalOpen(true);
-                            }}
-                            className={cn(FEED_ACTION_METRIC_CLASS, 'pr-0.5')}
-                            aria-label={likeLabel}
-                          >
-                            {compactMetric(likeCount)}
-                          </button>
-                        </div>
+                      <div
+                        className={cn(
+                          FEED_ACTION_BTN_CLASS,
+                          isLiked && 'text-orange-500 border-orange-500/50'
+                        )}
+                      >
                         <button
                           type="button"
                           data-gallery-action=""
                           onClick={() => {
                             triggerHaptic('light');
-                            setViewsSheetPostId(item.id);
-                            setViewsSheetCount(item.viewsCount ?? 0);
-                            setIsViewsModalOpen(true);
+                            toggleLiked(item.id);
                           }}
-                          className={FEED_ACTION_BTN_CLASS}
-                          aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
+                          className="flex items-center justify-center"
+                          aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
+                          aria-pressed={isLiked}
                         >
-                          <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
-                          <span className={FEED_ACTION_METRIC_CLASS}>
-                            {compactMetric(item.viewsCount ?? 0)}
-                          </span>
+                          <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 shrink-0" />
+                        </button>
+                        <button
+                          type="button"
+                          data-gallery-action=""
+                          onClick={() => {
+                            triggerHaptic('light');
+                            setLikesSheetCount(likeCount);
+                            setIsLikesModalOpen(true);
+                          }}
+                          className={cn(FEED_ACTION_METRIC_CLASS, 'pr-0.5')}
+                          aria-label={likeLabel}
+                        >
+                          {formatNumber(likeCount)}
                         </button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        data-gallery-action=""
-                        onClick={() => {
-                          triggerHaptic('light');
-                          setViewsSheetPostId(item.id);
-                          setViewsSheetCount(item.viewsCount ?? 0);
-                          setIsViewsModalOpen(true);
-                        }}
-                        className={FEED_ACTION_BTN_CLASS}
-                        aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
-                      >
-                        <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
-                        <span className={FEED_ACTION_METRIC_CLASS}>
-                          {compactMetric(item.viewsCount ?? 0)}
-                        </span>
-                      </button>
-                    )}
+                    ) : null}
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setViewsSheetPostId(item.id);
+                        setViewsSheetCount(item.viewsCount ?? 0);
+                        setIsViewsModalOpen(true);
+                      }}
+                      className={FEED_ACTION_BTN_CLASS}
+                      aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
+                    >
+                      <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <span className={FEED_ACTION_METRIC_CLASS}>
+                        {formatNumber(item.viewsCount ?? 0)}
+                      </span>
+                    </button>
                     <button
                       type="button"
                       data-gallery-action=""
@@ -1138,7 +1116,7 @@ export function GalleryInspirationGrid({
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_ACTION_METRIC_CLASS}>128</span>
+                      <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(128)}</span>
                     </button>
                     <button
                       type="button"
@@ -1151,7 +1129,7 @@ export function GalleryInspirationGrid({
                       aria-label={t('chat.quotes')}
                     >
                       <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_ACTION_METRIC_CLASS}>45</span>
+                      <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
                     </button>
                     <FeedSaveButton
                       postId={item.id}
