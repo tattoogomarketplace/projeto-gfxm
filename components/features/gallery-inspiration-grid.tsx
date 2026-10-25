@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, FileText, Heart, Send } from 'lucide-react';
+import { Bookmark, Eye, Heart, ReceiptText, Send } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -1136,7 +1136,7 @@ export function GalleryInspirationGrid({
                       className={FEED_TOP_ACTION_BTN_CLASS}
                       aria-label={t('chat.quotes')}
                     >
-                      <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <ReceiptText className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
                     </button>
                   </div>
