@@ -2,13 +2,7 @@
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  usePresence,
-  useTransform,
-} from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import { Radio, X, Zap } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -86,7 +80,6 @@ function FlashNoteStorySurface({
   const openedAt = useRef(0);
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.18]);
-  const [isPresent, safeToRemove] = usePresence();
 
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
@@ -98,12 +91,6 @@ function FlashNoteStorySurface({
   useEffect(() => {
     openedAt.current = Date.now();
   }, []);
-
-  useEffect(() => {
-    if (isPresent) return;
-    dragY.set(0);
-    safeToRemove?.();
-  }, [dragY, isPresent, safeToRemove]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -173,13 +160,13 @@ function FlashNoteStorySurface({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: EXIT_SNAP }}
       transition={STORY_SPRING}
-      style={{ pointerEvents: isPresent ? 'auto' : 'none', backfaceVisibility: 'hidden' }}
+      style={{ backfaceVisibility: 'hidden' }}
       onContextMenu={(event) => event.preventDefault()}
     >
       <motion.div
         className={cn('absolute inset-0', GPU_LAYER)}
         initial={{ opacity: 0 }}
-        animate={{ opacity: isPresent ? 1 : 0 }}
+        animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: EXIT_SNAP }}
         transition={STORY_SPRING}
         onClick={handleBackdropClick}
@@ -201,7 +188,7 @@ function FlashNoteStorySurface({
         }}
         aria-label={t('common.close')}
         initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: isPresent ? 1 : 0, scale: isPresent ? 1 : 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.92, transition: EXIT_SNAP }}
         transition={STORY_SPRING}
         className={cn(
@@ -216,7 +203,7 @@ function FlashNoteStorySurface({
       </motion.button>
 
       <motion.article
-        drag={isPresent ? 'y' : false}
+        drag="y"
         dragElastic={0.18}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragMomentum={false}
@@ -225,7 +212,7 @@ function FlashNoteStorySurface({
         transition={STORY_SPRING}
         style={{ y: dragY, backfaceVisibility: 'hidden' }}
         initial={{ opacity: 0, scale: 0.96, y: 18 }}
-        animate={{ opacity: isPresent ? 1 : 0, scale: isPresent ? 1 : 0.98, y: isPresent ? 0 : 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.98, y: 16, transition: EXIT_SNAP }}
         className={cn(
           'relative z-10 flex w-full max-w-[26.5rem] cursor-grab touch-none flex-col overflow-hidden',
