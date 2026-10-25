@@ -1095,7 +1095,7 @@ export function GalleryInspirationGrid({
                           className={FEED_TOP_ACTION_METRIC_CLASS}
                           aria-label={likeLabel}
                         >
-                          {formatNumber(likeCount)}
+                          {formatNumber(12300)}
                         </button>
                       </div>
                     ) : null}
@@ -1113,7 +1113,7 @@ export function GalleryInspirationGrid({
                     >
                       <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_TOP_ACTION_METRIC_CLASS}>
-                        {formatNumber(item.viewsCount ?? 0)}
+                        {formatNumber(12300)}
                       </span>
                     </button>
                     <button
@@ -1124,7 +1124,7 @@ export function GalleryInspirationGrid({
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(128)}</span>
+                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(12300000)}</span>
                     </button>
                     <button
                       type="button"
@@ -1137,7 +1137,7 @@ export function GalleryInspirationGrid({
                       aria-label={t('chat.quotes')}
                     >
                       <ReceiptText className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
+                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(12300000)}</span>
                     </button>
                   </div>
                 </div>
@@ -1155,11 +1155,12 @@ export function GalleryInspirationGrid({
                       data-gallery-action=""
                       aria-label={likeLabel}
                       onClick={() => {
+                        console.log('like');
                         triggerHaptic('light');
                         setLikesSheetCount(likeCount);
                         setIsLikesModalOpen(true);
                       }}
-                      className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
+                      className="mt-2 flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white cursor-pointer transition-all active:scale-95 touch-manipulation"
                     >
                       <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
                       <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
