@@ -92,6 +92,11 @@ export async function createQuoteRequest(
     select: { id: true },
   });
 
+  revalidatePath('/dashboard/tatuador');
+  revalidatePath('/dashboard/estudio');
+  revalidatePath('/dashboard/agenda');
+  revalidatePath('/dashboard/chat');
+
   return {
     quoteId: created.id,
     chatId: created.id,
@@ -300,10 +305,13 @@ export async function approveArtistQuote(input: {
       return agendamento;
     });
 
+    revalidatePath('/dashboard', 'layout');
     revalidatePath('/dashboard/tatuador');
     revalidatePath('/dashboard/cliente');
     revalidatePath('/dashboard/agenda');
     revalidatePath('/dashboard/estudio');
+    revalidatePath('/dashboard/chat');
+    revalidatePath('/dashboard/pagamentos');
 
     return {
       quoteId,

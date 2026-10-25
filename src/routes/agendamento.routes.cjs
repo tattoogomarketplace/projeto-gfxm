@@ -5,6 +5,7 @@ const { authLimiter } = require("../middlewares/rate-limit.cjs");
 
 const router = Router();
 
+router.get("/", requireAuth, agendamentoController.listar);
 router.post("/", requireAuth, agendamentoController.criar);
 router.post("/cancelar-solicitacao", authLimiter, requireAuth, agendamentoController.cancelarSolicitacao);
 router.post("/cancelar-executar", authLimiter, requireAuth, agendamentoController.cancelarExecutar);

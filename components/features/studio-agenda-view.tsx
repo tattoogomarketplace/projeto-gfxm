@@ -262,7 +262,7 @@ export function StudioAgendaView({
         </div>
       </div>
 
-      {role === 'tatuador' ? <ArtistQuoteInbox /> : null}
+      {role === 'tatuador' || role === 'estudio' ? <ArtistQuoteInbox /> : null}
 
       {isLoading ? (
         <StudioAgendaSkeleton />

@@ -272,8 +272,74 @@ async function executarCancelamento({ agendamentoId, otp, user }) {
   return { sucesso: true, mensagem: "Cancelado com sucesso." };
 }
 
+function toMoney(value) {
+  const numeric = Number(value ?? 0);
+  return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : 0;
+}
+
+function scopeForRole(actorId, role) {
+  if (role === "cliente") return { cliente_id: actorId };
+  if (role === "tatuador") return { tatuador_id: actorId };
+  return {
+    OR: [{ tatuador_id: actorId }, { tatuador: { studio_id: actorId } }],
+  };
+}
+
+async function listarAgendamentos({ user }) {
+  if (!user?.id) {
+    throw httpError(401, "Não autenticado.");
+  }
+
+  const role = user.role;
+  if (role !== "cliente" && role !== "tatuador" && role !== "estudio") {
+    throw httpError(403, "Acesso negado.");
+  }
+
+  const rows = await prisma.agendamento.findMany({
+    where: {
+      deleted_at: null,
+      ...scopeForRole(user.id, role),
+    },
+    select: {
+      id: true,
+      cliente_id: true,
+      tatuador_id: true,
+      data_hora: true,
+      status: true,
+      valor_total: true,
+      valor_sinal: true,
+      sinal_pago: true,
+      pagamento_restante_presencial: true,
+      waiver_signed: true,
+      session_status: true,
+      version: true,
+    },
+    orderBy: { data_hora: "asc" },
+    take: 100,
+  });
+
+  return {
+    sucesso: true,
+    agendamentos: rows.map((row) => ({
+      id: row.id,
+      cliente_id: row.cliente_id,
+      tatuador_id: row.tatuador_id,
+      data_hora: row.data_hora.toISOString(),
+      status: row.status,
+      valor_total: toMoney(row.valor_total),
+      valor_sinal: toMoney(row.valor_sinal),
+      sinal_pago: row.sinal_pago,
+      pagamento_restante_presencial: row.pagamento_restante_presencial,
+      waiver_signed: row.waiver_signed,
+      session_status: row.session_status,
+      version: row.version,
+    })),
+  };
+}
+
 module.exports = {
   criarAgendamento,
+  listarAgendamentos,
   expirarMutexVencidos,
   solicitarCancelamento,
   executarCancelamento,

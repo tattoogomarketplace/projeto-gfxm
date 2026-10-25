@@ -5,13 +5,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { BookingError, criarAgendamentoAtomico } from '@/lib/services/booking-transaction';
+import {
+  AgendamentoQueryError,
+  listAgendamentosForActor,
+} from '@/lib/services/agendamento-query';
 
-function errorResponse(error: unknown) {
-  if (error instanceof BookingError) {
+function errorResponse(error: unknown, fallback: string) {
+  if (error instanceof BookingError || error instanceof AgendamentoQueryError) {
     return NextResponse.json(
       {
         sucesso: false,
-        bloqueado: error.bloqueado || undefined,
+        bloqueado: error instanceof BookingError ? error.bloqueado || undefined : undefined,
         erro: error.message,
       },
       { status: error.status }
@@ -20,10 +24,33 @@ function errorResponse(error: unknown) {
   console.error('[agendamentos] falha inesperada', {
     error: error instanceof Error ? error.message : String(error),
   });
-  return NextResponse.json(
-    { sucesso: false, erro: 'Falha ao criar agendamento.' },
-    { status: 500 }
-  );
+  return NextResponse.json({ sucesso: false, erro: fallback }, { status: 500 });
+}
+
+export async function GET(request: Request) {
+  try {
+    const { userId } = await resolvePerfilSession(request);
+    if (!userId) {
+      return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
+    }
+
+    const actor = await prisma.perfil.findUnique({
+      where: { clerk_id: userId },
+      select: { id: true, deleted_at: true, role: true },
+    });
+    if (!actor || actor.deleted_at) {
+      return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
+    }
+
+    const agendamentos = await listAgendamentosForActor({
+      actorId: actor.id,
+      role: actor.role,
+    });
+
+    return NextResponse.json({ sucesso: true, agendamentos }, { status: 200 });
+  } catch (error) {
+    return errorResponse(error, 'Falha ao carregar agendamentos.');
+  }
 }
 
 export async function POST(request: Request) {
@@ -72,6 +99,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, 'Falha ao criar agendamento.');
   }
 }

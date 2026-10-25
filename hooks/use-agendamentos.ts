@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { agendamentoService, AgendamentoClientError } from '@/lib/services/agendamento-service';
@@ -7,9 +9,12 @@ import { t } from '@/lib/i18n/store';
 import { apiErrorMessage } from '@/lib/error-handler';
 
 export const useAgendamentos = () => {
+  const { getToken } = useAuth();
+  const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
+
   return useQuery({
     queryKey: ['agendamentos'],
-    queryFn: () => agendamentoService.getAgendamentos(),
+    queryFn: () => agendamentoService.getAgendamentos(tokenFn),
   });
 };
 

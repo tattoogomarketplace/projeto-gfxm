@@ -1,5 +1,23 @@
 const agendamentoService = require("../services/agendamento.service.cjs");
 
+async function listar(req, res) {
+  try {
+    const result = await agendamentoService.listarAgendamentos({
+      user: req.user,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({
+        sucesso: false,
+        erro: err.message,
+      });
+    }
+    req.log.error({ err }, "Erro ao listar agendamentos");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao carregar agendamentos." });
+  }
+}
+
 async function criar(req, res) {
   try {
     const { tatuador_id, data_hora, valor_total, extras } = req.body;
@@ -70,4 +88,4 @@ async function cancelarExecutar(req, res) {
   }
 }
 
-module.exports = { criar, cancelarSolicitacao, cancelarExecutar };
+module.exports = { listar, criar, cancelarSolicitacao, cancelarExecutar };
