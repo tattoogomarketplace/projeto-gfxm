@@ -71,7 +71,7 @@ const HUD_CURATORSHIP_STYLE = {
 } as const;
 
 const FEED_ACTION_BTN_CLASS =
-  'flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] px-2 py-1.5 text-zinc-300 transition-all hover:border-orange-500/50';
+  'flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-1.5 text-zinc-300 transition-all hover:border-orange-500/50';
 
 const FEED_ACTION_METRIC_CLASS =
   'text-xs font-semibold tracking-wide text-gray-300 whitespace-nowrap';
@@ -366,6 +366,7 @@ function FeedSaveButton({
       }}
       className={cn(
         FEED_ACTION_BTN_CLASS,
+        'flex-shrink-0 self-center',
         isSaved && 'text-[#FF6600] border-[#FF6600]/50'
       )}
       aria-label="Salvar"
@@ -885,32 +886,34 @@ export function GalleryInspirationGrid({
               >
               <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
                 <div className="flex w-full flex-row justify-between items-center gap-1 mt-3">
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5">
                     <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5">
                     <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5">
                     <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-5" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
-                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
-                    <Skeleton className="h-3 w-6" />
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5">
                     <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
                 </div>
               </div>
-              <div className="w-full max-w-none bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
-                <Skeleton className="h-3.5 w-32" />
-                <Skeleton className="mt-1.5 h-3 w-full" />
-                <Skeleton className="mt-2 h-3 w-24" />
+              <div className="flex flex-row justify-between items-center gap-4 relative w-full bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
+                <div className="flex flex-col flex-1">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="mt-1.5 h-3 w-full" />
+                  <Skeleton className="mt-2 h-3 w-24" />
+                </div>
+                <div className="flex-shrink-0 self-center flex items-center gap-1.5 px-3 py-1.5">
+                  <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <Skeleton className="h-3 w-6" />
+                </div>
               </div>
                 <TattooDnaSpecsBar />
               </motion.div>
@@ -1131,51 +1134,53 @@ export function GalleryInspirationGrid({
                       <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
                     </button>
-                    <FeedSaveButton
-                      postId={item.id}
-                      isSaved={isSaved}
-                      onToggle={persistToggleSave}
-                      onSaved={() => setIsSaveToastOpen(true)}
-                    />
                   </div>
                 </div>
 
-                <div className="w-full max-w-none bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
-                  <p className="leading-tight">
-                    <span className="mr-2 font-bold text-[14px] text-white">
-                      {artistName}
-                    </span>
-                    <span className="text-[13px] leading-tight text-gray-400">{caption}</span>
-                  </p>
-                  <button
-                    type="button"
-                    data-gallery-action=""
-                    aria-label={likeLabel}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setLikesSheetCount(likeCount);
-                      setIsLikesModalOpen(true);
-                    }}
-                    className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
-                    <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
-                  </button>
-                  <button
-                    type="button"
-                    data-gallery-action=""
-                    aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setViewsSheetPostId(item.id);
-                      setViewsSheetCount(item.viewsCount ?? 0);
-                      setIsViewsModalOpen(true);
-                    }}
-                    className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Eye className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                    <span>{(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações</span>
-                  </button>
+                <div className="flex flex-row justify-between items-center gap-4 relative w-full bg-[#0a0a0c] border border-white/[0.04] rounded-[24px] p-4 mt-2 mb-4 shadow-lg">
+                  <div className="flex flex-col flex-1">
+                    <p className="leading-tight">
+                      <span className="mr-2 font-bold text-[14px] text-white">
+                        {artistName}
+                      </span>
+                      <span className="text-[13px] leading-tight text-gray-400">{caption}</span>
+                    </p>
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      aria-label={likeLabel}
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setLikesSheetCount(likeCount);
+                        setIsLikesModalOpen(true);
+                      }}
+                      className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
+                      <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
+                    </button>
+                    <button
+                      type="button"
+                      data-gallery-action=""
+                      aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setViewsSheetPostId(item.id);
+                        setViewsSheetCount(item.viewsCount ?? 0);
+                        setIsViewsModalOpen(true);
+                      }}
+                      className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                      <span>{(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações</span>
+                    </button>
+                  </div>
+                  <FeedSaveButton
+                    postId={item.id}
+                    isSaved={isSaved}
+                    onToggle={persistToggleSave}
+                    onSaved={() => setIsSaveToastOpen(true)}
+                  />
                 </div>
               <TattooDnaSpecsBar />
               </motion.div>
