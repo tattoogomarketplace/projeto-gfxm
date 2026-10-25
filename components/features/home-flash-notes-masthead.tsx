@@ -26,7 +26,7 @@ function BrandWordmark() {
         className="inline-flex items-baseline select-none text-xl font-black leading-none sm:text-2xl"
         aria-label={BRAND_NAME}
       >
-        <span className="font-black tracking-wide text-transparent [-webkit-text-stroke:1.5px_#FF5F1F] [paint-order:stroke_fill] drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]">
+        <span className="font-bold tracking-widest text-transparent [-webkit-text-stroke:0.5px_#FF5F1F] [paint-order:stroke_fill] drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]">
           {BRAND_WORDMARK.main}
         </span>
         <span className="ml-1 font-black text-[#FF5F1F] drop-shadow-[0_0_6px_rgba(255,95,31,0.6)]">
