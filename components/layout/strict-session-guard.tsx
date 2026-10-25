@@ -36,20 +36,36 @@ export function StrictSessionGuard() {
 
     if (isSignedIn) {
       wasSignedIn.current = true;
+      redirected.current = false;
       return;
     }
 
-    if (wasSignedIn.current && !redirected.current) {
-      if (isIntentionalSignOut()) {
-        resetIntentionalSignOut();
-        wasSignedIn.current = false;
-        return;
-      }
-      if (isOnboardingGrace()) {
-        return;
-      }
-      kickToLogin();
+    if (!wasSignedIn.current || redirected.current) return;
+    if (isIntentionalSignOut()) {
+      resetIntentionalSignOut();
+      wasSignedIn.current = false;
+      return;
     }
+    if (isOnboardingGrace()) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { status } = await checkCurrentSession();
+          if (cancelled || redirected.current) return;
+          if (status === 'active' || status === 'unknown') return;
+        } catch {
+          return;
+        }
+        if (!cancelled) kickToLogin();
+      })();
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [isLoaded, isSignedIn, kickToLogin]);
 
   useEffect(() => {

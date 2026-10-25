@@ -157,7 +157,7 @@ export const SettingsHub = memo(function SettingsHub() {
           onToggle={handleToggle}
           delayMs={60}
         >
-          <WorkingHoursSchedule />
+          {openSection === 'schedule' ? <WorkingHoursSchedule /> : null}
         </SettingsAccordion>
       ) : null}
 

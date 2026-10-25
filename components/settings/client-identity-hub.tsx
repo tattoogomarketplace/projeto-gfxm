@@ -8,6 +8,7 @@ import {
   Camera,
   Check,
   ChevronRight,
+  ExternalLink,
   Lock,
   LogOut,
   Settings,
@@ -240,6 +241,7 @@ export type ClientIdentityHubProps = {
   email: string;
   avatarUrl?: string | null;
   loggingOut: boolean;
+  publicProfileHref?: string | null;
   onLogout: () => void;
   onAvatarFile?: (file: File, previewUrl: string) => void | Promise<void>;
   onAvatarRemove?: () => void | Promise<void>;
@@ -251,6 +253,7 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
   email,
   avatarUrl,
   loggingOut,
+  publicProfileHref = null,
   onLogout,
   onAvatarFile,
   onAvatarRemove,
@@ -333,6 +336,23 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
             {displayName || t('profile.title')}
           </h1>
           {username ? <MagneticUsernameBadge username={username} /> : null}
+
+          {publicProfileHref ? (
+            <Link
+              href={publicProfileHref}
+              onClick={() => {
+                try {
+                  triggerHaptic('light');
+                } catch {
+                  // Haptics are best-effort.
+                }
+              }}
+              className="mt-5 inline-flex min-h-11 w-full max-w-sm items-center justify-center gap-2 rounded-2xl border border-orange-500/35 bg-orange-500/10 px-5 text-sm font-semibold tracking-tight text-orange-300 shadow-[0_0_24px_rgba(249,115,22,0.18)] backdrop-blur-xl transition-transform duration-200 hover:border-orange-400/60 hover:bg-orange-500/15 active:scale-[0.98]"
+            >
+              <ExternalLink className="h-4 w-4" strokeWidth={1.75} />
+              {t('profile.viewPublic')}
+            </Link>
+          ) : null}
 
           <div className="mt-4 flex w-full justify-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/80 px-4 py-2">

@@ -324,6 +324,14 @@ export const WorkingHoursSchedule = memo(function WorkingHoursSchedule() {
         const result = await getWeeklySchedule();
         if (cancelled) return;
         if (!result.success) {
+          const reason = String(result.error || '').toLowerCase();
+          if (
+            reason.includes('não autenticado') ||
+            reason.includes('nao autenticado') ||
+            reason.includes('unauthenticated')
+          ) {
+            return;
+          }
           throw new Error(result.error || t('toast.hoursLoadFailed'));
         }
         const synced = hydrateWorkingHours(result.data.schedule);

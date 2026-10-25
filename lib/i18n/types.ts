@@ -241,6 +241,7 @@ export type MessageKey =
   | 'profile.completed'
   | 'profile.verified'
   | 'profile.edit'
+  | 'profile.viewPublic'
   | 'profile.share'
   | 'profile.copied'
   | 'profile.posts'

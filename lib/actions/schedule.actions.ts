@@ -1,7 +1,5 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-
 import { prisma } from '@/lib/prisma';
 import {
   assertTatuador,
@@ -9,6 +7,7 @@ import {
   loadTatuadorActor,
   ArtistScheduleError,
 } from '@/lib/services/artist-schedule';
+import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
 import {
   getZonedClock,
   normalizeWorkingHours,
@@ -119,7 +118,7 @@ class ScheduleError extends Error {
 
 async function requireActorId(): Promise<string | null> {
   try {
-    const { userId } = await auth();
+    const { userId } = await resolvePerfilSessionFromIncomingRequest();
     return userId ?? null;
   } catch {
     return null;

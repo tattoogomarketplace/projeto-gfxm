@@ -13,6 +13,7 @@ import type { Locale, MessageDictionary } from '@/lib/i18n/types';
 export type ProfileUiMessages = Pick<
   MessageDictionary,
   | 'profile.edit'
+  | 'profile.viewPublic'
   | 'profile.share'
   | 'profile.copied'
   | 'profile.posts'
@@ -32,6 +33,7 @@ export type ProfileUiMessages = Pick<
 export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   'pt-BR': {
     'profile.edit': 'Editar Perfil',
+    'profile.viewPublic': 'Ver meu Perfil Público',
     'profile.share': 'Compartilhar Perfil',
     'profile.copied': 'Link do perfil copiado.',
     'profile.posts': 'Publicações',
@@ -49,6 +51,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   'pt-PT': {
     'profile.edit': 'Editar Perfil',
+    'profile.viewPublic': 'Ver o meu Perfil Público',
     'profile.share': 'Partilhar Perfil',
     'profile.copied': 'Ligação do perfil copiada.',
     'profile.posts': 'Publicações',
@@ -66,6 +69,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   en: {
     'profile.edit': 'Edit Profile',
+    'profile.viewPublic': 'View my Public Profile',
     'profile.share': 'Share Profile',
     'profile.copied': 'Profile link copied.',
     'profile.posts': 'Posts',
@@ -83,6 +87,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   es: {
     'profile.edit': 'Editar perfil',
+    'profile.viewPublic': 'Ver mi Perfil Público',
     'profile.share': 'Compartir perfil',
     'profile.copied': 'Enlace del perfil copiado.',
     'profile.posts': 'Publicaciones',
@@ -100,6 +105,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   fr: {
     'profile.edit': 'Modifier le profil',
+    'profile.viewPublic': 'Voir mon profil public',
     'profile.share': 'Partager le profil',
     'profile.copied': 'Lien du profil copié.',
     'profile.posts': 'Publications',
@@ -117,6 +123,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   de: {
     'profile.edit': 'Profil bearbeiten',
+    'profile.viewPublic': 'Mein öffentliches Profil ansehen',
     'profile.share': 'Profil teilen',
     'profile.copied': 'Profillink kopiert.',
     'profile.posts': 'Beiträge',
@@ -134,6 +141,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   it: {
     'profile.edit': 'Modifica profilo',
+    'profile.viewPublic': 'Vedi il mio profilo pubblico',
     'profile.share': 'Condividi profilo',
     'profile.copied': 'Link del profilo copiato.',
     'profile.posts': 'Pubblicazioni',
@@ -151,6 +159,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   ja: {
     'profile.edit': 'プロフィールを編集',
+    'profile.viewPublic': '公開プロフィールを見る',
     'profile.share': 'プロフィールを共有',
     'profile.copied': 'プロフィールのリンクをコピーしました。',
     'profile.posts': '投稿',
@@ -168,6 +177,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   zh: {
     'profile.edit': '编辑个人资料',
+    'profile.viewPublic': '查看我的公开资料',
     'profile.share': '分享个人资料',
     'profile.copied': '个人资料链接已复制。',
     'profile.posts': '帖子',
@@ -185,6 +195,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   ko: {
     'profile.edit': '프로필 편집',
+    'profile.viewPublic': '내 공개 프로필 보기',
     'profile.share': '프로필 공유',
     'profile.copied': '프로필 링크가 복사되었습니다.',
     'profile.posts': '게시물',
@@ -202,6 +213,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   ar: {
     'profile.edit': 'تعديل الملف الشخصي',
+    'profile.viewPublic': 'عرض ملفي العام',
     'profile.share': 'مشاركة الملف الشخصي',
     'profile.copied': 'تم نسخ رابط الملف الشخصي.',
     'profile.posts': 'المنشورات',
@@ -219,6 +231,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   ru: {
     'profile.edit': 'Редактировать профиль',
+    'profile.viewPublic': 'Смотреть мой публичный профиль',
     'profile.share': 'Поделиться профилем',
     'profile.copied': 'Ссылка на профиль скопирована.',
     'profile.posts': 'Публикации',
@@ -236,6 +249,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   hi: {
     'profile.edit': 'प्रोफ़ाइल संपादित करें',
+    'profile.viewPublic': 'मेरी सार्वजनिक प्रोफ़ाइल देखें',
     'profile.share': 'प्रोफ़ाइल साझा करें',
     'profile.copied': 'प्रोफ़ाइल लिंक कॉपी हो गया।',
     'profile.posts': 'पोस्ट',
@@ -253,6 +267,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   nl: {
     'profile.edit': 'Profiel bewerken',
+    'profile.viewPublic': 'Bekijk mijn openbare profiel',
     'profile.share': 'Profiel delen',
     'profile.copied': 'Profiel-link gekopieerd.',
     'profile.posts': 'Berichten',
@@ -270,6 +285,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   tr: {
     'profile.edit': 'Profili Düzenle',
+    'profile.viewPublic': 'Herkese açık profilimi gör',
     'profile.share': 'Profili Paylaş',
     'profile.copied': 'Profil bağlantısı kopyalandı.',
     'profile.posts': 'Gönderiler',
@@ -287,6 +303,7 @@ export const PROFILE_UI_MESSAGES: Record<Locale, ProfileUiMessages> = {
   },
   pl: {
     'profile.edit': 'Edytuj profil',
+    'profile.viewPublic': 'Zobacz mój profil publiczny',
     'profile.share': 'Udostępnij profil',
     'profile.copied': 'Skopiowano link do profilu.',
     'profile.posts': 'Posty',
