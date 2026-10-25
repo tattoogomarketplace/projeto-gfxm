@@ -23,10 +23,10 @@ function BrandWordmark() {
   return (
     <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-2">
       <p
-        className="select-none text-xl font-bold leading-none tracking-tight sm:text-2xl"
+        className="select-none text-xl font-black leading-none tracking-tight sm:text-2xl"
         aria-label={BRAND_NAME}
       >
-        <span className="font-bold text-black drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]">
+        <span className="font-black text-white [-webkit-text-stroke:1.5px_#000000] drop-shadow-[0_0_12px_rgba(34,197,94,1)]">
           {BRAND_WORDMARK.main}
         </span>
         <span className="ml-1 text-[#FF5F1F] [text-shadow:0_0_20px_rgba(255,95,31,0.45)]">
