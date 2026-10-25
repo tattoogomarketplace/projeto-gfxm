@@ -35,9 +35,12 @@ npx prisma migrate deploy
 
 ## Nota sobre este diretório
 
-O histórico `prisma migrate` deste projeto ainda não foi inicializado (o schema
-é sincronizado via `prisma db push`/`database/migrations/*.sql`). Por isso o
-arquivo `20261017_least_privilege_app_runner.sql` está na **raiz** de
-`prisma/migrations` e não em uma subpasta com timestamp: o Prisma Migrate só
-considera migrações subpastas, então este runbook permanece uma ação
-administrativa manual e não é aplicado automaticamente.
+O histórico `prisma migrate` passou a ser versionado a partir de
+`20261025183000_add_flashnote_columns` (colunas `price`, `discount_percentage`
+e `image_url` em `flash_notes`). O SQL é idempotente (`IF NOT EXISTS`) para
+não quebrar ambientes que já receberam `db push`.
+
+O arquivo `20261017_least_privilege_app_runner.sql` permanece na **raiz** de
+`prisma/migrations` (não em subpasta com timestamp): o Prisma Migrate só
+considera subpastas, então esse runbook continua sendo uma ação administrativa
+manual e não é aplicado automaticamente.
