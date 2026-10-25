@@ -1,16 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Great_Vibes } from 'next/font/google';
+import { Zap } from 'lucide-react';
 import { BRAND_NAME, BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { useI18n } from '@/hooks/use-i18n';
 import { NATIVE_APP_IMAGE_STYLE } from '@/components/ui/optimized-image';
-
-const brandScript = Great_Vibes({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-});
 
 const MOCK_FLASH_NOTES = [
   {
@@ -40,20 +34,25 @@ export function HomeFlashNotesMasthead() {
     <div className="-mx-4 min-w-0 sm:-mx-6">
       <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <p
-          className={`${brandScript.className} select-none text-[clamp(2.15rem,8vw,2.85rem)] leading-none tracking-tight`}
+          className="select-none text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight"
           aria-label={BRAND_NAME}
         >
           <span className="text-white">{BRAND_WORDMARK.main}</span>
-          <span className="text-[#FF5F1F] [text-shadow:0_0_18px_rgba(255,95,31,0.45)]">
-            {' '}
+          <span className="ml-1 text-[#FF5F1F] [text-shadow:0_0_20px_rgba(255,95,31,0.45)]">
             {BRAND_WORDMARK.mark}
           </span>
         </p>
       </div>
 
-      <div className="sticky top-0 z-50 w-full transform-gpu border-b border-white/5 bg-[#121212]/80 pb-3 pt-[max(env(safe-area-inset-top),0.5rem)] backdrop-blur-2xl will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]">
+      <section className="relative w-full bg-transparent pb-3 pt-2">
+        <div className="mb-2 flex items-center gap-2 px-4">
+          <Zap className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500">
+            {t('flash.heading')}
+          </p>
+        </div>
         <div
-          className="hide-scrollbar flex gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory px-4 pr-16 [-webkit-overflow-scrolling:touch]"
+          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pr-16 transform-gpu will-change-transform [-webkit-overflow-scrolling:touch]"
           role="list"
           aria-label={t('flash.listAria')}
         >
@@ -82,7 +81,7 @@ export function HomeFlashNotesMasthead() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

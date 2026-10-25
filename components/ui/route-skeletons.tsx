@@ -72,7 +72,11 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
         <div className="relative flex w-full justify-center bg-transparent pb-2 pt-[calc(env(safe-area-inset-top)+1rem)]">
           <Skeleton className="h-10 w-48 rounded-full" />
         </div>
-        <div className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#121212]/80 pb-3 pt-[max(env(safe-area-inset-top),0.5rem)] backdrop-blur-2xl">
+        <div className="relative w-full bg-transparent pb-3 pt-2">
+          <div className="mb-2 flex items-center gap-2 px-4">
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-2.5 w-24 rounded-full" />
+          </div>
           <div className="flex gap-4 overflow-hidden px-4">
             {[0, 1, 2].map((index) => (
               <div key={index} className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5">
