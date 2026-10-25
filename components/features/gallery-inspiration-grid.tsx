@@ -76,6 +76,11 @@ const FEED_ACTION_BTN_CLASS =
 const FEED_ACTION_METRIC_CLASS =
   'text-xs font-semibold tracking-wide text-gray-300 whitespace-nowrap';
 
+const FEED_TOP_ACTION_BTN_CLASS =
+  'flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px] bg-white/[0.02] text-zinc-300 transition-all hover:border-orange-500/50';
+
+const FEED_TOP_ACTION_METRIC_CLASS = 'text-sm font-medium leading-none';
+
 type FeedListUser = {
   id: string;
   username: string;
@@ -885,21 +890,21 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
               <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex w-full flex-row justify-between items-center gap-1 mt-3">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5">
-                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                <div className="flex w-full flex-row justify-between items-center gap-2">
+                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                    <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5">
-                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                    <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5">
-                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                    <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-5" />
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5">
-                    <Skeleton className="h-6 w-6 rounded-xl border border-white/10 bg-white/[0.02]" />
+                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                    <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
                 </div>
@@ -1058,11 +1063,11 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
                 <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex w-full flex-row justify-between items-center gap-1 mt-3">
+                  <div className="flex w-full flex-row justify-between items-center gap-2">
                     {showLike ? (
                       <div
                         className={cn(
-                          FEED_ACTION_BTN_CLASS,
+                          FEED_TOP_ACTION_BTN_CLASS,
                           isLiked && 'text-orange-500 border-orange-500/50'
                         )}
                       >
@@ -1087,7 +1092,7 @@ export function GalleryInspirationGrid({
                             setLikesSheetCount(likeCount);
                             setIsLikesModalOpen(true);
                           }}
-                          className={cn(FEED_ACTION_METRIC_CLASS, 'pr-0.5')}
+                          className={FEED_TOP_ACTION_METRIC_CLASS}
                           aria-label={likeLabel}
                         >
                           {formatNumber(likeCount)}
@@ -1103,11 +1108,11 @@ export function GalleryInspirationGrid({
                         setViewsSheetCount(item.viewsCount ?? 0);
                         setIsViewsModalOpen(true);
                       }}
-                      className={FEED_ACTION_BTN_CLASS}
+                      className={FEED_TOP_ACTION_BTN_CLASS}
                       aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
                     >
                       <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_ACTION_METRIC_CLASS}>
+                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>
                         {formatNumber(item.viewsCount ?? 0)}
                       </span>
                     </button>
@@ -1115,11 +1120,11 @@ export function GalleryInspirationGrid({
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className={FEED_ACTION_BTN_CLASS}
+                      className={FEED_TOP_ACTION_BTN_CLASS}
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(128)}</span>
+                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(128)}</span>
                     </button>
                     <button
                       type="button"
@@ -1128,11 +1133,11 @@ export function GalleryInspirationGrid({
                         setBudgetItem(item);
                         setIsBudgetModalOpen(true);
                       }}
-                      className={FEED_ACTION_BTN_CLASS}
+                      className={FEED_TOP_ACTION_BTN_CLASS}
                       aria-label={t('chat.quotes')}
                     >
                       <FileText className="h-6 w-6 shrink-0" strokeWidth={2} />
-                      <span className={FEED_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
+                      <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(45)}</span>
                     </button>
                   </div>
                 </div>
