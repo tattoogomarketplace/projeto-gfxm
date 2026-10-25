@@ -82,7 +82,7 @@ export function GaleriaInspiracoes({
           items={inspirations}
           loading={loading}
           skeletonCount={9}
-          layout="masonry"
+          layout="feed"
           showLike
           savedIds={savedIds}
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}

@@ -17,9 +17,22 @@ export default function GaleriaLoading() {
           <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
         </div>
       </div>
-      <div className="columns-2 md:columns-3 gap-2">
-        {Array.from({ length: 9 }, (_, index) => (
-          <div key={index} className="break-inside-avoid mb-2 relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
+      <div className="flex flex-col gap-8 w-full max-w-lg mx-auto">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="flex w-full flex-col">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-white/5" />
+                <div className="flex flex-col gap-1">
+                  <div className="h-3 w-28 rounded bg-white/5" />
+                  <div className="h-2.5 w-20 rounded bg-white/5" />
+                </div>
+              </div>
+              <div className="h-7 w-[5.5rem] rounded-full bg-white/5" />
+            </div>
+            <div className="relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
+            <div className="h-16 w-full bg-white/[0.03]" />
+          </div>
         ))}
       </div>
     </div>
