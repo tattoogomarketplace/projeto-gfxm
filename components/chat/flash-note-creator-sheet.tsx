@@ -496,7 +496,10 @@ export function FlashNoteCreatorSheet({
         body: file,
       });
       if (!putRes.ok) {
-        throw new Error(t('toast.uploadPutFailed'));
+        const raw = await putRes.text().catch(() => '');
+        throw new Error(
+          raw.trim() || `Upload rejected (${putRes.status}): ${putRes.statusText || t('toast.uploadPutFailed')}`
+        );
       }
       return presign.publicUrl;
     },
@@ -560,7 +563,7 @@ export function FlashNoteCreatorSheet({
             imageUrl = await uploadFlashImage(pendingFile);
           } catch (error) {
             triggerHaptic('heavy');
-            toast.error(error instanceof Error ? error.message : t('toast.uploadPutFailed'));
+            toast.error(error instanceof Error ? error.message : String(error));
             return;
           } finally {
             setIsUploading(false);
@@ -585,6 +588,9 @@ export function FlashNoteCreatorSheet({
         triggerHaptic('heavy');
         toast.success(t('toast.flashLive'));
         onClose();
+      } catch (error) {
+        triggerHaptic('heavy');
+        toast.error(error instanceof Error ? error.message : String(error));
       } finally {
         setIsPublishing(false);
         setIsUploading(false);
@@ -664,58 +670,51 @@ export function FlashNoteCreatorSheet({
               onChange={handleImagePicked}
             />
             <div className="px-5 pb-2 pt-4">
-              <button
-                type="button"
-                onClick={openFilePicker}
-                disabled={busy}
-                aria-label={hasImage ? t('flash.changeImage') : t('flash.dropzone')}
-                className={cn(
-                  'relative mx-auto flex w-full max-w-[220px] overflow-hidden rounded-3xl border border-white/[0.08]',
-                  'aspect-[9/16] bg-[#161616] text-left transition-transform active:scale-[0.98]',
-                  'disabled:pointer-events-none disabled:opacity-60'
-                )}
-              >
-                {hasImage ? (
-                  <OptimizedImage
-                    src={imagePreview}
-                    alt={t('flash.dropzone')}
-                    sizes="220px"
-                    className="absolute inset-0 h-full w-full"
-                    fallback={null}
-                  />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{ background: background.css }}
-                  />
-                )}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/55"
-                />
-                <span className="relative z-10 mt-auto flex w-full flex-col items-center gap-1.5 px-4 pb-5 pt-16 text-center">
-                  {isUploading ? (
-                    <Loader2 className="h-6 w-6 animate-spin text-orange-400" strokeWidth={2.2} />
-                  ) : (
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-orange-400 backdrop-blur-md">
-                      <ImagePlus className="h-5 w-5" strokeWidth={1.9} />
-                    </span>
-                  )}
-                  <span className="text-[13px] font-semibold text-white">
-                    {isUploading
-                      ? t('flash.uploading')
-                      : hasImage
-                        ? t('flash.changeImage')
-                        : t('flash.dropzone')}
+              {hasImage ? (
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  disabled={busy}
+                  aria-label={t('flash.changeImage')}
+                  className="relative mt-0 block w-full overflow-hidden rounded-xl border border-orange-500/40 bg-black/30 text-left disabled:pointer-events-none disabled:opacity-60"
+                >
+                  <div className="relative mx-auto aspect-[9/16] w-full max-w-[220px] overflow-hidden">
+                    <OptimizedImage
+                      src={imagePreview}
+                      alt={t('flash.dropzone')}
+                      sizes="220px"
+                      className="h-full w-full"
+                      fallback={null}
+                    />
+                    {isUploading ? (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/45 backdrop-blur-sm">
+                        <Loader2 className="h-6 w-6 animate-spin text-orange-400" strokeWidth={2.2} />
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="mt-2 block pb-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-300">
+                    {isUploading ? t('flash.uploading') : t('flash.changeImage')}
                   </span>
-                  {hasImage ? null : (
-                    <span className="text-[11px] font-medium text-zinc-400">
-                      {t('flash.dropzoneHint')}
-                    </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  disabled={busy}
+                  aria-label={t('flash.dropzone')}
+                  className="relative flex min-h-[8.5rem] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-orange-500/40 bg-black/20 backdrop-blur-md transition-colors hover:border-orange-500 disabled:pointer-events-none disabled:opacity-60 dark:bg-white/[0.04]"
+                >
+                  {isUploading ? (
+                    <Loader2 className="mb-2 h-6 w-6 animate-spin text-orange-400" strokeWidth={2.2} />
+                  ) : (
+                    <ImagePlus className="mb-2 h-6 w-6 text-orange-400" strokeWidth={1.75} />
                   )}
-                </span>
-              </button>
+                  <span className="text-sm font-semibold text-orange-300">
+                    {isUploading ? t('flash.uploading') : t('flash.dropzone')}
+                  </span>
+                  <span className="mt-1 text-[11px] text-zinc-500">{t('flash.dropzoneHint')}</span>
+                </button>
+              )}
             </div>
 
             <div className="px-5 pb-2 pt-2">

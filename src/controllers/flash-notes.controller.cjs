@@ -10,7 +10,10 @@ async function listar(req, res) {
       return res.status(err.status).json({ sucesso: false, erro: err.message });
     }
     req.log?.error({ err }, "Erro ao listar Flash Notes");
-    return res.status(500).json({ sucesso: false, erro: "Falha ao listar Flash Notes." });
+    return res.status(500).json({
+      sucesso: false,
+      erro: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -34,7 +37,10 @@ async function criar(req, res) {
       return res.status(err.status).json({ sucesso: false, erro: err.message });
     }
     req.log?.error({ err }, "Erro ao criar Flash Note");
-    return res.status(500).json({ sucesso: false, erro: "Falha ao criar Flash Note." });
+    return res.status(500).json({
+      sucesso: false,
+      erro: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -57,7 +63,10 @@ async function atualizar(req, res) {
       return res.status(err.status).json({ sucesso: false, erro: err.message });
     }
     req.log?.error({ err }, "Erro ao atualizar Flash Note");
-    return res.status(500).json({ sucesso: false, erro: "Falha ao atualizar Flash Note." });
+    return res.status(500).json({
+      sucesso: false,
+      erro: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 

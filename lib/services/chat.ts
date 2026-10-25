@@ -218,10 +218,9 @@ export function chatErrorResponse(error: unknown) {
       { status: error.status }
     );
   }
-  console.error('[chat] falha inesperada', {
-    error: error instanceof Error ? error.message : String(error),
-  });
-  return NextResponse.json({ sucesso: false, erro: 'Falha no chat.' }, { status: 500 });
+  const raw = error instanceof Error ? error.message : String(error);
+  console.error('[chat] falha inesperada', { error: raw });
+  return NextResponse.json({ sucesso: false, erro: raw }, { status: 500 });
 }
 
 export async function listConversations(

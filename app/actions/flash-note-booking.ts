@@ -87,13 +87,13 @@ function toResult(error: unknown): BookFlashNoteResult {
   if (isPrismaKnown(error) && (error.code === 'P2002' || error.code === 'P2034' || error.code === 'P2028')) {
     return {
       success: false,
-      error: 'Esta oferta ja foi garantida por outro cliente.',
+      error: error.message || 'Esta oferta ja foi garantida por outro cliente.',
       code: 'CONFLICT',
     };
   }
   return {
     success: false,
-    error: 'Nao foi possivel garantir este horario.',
+    error: error instanceof Error ? error.message : String(error),
     code: 'CONFLICT',
   };
 }

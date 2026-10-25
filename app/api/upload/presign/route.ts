@@ -82,14 +82,12 @@ export async function POST(request: Request) {
       publicUrl: buildPublicUrl(fileKey),
     });
   } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
     console.error('[upload/presign] falha ao gerar URL pré-assinada', {
       userId,
       fileKey,
-      error: error instanceof Error ? error.message : String(error),
+      error: raw,
     });
-    return NextResponse.json(
-      { erro: 'Não foi possível preparar o upload.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ erro: raw }, { status: 500 });
   }
 }

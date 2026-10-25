@@ -174,7 +174,7 @@ function FlashNoteStorySurface({
       const result = await bookFlashNote(note.id);
       if (!result.success) {
         triggerHaptic('heavy');
-        toast.error(t(bookErrorKey(result.code)));
+        toast.error(result.error || t(bookErrorKey(result.code)));
         return;
       }
       triggerHaptic('success');

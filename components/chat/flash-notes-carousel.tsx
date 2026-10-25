@@ -15,7 +15,6 @@ import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatAppError } from '@/lib/error-handler';
 
 async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
   const clerkToken = await getToken().catch(() => null);
@@ -184,11 +183,7 @@ export function FlashNotesCarousel() {
         };
         if (!res.ok || !json.note) {
           if (snapshotRef.current) setNotes(snapshotRef.current);
-          toast.error(
-            json.erro
-              ? formatAppError({ message: json.erro }, 'api')
-              : t('toast.flashPublishFailed')
-          );
+          toast.error(json.erro || t('toast.flashPublishFailed'));
           return false;
         }
         if (json.actorId) setActorId(json.actorId);
@@ -199,9 +194,9 @@ export function FlashNotesCarousel() {
           ),
         ]);
         return true;
-      } catch {
+      } catch (error) {
         if (snapshotRef.current) setNotes(snapshotRef.current);
-        toast.error(t('toast.flashPublishFailed'));
+        toast.error(error instanceof Error ? error.message : String(error));
         return false;
       }
     },
@@ -225,17 +220,13 @@ export function FlashNotesCarousel() {
       const json = (await res.json().catch(() => ({}))) as { sucesso?: boolean; erro?: string };
       if (!res.ok || !json.sucesso) {
         if (snapshotRef.current) setNotes(snapshotRef.current);
-        toast.error(
-          json.erro
-            ? formatAppError({ message: json.erro }, 'api')
-            : t('toast.flashDeleteFailed')
-        );
+        toast.error(json.erro || t('toast.flashDeleteFailed'));
         return false;
       }
       return true;
-    } catch {
+    } catch (error) {
       if (snapshotRef.current) setNotes(snapshotRef.current);
-      toast.error(t('toast.flashDeleteFailed'));
+      toast.error(error instanceof Error ? error.message : String(error));
       return false;
     }
   }, [notes, ownNote, t]);
