@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       alignClass?: unknown;
       price?: unknown;
       discountPercentage?: unknown;
+      imageUrl?: unknown;
     } = {};
     try {
       body = (await request.json()) as typeof body;
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       alignClass: body.alignClass,
       price: body.price,
       discountPercentage: body.discountPercentage,
+      imageUrl: body.imageUrl,
     });
 
     return NextResponse.json({ sucesso: true, actorId: actor.id, note }, { status: 201 });

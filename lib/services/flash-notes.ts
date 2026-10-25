@@ -40,6 +40,7 @@ type FlashNoteRow = {
   alignClass: string;
   price: { toNumber?: () => number } | number | string;
   discountPercentage: number | null;
+  imageUrl: string | null;
   createdAt: Date;
   expiresAt: Date;
   ativa: boolean;
@@ -96,6 +97,7 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
     price: pricing?.originalPrice ?? 0,
     discountPercentage: pricing?.discountPercent ?? null,
     salePrice: pricing?.salePrice ?? null,
+    imageUrl: row.imageUrl?.trim() || null,
     createdAt: row.createdAt.toISOString(),
     expiresAt: row.expiresAt.toISOString(),
     ativa: row.ativa,
@@ -153,6 +155,7 @@ export async function createFlashNote(params: {
   alignClass?: unknown;
   price?: unknown;
   discountPercentage?: unknown;
+  imageUrl?: unknown;
 }): Promise<FlashNoteDto> {
   if (params.actorRole !== 'tatuador') {
     throw new ChatError(403, 'Apenas tatuadores podem publicar Flash Notes.');
@@ -172,6 +175,7 @@ export async function createFlashNote(params: {
 
   const style = sanitizeFlashNoteStyle(params);
   const pricing = requireFlashNotePricing(params.price, params.discountPercentage);
+  const imageUrl = requireFlashNoteImageUrl(params.imageUrl);
 
   await prisma.flashNote.updateMany({
     where: { userId: params.actorId, ativa: true },
@@ -187,6 +191,7 @@ export async function createFlashNote(params: {
       alignClass: style.alignClass,
       price: pricing.originalPrice,
       discountPercentage: pricing.discountPercent,
+      imageUrl,
       expiresAt,
       ativa: true,
     },
@@ -209,6 +214,7 @@ export async function updateFlashNote(params: {
   alignClass?: unknown;
   price?: unknown;
   discountPercentage?: unknown;
+  imageUrl?: unknown;
 }): Promise<FlashNoteDto> {
   if (!FLASH_NOTE_ID_RE.test(params.noteId)) {
     throw new ChatError(404, 'Flash Note não encontrada.');
@@ -225,6 +231,7 @@ export async function updateFlashNote(params: {
       alignClass: true,
       price: true,
       discountPercentage: true,
+      imageUrl: true,
     },
   });
 
@@ -244,6 +251,10 @@ export async function updateFlashNote(params: {
     params.price ?? existing.price,
     params.discountPercentage === undefined ? existing.discountPercentage : params.discountPercentage
   );
+  const imageUrl =
+    params.imageUrl === undefined
+      ? requireFlashNoteImageUrl(existing.imageUrl)
+      : requireFlashNoteImageUrl(params.imageUrl);
 
   const mutated = await prisma.flashNote.updateMany({
     where: { id: existing.id, userId: params.actorId },
@@ -254,6 +265,7 @@ export async function updateFlashNote(params: {
       alignClass: style.alignClass,
       price: pricing.originalPrice,
       discountPercentage: pricing.discountPercent,
+      imageUrl,
       expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
     },
   });
@@ -285,6 +297,26 @@ function normalizeContent(value: unknown): string {
     throw new ChatError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
   }
   return content;
+}
+
+function requireFlashNoteImageUrl(value: unknown): string {
+  const imageUrl = typeof value === 'string' ? value.trim() : '';
+  if (!imageUrl) {
+    throw new ChatError(400, 'A Flash Note precisa de uma imagem 9:16.');
+  }
+  try {
+    const parsed = new URL(imageUrl);
+    if (parsed.protocol !== 'https:') {
+      throw new ChatError(400, 'A URL da imagem deve ser HTTPS.');
+    }
+  } catch (error) {
+    if (error instanceof ChatError) throw error;
+    throw new ChatError(400, 'URL da imagem inválida.');
+  }
+  if (imageUrl.length > 1024) {
+    throw new ChatError(400, 'URL da imagem excede o tamanho máximo.');
+  }
+  return imageUrl;
 }
 
 function requireFlashNotePricing(price: unknown, discountPercentage: unknown) {

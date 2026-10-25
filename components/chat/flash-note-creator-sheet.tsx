@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
   useTransition,
+  type ChangeEvent,
 } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -18,10 +19,12 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { useAuth } from '@clerk/nextjs';
 import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  ImagePlus,
   Loader2,
   Radio,
   Sparkles,
@@ -29,8 +32,10 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { authedFetch } from '@/lib/utils/authed-fetch';
 import {
   normalizeFlashNoteDiscount,
   parseTypedMoneyInput,
@@ -62,6 +67,8 @@ const ALIGN_ICONS: Record<FlashNoteAlignId, LucideIcon> = {
 };
 
 const MAX_TEXTAREA_HEIGHT = 260;
+const MAX_FLASH_IMAGE_BYTES = 10 * 1024 * 1024;
+const FLASH_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
 
 /**
  * Tiny external store for the composer draft. It lets the textarea and the
@@ -281,11 +288,13 @@ type FlashNoteCreatorSheetProps = {
   onClose: () => void;
   initialPrice?: number | null;
   initialDiscountPercentage?: number | null;
+  initialImageUrl?: string | null;
   /** Resolves `true` once the note has been persisted (optimistically or not). */
   onPublish: (
     content: string,
     style: FlashNoteStyle,
-    offer: { price: number; discountPercentage: number | null }
+    offer: { price: number; discountPercentage: number | null },
+    imageUrl: string
   ) => Promise<boolean>;
   /** Present only when editing; resolves `true` once the note is removed. */
   onDelete?: () => Promise<boolean>;
@@ -300,12 +309,15 @@ export function FlashNoteCreatorSheet({
   initialAlignClass,
   initialPrice = null,
   initialDiscountPercentage = null,
+  initialImageUrl = null,
   onClose,
   onPublish,
   onDelete,
 }: FlashNoteCreatorSheetProps) {
   const { t } = useI18n();
+  const { getToken } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [store] = useState<DraftStore>(() => createDraftStore(initialContent));
 
@@ -325,17 +337,24 @@ export function FlashNoteCreatorSheet({
   const [discountInput, setDiscountInput] = useState(() =>
     initialDiscountPercentage != null ? String(initialDiscountPercentage) : ''
   );
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    () => initialImageUrl?.trim() || null
+  );
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isPending, startTransition] = useTransition();
   // Urgent, synchronous flag so the spinner paints on the very first frame.
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const background = useMemo(() => getFlashNoteBackground(backgroundId), [backgroundId]);
   const alignment = useMemo(() => getFlashNoteAlignById(align), [align]);
   const typeface = useMemo(() => getFlashNoteFontById(font), [font]);
 
-  const busy = isPending || isPublishing;
-  const canPublish = hasText && parseTypedMoneyInput(priceInput) != null && !busy;
+  const busy = isPending || isPublishing || isUploading;
+  const hasImage = Boolean(imagePreview);
+  const canPublish =
+    hasText && hasImage && parseTypedMoneyInput(priceInput) != null && !busy;
 
   // Mirror the store's emptiness into local state — but only flip it on the
   // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
@@ -362,6 +381,8 @@ export function FlashNoteCreatorSheet({
     setFont(getFlashNoteFontByClass(initialFontClass).id);
     setPriceInput(initialPrice != null && initialPrice > 0 ? String(initialPrice) : '');
     setDiscountInput(initialDiscountPercentage != null ? String(initialDiscountPercentage) : '');
+    setImagePreview(initialImageUrl?.trim() || null);
+    setPendingFile(null);
     setConfirmDelete(false);
   }, [
     open,
@@ -371,6 +392,7 @@ export function FlashNoteCreatorSheet({
     initialAlignClass,
     initialPrice,
     initialDiscountPercentage,
+    initialImageUrl,
     store,
   ]);
 
@@ -414,6 +436,73 @@ export function FlashNoteCreatorSheet({
     setFont((current) => cycleFlashNoteFont(current));
   }, [triggerHaptic]);
 
+  const openFilePicker = useCallback(() => {
+    if (busy) return;
+    triggerHaptic('light');
+    fileInputRef.current?.click();
+  }, [busy, triggerHaptic]);
+
+  const handleImagePicked = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      if (!FLASH_IMAGE_TYPES.has(file.type)) {
+        triggerHaptic('heavy');
+        toast.error(t('toast.invalidFormat', { formats: 'JPG, PNG, WEBP, AVIF' }));
+        return;
+      }
+      if (file.size > MAX_FLASH_IMAGE_BYTES) {
+        triggerHaptic('heavy');
+        toast.error(t('toast.invalidFormat', { formats: '10MB' }));
+        return;
+      }
+      triggerHaptic('light');
+      setPendingFile(file);
+      setImagePreview((current) => {
+        if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+        return URL.createObjectURL(file);
+      });
+    },
+    [t, triggerHaptic]
+  );
+
+  const uploadFlashImage = useCallback(
+    async (file: File): Promise<string> => {
+      const contentType = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
+      const presignRes = await authedFetch(
+        '/api/upload/presign',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, contentType }),
+        },
+        getToken
+      );
+      const presign = (await presignRes.json().catch(() => ({}))) as {
+        presignedUrl?: string;
+        publicUrl?: string;
+        erro?: string;
+      };
+      if (!presignRes.ok || !presign.presignedUrl || !presign.publicUrl) {
+        throw new Error(presign.erro || t('toast.uploadPrepareFailed'));
+      }
+      const putRes = await fetch(presign.presignedUrl, {
+        method: 'PUT',
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        headers: { 'Content-Type': contentType },
+        body: file,
+      });
+      if (!putRes.ok) {
+        throw new Error(t('toast.uploadPutFailed'));
+      }
+      return presign.publicUrl;
+    },
+    [getToken, t]
+  );
+
   const requestDelete = useCallback(() => {
     if (busy) return;
     triggerHaptic('light');
@@ -441,6 +530,11 @@ export function FlashNoteCreatorSheet({
   const handlePublish = useCallback(() => {
     const content = store.get().trim();
     if (!content || busy) return;
+    if (!imagePreview) {
+      triggerHaptic('heavy');
+      toast.error(t('flash.imageRequired'));
+      return;
+    }
     const price = parseTypedMoneyInput(priceInput);
     if (price == null) {
       triggerHaptic('heavy');
@@ -459,6 +553,24 @@ export function FlashNoteCreatorSheet({
     setIsPublishing(true);
     startTransition(async () => {
       try {
+        let imageUrl = initialImageUrl?.trim() || '';
+        if (pendingFile) {
+          setIsUploading(true);
+          try {
+            imageUrl = await uploadFlashImage(pendingFile);
+          } catch (error) {
+            triggerHaptic('heavy');
+            toast.error(error instanceof Error ? error.message : t('toast.uploadPutFailed'));
+            return;
+          } finally {
+            setIsUploading(false);
+          }
+        }
+        if (!imageUrl) {
+          triggerHaptic('heavy');
+          toast.error(t('flash.imageRequired'));
+          return;
+        }
         const published = await onPublish(
           content,
           {
@@ -466,7 +578,8 @@ export function FlashNoteCreatorSheet({
             fontClass: typeface.className,
             alignClass: alignment.className,
           },
-          { price, discountPercentage }
+          { price, discountPercentage },
+          imageUrl
         );
         if (!published) return;
         triggerHaptic('heavy');
@@ -474,6 +587,7 @@ export function FlashNoteCreatorSheet({
         onClose();
       } finally {
         setIsPublishing(false);
+        setIsUploading(false);
       }
     });
   }, [
@@ -481,13 +595,17 @@ export function FlashNoteCreatorSheet({
     backgroundId,
     busy,
     discountInput,
+    imagePreview,
+    initialImageUrl,
     onClose,
     onPublish,
+    pendingFile,
     priceInput,
     store,
     t,
     triggerHaptic,
     typeface.className,
+    uploadFlashImage,
   ]);
 
   return (
@@ -538,22 +656,80 @@ export function FlashNoteCreatorSheet({
             </DrawerHeader>
 
             <DrawerBody className="relative flex flex-col overflow-y-auto overscroll-none px-0 pb-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              className="sr-only"
+              onChange={handleImagePicked}
+            />
             <div className="px-5 pb-2 pt-4">
+              <button
+                type="button"
+                onClick={openFilePicker}
+                disabled={busy}
+                aria-label={hasImage ? t('flash.changeImage') : t('flash.dropzone')}
+                className={cn(
+                  'relative mx-auto flex w-full max-w-[220px] overflow-hidden rounded-3xl border border-white/[0.08]',
+                  'aspect-[9/16] bg-[#161616] text-left transition-transform active:scale-[0.98]',
+                  'disabled:pointer-events-none disabled:opacity-60'
+                )}
+              >
+                {hasImage ? (
+                  <OptimizedImage
+                    src={imagePreview}
+                    alt={t('flash.dropzone')}
+                    sizes="220px"
+                    className="absolute inset-0 h-full w-full"
+                    fallback={null}
+                  />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{ background: background.css }}
+                  />
+                )}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/55"
+                />
+                <span className="relative z-10 mt-auto flex w-full flex-col items-center gap-1.5 px-4 pb-5 pt-16 text-center">
+                  {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-orange-400" strokeWidth={2.2} />
+                  ) : (
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-orange-400 backdrop-blur-md">
+                      <ImagePlus className="h-5 w-5" strokeWidth={1.9} />
+                    </span>
+                  )}
+                  <span className="text-[13px] font-semibold text-white">
+                    {isUploading
+                      ? t('flash.uploading')
+                      : hasImage
+                        ? t('flash.changeImage')
+                        : t('flash.dropzone')}
+                  </span>
+                  {hasImage ? null : (
+                    <span className="text-[11px] font-medium text-zinc-400">
+                      {t('flash.dropzoneHint')}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </div>
+
+            <div className="px-5 pb-2 pt-2">
               <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]">
-                {/* Layer 0 — gradient background. Raw inline CSS keeps it immune
-                    to Tailwind purging, so selecting a color always paints. */}
                 <div
                   aria-hidden
                   className="absolute inset-0 z-0 bg-transparent"
                   style={{ background: background.css }}
                 />
-                {/* Layer 1 — decorative brand glow. */}
                 <span
                   aria-hidden
                   className="pointer-events-none absolute -right-10 -top-12 z-[1] h-32 w-32 rounded-full blur-3xl transition-[background-color] duration-200"
                   style={{ backgroundColor: `${background.ring}33` }}
                 />
-                {/* Layer 2 — vignette. Subtle darkening so white text always pops. */}
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 z-[2] bg-black/20"
@@ -562,7 +738,6 @@ export function FlashNoteCreatorSheet({
                       'radial-gradient(120% 100% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.28) 100%)',
                   }}
                 />
-                {/* Layer 3 — content sits above the gradient, fully transparent. */}
                 <div className="relative z-10 bg-transparent backdrop-blur-none">
                   <FlashNoteTextarea
                     store={store}
@@ -651,7 +826,7 @@ export function FlashNoteCreatorSheet({
                 {busy ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.6} />
-                    {t('flash.publishing')}
+                    {isUploading ? t('flash.uploading') : t('flash.publishing')}
                   </>
                 ) : (
                   <>

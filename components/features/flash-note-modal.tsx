@@ -95,7 +95,7 @@ function FlashNoteStorySurface({
 
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
-  const mediaUrl = note.author?.avatarUrl ?? null;
+  const mediaUrl = note.imageUrl || note.author?.avatarUrl || null;
   const offer = buildFlashNoteOffer({
     content: note.content,
     price: note.price,

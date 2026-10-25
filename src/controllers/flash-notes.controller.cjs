@@ -26,6 +26,7 @@ async function criar(req, res) {
       alignClass: req.body?.alignClass,
       price: req.body?.price,
       discountPercentage: req.body?.discountPercentage,
+      imageUrl: req.body?.imageUrl ?? req.body?.image_url,
     });
     return res.status(201).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {
@@ -48,6 +49,7 @@ async function atualizar(req, res) {
       alignClass: req.body?.alignClass,
       price: req.body?.price,
       discountPercentage: req.body?.discountPercentage,
+      imageUrl: req.body?.imageUrl ?? req.body?.image_url,
     });
     return res.status(200).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {

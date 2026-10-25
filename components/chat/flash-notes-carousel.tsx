@@ -107,12 +107,18 @@ export function FlashNotesCarousel() {
     async (
       content: string,
       style: FlashNoteStyle,
-      offer: { price: number; discountPercentage: number | null }
+      offer: { price: number; discountPercentage: number | null },
+      imageUrl: string
     ): Promise<boolean> => {
       const trimmed = content.trim();
       if (!trimmed) return false;
       if (trimmed.length > FLASH_NOTE_MAX_LENGTH) {
         toast.error(t('toast.flashMax', { count: FLASH_NOTE_MAX_LENGTH }));
+        return false;
+      }
+      const mediaUrl = imageUrl.trim();
+      if (!mediaUrl) {
+        toast.error(t('flash.imageRequired'));
         return false;
       }
 
@@ -131,6 +137,7 @@ export function FlashNotesCarousel() {
           offer.discountPercentage != null
             ? Number((offer.price * (1 - offer.discountPercentage / 100)).toFixed(2))
             : offer.price,
+        imageUrl: mediaUrl,
         createdAt: editing?.createdAt ?? new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         ativa: true,
@@ -165,6 +172,7 @@ export function FlashNotesCarousel() {
               alignClass: style.alignClass,
               price: offer.price,
               discountPercentage: offer.discountPercentage,
+              imageUrl: mediaUrl,
             }),
           }
         );
@@ -313,9 +321,9 @@ export function FlashNotesCarousel() {
                     }}
                   >
                      <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
-                       {note.author?.avatarUrl ? (
+                       {note.imageUrl || note.author?.avatarUrl ? (
                          <OptimizedImage
-                           src={note.author.avatarUrl}
+                           src={note.imageUrl || note.author?.avatarUrl}
                            alt={name}
                            sizes="56px"
                            className="h-full w-full rounded-full"
@@ -359,6 +367,7 @@ export function FlashNotesCarousel() {
         initialAlignClass={ownNote?.alignClass}
         initialPrice={ownNote?.price ?? null}
         initialDiscountPercentage={ownNote?.discountPercentage ?? null}
+        initialImageUrl={ownNote?.imageUrl ?? null}
         onClose={closeComposer}
         onPublish={publishNote}
         onDelete={ownNote ? deleteOwnNote : undefined}

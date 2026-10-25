@@ -140,7 +140,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
                       }}
                     >
                       <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] dark:border-[#0a0a0a]">
-                        <StoryAvatar src={note.author?.avatarUrl} alt={name} fallback={initial} />
+                        <StoryAvatar src={note.imageUrl || note.author?.avatarUrl} alt={name} fallback={initial} />
                       </span>
                       <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
                         <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />

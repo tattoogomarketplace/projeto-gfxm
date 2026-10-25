@@ -353,6 +353,7 @@ model FlashNote {
   alignClass           String   @default("text-center") @map("align_class") @db.VarChar(16)
   price                Decimal  @default(0) @db.Decimal(12, 2)
   discountPercentage   Int?     @map("discount_percentage")
+  imageUrl             String?  @map("image_url") @db.VarChar(1024)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   expiresAt            DateTime @map("expires_at") @db.Timestamptz(6)
   ativa                Boolean  @default(true)

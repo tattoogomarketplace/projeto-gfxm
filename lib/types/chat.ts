@@ -72,6 +72,7 @@ export type FlashNoteDto = {
   price: number;
   discountPercentage: number | null;
   salePrice: number | null;
+  imageUrl: string | null;
   createdAt: string;
   expiresAt: string;
   ativa: boolean;
