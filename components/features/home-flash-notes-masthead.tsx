@@ -2,13 +2,14 @@
 
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Radio, X, Zap } from 'lucide-react';
+import { Radio, Zap } from 'lucide-react';
 import { BRAND_NAME, BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { FLASH_NOTE_MAX_LENGTH, getFlashNoteBackground } from '@/lib/flash-notes-style';
 import { artistProfileHref } from '@/lib/artist-profile';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { FlashNoteModal } from '@/components/features/flash-note-modal';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -16,13 +17,6 @@ function truncateNote(content: string): string {
   const trimmed = content.trim();
   if (trimmed.length <= FLASH_NOTE_MAX_LENGTH) return trimmed;
   return `${trimmed.slice(0, FLASH_NOTE_MAX_LENGTH - 1).trimEnd()}…`;
-}
-
-function remainingLabel(expiresAt: string, expiringLabel: string): string {
-  const ms = new Date(expiresAt).getTime() - Date.now();
-  if (Number.isNaN(ms) || ms <= 0) return expiringLabel;
-  const hours = Math.max(1, Math.round(ms / (60 * 60 * 1000)));
-  return hours === 1 ? '1h' : `${hours}h`;
 }
 
 function BrandWordmark() {
@@ -95,6 +89,19 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
     [router, triggerHaptic]
   );
 
+  const bookArtist = useCallback(
+    (note: FlashNoteDto) => {
+      triggerHaptic('medium');
+      setSelected(null);
+      const href = artistProfileHref({
+        id: note.author?.id ?? note.userId,
+        username: note.author?.username,
+      });
+      router.push(`${href}?intent=agendar`);
+    },
+    [router, triggerHaptic]
+  );
+
   return (
     <div className="-mx-4 min-w-0 sm:-mx-6">
       <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
@@ -156,46 +163,13 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
         )}
       </div>
 
-      {selected ? (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-sm rounded-2xl border border-white/[0.05] bg-[#121212] p-5 shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => visitArtist(selected)}
-                className="flex min-w-0 items-center gap-3 text-left"
-              >
-                <span className="relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-[#1a1a1a]">
-                  <StoryAvatar
-                    src={selected.author?.avatarUrl}
-                    alt={selected.author?.name || t('flash.artist')}
-                    fallback={selected.author?.initial ?? 'A'}
-                  />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">
-                    {selected.author?.name || t('flash.artist')}
-                  </p>
-                  <p className="text-[11px] text-orange-500">
-                    {t('flash.active')} · {remainingLabel(selected.expiresAt, t('flash.expiring'))}
-                  </p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={closeNote}
-                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full text-zinc-400"
-                aria-label={t('common.close')}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-300">
-              {truncateNote(selected.content)}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <FlashNoteModal
+        note={selected}
+        open={Boolean(selected)}
+        onClose={closeNote}
+        onBook={bookArtist}
+        onVisitArtist={visitArtist}
+      />
     </div>
   );
 }
