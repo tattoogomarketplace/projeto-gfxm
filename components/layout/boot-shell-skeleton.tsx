@@ -70,30 +70,34 @@ function HomeSkeleton({ kind }: { kind: HomeKind }) {
  * `AppShell` — a caixa física é a MESMA, então nenhuma fronteira (header,
  * padding, dock) pode deslocar os esqueletos na transição.
  */
-function ShellChrome({ children }: { children: ReactNode }) {
+function ShellChrome({
+  children,
+  hideHeader = false,
+}: {
+  children: ReactNode;
+  hideHeader?: boolean;
+}) {
   return (
     <div
       data-viewport-root
       className="luxury-canvas relative flex h-[100dvh] max-h-[100dvh] min-h-[100dvh] min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white"
     >
       <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
-        <header className="glass-chrome safe-header-pad z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]">
-          <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
-            <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
-            <div className="flex shrink-0 items-center gap-2">
-              {/* Slot do gatilho de configurações: o ícone REAL é persistente
-                  (`PersistentAppChrome`, root layout) e já está pintado sobre
-                  este mesmo ponto. Não desenhamos um esqueleto cinza aqui para
-                  não haver troca visual (cinza -> ícone) no handoff. */}
-              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+        {hideHeader ? null : (
+          <header className="glass-chrome safe-header-pad z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]">
+            <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
+              <Skeleton className="h-5 min-w-0 flex-1 rounded-md" />
+              <div className="flex shrink-0 items-center gap-2">
+                <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+              </div>
             </div>
-          </div>
-          <div className="hidden px-4 pb-3 md:block">
-            <div className="grid w-full rounded-2xl border border-black/[0.04] bg-black/[0.03] p-1 backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.04]">
-              <Skeleton className="h-11 w-full rounded-xl" />
+            <div className="hidden px-4 pb-3 md:block">
+              <div className="grid w-full rounded-2xl border border-black/[0.04] bg-black/[0.03] p-1 backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.04]">
+                <Skeleton className="h-11 w-full rounded-xl" />
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         <div className="scrollbar-none relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
           <div className="nav-safe-pad absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 sm:px-6">
@@ -130,7 +134,7 @@ export function BootShellSkeleton() {
   }
 
   return (
-    <ShellChrome>
+    <ShellChrome hideHeader={kind === 'cliente'}>
       <HomeSkeleton kind={kind} />
     </ShellChrome>
   );

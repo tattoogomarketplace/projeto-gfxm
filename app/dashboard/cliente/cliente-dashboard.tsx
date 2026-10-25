@@ -26,7 +26,7 @@ export default function ClienteDashboard({
   const activeTab = useRouteTab(initialTab);
 
   return (
-    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent pt-5 text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
+    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
       <div className="relative flex min-w-0 w-full flex-1 flex-col gap-6">
         {/*
          * Ramificação EXAUSTIVA da aba "Início". O retorno nunca cai para um

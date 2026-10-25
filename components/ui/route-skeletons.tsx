@@ -67,8 +67,22 @@ const DISCOVER_ASPECTS = [
 
 export function HomeDiscoverSkeleton({ className }: { className?: string }) {
   return (
-    <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4 pt-5', className)}>
-      <Skeleton className="h-36 w-full rounded-3xl" />
+    <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4', className)}>
+      <div className="-mx-4 min-w-0 sm:-mx-6">
+        <div className="relative flex w-full justify-center bg-transparent pb-2 pt-[calc(env(safe-area-inset-top)+1rem)]">
+          <Skeleton className="h-10 w-48 rounded-full" />
+        </div>
+        <div className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#121212]/80 pb-3 pt-[max(env(safe-area-inset-top),0.5rem)] backdrop-blur-2xl">
+          <div className="flex gap-4 overflow-hidden px-4">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <Skeleton className="h-2.5 w-12 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <section className="min-w-0 w-full space-y-3">
         <div className="flex items-end justify-between gap-3 px-0.5">

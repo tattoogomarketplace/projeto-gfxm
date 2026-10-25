@@ -80,6 +80,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isArtistProfile =
     pathname.startsWith('/dashboard/artista/') ||
     /^\/dashboard\/artistas\/.+/.test(pathname);
+  const isClienteHome = pathname.startsWith('/dashboard/cliente');
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
@@ -106,7 +107,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // + busca/voltar). O header do casco nunca é empilhado acima dela — inclusive
   // no inbox, onde a dock permanece visível.
   const hideShellHeader =
-    hideShellChrome || isDedicatedChat || isArtistProfile || isAgenda || isGaleria || isProfileSettings;
+    hideShellChrome ||
+    isDedicatedChat ||
+    isArtistProfile ||
+    isAgenda ||
+    isGaleria ||
+    isProfileSettings ||
+    isClienteHome;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
 

@@ -13,13 +13,13 @@ import {
 } from '@/components/features/gallery-haptic-preview';
 import { HomeCarouselActionCard } from '@/components/features/home-carousel-action-card';
 import { HomeFeedbackCarousel } from '@/components/features/home-feedback-carousel';
+import { HomeFlashNotesMasthead } from '@/components/features/home-flash-notes-masthead';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BRAND_NAME } from '@/lib/i18n/brands';
 import { HOME_CAROUSEL_LIMIT, type InspirationItem } from '@/lib/gallery-mock';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
@@ -302,23 +302,7 @@ export function HomeDiscover({
 
   return (
     <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
-      <header className="relative min-w-0 w-full overflow-hidden rounded-3xl border border-zinc-800/50 bg-zinc-900/40 p-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl"
-        />
-        <div className="relative">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500">
-            {BRAND_NAME}
-          </p>
-          <h1 className="mt-1.5 text-[26px] font-bold leading-tight tracking-tight text-white">
-            {t('home.discover')}
-          </h1>
-          <p className="mt-2 max-w-[34ch] text-sm leading-relaxed text-zinc-400">
-            {t('home.discoverSubtitle')}
-          </p>
-        </div>
-      </header>
+      <HomeFlashNotesMasthead />
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-artists">
         <SectionHeader
