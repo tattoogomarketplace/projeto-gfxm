@@ -54,8 +54,9 @@ import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]'] as const;
 
-const GRID_CLASS = 'grid grid-cols-3 gap-[1px]';
+const GRID_CLASS = 'columns-2 md:columns-3 gap-2';
 const GRID_TILE_CLASS = 'relative w-full aspect-[9/16] overflow-hidden bg-white/5';
+const MASONRY_CARD_CLASS = 'break-inside-avoid mb-2';
 
 const HUD_CURATORSHIP_CLASS =
   'relative z-[1] p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-b-0 border-white/10 shadow-2xl';
@@ -926,7 +927,7 @@ export function GalleryInspirationGrid({
         {Array.from({ length: skeletonCount }, (_, index) => (
           <Skeleton
             key={index}
-            className={cn(GRID_TILE_CLASS, aspectFor(index))}
+            className={cn(MASONRY_CARD_CLASS, GRID_TILE_CLASS, aspectFor(index))}
           />
         ))}
       </div>
@@ -1219,7 +1220,7 @@ export function GalleryInspirationGrid({
                 'group relative select-none overflow-hidden',
                 isCarousel
                   ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start rounded-xl border border-zinc-800/50 bg-zinc-900/40'
-                  : GRID_TILE_CLASS
+                  : cn(MASONRY_CARD_CLASS, GRID_TILE_CLASS)
               )}
             >
               <motion.div

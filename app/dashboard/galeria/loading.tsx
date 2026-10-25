@@ -17,9 +17,9 @@ export default function GaleriaLoading() {
           <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-[1px]">
+      <div className="columns-2 md:columns-3 gap-2">
         {Array.from({ length: 9 }, (_, index) => (
-          <div key={index} className="relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
+          <div key={index} className="break-inside-avoid mb-2 relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
         ))}
       </div>
     </div>
