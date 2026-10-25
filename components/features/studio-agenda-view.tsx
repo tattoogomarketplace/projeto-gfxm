@@ -12,6 +12,7 @@ import {
 import { GlassContainer } from '@/components/ui/glass-container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/lib/toast';
+import { ArtistQuoteInbox } from '@/components/features/artist-quote-inbox';
 import { SessionValidationSheet } from '@/components/features/session-validation-sheet';
 import { StudioActiveSessionCard } from '@/components/features/studio-active-session-card';
 import { MOCK_STUDIO_ACTIVE_SESSIONS } from '@/lib/mocks/studio-active-sessions';
@@ -260,6 +261,8 @@ export function StudioAgendaView({
           </p>
         </div>
       </div>
+
+      {role === 'tatuador' ? <ArtistQuoteInbox /> : null}
 
       {isLoading ? (
         <StudioAgendaSkeleton />
