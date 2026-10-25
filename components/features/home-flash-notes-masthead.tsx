@@ -27,7 +27,7 @@ function remainingLabel(expiresAt: string, expiringLabel: string): string {
 
 function BrandWordmark() {
   return (
-    <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-[calc(env(safe-area-inset-top)+1rem)]">
+    <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-2">
       <p
         className="select-none text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-none tracking-tight"
         aria-label={BRAND_NAME}
@@ -38,6 +38,30 @@ function BrandWordmark() {
         </span>
       </p>
     </div>
+  );
+}
+
+function StoryAvatar({
+  src,
+  alt,
+  fallback,
+}: {
+  src?: string | null;
+  alt: string;
+  fallback: string;
+}) {
+  return (
+    <OptimizedImage
+      src={src}
+      alt={alt}
+      sizes="56px"
+      className="h-full w-full rounded-full"
+      fallback={
+        <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+          {fallback}
+        </span>
+      }
+    />
   );
 }
 
@@ -73,70 +97,64 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
 
   return (
     <div className="-mx-4 min-w-0 sm:-mx-6">
-      <BrandWordmark />
+      <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
+        <BrandWordmark />
 
-      {notes.length === 0 ? null : (
-        <section className="relative w-full shrink-0 bg-transparent px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-3 pt-2">
-          <div className="mb-2 flex items-center gap-2 px-4">
-            <Zap className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500">
-              {t('flash.heading')}
-            </p>
-          </div>
+        {notes.length === 0 ? null : (
+          <section className="relative w-full shrink-0 bg-transparent px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-2">
+            <div className="mb-2 flex items-center gap-2 px-4">
+              <Zap className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500">
+                {t('flash.heading')}
+              </p>
+            </div>
 
-          <div
-            className={cn(
-              'flex min-h-[5.25rem] gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 pt-0.5',
-              'snap-x snap-mandatory scroll-smooth',
-              'hide-scrollbar transform-gpu will-change-transform',
-              '[-webkit-overflow-scrolling:touch]'
-            )}
-            role="list"
-            aria-label={t('flash.listAria')}
-          >
-            {notes.map((note) => {
-              const name = note.author?.name || t('flash.artist');
-              const initial = note.author?.initial ?? 'A';
-              const ring = getFlashNoteBackground(note.backgroundId).ring;
-              return (
-                <button
-                  key={note.id}
-                  type="button"
-                  role="listitem"
-                  onClick={() => openNote(note)}
-                  className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-                  aria-label={t('flash.aria', { name })}
-                >
-                  <span
-                    className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
-                    style={{
-                      backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
-                    }}
+            <div
+              className={cn(
+                'flex min-h-[5.25rem] gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 pt-0.5',
+                'snap-x snap-mandatory scroll-smooth',
+                'hide-scrollbar transform-gpu will-change-transform',
+                '[-webkit-overflow-scrolling:touch]'
+              )}
+              role="list"
+              aria-label={t('flash.listAria')}
+            >
+              {notes.map((note) => {
+                const name = note.author?.name || t('flash.artist');
+                const initial = note.author?.initial ?? 'A';
+                const ring = getFlashNoteBackground(note.backgroundId).ring;
+                return (
+                  <button
+                    key={note.id}
+                    type="button"
+                    role="listitem"
+                    onClick={() => openNote(note)}
+                    className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
+                    aria-label={t('flash.aria', { name })}
                   >
-                    <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
-                      {note.author?.avatarUrl ? (
-                        <OptimizedImage
-                          src={note.author.avatarUrl}
-                          alt={name}
-                          className="h-full w-full rounded-full"
-                        />
-                      ) : (
-                        initial
-                      )}
+                    <span
+                      className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
+                      style={{
+                        backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
+                      }}
+                    >
+                      <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] dark:border-[#0a0a0a]">
+                        <StoryAvatar src={note.author?.avatarUrl} alt={name} fallback={initial} />
+                      </span>
+                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
+                        <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
+                      </span>
                     </span>
-                    <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
-                      <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
+                    <span className="w-full truncate text-center text-[10px] font-medium text-zinc-400">
+                      {truncateNote(note.content)}
                     </span>
-                  </span>
-                  <span className="w-full truncate text-center text-[10px] font-medium text-zinc-400">
-                    {truncateNote(note.content)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </div>
 
       {selected ? (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center">
@@ -147,16 +165,12 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
                 onClick={() => visitArtist(selected)}
                 className="flex min-w-0 items-center gap-3 text-left"
               >
-                <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
-                  {selected.author?.avatarUrl ? (
-                    <OptimizedImage
-                      src={selected.author.avatarUrl}
-                      alt={selected.author?.name || t('flash.artist')}
-                      className="h-full w-full rounded-full"
-                    />
-                  ) : (
-                    selected.author?.initial ?? 'A'
-                  )}
+                <span className="relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-[#1a1a1a]">
+                  <StoryAvatar
+                    src={selected.author?.avatarUrl}
+                    alt={selected.author?.name || t('flash.artist')}
+                    fallback={selected.author?.initial ?? 'A'}
+                  />
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-white">

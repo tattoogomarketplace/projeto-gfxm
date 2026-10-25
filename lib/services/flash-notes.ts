@@ -43,9 +43,14 @@ type FlashNoteRow = {
     role: string;
     cidade: string | null;
     estado: string | null;
-    portfolios?: { url_imagem: string }[];
+    portfolios?: { url_imagem: string | null }[];
   } | null;
 };
+
+function authorAvatarUrl(portfolios?: { url_imagem: string | null }[] | null): string | null {
+  const url = portfolios?.[0]?.url_imagem?.trim();
+  return url || null;
+}
 
 function authorName(nome: string | null, role: string): string {
   void role;
@@ -68,7 +73,7 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
         initial: authorInitial(authorName(row.user.nome, row.user.role)),
         cidade: row.user.cidade,
         estado: row.user.estado,
-        avatarUrl: row.user.portfolios?.[0]?.url_imagem ?? null,
+        avatarUrl: authorAvatarUrl(row.user.portfolios),
       }
     : null;
 

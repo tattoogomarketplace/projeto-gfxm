@@ -69,21 +69,23 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
   return (
     <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4', className)}>
       <div className="-mx-4 min-w-0 sm:-mx-6">
-        <div className="relative flex w-full justify-center bg-transparent pb-2 pt-[calc(env(safe-area-inset-top)+1rem)]">
-          <Skeleton className="h-10 w-48 rounded-full" />
-        </div>
-        <div className="relative w-full bg-transparent pb-3 pt-2">
-          <div className="mb-2 flex items-center gap-2 px-4">
-            <Skeleton className="h-3.5 w-3.5 rounded-full" />
-            <Skeleton className="h-2.5 w-24 rounded-full" />
+        <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
+          <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-2">
+            <Skeleton className="h-10 w-48 rounded-full" />
           </div>
-          <div className="flex min-h-[5.25rem] gap-3 overflow-hidden px-4">
-            {[0, 1, 2, 3].map((index) => (
-              <div key={index} className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 flex-col items-center gap-1.5">
-                <Skeleton className="h-14 w-14 rounded-full" />
-                <Skeleton className="h-2.5 w-12 rounded-full" />
-              </div>
-            ))}
+          <div className="relative w-full bg-transparent pt-2">
+            <div className="mb-2 flex items-center gap-2 px-4">
+              <Skeleton className="h-3.5 w-3.5 rounded-full" />
+              <Skeleton className="h-2.5 w-24 rounded-full" />
+            </div>
+            <div className="flex min-h-[5.25rem] gap-3 overflow-hidden px-4">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 flex-col items-center gap-1.5">
+                  <Skeleton className="h-14 w-14 rounded-full" />
+                  <Skeleton className="h-2.5 w-12 rounded-full" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

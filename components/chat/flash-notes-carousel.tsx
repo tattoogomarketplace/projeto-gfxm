@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { Pencil, Plus, Radio, X, Zap } from 'lucide-react';
 import { FlashNoteCreatorSheet, FLASH_NOTE_MAX_LENGTH } from '@/components/chat/flash-note-creator-sheet';
 import { getFlashNoteBackground, type FlashNoteStyle } from '@/lib/flash-notes-style';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -303,9 +304,23 @@ export function FlashNotesCarousel() {
                       backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
                     }}
                   >
-                    <span className="flex h-full w-full items-center justify-center rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
-                      {initial}
-                    </span>
+                     <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
+                       {note.author?.avatarUrl ? (
+                         <OptimizedImage
+                           src={note.author.avatarUrl}
+                           alt={name}
+                           sizes="56px"
+                           className="h-full w-full rounded-full"
+                           fallback={
+                             <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                               {initial}
+                             </span>
+                           }
+                         />
+                       ) : (
+                         initial
+                       )}
+                     </span>
                     <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
                       <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                     </span>
@@ -344,8 +359,22 @@ export function FlashNotesCarousel() {
           <div className="w-full max-w-sm rounded-2xl border border-black/[0.04] bg-white p-5 shadow-xl dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
-                  {selected.author?.initial ?? 'A'}
+                <span className="relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
+                  {selected.author?.avatarUrl ? (
+                    <OptimizedImage
+                      src={selected.author.avatarUrl}
+                      alt={selected.author?.name || t('flash.artist')}
+                      sizes="44px"
+                      className="h-full w-full rounded-full"
+                      fallback={
+                        <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                          {selected.author?.initial ?? 'A'}
+                        </span>
+                      }
+                    />
+                  ) : (
+                    selected.author?.initial ?? 'A'
+                  )}
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">

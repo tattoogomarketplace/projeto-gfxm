@@ -40,20 +40,43 @@ function normalizeContent(value) {
   return trimmed;
 }
 
+const FLASH_NOTE_AUTHOR_SELECT = {
+  id: true,
+  nome: true,
+  username: true,
+  role: true,
+  cidade: true,
+  estado: true,
+  portfolios: {
+    where: { deleted_at: null },
+    orderBy: { created_at: "desc" },
+    take: 1,
+    select: { url_imagem: true },
+  },
+};
+
 function authorName(nome, role) {
   const trimmed = (nome ?? "").trim();
   return trimmed || (role === "tatuador" ? "Artista" : "Cliente");
 }
 
+function authorAvatarUrl(portfolios) {
+  const url = typeof portfolios?.[0]?.url_imagem === "string" ? portfolios[0].url_imagem.trim() : "";
+  return url || null;
+}
+
 function toFlashNoteDto(row) {
+  const name = row.user ? authorName(row.user.nome, row.user.role) : "";
   const author = row.user
     ? {
         id: row.user.id,
-        name: authorName(row.user.nome, row.user.role),
+        name,
+        username: row.user.username?.trim() || null,
         role: row.user.role,
-        initial: authorName(row.user.nome, row.user.role).charAt(0).toUpperCase() || "A",
+        initial: name.charAt(0).toUpperCase() || "A",
         cidade: row.user.cidade,
         estado: row.user.estado,
+        avatarUrl: authorAvatarUrl(row.user.portfolios),
       }
     : null;
 
@@ -99,7 +122,7 @@ async function listActiveFlashNotes(userId) {
     take: ACTIVE_NOTES_LIMIT,
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });
@@ -143,7 +166,7 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
     },
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });
@@ -186,7 +209,7 @@ async function updateFlashNote({ actorId, noteId, content, backgroundId, fontCla
     where: { id: existing.id, userId: actorId },
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });
