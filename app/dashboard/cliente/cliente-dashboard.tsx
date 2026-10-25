@@ -7,6 +7,7 @@ import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-w
 import { useRouteTab } from '@/hooks/use-route-tab';
 import type { AppTab } from '@/hooks/use-ui-store';
 import type { InspirationItem } from '@/lib/gallery-mock';
+import type { FlashNoteDto } from '@/lib/types/chat';
 import type { AppRole } from '@/lib/utils/auth-redirect';
 
 export default function ClienteDashboard({
@@ -14,11 +15,13 @@ export default function ClienteDashboard({
   initialTab = 'portfolio',
   feedItems = [],
   savedItems = [],
+  flashNotes = [],
 }: {
   role?: AppRole;
   initialTab?: AppTab;
   feedItems?: InspirationItem[];
   savedItems?: InspirationItem[];
+  flashNotes?: FlashNoteDto[];
 }) {
   // Aba derivada da ROTA (pathname + query), idêntica no SSR e no 1º frame do
   // cliente. Sem estado pós-hidratação: a aba "Agenda"/"Chat" já nasce correta
@@ -51,7 +54,7 @@ export default function ClienteDashboard({
           </section>
         ) : activeTab === 'portfolio' ? (
           <section key="portfolio" className="min-w-0 w-full flex-1">
-            <HomeDiscover feedItems={feedItems} savedItems={savedItems} />
+            <HomeDiscover feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
           </section>
         ) : (
           // Fase transitória: pinta EXATAMENTE o skeleton do `loading.tsx`

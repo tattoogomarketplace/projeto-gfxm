@@ -21,6 +21,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HOME_CAROUSEL_LIMIT, type InspirationItem } from '@/lib/gallery-mock';
+import type { FlashNoteDto } from '@/lib/types/chat';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
 
@@ -214,9 +215,11 @@ function artistDestination(artist: DiscoverArtist): string {
 export function HomeDiscover({
   feedItems = [],
   savedItems = [],
+  flashNotes = [],
 }: {
   feedItems?: InspirationItem[];
   savedItems?: InspirationItem[];
+  flashNotes?: FlashNoteDto[];
 }) {
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
@@ -302,7 +305,7 @@ export function HomeDiscover({
 
   return (
     <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
-      <HomeFlashNotesMasthead />
+      <HomeFlashNotesMasthead notes={flashNotes} />
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-artists">
         <SectionHeader

@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 import { SessionHydrating } from '@/components/features/session-hydrating';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import { getFeedPosts } from '@/lib/services/feed-posts';
+import { listActiveFlashNotes } from '@/lib/services/flash-notes';
 import { listSavedInspirations } from '@/lib/services/saved-inspiration';
+import type { FlashNoteDto } from '@/lib/types/chat';
 import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import { parseAppTab } from '@/lib/utils/route-tab';
@@ -31,6 +33,7 @@ export default async function ClienteDashboardPage({ searchParams }: DashboardPa
   const clerkUserId = perfil.clerk_id;
   let feedItems: InspirationItem[] = [];
   let savedItems: InspirationItem[] = [];
+  let flashNotes: FlashNoteDto[] = [];
   try {
     feedItems = await getFeedPosts();
   } catch (error) {
@@ -43,12 +46,19 @@ export default async function ClienteDashboardPage({ searchParams }: DashboardPa
     console.error('[dashboard/cliente] falha ao listar inspirações salvas', error);
     savedItems = [];
   }
+  try {
+    flashNotes = await listActiveFlashNotes();
+  } catch (error) {
+    console.error('[dashboard/cliente] falha ao carregar Flash Notes', error);
+    flashNotes = [];
+  }
 
   return (
     <ClienteDashboard
       initialTab={initialTab}
       feedItems={feedItems}
       savedItems={savedItems}
+      flashNotes={flashNotes}
     />
   );
 }

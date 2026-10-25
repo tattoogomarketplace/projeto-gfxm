@@ -11,6 +11,21 @@ const ACTIVE_NOTES_LIMIT = 80;
 const FLASH_NOTE_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const FLASH_NOTE_AUTHOR_SELECT = {
+  id: true,
+  nome: true,
+  username: true,
+  role: true,
+  cidade: true,
+  estado: true,
+  portfolios: {
+    where: { deleted_at: null },
+    orderBy: { created_at: 'desc' as const },
+    take: 1,
+    select: { url_imagem: true },
+  },
+} as const;
+
 type FlashNoteRow = {
   id: string;
   userId: string;
@@ -24,9 +39,11 @@ type FlashNoteRow = {
   user?: {
     id: string;
     nome: string | null;
+    username: string | null;
     role: string;
     cidade: string | null;
     estado: string | null;
+    portfolios?: { url_imagem: string }[];
   } | null;
 };
 
@@ -46,10 +63,12 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
     ? {
         id: row.user.id,
         name: authorName(row.user.nome, row.user.role),
+        username: row.user.username?.trim() || null,
         role: row.user.role,
         initial: authorInitial(authorName(row.user.nome, row.user.role)),
         cidade: row.user.cidade,
         estado: row.user.estado,
+        avatarUrl: row.user.portfolios?.[0]?.url_imagem ?? null,
       }
     : null;
 
@@ -99,7 +118,7 @@ export async function listActiveFlashNotes(userId?: string): Promise<FlashNoteDt
     take: ACTIVE_NOTES_LIMIT,
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });
@@ -151,7 +170,7 @@ export async function createFlashNote(params: {
     },
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });
@@ -207,7 +226,7 @@ export async function updateFlashNote(params: {
     where: { id: existing.id, userId: params.actorId },
     include: {
       user: {
-        select: { id: true, nome: true, role: true, cidade: true, estado: true },
+        select: FLASH_NOTE_AUTHOR_SELECT,
       },
     },
   });

@@ -54,10 +54,12 @@ export type ChatContextDto = {
 export type FlashNoteAuthorDto = {
   id: string;
   name: string;
+  username: string | null;
   role: string;
   initial: string;
   cidade: string | null;
   estado: string | null;
+  avatarUrl: string | null;
 };
 
 export type FlashNoteDto = {

@@ -77,10 +77,10 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
             <Skeleton className="h-3.5 w-3.5 rounded-full" />
             <Skeleton className="h-2.5 w-24 rounded-full" />
           </div>
-          <div className="flex gap-4 overflow-hidden px-4">
-            {[0, 1, 2].map((index) => (
-              <div key={index} className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5">
-                <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="flex min-h-[5.25rem] gap-3 overflow-hidden px-4">
+            {[0, 1, 2, 3].map((index) => (
+              <div key={index} className="flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 flex-col items-center gap-1.5">
+                <Skeleton className="h-14 w-14 rounded-full" />
                 <Skeleton className="h-2.5 w-12 rounded-full" />
               </div>
             ))}

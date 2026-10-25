@@ -130,10 +130,12 @@ export function FlashNotesCarousel() {
         author: editing?.author ?? {
           id: actorId ?? 'me',
           name: t('flash.you'),
+          username: null,
           role: 'tatuador',
           initial: 'V',
           cidade: null,
           estado: null,
+          avatarUrl: null,
         },
       };
 
