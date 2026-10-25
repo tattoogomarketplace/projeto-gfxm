@@ -735,6 +735,11 @@ export function GalleryInspirationGrid({
 
   const openInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
+    setPreview(item);
+  };
+
+  const visitArtistProfile = (item: InspirationItem) => {
+    triggerHaptic('light');
     router.push(artistProfileHref({ id: item.artistId, username: item.artistUsername }));
   };
 
@@ -1259,6 +1264,12 @@ export function GalleryInspirationGrid({
                 </>
               ) : (
                 <>
+                  <button
+                    type="button"
+                    onClick={(event) => handleInspirationClick(item, event)}
+                    className="absolute inset-0 z-[1]"
+                    aria-label={artistName}
+                  />
                   {showLike ? (
                     <div className="absolute right-3 top-3 z-[5]">
                       <TattooLikeButton
@@ -1274,7 +1285,13 @@ export function GalleryInspirationGrid({
                   ) : null}
                   <button
                     type="button"
-                    onClick={(event) => handleInspirationClick(item, event)}
+                    data-gallery-action=""
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (consumeLongPressClick(event)) return;
+                      visitArtistProfile(item);
+                    }}
                     className="absolute bottom-3 right-3 z-[5] rounded-full border border-orange-500/40 bg-orange-500/15 px-4 py-2 text-sm font-semibold text-orange-400 backdrop-blur-md"
                     aria-label={t('gallery.visitProfile')}
                   >

@@ -66,7 +66,7 @@ export function GaleriaInspiracoes({
           <h1 className="text-base font-semibold tracking-tight text-zinc-100">{t('gallery.title')}</h1>
         </div>
       </div>
-      <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)] pointer-events-none">
+      <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)]">
         <PortfolioFilterBar
           style={style}
           bodyPart={bodyPart}
@@ -77,11 +77,12 @@ export function GaleriaInspiracoes({
         />
       </div>
 
-      <div className="flex w-full max-w-none flex-col px-0 mx-0">
+      <div className="w-full">
         <GalleryInspirationGrid
           items={inspirations}
           loading={loading}
           skeletonCount={9}
+          layout="masonry"
           showLike
           savedIds={savedIds}
           onExploreStyle={(nextStyle) => setStyle(nextStyle)}
