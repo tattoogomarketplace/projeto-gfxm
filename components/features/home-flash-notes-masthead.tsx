@@ -89,18 +89,10 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
     [router, triggerHaptic]
   );
 
-  const bookArtist = useCallback(
-    (note: FlashNoteDto) => {
-      triggerHaptic('medium');
-      setSelected(null);
-      const href = artistProfileHref({
-        id: note.author?.id ?? note.userId,
-        username: note.author?.username,
-      });
-      router.push(`${href}?intent=agendar`);
-    },
-    [router, triggerHaptic]
-  );
+  const bookArtist = useCallback(() => {
+    setSelected(null);
+    router.refresh();
+  }, [router]);
 
   return (
     <div className="-mx-4 min-w-0 sm:-mx-6">

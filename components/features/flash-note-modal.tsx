@@ -1,14 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
-import { Radio, X, Zap } from 'lucide-react';
+import { Loader2, Radio, X, Zap } from 'lucide-react';
+import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-booking';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatFlashNotePrice, parseFlashNoteOffer } from '@/lib/flash-note-offer';
 import { getFlashNoteBackground } from '@/lib/flash-notes-style';
+import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +30,15 @@ const GPU_LAYER =
   'transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
 const clientMountedSubscribe = () => () => {};
+
+function bookErrorKey(code: BookFlashNoteCode) {
+  if (code === 'UNAUTHENTICATED') return 'toast.flashBookAuth' as const;
+  if (code === 'INVALID_PRICE') return 'toast.flashBookPrice' as const;
+  if (code === 'CONSUMED' || code === 'CONFLICT' || code === 'NO_SLOT') {
+    return 'toast.flashBookUnavailable' as const;
+  }
+  return 'toast.flashBookFailed' as const;
+}
 
 function remainingLabel(expiresAt: string, expiringLabel: string): string {
   const ms = new Date(expiresAt).getTime() - Date.now();
@@ -80,6 +91,7 @@ function FlashNoteStorySurface({
   const openedAt = useRef(0);
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.18]);
+  const [isPending, startTransition] = useTransition();
 
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
@@ -94,7 +106,7 @@ function FlashNoteStorySurface({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && !isPending) onClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -109,13 +121,13 @@ function FlashNoteStorySurface({
       window.removeEventListener('keydown', onKeyDown);
       overlay?.removeEventListener('wheel', blockWheel);
     };
-  }, [onClose]);
+  }, [isPending, onClose]);
 
   const handleBackdropClick = useCallback(() => {
-    if (Date.now() - openedAt.current < 240) return;
+    if (isPending || Date.now() - openedAt.current < 240) return;
     triggerHaptic('light');
     onClose();
-  }, [onClose, triggerHaptic]);
+  }, [isPending, onClose, triggerHaptic]);
 
   const handleDrag = (_event: unknown, info: { offset: { y: number } }) => {
     dragY.set(Math.max(0, info.offset.y));
@@ -125,6 +137,10 @@ function FlashNoteStorySurface({
     _event: unknown,
     info: { offset: { y: number }; velocity: { y: number } }
   ) => {
+    if (isPending) {
+      dragY.set(0);
+      return;
+    }
     if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) {
       triggerHaptic('light');
       onClose();
@@ -134,14 +150,29 @@ function FlashNoteStorySurface({
   };
 
   const handleBook = useCallback(() => {
+    if (isPending) return;
     triggerHaptic('medium');
-    onBook?.(note);
-  }, [note, onBook, triggerHaptic]);
+    startTransition(async () => {
+      const result = await bookFlashNote(note.id);
+      if (!result.success) {
+        triggerHaptic('heavy');
+        toast.error(t(bookErrorKey(result.code)));
+        return;
+      }
+      triggerHaptic('success');
+      toast.success(t('toast.flashBooked'), {
+        description: t('toast.flashBookedHint'),
+      });
+      onBook?.(note);
+      onClose();
+    });
+  }, [isPending, note, onBook, onClose, t, triggerHaptic]);
 
   const handleVisit = useCallback(() => {
+    if (isPending) return;
     triggerHaptic('light');
     onVisitArtist?.(note);
-  }, [note, onVisitArtist, triggerHaptic]);
+  }, [isPending, note, onVisitArtist, triggerHaptic]);
 
   const priceLocale = locale.startsWith('pt') ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US';
 
@@ -182,7 +213,9 @@ function FlashNoteStorySurface({
 
       <motion.button
         type="button"
+        disabled={isPending}
         onClick={() => {
+          if (isPending) return;
           triggerHaptic('light');
           onClose();
         }}
@@ -203,7 +236,7 @@ function FlashNoteStorySurface({
       </motion.button>
 
       <motion.article
-        drag="y"
+        drag={isPending ? false : 'y'}
         dragElastic={0.18}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragMomentum={false}
@@ -242,9 +275,10 @@ function FlashNoteStorySurface({
         <header className="relative z-10 flex items-center gap-3 px-4 pt-4">
           <button
             type="button"
+            disabled={isPending}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleVisit}
-            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:pointer-events-none"
           >
             <span className="relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#1a1a1a]">
               <OptimizedImage
@@ -313,17 +347,24 @@ function FlashNoteStorySurface({
 
           <button
             type="button"
+            disabled={isPending}
+            aria-busy={isPending}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleBook}
             className={cn(
               'mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl',
               'bg-gradient-to-b from-orange-500 to-orange-600 px-4 text-[15px] font-bold text-white',
-              'shadow-[0_0_22px_rgba(249,115,22,0.45)] transition-[transform,box-shadow] duration-100',
-              'active:scale-[0.97] hover:shadow-[0_0_28px_rgba(249,115,22,0.7)]'
+              'shadow-[0_0_22px_rgba(249,115,22,0.45)] transition-[transform,box-shadow,opacity] duration-100',
+              'active:scale-[0.97] hover:shadow-[0_0_28px_rgba(249,115,22,0.7)]',
+              'disabled:pointer-events-none disabled:opacity-80'
             )}
           >
-            <Zap className="h-4 w-4" strokeWidth={2.4} />
-            {t('flash.bookNow')}
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.4} />
+            ) : (
+              <Zap className="h-4 w-4" strokeWidth={2.4} />
+            )}
+            {isPending ? t('booking.reserving') : t('flash.bookNow')}
           </button>
         </div>
       </motion.article>

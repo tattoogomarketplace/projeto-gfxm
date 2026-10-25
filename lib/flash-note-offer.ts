@@ -55,6 +55,22 @@ export function parseFlashNoteOffer(content: string): FlashNoteOffer {
   };
 }
 
+export function resolveFlashNoteSalePrice(content: string): {
+  originalPrice: number;
+  discountPercent: number | null;
+  salePrice: number;
+} | null {
+  const offer = parseFlashNoteOffer(content);
+  if (offer.originalPrice == null) return null;
+  const salePrice = offer.salePrice != null ? offer.salePrice : offer.originalPrice;
+  if (!(salePrice > 0)) return null;
+  return {
+    originalPrice: offer.originalPrice,
+    discountPercent: offer.discountPercent,
+    salePrice,
+  };
+}
+
 export function formatFlashNotePrice(value: number, locale = 'pt-BR'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
