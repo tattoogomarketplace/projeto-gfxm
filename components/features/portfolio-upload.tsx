@@ -2,6 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Cropper, { type Area } from 'react-easy-crop';
 import { toast } from '@/lib/toast';
 import { ImagePlus, MapPin, Sparkles, X } from 'lucide-react';
 import { CreatorStudioStats } from '@/components/features/creator-studio-stats';
@@ -22,6 +23,7 @@ import {
   type PortfolioStyle,
 } from '@/lib/portfolio-metadata';
 import { authedFetch } from '@/lib/utils/authed-fetch';
+import { CROP_ASPECT, cropAndCompressImage } from '@/lib/utils/crop-image';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
@@ -105,6 +107,12 @@ export function PortfolioUpload({
   const [sessionDuration, setSessionDuration] = useState<PortfolioSessionDuration | ''>('');
   const [healing, setHealing] = useState<HealingStatus>('fresh');
   const [notes, setNotes] = useState('');
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+  const [cropSourceName, setCropSourceName] = useState('obra.jpg');
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [cropping, setCropping] = useState(false);
 
   const isEditing = Boolean(editingItem);
   const canPublish = isEditing
@@ -165,8 +173,20 @@ export function PortfolioUpload({
     };
   }, [previewUrl]);
 
+  const closeCropper = useCallback(() => {
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    setCropSourceUrl(null);
+    setCropSourceName('obra.jpg');
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+    setCropping(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [cropSourceUrl]);
+
   const resetDraft = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
     setPreviewUrl(null);
     setPendingFile(null);
     setEditingItem(null);
@@ -176,11 +196,17 @@ export function PortfolioUpload({
     setHealing('fresh');
     setNotes('');
     setModalOpen(false);
+    setCropSourceUrl(null);
+    setCropSourceName('obra.jpg');
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+    setCropping(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const openEditor = (item: PortfolioItemDto) => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
     setPendingFile(null);
     setPreviewUrl(item.imageUrl);
     setEditingItem(item);
@@ -196,7 +222,7 @@ export function PortfolioUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_TYPES.has(file.type)) {
+    if (!file.type.startsWith('image/') && !ALLOWED_TYPES.has(file.type)) {
       toast.error(t('toast.portfolioInvalidType'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
@@ -207,24 +233,38 @@ export function PortfolioUpload({
       return;
     }
 
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    setCropSourceUrl(URL.createObjectURL(file));
+    setCropSourceName(file.name || 'obra.jpg');
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const confirmCrop = async () => {
+    if (!cropSourceUrl || !croppedAreaPixels || cropping) return;
+    setCropping(true);
     setChecking(true);
     try {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const compressed = await cropAndCompressImage(cropSourceUrl, croppedAreaPixels, cropSourceName);
+      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setEditingItem(null);
-      setPendingFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setPendingFile(compressed);
+      setPreviewUrl(URL.createObjectURL(compressed));
       setStyle('');
       setBodyPart('');
       setSessionDuration('');
       setHealing('fresh');
       setNotes('');
       setModalOpen(true);
+      closeCropper();
       toast.success(t('toast.imageReceived'));
     } catch {
       toast.error(t('toast.imagePrepareFailed'));
     } finally {
       setChecking(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setCropping(false);
     }
   };
 
@@ -388,22 +428,44 @@ export function PortfolioUpload({
         <p className="relative mt-1 max-w-sm text-xs leading-relaxed text-neutral-500 dark:text-zinc-500">
           {t('creator.uploadSubtitle')}
         </p>
-        <label className="relative mt-4 flex min-h-[8.5rem] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-orange-500/40 bg-black/20 transition-colors hover:border-orange-500 dark:bg-white/[0.04]">
-          <ImagePlus className="mb-2 h-6 w-6 text-orange-400" strokeWidth={1.75} />
-          <span className="text-sm font-semibold text-orange-300">
-            {checking ? t('portfolio.checking') : t('creator.uploadCta')}
-          </span>
-          <span className="mt-1 text-[11px] text-zinc-500">{t('portfolio.newHint')}</span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
-            capture="environment"
-            className="hidden"
-            onChange={handleUpload}
-            disabled={checking || publishing}
-          />
-        </label>
+        {previewUrl && pendingFile ? (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={checking || publishing || cropping}
+            className="relative mt-4 block w-full overflow-hidden rounded-xl border border-orange-500/40 bg-black/30 text-left"
+          >
+            <div className="relative mx-auto aspect-[9/16] w-full max-w-[220px] overflow-hidden">
+              <OptimizedImage src={previewUrl} alt={t('portfolio.preview')} className="h-full w-full" />
+            </div>
+            <span className="mt-2 block pb-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-300">
+              {t('portfolio.changeImage')}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={checking || publishing || cropping}
+            className="relative mt-4 flex min-h-[8.5rem] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-orange-500/40 bg-black/20 transition-colors hover:border-orange-500 dark:bg-white/[0.04]"
+          >
+            <ImagePlus className="mb-2 h-6 w-6 text-orange-400" strokeWidth={1.75} />
+            <span className="text-sm font-semibold text-orange-300">
+              {checking || cropping ? t('portfolio.checking') : t('creator.uploadCta')}
+            </span>
+            <span className="mt-1 text-[11px] text-zinc-500">{t('portfolio.newHint')}</span>
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            void handleUpload(event);
+          }}
+          disabled={checking || publishing || cropping}
+        />
       </section>
 
       <section className="space-y-3" aria-label={t('creator.gridTitle')}>
@@ -466,7 +528,7 @@ export function PortfolioUpload({
             </div>
 
             {previewUrl ? (
-              <div className="relative mb-4 h-48 overflow-hidden rounded-xl border border-neutral-800">
+              <div className="relative mx-auto mb-4 aspect-[9/16] h-auto w-full max-w-[180px] overflow-hidden rounded-xl border border-neutral-800">
                 <OptimizedImage src={previewUrl} alt={t('portfolio.preview')} className="h-full w-full" />
               </div>
             ) : null}
@@ -551,6 +613,67 @@ export function PortfolioUpload({
                   <Sparkles className="h-4 w-4" strokeWidth={1.75} />
                   {isEditing ? t('creator.saveChanges') : t('portfolio.publish')}
                 </span>
+              )}
+            </NeonButton>
+          </div>
+        </div>
+      ) : null}
+
+      {cropSourceUrl ? (
+        <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center">
+          <div className="flex max-h-[min(92vh,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-orange-500/30 bg-[#121212] p-5 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+                  {t('portfolio.cropTitle')}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">{t('portfolio.cropHint')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCropper}
+                disabled={cropping}
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-700 text-zinc-400 hover:border-orange-500/40 hover:text-white"
+                aria-label={t('common.close')}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="relative mx-auto aspect-[9/16] w-full max-w-[280px] overflow-hidden rounded-xl bg-black">
+              <Cropper
+                image={cropSourceUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={CROP_ASPECT}
+                cropShape="rect"
+                showGrid
+                objectFit="contain"
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+              />
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.01}
+              value={zoom}
+              onChange={(event) => setZoom(Number(event.target.value))}
+              className="mt-4 w-full accent-orange-500"
+              aria-label={t('portfolio.cropTitle')}
+            />
+            <NeonButton
+              className="mt-4 w-full"
+              disabled={cropping || !croppedAreaPixels}
+              onClick={() => {
+                void confirmCrop();
+              }}
+            >
+              {cropping ? (
+                <TattooMachineLoader compact label={t('portfolio.checking')} />
+              ) : (
+                t('portfolio.cropConfirm')
               )}
             </NeonButton>
           </div>
