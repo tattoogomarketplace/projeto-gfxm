@@ -8,7 +8,7 @@ import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
-import { formatFlashNotePrice, parseFlashNoteOffer } from '@/lib/flash-note-offer';
+import { buildFlashNoteOffer, formatFlashNotePrice } from '@/lib/flash-note-offer';
 import { getFlashNoteBackground } from '@/lib/flash-notes-style';
 import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
@@ -96,7 +96,11 @@ function FlashNoteStorySurface({
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
   const mediaUrl = note.author?.avatarUrl ?? null;
-  const offer = parseFlashNoteOffer(note.content);
+  const offer = buildFlashNoteOffer({
+    content: note.content,
+    price: note.price,
+    discountPercentage: note.discountPercentage,
+  });
   const caption = offer.caption || note.content.trim();
   const surface = getFlashNoteBackground(note.backgroundId);
 

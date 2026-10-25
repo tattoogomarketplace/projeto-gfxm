@@ -31,6 +31,10 @@ import {
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import {
+  normalizeFlashNoteDiscount,
+  parseTypedMoneyInput,
+} from '@/lib/flash-note-offer';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 import {
@@ -275,8 +279,14 @@ type FlashNoteCreatorSheetProps = {
   initialFontClass?: string;
   initialAlignClass?: string;
   onClose: () => void;
+  initialPrice?: number | null;
+  initialDiscountPercentage?: number | null;
   /** Resolves `true` once the note has been persisted (optimistically or not). */
-  onPublish: (content: string, style: FlashNoteStyle) => Promise<boolean>;
+  onPublish: (
+    content: string,
+    style: FlashNoteStyle,
+    offer: { price: number; discountPercentage: number | null }
+  ) => Promise<boolean>;
   /** Present only when editing; resolves `true` once the note is removed. */
   onDelete?: () => Promise<boolean>;
 };
@@ -288,6 +298,8 @@ export function FlashNoteCreatorSheet({
   initialBackgroundId,
   initialFontClass,
   initialAlignClass,
+  initialPrice = null,
+  initialDiscountPercentage = null,
   onClose,
   onPublish,
   onDelete,
@@ -307,6 +319,12 @@ export function FlashNoteCreatorSheet({
     () => getFlashNoteFontByClass(initialFontClass).id
   );
   const [hasText, setHasText] = useState(() => initialContent.trim().length > 0);
+  const [priceInput, setPriceInput] = useState(() =>
+    initialPrice != null && initialPrice > 0 ? String(initialPrice) : ''
+  );
+  const [discountInput, setDiscountInput] = useState(() =>
+    initialDiscountPercentage != null ? String(initialDiscountPercentage) : ''
+  );
   const [isPending, startTransition] = useTransition();
   // Urgent, synchronous flag so the spinner paints on the very first frame.
   const [isPublishing, setIsPublishing] = useState(false);
@@ -317,7 +335,7 @@ export function FlashNoteCreatorSheet({
   const typeface = useMemo(() => getFlashNoteFontById(font), [font]);
 
   const busy = isPending || isPublishing;
-  const canPublish = hasText && !busy;
+  const canPublish = hasText && parseTypedMoneyInput(priceInput) != null && !busy;
 
   // Mirror the store's emptiness into local state — but only flip it on the
   // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
@@ -342,8 +360,19 @@ export function FlashNoteCreatorSheet({
     setBackgroundId(getFlashNoteBackground(initialBackgroundId).id);
     setAlign(getFlashNoteAlignByClass(initialAlignClass).id);
     setFont(getFlashNoteFontByClass(initialFontClass).id);
+    setPriceInput(initialPrice != null && initialPrice > 0 ? String(initialPrice) : '');
+    setDiscountInput(initialDiscountPercentage != null ? String(initialDiscountPercentage) : '');
     setConfirmDelete(false);
-  }, [open, initialContent, initialBackgroundId, initialFontClass, initialAlignClass, store]);
+  }, [
+    open,
+    initialContent,
+    initialBackgroundId,
+    initialFontClass,
+    initialAlignClass,
+    initialPrice,
+    initialDiscountPercentage,
+    store,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -412,17 +441,33 @@ export function FlashNoteCreatorSheet({
   const handlePublish = useCallback(() => {
     const content = store.get().trim();
     if (!content || busy) return;
+    const price = parseTypedMoneyInput(priceInput);
+    if (price == null) {
+      triggerHaptic('heavy');
+      toast.error(t('flash.priceRequired'));
+      return;
+    }
+    const discountPercentage = discountInput.trim()
+      ? normalizeFlashNoteDiscount(Number(discountInput.replace(',', '.')))
+      : null;
+    if (discountInput.trim() && discountPercentage == null) {
+      triggerHaptic('heavy');
+      toast.error(t('toast.flashBookPrice'));
+      return;
+    }
     triggerHaptic('medium');
-    // Set the pending UI urgently so the button + spinner react on the same
-    // frame as the tap; the transition then carries the async network work.
     setIsPublishing(true);
     startTransition(async () => {
       try {
-        const published = await onPublish(content, {
-          backgroundId,
-          fontClass: typeface.className,
-          alignClass: alignment.className,
-        });
+        const published = await onPublish(
+          content,
+          {
+            backgroundId,
+            fontClass: typeface.className,
+            alignClass: alignment.className,
+          },
+          { price, discountPercentage }
+        );
         if (!published) return;
         triggerHaptic('heavy');
         toast.success(t('toast.flashLive'));
@@ -431,7 +476,19 @@ export function FlashNoteCreatorSheet({
         setIsPublishing(false);
       }
     });
-  }, [alignment.className, backgroundId, busy, onClose, onPublish, store, t, triggerHaptic, typeface.className]);
+  }, [
+    alignment.className,
+    backgroundId,
+    busy,
+    discountInput,
+    onClose,
+    onPublish,
+    priceInput,
+    store,
+    t,
+    triggerHaptic,
+    typeface.className,
+  ]);
 
   return (
     <Drawer
@@ -530,6 +587,39 @@ export function FlashNoteCreatorSheet({
               onCycleAlign={handleCycleAlign}
               onCycleFont={handleCycleFont}
             />
+
+            <div className="grid grid-cols-2 gap-3 px-5 pt-4">
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
+                  {t('flash.priceLabel')}
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={priceInput}
+                  disabled={busy}
+                  onChange={(event) => setPriceInput(event.target.value.replace(/[^\d.,]/g, ''))}
+                  placeholder={t('flash.pricePlaceholder')}
+                  className="min-h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-[15px] font-semibold text-white outline-none placeholder:text-zinc-600 focus:border-orange-500/50"
+                />
+              </label>
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
+                  {t('flash.discountLabel')}
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={discountInput}
+                  disabled={busy}
+                  onChange={(event) => setDiscountInput(event.target.value.replace(/[^\d]/g, '').slice(0, 2))}
+                  placeholder={t('flash.discountPlaceholder')}
+                  className="min-h-12 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-[15px] font-semibold text-white outline-none placeholder:text-zinc-600 focus:border-orange-500/50"
+                />
+              </label>
+            </div>
 
             {/* Live indicator + counter. */}
             <div className="flex items-center justify-between gap-3 px-5 pt-4">

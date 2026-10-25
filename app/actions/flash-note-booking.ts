@@ -195,9 +195,11 @@ async function bookFlashNoteOnce(noteId: string, clerkUserId: string): Promise<B
           content: string;
           ativa: boolean;
           expires_at: Date;
+          price: Prisma.Decimal | number | string;
+          discount_percentage: number | null;
         }>
       >`
-        SELECT id, user_id, content, ativa, expires_at
+        SELECT id, user_id, content, ativa, expires_at, price, discount_percentage
         FROM flash_notes
         WHERE id = ${noteId}::uuid
         FOR UPDATE
@@ -215,30 +217,25 @@ async function bookFlashNoteOnce(noteId: string, clerkUserId: string): Promise<B
         throw new FlashNoteBookingError('FORBIDDEN', 'Perfil indisponivel.');
       }
 
-      const existing = await tx.agendamentoExtra.findFirst({
+      const existing = await tx.agendamento.findFirst({
         where: {
-          descricao: extraLabel(note.id),
+          flashNoteId: note.id,
           deleted_at: null,
-          agendamento: {
-            cliente_id: client.id,
-            deleted_at: null,
-            status: { in: [...ACTIVE_BOOKING_STATUSES] },
-          },
         },
         select: {
-          agendamento: {
-            select: {
-              id: true,
-              tatuador_id: true,
-              data_hora: true,
-              valor_total: true,
-              valor_sinal: true,
-            },
-          },
+          id: true,
+          tatuador_id: true,
+          data_hora: true,
+          valor_total: true,
+          valor_sinal: true,
+          cliente_id: true,
         },
       });
-      if (existing?.agendamento) {
-        const booking = existing.agendamento;
+      if (existing) {
+        if (existing.cliente_id !== client.id) {
+          throw new FlashNoteBookingError('CONSUMED', 'Esta Flash Note ja foi garantida ou expirou.');
+        }
+        const booking = existing;
         return {
           alreadyProcessed: true as const,
           bookingId: booking.id,
@@ -273,7 +270,7 @@ async function bookFlashNoteOnce(noteId: string, clerkUserId: string): Promise<B
         throw new FlashNoteBookingError('FORBIDDEN', 'Artista indisponivel para agendamento.');
       }
 
-      const pricing = resolveFlashNoteSalePrice(note.content);
+      const pricing = resolveFlashNoteSalePrice(note.price, note.discount_percentage);
       if (!pricing) {
         throw new FlashNoteBookingError(
           'INVALID_PRICE',
@@ -330,6 +327,7 @@ async function bookFlashNoteOnce(noteId: string, clerkUserId: string): Promise<B
           valor_sinal: new Prisma.Decimal(depositValue.toFixed(2)),
           sinal_pago: false,
           mutex_expira_em: mutexExpiraEm,
+          flashNoteId: note.id,
           extras: {
             create: [
               {

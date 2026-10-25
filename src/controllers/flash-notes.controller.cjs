@@ -24,6 +24,8 @@ async function criar(req, res) {
       backgroundId: req.body?.backgroundId,
       fontClass: req.body?.fontClass,
       alignClass: req.body?.alignClass,
+      price: req.body?.price,
+      discountPercentage: req.body?.discountPercentage,
     });
     return res.status(201).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {
@@ -44,6 +46,8 @@ async function atualizar(req, res) {
       backgroundId: req.body?.backgroundId,
       fontClass: req.body?.fontClass,
       alignClass: req.body?.alignClass,
+      price: req.body?.price,
+      discountPercentage: req.body?.discountPercentage,
     });
     return res.status(200).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {

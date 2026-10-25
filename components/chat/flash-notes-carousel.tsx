@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { Pencil, Plus, Radio, X, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Pencil, Plus, Radio, Zap } from 'lucide-react';
 import { FlashNoteCreatorSheet, FLASH_NOTE_MAX_LENGTH } from '@/components/chat/flash-note-creator-sheet';
+import { FlashNoteModal } from '@/components/features/flash-note-modal';
 import { getFlashNoteBackground, type FlashNoteStyle } from '@/lib/flash-notes-style';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,15 +33,9 @@ function truncateNote(content: string): string {
   return `${trimmed.slice(0, FLASH_NOTE_MAX_LENGTH - 1).trimEnd()}…`;
 }
 
-function remainingLabel(expiresAt: string, expiringLabel: string): string {
-  const ms = new Date(expiresAt).getTime() - Date.now();
-  if (Number.isNaN(ms) || ms <= 0) return expiringLabel;
-  const hours = Math.max(1, Math.round(ms / (60 * 60 * 1000)));
-  return hours === 1 ? '1h' : `${hours}h`;
-}
-
 export function FlashNotesCarousel() {
   const { getToken } = useAuth();
+  const router = useRouter();
   const getTokenRef = useRef(getToken);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
@@ -108,7 +104,11 @@ export function FlashNotesCarousel() {
   // way the full style payload (backgroundId/fontClass/alignClass) is sent so
   // the ring and preview survive reloads.
   const publishNote = useCallback(
-    async (content: string, style: FlashNoteStyle): Promise<boolean> => {
+    async (
+      content: string,
+      style: FlashNoteStyle,
+      offer: { price: number; discountPercentage: number | null }
+    ): Promise<boolean> => {
       const trimmed = content.trim();
       if (!trimmed) return false;
       if (trimmed.length > FLASH_NOTE_MAX_LENGTH) {
@@ -125,6 +125,12 @@ export function FlashNotesCarousel() {
         backgroundId: style.backgroundId,
         fontClass: style.fontClass,
         alignClass: style.alignClass,
+        price: offer.price,
+        discountPercentage: offer.discountPercentage,
+        salePrice:
+          offer.discountPercentage != null
+            ? Number((offer.price * (1 - offer.discountPercentage / 100)).toFixed(2))
+            : offer.price,
         createdAt: editing?.createdAt ?? new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         ativa: true,
@@ -157,6 +163,8 @@ export function FlashNotesCarousel() {
               backgroundId: style.backgroundId,
               fontClass: style.fontClass,
               alignClass: style.alignClass,
+              price: offer.price,
+              discountPercentage: offer.discountPercentage,
             }),
           }
         );
@@ -349,57 +357,23 @@ export function FlashNotesCarousel() {
         initialBackgroundId={ownNote?.backgroundId}
         initialFontClass={ownNote?.fontClass}
         initialAlignClass={ownNote?.alignClass}
+        initialPrice={ownNote?.price ?? null}
+        initialDiscountPercentage={ownNote?.discountPercentage ?? null}
         onClose={closeComposer}
         onPublish={publishNote}
         onDelete={ownNote ? deleteOwnNote : undefined}
       />
 
-      {selected ? (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-sm rounded-2xl border border-black/[0.04] bg-white p-5 shadow-xl dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border border-orange-500/40 bg-[#1a1a1a] text-sm font-semibold text-orange-400">
-                  {selected.author?.avatarUrl ? (
-                    <OptimizedImage
-                      src={selected.author.avatarUrl}
-                      alt={selected.author?.name || t('flash.artist')}
-                      sizes="44px"
-                      className="h-full w-full rounded-full"
-                      fallback={
-                        <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
-                          {selected.author?.initial ?? 'A'}
-                        </span>
-                      }
-                    />
-                  ) : (
-                    selected.author?.initial ?? 'A'
-                  )}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-white">
-                    {selected.author?.name || t('flash.artist')}
-                  </p>
-                  <p className="text-[11px] text-orange-500 dark:text-orange-400">
-                    {t('flash.active')} · {remainingLabel(selected.expiresAt, t('flash.expiring'))}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full text-neutral-500 dark:text-zinc-400"
-                aria-label={t('common.close')}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-neutral-700 dark:text-zinc-300">
-              {truncateNote(selected.content)}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <FlashNoteModal
+        note={selected}
+        open={Boolean(selected)}
+        onClose={() => setSelected(null)}
+        onBook={() => {
+          setSelected(null);
+          void loadNotes();
+          router.refresh();
+        }}
+      />
     </section>
   );
 }

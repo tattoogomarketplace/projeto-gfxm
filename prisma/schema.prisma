@@ -266,12 +266,14 @@ model Agendamento {
   session_status                SessionStatus?
   mutex_expira_em               DateTime?         @db.Timestamptz(6)
   version                       Int               @default(1)
+  flashNoteId                   String?           @unique(map: "agendamentos_flash_note_id_unique") @map("flash_note_id") @db.Uuid
   created_at                    DateTime          @default(now()) @db.Timestamptz(6)
   updated_at                    DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
   deleted_at                    DateTime?         @db.Timestamptz(6)
 
   cliente    Perfil               @relation("AgendamentoCliente", fields: [cliente_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
   tatuador   Perfil               @relation("AgendamentoTatuador", fields: [tatuador_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  flashNote  FlashNote?           @relation(fields: [flashNoteId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   transacoes TransacaoPagamento[]
   extras     AgendamentoExtra[]
 
@@ -343,17 +345,20 @@ model MensagemChat {
 }
 
 model FlashNote {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
-  content      String   @db.VarChar(80)
-  backgroundId String   @default("graphite") @map("background_id") @db.VarChar(24)
-  fontClass    String   @default("font-sans") @map("font_class") @db.VarChar(24)
-  alignClass   String   @default("text-center") @map("align_class") @db.VarChar(16)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
-  ativa        Boolean  @default(true)
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String   @map("user_id") @db.Uuid
+  content              String   @db.VarChar(80)
+  backgroundId         String   @default("graphite") @map("background_id") @db.VarChar(24)
+  fontClass            String   @default("font-sans") @map("font_class") @db.VarChar(24)
+  alignClass           String   @default("text-center") @map("align_class") @db.VarChar(16)
+  price                Decimal  @default(0) @db.Decimal(12, 2)
+  discountPercentage   Int?     @map("discount_percentage")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt            DateTime @map("expires_at") @db.Timestamptz(6)
+  ativa                Boolean  @default(true)
 
-  user Perfil @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        Perfil       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  agendamento Agendamento?
 
   @@index([userId], map: "flash_notes_user_id_idx")
   @@index([expiresAt], map: "flash_notes_expires_at_idx")

@@ -65,6 +65,58 @@ function authorAvatarUrl(portfolios) {
   return url || null;
 }
 
+function toNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (value && typeof value === "object" && typeof value.toNumber === "function") {
+    const parsed = Number(value.toNumber());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function normalizePrice(value) {
+  const parsed = toNumber(value);
+  if (parsed == null || parsed <= 0 || parsed > 999999.99) return null;
+  return Number(parsed.toFixed(2));
+}
+
+function normalizeDiscount(value) {
+  if (value == null || value === "") return null;
+  const parsed = toNumber(value);
+  if (parsed == null || !Number.isInteger(parsed) || parsed < 0 || parsed >= 100) return null;
+  return parsed === 0 ? null : parsed;
+}
+
+function resolveSalePrice(price, discountPercentage) {
+  const originalPrice = normalizePrice(price);
+  if (originalPrice == null) return null;
+  const discountPercent = normalizeDiscount(discountPercentage);
+  const salePrice =
+    discountPercent != null
+      ? Number((originalPrice * (1 - discountPercent / 100)).toFixed(2))
+      : originalPrice;
+  if (!(salePrice > 0)) return null;
+  return { originalPrice, discountPercent, salePrice };
+}
+
+function requirePricing(price, discountPercentage) {
+  if (normalizePrice(price) == null) {
+    throw httpError(400, "Informe um valor valido para a Flash Note.");
+  }
+  if (discountPercentage != null && discountPercentage !== "" && normalizeDiscount(discountPercentage) == null) {
+    throw httpError(400, "Desconto invalido. Use um percentual de 1 a 99.");
+  }
+  const pricing = resolveSalePrice(price, discountPercentage);
+  if (!pricing) {
+    throw httpError(400, "Informe um valor valido para a Flash Note.");
+  }
+  return pricing;
+}
+
 function toFlashNoteDto(row) {
   const name = row.user ? authorName(row.user.nome, row.user.role) : "";
   const author = row.user
@@ -79,6 +131,7 @@ function toFlashNoteDto(row) {
         avatarUrl: authorAvatarUrl(row.user.portfolios),
       }
     : null;
+  const pricing = resolveSalePrice(row.price, row.discountPercentage);
 
   return {
     id: row.id,
@@ -87,6 +140,9 @@ function toFlashNoteDto(row) {
     backgroundId: row.backgroundId,
     fontClass: row.fontClass,
     alignClass: row.alignClass,
+    price: pricing?.originalPrice ?? 0,
+    discountPercentage: pricing?.discountPercent ?? null,
+    salePrice: pricing?.salePrice ?? null,
     createdAt: row.createdAt,
     expiresAt: row.expiresAt,
     ativa: row.ativa,
@@ -130,7 +186,7 @@ async function listActiveFlashNotes(userId) {
   return rows.map(toFlashNoteDto);
 }
 
-async function createFlashNote({ actorId, actorRole, content, expiresAt, backgroundId, fontClass, alignClass }) {
+async function createFlashNote({ actorId, actorRole, content, expiresAt, backgroundId, fontClass, alignClass, price, discountPercentage }) {
   if (actorRole !== "tatuador") {
     throw httpError(403, "Apenas tatuadores podem publicar Flash Notes.");
   }
@@ -148,6 +204,7 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
   }
 
   const style = sanitizeStyle({ backgroundId, fontClass, alignClass });
+  const pricing = requirePricing(price, discountPercentage);
 
   await prisma.flashNote.updateMany({
     where: { userId: actorId, ativa: true },
@@ -161,6 +218,8 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
       backgroundId: style.backgroundId,
       fontClass: style.fontClass,
       alignClass: style.alignClass,
+      price: pricing.originalPrice,
+      discountPercentage: pricing.discountPercent,
       expiresAt: expires,
       ativa: true,
     },
@@ -174,10 +233,19 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
   return toFlashNoteDto(created);
 }
 
-async function updateFlashNote({ actorId, noteId, content, backgroundId, fontClass, alignClass }) {
+async function updateFlashNote({ actorId, noteId, content, backgroundId, fontClass, alignClass, price, discountPercentage }) {
   const existing = await prisma.flashNote.findFirst({
     where: { id: noteId, userId: actorId },
-    select: { id: true, userId: true, content: true, backgroundId: true, fontClass: true, alignClass: true },
+    select: {
+      id: true,
+      userId: true,
+      content: true,
+      backgroundId: true,
+      fontClass: true,
+      alignClass: true,
+      price: true,
+      discountPercentage: true,
+    },
   });
 
   if (!existing) {
@@ -190,6 +258,10 @@ async function updateFlashNote({ actorId, noteId, content, backgroundId, fontCla
     fontClass: fontClass ?? existing.fontClass,
     alignClass: alignClass ?? existing.alignClass,
   });
+  const pricing = requirePricing(
+    price ?? existing.price,
+    discountPercentage === undefined ? existing.discountPercentage : discountPercentage
+  );
 
   const mutated = await prisma.flashNote.updateMany({
     where: { id: existing.id, userId: actorId },
@@ -198,6 +270,8 @@ async function updateFlashNote({ actorId, noteId, content, backgroundId, fontCla
       backgroundId: style.backgroundId,
       fontClass: style.fontClass,
       alignClass: style.alignClass,
+      price: pricing.originalPrice,
+      discountPercentage: pricing.discountPercent,
       expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
     },
   });

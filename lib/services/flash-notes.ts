@@ -4,6 +4,11 @@ import {
   FLASH_NOTE_MAX_LENGTH,
   sanitizeFlashNoteStyle,
 } from '@/lib/flash-notes-style';
+import {
+  normalizeFlashNoteDiscount,
+  normalizeFlashNotePrice,
+  resolveFlashNoteSalePrice,
+} from '@/lib/flash-note-offer';
 import type { FlashNoteDto } from '@/lib/types/chat';
 
 const FLASH_NOTE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -33,6 +38,8 @@ type FlashNoteRow = {
   backgroundId: string;
   fontClass: string;
   alignClass: string;
+  price: { toNumber?: () => number } | number | string;
+  discountPercentage: number | null;
   createdAt: Date;
   expiresAt: Date;
   ativa: boolean;
@@ -77,6 +84,8 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
       }
     : null;
 
+  const pricing = resolveFlashNoteSalePrice(row.price, row.discountPercentage);
+
   return {
     id: row.id,
     userId: row.userId,
@@ -84,6 +93,9 @@ export function toFlashNoteDto(row: FlashNoteRow): FlashNoteDto {
     backgroundId: row.backgroundId,
     fontClass: row.fontClass,
     alignClass: row.alignClass,
+    price: pricing?.originalPrice ?? 0,
+    discountPercentage: pricing?.discountPercent ?? null,
+    salePrice: pricing?.salePrice ?? null,
     createdAt: row.createdAt.toISOString(),
     expiresAt: row.expiresAt.toISOString(),
     ativa: row.ativa,
@@ -139,6 +151,8 @@ export async function createFlashNote(params: {
   backgroundId?: unknown;
   fontClass?: unknown;
   alignClass?: unknown;
+  price?: unknown;
+  discountPercentage?: unknown;
 }): Promise<FlashNoteDto> {
   if (params.actorRole !== 'tatuador') {
     throw new ChatError(403, 'Apenas tatuadores podem publicar Flash Notes.');
@@ -157,6 +171,7 @@ export async function createFlashNote(params: {
   }
 
   const style = sanitizeFlashNoteStyle(params);
+  const pricing = requireFlashNotePricing(params.price, params.discountPercentage);
 
   await prisma.flashNote.updateMany({
     where: { userId: params.actorId, ativa: true },
@@ -170,6 +185,8 @@ export async function createFlashNote(params: {
       backgroundId: style.backgroundId,
       fontClass: style.fontClass,
       alignClass: style.alignClass,
+      price: pricing.originalPrice,
+      discountPercentage: pricing.discountPercent,
       expiresAt,
       ativa: true,
     },
@@ -190,6 +207,8 @@ export async function updateFlashNote(params: {
   backgroundId?: unknown;
   fontClass?: unknown;
   alignClass?: unknown;
+  price?: unknown;
+  discountPercentage?: unknown;
 }): Promise<FlashNoteDto> {
   if (!FLASH_NOTE_ID_RE.test(params.noteId)) {
     throw new ChatError(404, 'Flash Note não encontrada.');
@@ -197,7 +216,16 @@ export async function updateFlashNote(params: {
 
   const existing = await prisma.flashNote.findFirst({
     where: { id: params.noteId, userId: params.actorId },
-    select: { id: true, userId: true, content: true, backgroundId: true, fontClass: true, alignClass: true },
+    select: {
+      id: true,
+      userId: true,
+      content: true,
+      backgroundId: true,
+      fontClass: true,
+      alignClass: true,
+      price: true,
+      discountPercentage: true,
+    },
   });
 
   if (!existing) {
@@ -212,6 +240,10 @@ export async function updateFlashNote(params: {
     fontClass: params.fontClass ?? existing.fontClass,
     alignClass: params.alignClass ?? existing.alignClass,
   });
+  const pricing = requireFlashNotePricing(
+    params.price ?? existing.price,
+    params.discountPercentage === undefined ? existing.discountPercentage : params.discountPercentage
+  );
 
   const mutated = await prisma.flashNote.updateMany({
     where: { id: existing.id, userId: params.actorId },
@@ -220,6 +252,8 @@ export async function updateFlashNote(params: {
       backgroundId: style.backgroundId,
       fontClass: style.fontClass,
       alignClass: style.alignClass,
+      price: pricing.originalPrice,
+      discountPercentage: pricing.discountPercent,
       expiresAt: new Date(Date.now() + FLASH_NOTE_TTL_MS),
     },
   });
@@ -251,6 +285,24 @@ function normalizeContent(value: unknown): string {
     throw new ChatError(400, `Flash Note deve ter no máximo ${FLASH_NOTE_MAX_LENGTH} caracteres.`);
   }
   return content;
+}
+
+function requireFlashNotePricing(price: unknown, discountPercentage: unknown) {
+  if (normalizeFlashNotePrice(price) == null) {
+    throw new ChatError(400, 'Informe um valor valido para a Flash Note.');
+  }
+  if (
+    discountPercentage != null &&
+    discountPercentage !== '' &&
+    normalizeFlashNoteDiscount(discountPercentage) == null
+  ) {
+    throw new ChatError(400, 'Desconto invalido. Use um percentual de 1 a 99.');
+  }
+  const pricing = resolveFlashNoteSalePrice(price, discountPercentage);
+  if (!pricing) {
+    throw new ChatError(400, 'Informe um valor valido para a Flash Note.');
+  }
+  return pricing;
 }
 
 export function isFlashNoteExpired(row: { expiresAt: Date; ativa: boolean }, now = new Date()) {

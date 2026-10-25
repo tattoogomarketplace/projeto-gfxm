@@ -69,6 +69,9 @@ export type FlashNoteDto = {
   backgroundId: string;
   fontClass: string;
   alignClass: string;
+  price: number;
+  discountPercentage: number | null;
+  salePrice: number | null;
   createdAt: string;
   expiresAt: string;
   ativa: boolean;

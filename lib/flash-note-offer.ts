@@ -5,69 +5,76 @@ export type FlashNoteOffer = {
   salePrice: number | null;
 };
 
-const DISCOUNT_RE = /(?:^|\s)[-–]?\s*(\d{1,2})\s*%(?:\s*off)?(?=\s|$)/i;
-const PRICE_RE =
-  /(?:r\$|rs\$?)\s*(\d{1,6}(?:[.,]\d{1,2})?)|(\d{1,6}(?:[.,]\d{1,2})?)\s*(?:reais|brl)\b/i;
+export type FlashNoteOfferInput = {
+  price: number;
+  discountPercentage: number | null;
+};
 
-function parseMoney(raw: string): number | null {
-  const normalized = raw.replace(/\./g, '').replace(',', '.');
-  const value = Number(normalized);
-  if (!Number.isFinite(value) || value <= 0) return null;
-  return value;
+const MAX_PRICE = 999999.99;
+
+function asFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (value && typeof value === 'object' && 'toNumber' in value && typeof value.toNumber === 'function') {
+    const parsed = Number(value.toNumber());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
-export function parseFlashNoteOffer(content: string): FlashNoteOffer {
-  const raw = content.trim();
-  let caption = raw;
-  let originalPrice: number | null = null;
-  let discountPercent: number | null = null;
+export function normalizeFlashNotePrice(value: unknown): number | null {
+  const parsed = asFiniteNumber(value);
+  if (parsed == null || parsed <= 0 || parsed > MAX_PRICE) return null;
+  return Number(parsed.toFixed(2));
+}
 
-  const discountMatch = raw.match(DISCOUNT_RE);
-  if (discountMatch) {
-    const parsed = Number(discountMatch[1]);
-    if (Number.isFinite(parsed) && parsed > 0 && parsed < 100) {
-      discountPercent = parsed;
-      caption = caption.replace(discountMatch[0], ' ');
-    }
-  }
+export function normalizeFlashNoteDiscount(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const parsed = asFiniteNumber(value);
+  if (parsed == null) return null;
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= 100) return null;
+  return parsed === 0 ? null : parsed;
+}
 
-  const priceMatch = raw.match(PRICE_RE);
-  const priceToken = priceMatch?.[1] || priceMatch?.[2];
-  if (priceToken) {
-    originalPrice = parseMoney(priceToken);
-    if (originalPrice != null && priceMatch?.[0]) {
-      caption = caption.replace(priceMatch[0], ' ');
-    }
-  }
+export function parseTypedMoneyInput(raw: string): number | null {
+  const trimmed = raw.trim().replace(/[^\d.,]/g, '');
+  if (!trimmed) return null;
+  const normalized =
+    trimmed.includes(',') && trimmed.includes('.')
+      ? trimmed.replace(/\./g, '').replace(',', '.')
+      : trimmed.replace(',', '.');
+  return normalizeFlashNotePrice(normalized);
+}
 
-  caption = caption.replace(/\s{2,}/g, ' ').replace(/^[-–|,.;:]+|[-–|,.;:]+$/g, '').trim();
-
+export function resolveFlashNoteSalePrice(
+  price: unknown,
+  discountPercentage: unknown
+): { originalPrice: number; discountPercent: number | null; salePrice: number } | null {
+  const originalPrice = normalizeFlashNotePrice(price);
+  if (originalPrice == null) return null;
+  const discountPercent = normalizeFlashNoteDiscount(discountPercentage);
   const salePrice =
-    originalPrice != null && discountPercent != null
+    discountPercent != null
       ? Number((originalPrice * (1 - discountPercent / 100)).toFixed(2))
-      : null;
-
-  return {
-    caption,
-    originalPrice,
-    discountPercent,
-    salePrice,
-  };
+      : originalPrice;
+  if (!(salePrice > 0)) return null;
+  return { originalPrice, discountPercent, salePrice };
 }
 
-export function resolveFlashNoteSalePrice(content: string): {
-  originalPrice: number;
-  discountPercent: number | null;
-  salePrice: number;
-} | null {
-  const offer = parseFlashNoteOffer(content);
-  if (offer.originalPrice == null) return null;
-  const salePrice = offer.salePrice != null ? offer.salePrice : offer.originalPrice;
-  if (!(salePrice > 0)) return null;
+export function buildFlashNoteOffer(params: {
+  content: string;
+  price: unknown;
+  discountPercentage: unknown;
+}): FlashNoteOffer {
+  const pricing = resolveFlashNoteSalePrice(params.price, params.discountPercentage);
   return {
-    originalPrice: offer.originalPrice,
-    discountPercent: offer.discountPercent,
-    salePrice,
+    caption: params.content.trim(),
+    originalPrice: pricing?.originalPrice ?? null,
+    discountPercent: pricing?.discountPercent ?? null,
+    salePrice: pricing?.salePrice ?? null,
   };
 }
 

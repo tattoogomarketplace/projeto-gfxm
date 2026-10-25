@@ -17,6 +17,8 @@ export async function PATCH(
       backgroundId?: unknown;
       fontClass?: unknown;
       alignClass?: unknown;
+      price?: unknown;
+      discountPercentage?: unknown;
     } = {};
     try {
       body = (await request.json()) as typeof body;
@@ -31,6 +33,8 @@ export async function PATCH(
       backgroundId: body.backgroundId,
       fontClass: body.fontClass,
       alignClass: body.alignClass,
+      price: body.price,
+      discountPercentage: body.discountPercentage,
     });
 
     return NextResponse.json({ sucesso: true, actorId: actor.id, note });
