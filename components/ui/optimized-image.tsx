@@ -9,6 +9,7 @@ interface OptimizedImageProps {
   className?: string;
   sizes?: string;
   fallback?: ReactNode;
+  priority?: boolean;
 }
 
 export const NATIVE_APP_IMAGE_STYLE = {
@@ -46,7 +47,7 @@ function isKnownOptimizerHost(src: string): boolean {
   }
 }
 
-export function OptimizedImage({ src, alt, className, sizes, fallback }: OptimizedImageProps) {
+export function OptimizedImage({ src, alt, className, sizes, fallback, priority }: OptimizedImageProps) {
   const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
   const resolved = resolveSrc(src);
   const failed = Boolean(resolved && brokenSrc === resolved);
@@ -78,7 +79,8 @@ export function OptimizedImage({ src, alt, className, sizes, fallback }: Optimiz
         onDragStart={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
         onError={() => setBrokenSrc(resolved)}
-        loading="lazy"
+        loading={priority ? undefined : 'lazy'}
+        priority={priority}
         quality={75}
         unoptimized={unoptimized}
       />

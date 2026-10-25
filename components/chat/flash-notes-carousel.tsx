@@ -377,7 +377,8 @@ export function FlashNotesCarousel() {
         note={selected}
         open={Boolean(selected)}
         onClose={() => setSelected(null)}
-        onBook={() => {
+        onBook={(note) => {
+          setNotes((current) => current.filter((item) => item.id !== note.id));
           setSelected(null);
           void loadNotes();
           router.refresh();

@@ -66,6 +66,8 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const [selected, setSelected] = useState<FlashNoteDto | null>(null);
+  const [consumedIds, setConsumedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const visibleNotes = notes.filter((note) => !consumedIds.has(note.id));
 
   const openNote = useCallback(
     (note: FlashNoteDto) => {
@@ -91,7 +93,12 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
     [router, triggerHaptic]
   );
 
-  const bookArtist = useCallback(() => {
+  const bookArtist = useCallback((note: FlashNoteDto) => {
+    setConsumedIds((current) => {
+      const next = new Set(current);
+      next.add(note.id);
+      return next;
+    });
     setSelected(null);
     router.refresh();
   }, [router]);
@@ -101,7 +108,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
       <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
         <BrandWordmark />
 
-        {notes.length === 0 ? null : (
+        {visibleNotes.length === 0 ? null : (
           <section className="relative w-full shrink-0 bg-transparent px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-2">
             <div className="mb-2 flex items-center gap-2 px-4">
               <Zap className="h-3.5 w-3.5 text-orange-500" strokeWidth={2} />
@@ -120,7 +127,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
               role="list"
               aria-label={t('flash.listAria')}
             >
-              {notes.map((note) => {
+              {visibleNotes.map((note) => {
                 const name = note.author?.name || t('flash.artist');
                 const initial = note.author?.initial ?? 'A';
                 const ring = getFlashNoteBackground(note.backgroundId).ring;

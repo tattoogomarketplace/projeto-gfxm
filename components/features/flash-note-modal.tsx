@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useSyncExternalStore, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore, useTransition } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import { Loader2, Radio, X, Zap } from 'lucide-react';
 import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-booking';
@@ -47,6 +48,14 @@ function remainingLabel(expiresAt: string, expiringLabel: string): string {
   return hours === 1 ? '1h' : `${hours}h`;
 }
 
+function storyRemainingRatio(createdAt: string, expiresAt: string): number {
+  const created = new Date(createdAt).getTime();
+  const expires = new Date(expiresAt).getTime();
+  const total = expires - created;
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  return Math.min(1, Math.max(0, (expires - Date.now()) / total));
+}
+
 export function FlashNoteModal({
   note,
   open,
@@ -86,6 +95,7 @@ function FlashNoteStorySurface({
   onVisitArtist?: (note: FlashNoteDto) => void;
 }) {
   const { t, locale } = useI18n();
+  const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const overlayRef = useRef<HTMLDivElement>(null);
   const openedAt = useRef(0);
@@ -103,6 +113,10 @@ function FlashNoteStorySurface({
   });
   const caption = offer.caption || note.content.trim();
   const surface = getFlashNoteBackground(note.backgroundId);
+  const remainingRatio = useMemo(
+    () => storyRemainingRatio(note.createdAt, note.expiresAt),
+    [note.createdAt, note.expiresAt]
+  );
 
   useEffect(() => {
     openedAt.current = Date.now();
@@ -169,8 +183,10 @@ function FlashNoteStorySurface({
       });
       onBook?.(note);
       onClose();
+      router.refresh();
+      router.push('/dashboard/agenda');
     });
-  }, [isPending, note, onBook, onClose, t, triggerHaptic]);
+  }, [isPending, note, onBook, onClose, router, t, triggerHaptic]);
 
   const handleVisit = useCallback(() => {
     if (isPending) return;
@@ -266,17 +282,39 @@ function FlashNoteStorySurface({
             src={mediaUrl}
             alt={name}
             sizes="(max-width: 480px) 100vw, 420px"
-            className="absolute inset-0 h-full w-full"
+            className="absolute inset-0 h-full w-full object-cover"
             fallback={null}
+            priority
           />
         ) : null}
 
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/70 via-black/10 to-black/80"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent"
         />
 
-        <header className="relative z-10 flex items-center gap-3 px-4 pt-4">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/55 to-transparent"
+        />
+
+        <div className="absolute inset-x-3 top-3 z-20">
+          <div
+            className="h-0.5 w-full overflow-hidden rounded-full bg-white/25"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(remainingRatio * 100)}
+            aria-label={t('flash.expiring')}
+          >
+            <div
+              className="h-full rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
+              style={{ width: `${remainingRatio * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <header className="relative z-10 flex items-center gap-3 px-4 pt-7">
           <button
             type="button"
             disabled={isPending}
@@ -308,32 +346,29 @@ function FlashNoteStorySurface({
         </header>
 
         <div className="relative z-10 mt-auto flex flex-col gap-3 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6">
-          {offer.discountPercent != null || offer.originalPrice != null ? (
-            <div className="flex flex-wrap items-center gap-2">
+          {offer.originalPrice != null ? (
+            <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
               {offer.discountPercent != null ? (
-                <span className="rounded-full border border-[#FF5F1F]/50 bg-[#FF5F1F]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-200 backdrop-blur-md">
+                <span className="mb-1 rounded-full border border-[#FF5F1F]/50 bg-[#FF5F1F]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-200">
                   {t('flash.discountOff', { value: String(offer.discountPercent) })}
                 </span>
               ) : null}
-              {offer.originalPrice != null ? (
-                <span className="flex items-baseline gap-1.5 text-white">
-                  {offer.salePrice != null ? (
-                    <span className="text-lg font-bold tracking-tight">
+              <div className="flex min-w-0 flex-col">
+                {offer.salePrice != null && offer.salePrice !== offer.originalPrice ? (
+                  <>
+                    <span className="text-[13px] font-medium text-zinc-400 line-through decoration-zinc-500">
+                      {formatFlashNotePrice(offer.originalPrice, priceLocale)}
+                    </span>
+                    <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
                       {formatFlashNotePrice(offer.salePrice, priceLocale)}
                     </span>
-                  ) : null}
-                  <span
-                    className={cn(
-                      'text-[12px] font-medium text-zinc-400',
-                      offer.salePrice != null ? 'line-through' : 'text-zinc-200'
-                    )}
-                  >
-                    {t('flash.fromPrice', {
-                      price: formatFlashNotePrice(offer.originalPrice, priceLocale),
-                    })}
+                  </>
+                ) : (
+                  <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
+                    {formatFlashNotePrice(offer.originalPrice, priceLocale)}
                   </span>
-                </span>
-              ) : null}
+                )}
+              </div>
             </div>
           ) : null}
 
