@@ -3,7 +3,6 @@
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { HomeDiscover } from '@/components/features/home-discover';
 import { HomeDiscoverSkeleton } from '@/components/ui/route-skeletons';
-import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
 import { useRouteTab } from '@/hooks/use-route-tab';
 import type { AppTab } from '@/hooks/use-ui-store';
@@ -55,9 +54,7 @@ export default function ClienteDashboard({
           </section>
         ) : activeTab === 'portfolio' ? (
           <section key="portfolio" className="min-w-0 w-full flex-1">
-            <PullToRefresh>
-              <HomeDiscover feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
-            </PullToRefresh>
+            <HomeDiscover feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
           </section>
         ) : (
           // Fase transitória: pinta EXATAMENTE o skeleton do `loading.tsx`

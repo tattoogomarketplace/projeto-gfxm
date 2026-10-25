@@ -25,6 +25,8 @@ const MAX_REFRESH_MS = 2400;
 const SNAP_MS = 380;
 const SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const AXIS_LOCK_PX = 8;
+const RING_RADIUS = 18;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 type Phase = 'idle' | 'pulling' | 'refreshing';
 
@@ -48,25 +50,26 @@ function readScrollTop(scroller: HTMLElement | Window | null): number {
   return (scroller as HTMLElement).scrollTop;
 }
 
-function findScrollParent(node: HTMLElement | null): HTMLElement | Window {
-  if (!node) return window;
-  const shell = node.closest('[data-shell-viewport]');
-  if (shell instanceof HTMLElement) return shell;
+function findActiveScroller(target: EventTarget | null): HTMLElement | Window {
+  let current: HTMLElement | null =
+    target instanceof HTMLElement
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null;
 
-  let current = node.parentElement;
   while (current && current !== document.body && current !== document.documentElement) {
+    if (current.hasAttribute('data-shell-viewport')) return current;
     const overflowY = window.getComputedStyle(current).overflowY;
-    if (overflowY === 'auto' || overflowY === 'scroll') {
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll') &&
+      current.scrollHeight > current.clientHeight + 1
+    ) {
       return current;
     }
     current = current.parentElement;
   }
   return window;
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function PullToRefresh({
@@ -84,6 +87,7 @@ export function PullToRefresh({
   const contentRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
+  const ringRef = useRef<SVGCircleElement>(null);
   const scrollerRef = useRef<HTMLElement | Window | null>(null);
 
   const phaseRef = useRef<Phase>('idle');
@@ -101,6 +105,7 @@ export function PullToRefresh({
   const finishingRef = useRef(false);
   const maxTimerRef = useRef(0);
   const minTimerRef = useRef(0);
+  const restTimerRef = useRef(0);
 
   const setPhaseSafe = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -111,23 +116,38 @@ export function PullToRefresh({
     const content = contentRef.current;
     const indicator = indicatorRef.current;
     const mark = markRef.current;
+    const ring = ringRef.current;
     if (!content || !indicator) return;
 
     const transition = withSnap ? `transform ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
     content.style.transition = transition;
-    indicator.style.transition = transition;
+    indicator.style.transition = withSnap
+      ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
+      : 'none';
 
-    content.style.transform = `translate3d(0, ${pull}px, 0)`;
+    content.style.transform = pull === 0 ? 'translate3d(0, 0, 0)' : `translate3d(0, ${pull}px, 0)`;
+    content.style.willChange = pull === 0 ? 'auto' : 'transform';
+    if (pull === 0 && withSnap) {
+      if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
+      restTimerRef.current = window.setTimeout(() => {
+        restTimerRef.current = 0;
+        if (pullRef.current !== 0 || !contentRef.current) return;
+        contentRef.current.style.transform = 'none';
+        contentRef.current.style.transition = 'none';
+        contentRef.current.style.willChange = 'auto';
+      }, SNAP_MS);
+    }
     const indicatorY = pull - INDICATOR_HIDE_PX;
     indicator.style.transform = `translate3d(-50%, ${indicatorY}px, 0)`;
 
     const progress = Math.min(1, pull / THRESHOLD_PX);
     indicator.style.opacity = String(Math.min(1, pull / 28));
+    if (ring) {
+      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
+    }
     if (mark) {
-      const reduce = prefersReducedMotion();
-      mark.style.transition = withSnap ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear` : 'none';
-      mark.style.opacity = String(0.35 + progress * 0.65);
-      mark.style.transform = reduce ? 'none' : `rotate(${progress * 180}deg)`;
+      mark.style.opacity = String(0.45 + progress * 0.55);
+      mark.style.transform = `scale(${0.92 + progress * 0.08})`;
     }
   }, []);
 
@@ -220,14 +240,13 @@ export function PullToRefresh({
     const root = rootRef.current;
     if (!root || disabled) return;
 
-    scrollerRef.current = findScrollParent(root);
-
     const onStart = (event: TouchEvent) => {
       if (phaseRef.current === 'refreshing') return;
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
       if (!touch) return;
 
+      scrollerRef.current = findActiveScroller(event.target);
       const atWindowTop = window.scrollY === 0;
       const atScrollerTop = readScrollTop(scrollerRef.current) <= 0;
       if (!atWindowTop || !atScrollerTop) {
@@ -311,6 +330,7 @@ export function PullToRefresh({
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
       if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
       if (minTimerRef.current) window.clearTimeout(minTimerRef.current);
+      if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
     };
   }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);
 
@@ -326,7 +346,7 @@ export function PullToRefresh({
   return (
     <div
       ref={rootRef}
-      className={cn('relative min-w-0 w-full flex-1 overflow-x-clip', className)}
+      className={cn('relative flex min-h-0 min-w-0 w-full flex-1 flex-col', className)}
       data-ptr-root
     >
       <div
@@ -344,15 +364,35 @@ export function PullToRefresh({
             refreshing && 'animate-pulse drop-shadow-[0_0_15px_#FF5F1F]'
           )}
         >
-          <span
-            className={cn(
-              'pointer-events-none absolute inset-[3px] rounded-full border border-[#FF5F1F]/25',
-              refreshing && 'border-[#FF5F1F]/70'
-            )}
-          />
+          <svg
+            className="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
+            viewBox="0 0 44 44"
+            aria-hidden
+          >
+            <circle
+              cx="22"
+              cy="22"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="rgba(255,95,31,0.18)"
+              strokeWidth="1.5"
+            />
+            <circle
+              ref={ringRef}
+              cx="22"
+              cy="22"
+              r={RING_RADIUS}
+              fill="none"
+              stroke="#FF5F1F"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeDasharray={RING_CIRCUMFERENCE}
+              strokeDashoffset={RING_CIRCUMFERENCE}
+            />
+          </svg>
           <span
             ref={markRef}
-            className="select-none text-[11px] font-black tracking-tight text-[#FF5F1F] transform-gpu"
+            className="relative z-[1] select-none text-[11px] font-black tracking-tight text-[#FF5F1F] transform-gpu"
           >
             {BRAND_WORDMARK.mark}
           </span>
@@ -360,7 +400,7 @@ export function PullToRefresh({
       </div>
       <div
         ref={contentRef}
-        className="min-w-0 w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+        className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"
       >
         {children}
       </div>
