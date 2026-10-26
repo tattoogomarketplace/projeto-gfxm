@@ -156,7 +156,8 @@ export function PullToRefresh({
       content.style.willChange = 'auto';
       if (indicator) {
         indicator.style.transition = withSnap ? 'opacity 160ms linear' : 'none';
-        indicator.style.transform = 'translate3d(-50%, -50%, 0)';
+        const inset = Math.max(0, (pull - INDICATOR_SIZE) / 2);
+        indicator.style.transform = `translate3d(-50%, ${inset}px, 0)`;
       }
     } else if (indicator) {
       content.style.transition = snapTransform;
@@ -442,7 +443,7 @@ export function PullToRefresh({
     ? {
         width: INDICATOR_SIZE,
         height: INDICATOR_SIZE,
-        transform: 'translate3d(-50%, -50%, 0)',
+        transform: 'translate3d(-50%, 0, 0)',
         opacity: 0,
         willChange: 'transform, opacity',
         color: ACCENT_MINT_CSS,
@@ -464,8 +465,7 @@ export function PullToRefresh({
     <div
       ref={indicatorRef}
       className={cn(
-        'pointer-events-none z-[35] flex items-center justify-center transform-gpu',
-        slotted ? 'absolute left-1/2 top-1/2' : 'absolute left-1/2 top-0'
+        'pointer-events-none absolute left-1/2 top-0 z-[35] flex items-center justify-center transform-gpu'
       )}
       style={indicatorStyle}
       aria-hidden={phase === 'idle'}

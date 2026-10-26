@@ -70,12 +70,12 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
     <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4', className)}>
       <div className="-mx-4 min-w-0 sm:-mx-6">
         <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
-          <div className="relative flex h-11 w-full items-center justify-center bg-transparent px-4">
+          <div className="relative z-10 flex h-11 w-full items-center justify-center bg-transparent px-4">
             <Skeleton className="h-7 w-44 rounded-full" />
           </div>
           <div
             data-ptr-slot
-            className="relative flex h-0 w-full shrink-0 items-center justify-center overflow-hidden bg-[#121212]"
+            className="relative isolate mt-1 flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
             aria-hidden
           />
           <div className="relative w-full bg-transparent pt-2">

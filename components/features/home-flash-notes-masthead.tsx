@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 
 function BrandWordmark() {
   return (
-    <div className="relative flex h-11 w-full items-center justify-center overflow-visible bg-transparent px-4">
+    <div className="relative z-10 flex h-11 w-full items-center justify-center overflow-visible bg-transparent px-4">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-28 -translate-x-[68%] -translate-y-1/2 rounded-full bg-[#90EE90]/25 blur-xl"
@@ -185,7 +185,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
 
         <div
           data-ptr-slot
-          className="relative flex h-0 w-full shrink-0 items-center justify-center overflow-hidden bg-[#121212]"
+          className="relative isolate mt-1 flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
           aria-hidden
         />
 
