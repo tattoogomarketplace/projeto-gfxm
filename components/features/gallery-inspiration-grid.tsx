@@ -1154,21 +1154,36 @@ export function GalleryInspirationGrid({
                       </span>
                       <span className="text-[13px] leading-tight text-gray-400">{caption}</span>
                     </p>
-                    <button
-                      type="button"
-                      data-gallery-action=""
-                      aria-label={likeLabel}
-                      onClick={() => {
-                        console.log('like');
-                        triggerHaptic('light');
-                        setLikesSheetCount(likeCount);
-                        setIsLikesModalOpen(true);
-                      }}
-                      className="mt-2 flex items-center gap-1.5 text-sm font-normal text-white/70 hover:text-white/90 transition-colors cursor-pointer"
-                    >
-                      <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
-                      <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
-                    </button>
+                    <div className="flex flex-row items-center gap-1.5 mt-2">
+                      <button
+                        type="button"
+                        data-gallery-action=""
+                        aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
+                        aria-pressed={isLiked}
+                        onClick={() => {
+                          console.log('Toggle Like');
+                          triggerHaptic('light');
+                          toggleLiked(item.id);
+                        }}
+                        className="p-1 -ml-1 cursor-pointer transition-transform active:scale-90 text-white/80 hover:text-red-500 touch-manipulation"
+                      >
+                        <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
+                      </button>
+                      <button
+                        type="button"
+                        data-gallery-action=""
+                        aria-label={likeLabel}
+                        onClick={() => {
+                          console.log('Open Likes List');
+                          triggerHaptic('light');
+                          setLikesSheetCount(likeCount);
+                          setIsLikesModalOpen(true);
+                        }}
+                        className="text-sm font-normal text-white/70 hover:text-white hover:underline cursor-pointer transition-colors touch-manipulation"
+                      >
+                        {likeCount.toLocaleString('pt-BR')} curtidas
+                      </button>
+                    </div>
                     <button
                       type="button"
                       data-gallery-action=""
