@@ -18,6 +18,7 @@ import { SplashGate } from "@/components/ui/splash-gate";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { BootShellSkeleton } from "@/components/layout/boot-shell-skeleton";
 import { BRAND_NAME } from "@/lib/i18n/brands";
+import { caveat } from "@/app/fonts";
 
 const BRAND_ASSET_VERSION = "20261005";
 const brandAsset = (path: string) => `${path}?v=${BRAND_ASSET_VERSION}`;
@@ -112,7 +113,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-      <html lang="pt-BR" className="min-h-screen w-full overscroll-none bg-[#121212] select-none" suppressHydrationWarning>
+      <html lang="pt-BR" className={`${caveat.variable} min-h-screen w-full overscroll-none bg-[#121212] select-none`} suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{

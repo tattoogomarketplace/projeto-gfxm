@@ -63,6 +63,7 @@ const config: Config = {
           "-apple-system",
           "sans-serif",
         ],
+        caveat: ["var(--font-brand-script)", "cursive"],
       },
       boxShadow: {
         'apple-xs': '0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)',

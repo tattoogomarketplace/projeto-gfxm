@@ -21,15 +21,38 @@ function truncateNote(content: string): string {
 
 function BrandWordmark() {
   return (
-    <div className="relative flex w-full justify-center bg-transparent px-14 pb-2 pt-2">
+    <div className="relative flex min-h-10 w-full max-w-full items-center justify-center overflow-visible bg-transparent px-14 pb-2 pt-2">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-24 -translate-x-[72%] -translate-y-1/2 rounded-full bg-[#90EE90]/30 blur-xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-12 translate-x-[18%] -translate-y-1/2 rounded-full bg-[#FF5F1F]/35 blur-xl"
+      />
       <p
-        className="inline-flex items-baseline select-none text-xl font-black leading-none sm:text-2xl"
+        className="relative inline-flex max-w-full items-end gap-1.5 select-none leading-none"
         aria-label={BRAND_NAME}
       >
-        <span className="font-bold tracking-widest text-transparent [-webkit-text-stroke:0.5px_#FF5F1F] [paint-order:stroke_fill] drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]">
-          {BRAND_WORDMARK.main}
+        <span className="relative inline-flex min-w-0 flex-col items-center">
+          <span className="font-caveat text-[1.65rem] font-bold leading-none tracking-tight text-[#90EE90] drop-shadow-[0_0_8px_rgba(144,238,144,0.4)] sm:text-[1.85rem]">
+            {BRAND_WORDMARK.main}
+          </span>
+          <svg
+            aria-hidden
+            viewBox="0 0 88 8"
+            className="pointer-events-none -mt-0.5 h-[7px] w-[4.55rem] text-[#90EE90] drop-shadow-[0_0_6px_rgba(144,238,144,0.45)] sm:w-[5.2rem]"
+          >
+            <path
+              d="M2 5.4 C 20 1.8, 44 1.4, 68 3.6 C 76 4.4, 82 5.8, 86 6.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
         </span>
-        <span className="ml-1 font-black text-[#FF5F1F] drop-shadow-[0_0_6px_rgba(255,95,31,0.6)]">
+        <span className="mb-0.5 shrink-0 font-sans text-[1.05rem] font-black leading-none tracking-tight text-[#FF5F1F] drop-shadow-[0_0_8px_rgba(255,95,31,0.4)] sm:text-xl">
           {BRAND_WORDMARK.mark}
         </span>
       </p>

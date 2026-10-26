@@ -20,6 +20,7 @@
   --animate-float: float 3.5s ease-in-out infinite;
   --animate-bounce-slow: bounce-slow 1.8s ease-in-out infinite;
   --animate-bounce-slow-reverse: bounce-slow-reverse 1.8s ease-in-out infinite;
+  --font-caveat: var(--font-brand-script), cursive;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
