@@ -114,9 +114,13 @@ function FlashNoteStorySurface({
   const [gestureState, setGestureState] = useState<GestureState>('IDLE');
   const [dragStartY, setDragStartY] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [transformOrigin, setTransformOrigin] = useState('center center');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isPendingRef = useRef(isPending);
   const gestureStateRef = useRef<GestureState>('IDLE');
+  const dragStartXRef = useRef<number | null>(null);
   const dragStartYRef = useRef<number | null>(null);
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
@@ -193,11 +197,33 @@ function FlashNoteStorySurface({
     }
   }, []);
 
+  const resetZoomTransform = useCallback(() => {
+    setDragStartY(null);
+    dragStartXRef.current = null;
+    dragStartYRef.current = null;
+    setZoomScale(1);
+    setPanX(0);
+    setPanY(0);
+    setTransformOrigin('center center');
+  }, []);
+
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
     didHoldRef.current = false;
+    const target = overlayRef.current;
+    const bounds = target?.getBoundingClientRect();
+    const originX = bounds && bounds.width > 0
+      ? Math.min(100, Math.max(0, ((event.clientX - bounds.left) / bounds.width) * 100))
+      : 50;
+    const originY = bounds && bounds.height > 0
+      ? Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100))
+      : 50;
+    setTransformOrigin(`${originX}% ${originY}%`);
     setDragStartY(event.clientY);
+    dragStartXRef.current = event.clientX;
     dragStartYRef.current = event.clientY;
+    setPanX(0);
+    setPanY(0);
     setGestureState('HOLDING');
     gestureStateRef.current = 'HOLDING';
     clearHoldTimer();
@@ -209,9 +235,11 @@ function FlashNoteStorySurface({
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
     const state = gestureStateRef.current;
+    const startX = dragStartXRef.current;
     const startY = dragStartYRef.current;
     if (state === 'IDLE' || startY == null) return;
 
+    const deltaX = startX == null ? 0 : event.clientX - startX;
     const deltaY = event.clientY - startY;
 
     if (state === 'HOLDING') {
@@ -221,6 +249,8 @@ function FlashNoteStorySurface({
         setGestureState('ZOOMING');
         gestureStateRef.current = 'ZOOMING';
         setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
+        setPanX(deltaX);
+        setPanY(deltaY);
         triggerHaptic('light');
         return;
       }
@@ -230,7 +260,7 @@ function FlashNoteStorySurface({
         setGestureState('BUDGET');
         gestureStateRef.current = 'BUDGET';
         setIsSheetOpen(true);
-        setZoomScale(1);
+        resetZoomTransform();
         triggerHaptic('medium');
       }
       return;
@@ -239,28 +269,26 @@ function FlashNoteStorySurface({
     if (state === 'ZOOMING') {
       if (deltaY < 0) return;
       setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
+      setPanX(deltaX);
+      setPanY(deltaY);
     }
-  }, [clearHoldTimer, triggerHaptic]);
+  }, [clearHoldTimer, resetZoomTransform, triggerHaptic]);
 
   const endHold = useCallback(() => {
     clearHoldTimer();
-    setDragStartY(null);
-    dragStartYRef.current = null;
-    setZoomScale(1);
+    resetZoomTransform();
     if (gestureStateRef.current === 'ZOOMING' || gestureStateRef.current === 'HOLDING') {
       setGestureState('IDLE');
       gestureStateRef.current = 'IDLE';
     }
-  }, [clearHoldTimer]);
+  }, [clearHoldTimer, resetZoomTransform]);
 
   const closeBudgetSheet = useCallback(() => {
     setIsSheetOpen(false);
     setGestureState('IDLE');
     gestureStateRef.current = 'IDLE';
-    setDragStartY(null);
-    dragStartYRef.current = null;
-    setZoomScale(1);
-  }, []);
+    resetZoomTransform();
+  }, [resetZoomTransform]);
 
   useEffect(() => () => clearHoldTimer(), [clearHoldTimer]);
 
@@ -408,10 +436,13 @@ function FlashNoteStorySurface({
         {mediaUrl ? (
           <div
             className={cn(
-              'absolute inset-0 z-0 origin-center will-change-transform transform-gpu',
+              'absolute inset-0 z-0 will-change-transform transform-gpu',
               gestureState !== 'ZOOMING' ? 'transition-transform duration-300 ease-out' : ''
             )}
-            style={{ transform: `scale3d(${zoomScale}, ${zoomScale}, 1)` }}
+            style={{
+              transform: `translate3d(${panX}px, ${panY}px, 0) scale3d(${zoomScale}, ${zoomScale}, 1)`,
+              transformOrigin,
+            }}
           >
             <OptimizedImage
               key={note.id}
