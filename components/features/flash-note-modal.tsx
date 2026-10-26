@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
@@ -29,6 +29,8 @@ const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
 const STORY_DURATION_MS = 15000;
 const HOLD_DELAY_MS = 180;
+const SHEET_OPEN_DELTA_Y = -50;
+const ZOOM_MAX = 2.5;
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
 const GPU_LAYER =
@@ -106,7 +108,12 @@ function FlashNoteStorySurface({
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.18]);
   const [isPending, startTransition] = useTransition();
   const [isHolding, setIsHolding] = useState(false);
+  const [dragStartY, setDragStartY] = useState<number | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isPendingRef = useRef(isPending);
+  const isHoldingRef = useRef(isHolding);
+  const dragStartYRef = useRef<number | null>(null);
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
   const onCloseRef = useRef(onClose);
@@ -117,10 +124,12 @@ function FlashNoteStorySurface({
 
   useEffect(() => {
     isPendingRef.current = isPending;
+    isHoldingRef.current = isHolding;
+    dragStartYRef.current = dragStartY;
     onNextRef.current = onNext;
     onPrevRef.current = onPrev;
     onCloseRef.current = onClose;
-  }, [isPending, onClose, onNext, onPrev]);
+  }, [dragStartY, isHolding, isPending, onClose, onNext, onPrev]);
 
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
@@ -148,7 +157,7 @@ function FlashNoteStorySurface({
   }, [triggerHaptic]);
 
   useEffect(() => {
-    if (isHolding || isPending) {
+    if (isHolding || isPending || isSheetOpen) {
       lastTickRef.current = null;
       return undefined;
     }
@@ -170,7 +179,7 @@ function FlashNoteStorySurface({
       window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
-  }, [note.id, isHolding, isPending, nextNote]);
+  }, [note.id, isHolding, isPending, isSheetOpen, nextNote]);
 
   const clearHoldTimer = useCallback(() => {
     if (holdTimerRef.current != null) {
@@ -179,20 +188,45 @@ function FlashNoteStorySurface({
     }
   }, []);
 
-  const beginHold = useCallback(() => {
-    if (isPendingRef.current) return;
+  const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (isPendingRef.current || isSheetOpen) return;
     didHoldRef.current = false;
+    setDragStartY(event.clientY);
+    dragStartYRef.current = event.clientY;
     clearHoldTimer();
     holdTimerRef.current = window.setTimeout(() => {
       didHoldRef.current = true;
       triggerHaptic('light');
       setIsHolding(true);
     }, HOLD_DELAY_MS);
+  }, [clearHoldTimer, isSheetOpen, triggerHaptic]);
+
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (!isHoldingRef.current) return;
+    const startY = dragStartYRef.current;
+    if (startY == null) return;
+    const deltaY = event.clientY - startY;
+    if (deltaY > 0) {
+      setZoomScale(Math.min(ZOOM_MAX, 1 + deltaY / 400));
+      return;
+    }
+    if (deltaY < SHEET_OPEN_DELTA_Y) {
+      clearHoldTimer();
+      setIsSheetOpen(true);
+      setIsHolding(false);
+      setDragStartY(null);
+      dragStartYRef.current = null;
+      setZoomScale(1);
+      triggerHaptic('medium');
+    }
   }, [clearHoldTimer, triggerHaptic]);
 
   const endHold = useCallback(() => {
     clearHoldTimer();
     setIsHolding(false);
+    setDragStartY(null);
+    dragStartYRef.current = null;
+    setZoomScale(1);
   }, [clearHoldTimer]);
 
   useEffect(() => () => clearHoldTimer(), [clearHoldTimer]);
@@ -213,6 +247,10 @@ function FlashNoteStorySurface({
     const onKeyDown = (event: KeyboardEvent) => {
       if (isPendingRef.current) return;
       if (event.key === 'Escape') {
+        if (isSheetOpen) {
+          setIsSheetOpen(false);
+          return;
+        }
         onClose();
         return;
       }
@@ -239,7 +277,7 @@ function FlashNoteStorySurface({
       window.removeEventListener('keydown', onKeyDown);
       overlay?.removeEventListener('wheel', blockWheel);
     };
-  }, [nextNote, onClose, prevNote]);
+  }, [isSheetOpen, nextNote, onClose, prevNote]);
 
   const handleDrag = (_event: unknown, info: { offset: { y: number } }) => {
     dragY.set(Math.max(0, info.offset.y));
@@ -315,7 +353,7 @@ function FlashNoteStorySurface({
       />
 
       <motion.article
-        drag={isPending ? false : 'y'}
+        drag={isPending || isHolding || isSheetOpen ? false : 'y'}
         dragElastic={0.18}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragMomentum={false}
@@ -334,15 +372,23 @@ function FlashNoteStorySurface({
         <div className="absolute inset-0 z-0" style={{ backgroundImage: surface.css }} />
 
         {mediaUrl ? (
-          <OptimizedImage
-            key={note.id}
-            src={mediaUrl}
-            alt={name}
-            sizes="100vw"
-            className="absolute inset-0 z-0 h-full w-full object-cover"
-            fallback={null}
-            priority
-          />
+          <div
+            className={cn(
+              'absolute inset-0 z-0 origin-center will-change-transform',
+              dragStartY == null ? 'transition-transform duration-300 ease-out' : ''
+            )}
+            style={{ transform: `scale(${zoomScale})` }}
+          >
+            <OptimizedImage
+              key={note.id}
+              src={mediaUrl}
+              alt={name}
+              sizes="100vw"
+              className="absolute inset-0 z-0 h-full w-full object-cover"
+              fallback={null}
+              priority
+            />
+          </div>
         ) : null}
 
         <div
@@ -354,6 +400,7 @@ function FlashNoteStorySurface({
           aria-hidden
           className="absolute bottom-32 left-0 top-20 z-10 w-[30%]"
           onPointerDown={beginHold}
+          onPointerMove={handlePointerMove}
           onPointerUp={endHold}
           onPointerCancel={endHold}
           onPointerLeave={endHold}
@@ -364,6 +411,7 @@ function FlashNoteStorySurface({
           aria-hidden
           className="absolute bottom-32 right-0 top-20 z-10 w-[70%]"
           onPointerDown={beginHold}
+          onPointerMove={handlePointerMove}
           onPointerUp={endHold}
           onPointerCancel={endHold}
           onPointerLeave={endHold}
@@ -403,7 +451,7 @@ function FlashNoteStorySurface({
               key={note.id}
               className="flash-story-progress-fill h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
               style={{
-                animationPlayState: isHolding || isPending ? 'paused' : 'running',
+                animationPlayState: isHolding || isPending || isSheetOpen ? 'paused' : 'running',
               }}
             />
           </div>
@@ -412,7 +460,7 @@ function FlashNoteStorySurface({
         <header
           className={cn(
             'absolute left-4 right-4 top-[max(2rem,calc(env(safe-area-inset-top)+1.5rem))] z-20 flex items-center justify-between transition-opacity duration-300',
-            isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            isHolding || isSheetOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           )}
         >
           <button
@@ -466,46 +514,72 @@ function FlashNoteStorySurface({
 
         <div
           className={cn(
-            'absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 right-4 z-20 flex flex-col gap-3 transition-opacity duration-300',
-            isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            'fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-opacity duration-300',
+            isSheetOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+          )}
+          onClick={() => {
+            if (!isSheetOpen) return;
+            triggerHaptic('light');
+            setIsSheetOpen(false);
+          }}
+        />
+
+        <div
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-[100] flex h-[55dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212]/70 p-6 backdrop-blur-3xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+            isSheetOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'
           )}
         >
-          {offer.originalPrice != null ? (
-            <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-              {offer.discountPercent != null ? (
-                <span className="mb-1 rounded-full border border-[#FF5F1F]/50 bg-[#FF5F1F]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-200">
-                  {t('flash.discountOff', { value: String(offer.discountPercent) })}
-                </span>
-              ) : null}
-              <div className="flex min-w-0 flex-col">
-                {offer.salePrice != null && offer.salePrice !== offer.originalPrice ? (
-                  <>
-                    <span className="text-[13px] font-medium text-zinc-400 line-through decoration-zinc-500">
-                      {formatFlashNotePrice(offer.originalPrice, priceLocale)}
-                    </span>
-                    <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
-                      {formatFlashNotePrice(offer.salePrice, priceLocale)}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
-                    {formatFlashNotePrice(offer.originalPrice, priceLocale)}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : null}
+          <div className="relative mb-5 flex items-center justify-center">
+            <span className="h-1 w-10 rounded-full bg-white/25" />
+            <button
+              type="button"
+              disabled={isPending}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => {
+                triggerHaptic('light');
+                setIsSheetOpen(false);
+              }}
+              aria-label={t('common.close')}
+              className="absolute right-0 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white"
+            >
+              <X className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+          </div>
 
           {caption ? (
             <p
               className={cn(
-                'text-[15px] font-medium leading-relaxed text-zinc-100',
+                'mb-4 text-[15px] font-medium leading-relaxed text-zinc-100',
                 note.fontClass,
                 note.alignClass
               )}
             >
               {caption}
             </p>
+          ) : null}
+
+          {offer.originalPrice != null ? (
+            <div className="flex flex-row items-end gap-3">
+              {offer.salePrice != null && offer.salePrice !== offer.originalPrice ? (
+                <span className="text-[13px] font-medium text-zinc-400 line-through decoration-zinc-500">
+                  {formatFlashNotePrice(offer.originalPrice, priceLocale)}
+                </span>
+              ) : null}
+              {offer.discountPercent != null ? (
+                <span className="rounded-full border border-[#FF5F1F]/50 bg-[#FF5F1F]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-200">
+                  {t('flash.discountOff', { value: String(offer.discountPercent) })}
+                </span>
+              ) : null}
+              <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
+                {formatFlashNotePrice(
+                  offer.salePrice != null && offer.salePrice !== offer.originalPrice
+                    ? offer.salePrice
+                    : offer.originalPrice,
+                  priceLocale
+                )}
+              </span>
+            </div>
           ) : null}
 
           <button
@@ -515,7 +589,7 @@ function FlashNoteStorySurface({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleBook}
             className={cn(
-              'mt-1 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl',
+              'mt-auto flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl',
               'bg-gradient-to-b from-orange-500 to-orange-600 px-4 text-[15px] font-bold text-white',
               'shadow-[0_0_22px_rgba(249,115,22,0.45)] transition-[transform,box-shadow,opacity] duration-100',
               'active:scale-[0.97] hover:shadow-[0_0_28px_rgba(249,115,22,0.7)]',
