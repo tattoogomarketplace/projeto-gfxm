@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTran
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
-import { Loader2, Radio, X, Zap } from 'lucide-react';
+import { Loader2, MapPin, Radio, Send, Sparkles, X, Zap } from 'lucide-react';
 import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-booking';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -195,6 +195,7 @@ function FlashNoteStorySurface({
     discountPercentage: note.discountPercentage,
   });
   const caption = offer.caption || note.content.trim();
+  const location = [note.author?.cidade, note.author?.estado].filter(Boolean).join(', ');
   const surface = getFlashNoteBackground(note.backgroundId);
 
   const nextNote = useCallback(() => {
@@ -861,6 +862,73 @@ function FlashNoteStorySurface({
             <X className="h-5 w-5" strokeWidth={1.75} />
           </motion.button>
         </header>
+
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col justify-end',
+            'bg-gradient-to-t from-black/80 to-transparent',
+            'px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-28',
+            'transition-opacity duration-300',
+            isGestureLocked || isSheetOpen ? 'opacity-0' : 'opacity-100'
+          )}
+        >
+          <div className="pointer-events-auto flex w-full flex-col gap-3">
+            {caption || location ? (
+              <div
+                className={cn(
+                  'flex min-w-0 items-start gap-2.5 rounded-2xl border border-[#FF5F1F]/50',
+                  'bg-[#121212]/60 px-3.5 py-2.5 backdrop-blur-md',
+                  'shadow-[0_0_20px_rgba(255,95,31,0.16)]'
+                )}
+              >
+                {location ? (
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5F1F]" strokeWidth={2} aria-hidden />
+                ) : (
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5F1F]" strokeWidth={2} aria-hidden />
+                )}
+                <div className="min-w-0">
+                  {caption ? (
+                    <p className="text-[13px] font-medium leading-snug text-white">{caption}</p>
+                  ) : null}
+                  {location ? (
+                    <p className={cn('truncate text-[11px] font-medium text-zinc-300', caption ? 'mt-0.5' : null)}>
+                      {location}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="flex w-full items-center gap-2.5">
+              <button
+                type="button"
+                disabled={isPending}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={handleVisit}
+                className={cn(
+                  'flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-white/10',
+                  'bg-[#121212]/60 px-4 text-left text-[13px] font-medium text-zinc-400 backdrop-blur-md',
+                  'disabled:pointer-events-none'
+                )}
+              >
+                {`${t('chat.sendAria')}...`}
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={handleVisit}
+                aria-label={t('chat.sendAria')}
+                className={cn(
+                  'flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full',
+                  'text-white disabled:pointer-events-none'
+                )}
+              >
+                <Send className="h-5 w-5" strokeWidth={1.75} />
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div
           className={cn(
