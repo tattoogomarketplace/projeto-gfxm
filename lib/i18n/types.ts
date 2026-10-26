@@ -691,6 +691,7 @@ export type MessageKey =
   | 'toast.signOutFailed'
   | 'toast.chatBlocked'
   | 'toast.chatSendFailed'
+  | 'toast.chatSent'
   | 'toast.accountDeactivated'
   | 'toast.accountDeactivateFailed'
   | 'toast.deletionScheduled'

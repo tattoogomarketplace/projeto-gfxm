@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type PointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type FormEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
 import { Loader2, MapPin, Radio, Send, Sparkles, X, Zap } from 'lucide-react';
@@ -9,11 +10,13 @@ import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { formatAppError } from '@/lib/error-handler';
 import { buildFlashNoteOffer, formatFlashNotePrice } from '@/lib/flash-note-offer';
 import { getFlashNoteBackground } from '@/lib/flash-notes-style';
 import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
+import { validateChatMessage } from '@/lib/utils/chat-moderation';
 
 type FlashNoteModalProps = {
   note: FlashNoteDto | null;
@@ -39,6 +42,8 @@ const ZOOM_MAX = 2.5;
 const ZOOM_DAMPING = 0.48;
 const PAN_DAMPING = 0.55;
 const SNAP_BACK_TRANSFORM = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+const FLASH_NOTE_CHAT_PREFIX = 'Respondendo ao Flash Note:';
+const MAX_FLASH_CHAT_LENGTH = 1000;
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
 const GPU_LAYER =
@@ -83,6 +88,28 @@ function bookErrorKey(code: BookFlashNoteCode) {
     return 'toast.flashBookUnavailable' as const;
   }
   return 'toast.flashBookFailed' as const;
+}
+
+async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
+  const clerkToken = await getToken().catch(() => null);
+  const stored = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
+  const token = clerkToken || stored;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+function composeFlashNoteDirectMessage(userText: string, note: FlashNoteDto): string {
+  const snippet = note.content.trim().replace(/\s+/g, ' ').slice(0, 160);
+  const context = snippet ? `${FLASH_NOTE_CHAT_PREFIX} ${snippet}` : `${FLASH_NOTE_CHAT_PREFIX} ${note.id}`;
+  const composed = `${context}\n${userText}`;
+  if (composed.length <= MAX_FLASH_CHAT_LENGTH) return composed;
+  const budget = Math.max(0, MAX_FLASH_CHAT_LENGTH - userText.length - FLASH_NOTE_CHAT_PREFIX.length - 2);
+  const clipped = snippet.slice(0, budget);
+  return clipped
+    ? `${FLASH_NOTE_CHAT_PREFIX} ${clipped}\n${userText}`.slice(0, MAX_FLASH_CHAT_LENGTH)
+    : userText.slice(0, MAX_FLASH_CHAT_LENGTH);
 }
 
 function remainingLabel(expiresAt: string, expiringLabel: string): string {
@@ -140,6 +167,7 @@ function FlashNoteStorySurface({
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const { getToken } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
   const overlayRef = useRef<HTMLDivElement>(null);
   const dragY = useMotionValue(0);
@@ -152,6 +180,9 @@ function FlashNoteStorySurface({
   const [panY, setPanY] = useState(0);
   const [transformOrigin, setTransformOrigin] = useState('center center');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [sendingChat, setSendingChat] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
   const isPendingRef = useRef(isPending);
   const gestureStateRef = useRef<GestureState>('IDLE');
   const dragStartXRef = useRef<number | null>(null);
@@ -213,7 +244,7 @@ function FlashNoteStorySurface({
   }, [triggerHaptic]);
 
   useEffect(() => {
-    if (gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen) {
+    if (gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen || sendingChat || composerFocused) {
       lastTickRef.current = null;
       return undefined;
     }
@@ -235,7 +266,7 @@ function FlashNoteStorySurface({
       window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
-  }, [note.id, gestureState, isGestureLocked, isPending, isSheetOpen, nextNote]);
+  }, [note.id, gestureState, isGestureLocked, isPending, isSheetOpen, sendingChat, composerFocused, nextNote]);
 
   const clearHoldTimer = useCallback(() => {
     if (holdTimeoutRef.current != null) {
@@ -316,7 +347,7 @@ function FlashNoteStorySurface({
 
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary) return;
-    if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
+    if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen || sendingChat || composerFocused) return;
     blockDismissRef.current = false;
     zoomSessionLockRef.current = false;
     didHoldRef.current = false;
@@ -355,7 +386,7 @@ function FlashNoteStorySurface({
       safeSetGestureState('HOLDING');
       triggerHaptic('light');
     }, HOLD_THRESHOLD_MS);
-  }, [clearHoldTimer, isSheetOpen, safeSetGestureState, triggerHaptic]);
+  }, [clearHoldTimer, composerFocused, isSheetOpen, safeSetGestureState, sendingChat, triggerHaptic]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary) return;
@@ -559,6 +590,9 @@ function FlashNoteStorySurface({
         onClose();
         return;
       }
+      const typingInComposer =
+        event.target instanceof HTMLElement && event.target.closest('[data-flash-chat-composer]');
+      if (typingInComposer) return;
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         nextNote();
@@ -666,6 +700,68 @@ function FlashNoteStorySurface({
     onVisitArtist?.(note);
   }, [isPending, note, onVisitArtist, triggerHaptic]);
 
+  const handleSendDirectMessage = useCallback(async () => {
+    const text = chatInput.trim();
+    if (!text || sendingChat || isPending) return;
+
+    const artistId = note.author?.id || note.userId;
+    if (!artistId) {
+      toast.error(t('toast.chatSendFailed'));
+      return;
+    }
+
+    const { isValid } = validateChatMessage(text);
+    if (!isValid) {
+      toast.error(t('toast.chatBlocked'));
+      return;
+    }
+
+    const mensagem = composeFlashNoteDirectMessage(text, note);
+    setSendingChat(true);
+    triggerHaptic('light');
+
+    try {
+      const headers = await authHeaders(getToken);
+      const res = await fetch('/api/chat/enviar', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          destinatario_id: artistId,
+          mensagem,
+          categoria: 'DIRECT',
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        sucesso?: boolean;
+        erro?: string;
+        bloqueado?: boolean;
+      };
+      if (!res.ok || !json.sucesso) {
+        if (res.status === 403 || json.bloqueado) {
+          toast.error(t('toast.chatBlocked'));
+          return;
+        }
+        toast.error(json.erro ? formatAppError({ message: json.erro }, 'api') : t('toast.chatSendFailed'));
+        return;
+      }
+      setChatInput('');
+      triggerHaptic('success');
+      toast.success(t('toast.chatSent'));
+    } catch {
+      toast.error(t('toast.chatSendFailed'));
+    } finally {
+      setSendingChat(false);
+    }
+  }, [chatInput, getToken, isPending, note, sendingChat, t, triggerHaptic]);
+
+  const handleChatSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void handleSendDirectMessage();
+    },
+    [handleSendDirectMessage]
+  );
+
   const priceLocale = locale.startsWith('pt') ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US';
 
   return (
@@ -693,7 +789,7 @@ function FlashNoteStorySurface({
       />
 
       <motion.article
-        drag={isPending || isGestureLocked || isSheetOpen ? false : 'y'}
+        drag={isPending || isGestureLocked || isSheetOpen || sendingChat || composerFocused ? false : 'y'}
         dragElastic={0.18}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragMomentum={false}
@@ -800,7 +896,7 @@ function FlashNoteStorySurface({
               className="flash-story-progress-fill h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
               style={{
                 animationPlayState:
-                  gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen
+                  gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen || sendingChat || composerFocused
                     ? 'paused'
                     : 'running',
               }}
@@ -899,34 +995,57 @@ function FlashNoteStorySurface({
               </div>
             ) : null}
 
-            <div className="flex w-full items-center gap-2.5">
-              <button
-                type="button"
-                disabled={isPending}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={handleVisit}
-                className={cn(
-                  'flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-white/10',
-                  'bg-[#121212]/60 px-4 text-left text-[13px] font-medium text-zinc-400 backdrop-blur-md',
-                  'disabled:pointer-events-none'
-                )}
-              >
-                {`${t('chat.sendAria')}...`}
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={handleVisit}
+            <form
+              data-flash-chat-composer
+              onSubmit={handleChatSubmit}
+              onPointerDown={(event) => event.stopPropagation()}
+              className="flex w-full items-center gap-2.5"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                onFocus={() => setComposerFocused(true)}
+                onBlur={() => setComposerFocused(false)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    void handleSendDirectMessage();
+                  }
+                }}
+                disabled={isPending || sendingChat}
+                maxLength={MAX_FLASH_CHAT_LENGTH}
+                autoComplete="off"
+                enterKeyHint="send"
+                placeholder={t('chat.placeholderMessage')}
                 aria-label={t('chat.sendAria')}
                 className={cn(
+                  'flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-white/10',
+                  'bg-[#121212]/60 px-4 text-[13px] font-medium text-white caret-[#FF5F1F] backdrop-blur-md',
+                  'placeholder:text-zinc-400 outline-none',
+                  'disabled:pointer-events-none disabled:opacity-70',
+                  sendingChat ? 'opacity-70' : 'opacity-100'
+                )}
+              />
+              <button
+                type="submit"
+                disabled={isPending || sendingChat || !chatInput.trim()}
+                aria-label={t('chat.sendAria')}
+                aria-busy={sendingChat}
+                className={cn(
                   'flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full',
-                  'text-white disabled:pointer-events-none'
+                  'text-white transition-opacity disabled:pointer-events-none disabled:opacity-40',
+                  sendingChat ? 'opacity-70' : 'opacity-100'
                 )}
               >
-                <Send className="h-5 w-5" strokeWidth={1.75} />
+                {sendingChat ? (
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={1.75} />
+                ) : (
+                  <Send className="h-5 w-5" strokeWidth={1.75} />
+                )}
               </button>
-            </div>
+            </form>
           </div>
         </div>
 
