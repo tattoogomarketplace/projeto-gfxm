@@ -1,23 +1,23 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, Zap } from 'lucide-react';
 import { BRAND_NAME, BRAND_WORDMARK } from '@/lib/i18n/brands';
-import { FLASH_NOTE_MAX_LENGTH, getFlashNoteBackground } from '@/lib/flash-notes-style';
 import { artistProfileHref } from '@/lib/artist-profile';
+import {
+  flashNoteViewedFlags,
+  formatFlashNoteHandle,
+  groupFlashNotesByArtist,
+  pickFlashNoteToOpen,
+} from '@/lib/flash-note-ring';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { FlashNoteModal } from '@/components/features/flash-note-modal';
+import { FlashNoteStoryRing } from '@/components/features/flash-note-story-ring';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
-
-function truncateNote(content: string): string {
-  const trimmed = content.trim();
-  if (trimmed.length <= FLASH_NOTE_MAX_LENGTH) return trimmed;
-  return `${trimmed.slice(0, FLASH_NOTE_MAX_LENGTH - 1).trimEnd()}…`;
-}
 
 function BrandWordmark() {
   return (
@@ -90,14 +90,33 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
   const { triggerHaptic } = useHapticFeedback();
   const [selected, setSelected] = useState<FlashNoteDto | null>(null);
   const [consumedIds, setConsumedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [viewedIds, setViewedIds] = useState<ReadonlySet<string>>(() => new Set());
   const visibleNotes = notes.filter((note) => !consumedIds.has(note.id));
+  const artistStories = useMemo(() => groupFlashNotesByArtist(visibleNotes), [visibleNotes]);
+
+  const markViewed = useCallback((noteId: string) => {
+    setViewedIds((current) => {
+      if (current.has(noteId)) return current;
+      const next = new Set(current);
+      next.add(noteId);
+      return next;
+    });
+  }, []);
+
+  const selectNote = useCallback(
+    (note: FlashNoteDto | null) => {
+      if (note) markViewed(note.id);
+      setSelected(note);
+    },
+    [markViewed]
+  );
 
   const openNote = useCallback(
     (note: FlashNoteDto) => {
       triggerHaptic('light');
-      setSelected(note);
+      selectNote(note);
     },
-    [triggerHaptic]
+    [selectNote, triggerHaptic]
   );
 
   const closeNote = useCallback(() => setSelected(null), []);
@@ -105,21 +124,35 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
   const goNextNote = useCallback(() => {
     setSelected((current) => {
       if (!current) return current;
-      const index = visibleNotes.findIndex((item) => item.id === current.id);
-      if (index < 0) return null;
-      if (index >= visibleNotes.length - 1) return null;
-      return visibleNotes[index + 1] ?? null;
+      const storyIndex = artistStories.findIndex((story) => story.userId === current.userId);
+      if (storyIndex < 0) return null;
+      const story = artistStories[storyIndex];
+      const noteIndex = story.notes.findIndex((item) => item.id === current.id);
+      const next =
+        noteIndex >= 0 && noteIndex < story.notes.length - 1
+          ? story.notes[noteIndex + 1] ?? null
+          : artistStories[storyIndex + 1]?.notes[0] ?? null;
+      if (next) markViewed(next.id);
+      return next;
     });
-  }, [visibleNotes]);
+  }, [artistStories, markViewed]);
 
   const goPrevNote = useCallback(() => {
     setSelected((current) => {
       if (!current) return current;
-      const index = visibleNotes.findIndex((item) => item.id === current.id);
-      if (index <= 0) return current;
-      return visibleNotes[index - 1] ?? current;
+      const storyIndex = artistStories.findIndex((story) => story.userId === current.userId);
+      if (storyIndex < 0) return current;
+      const story = artistStories[storyIndex];
+      const noteIndex = story.notes.findIndex((item) => item.id === current.id);
+      const previousStoryNotes = storyIndex > 0 ? artistStories[storyIndex - 1]?.notes : undefined;
+      const previous =
+        noteIndex > 0
+          ? story.notes[noteIndex - 1] ?? current
+          : previousStoryNotes?.[previousStoryNotes.length - 1] ?? current;
+      if (previous) markViewed(previous.id);
+      return previous;
     });
-  }, [visibleNotes]);
+  }, [artistStories, markViewed]);
 
   const visitArtist = useCallback(
     (note: FlashNoteDto) => {
@@ -175,34 +208,38 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
               role="list"
               aria-label={t('flash.listAria')}
             >
-              {visibleNotes.map((note) => {
-                const name = note.author?.name || t('flash.artist');
-                const initial = note.author?.initial ?? 'A';
-                const ring = getFlashNoteBackground(note.backgroundId).ring;
+              {artistStories.map((story) => {
+                const cover = pickFlashNoteToOpen(story, viewedIds) ?? story.notes[0];
+                if (!cover) return null;
+                const handle = formatFlashNoteHandle(story.author?.username, story.author?.name);
+                const name = story.author?.name || t('flash.artist');
+                const initial = story.author?.initial ?? 'A';
                 return (
                   <button
-                    key={note.id}
+                    key={story.userId}
                     type="button"
                     role="listitem"
-                    onClick={() => openNote(note)}
+                    onClick={() => openNote(cover)}
                     className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-                    aria-label={t('flash.aria', { name })}
+                    aria-label={t('flash.aria', { name: handle })}
                   >
-                    <span
-                      className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
-                      style={{
-                        backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
-                      }}
-                    >
-                      <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] dark:border-[#0a0a0a]">
-                        <StoryAvatar src={note.imageUrl || note.author?.avatarUrl} alt={name} fallback={initial} />
-                      </span>
-                      <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
+                    <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center">
+                      <FlashNoteStoryRing
+                        segmentCount={story.notes.length}
+                        viewedFlags={flashNoteViewedFlags(story.notes, viewedIds)}
+                      >
+                        <StoryAvatar
+                          src={cover.imageUrl || story.author?.avatarUrl}
+                          alt={name}
+                          fallback={initial}
+                        />
+                      </FlashNoteStoryRing>
+                      <span className="absolute -bottom-0.5 -right-0.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
                         <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                       </span>
                     </span>
                     <span className="w-full truncate text-center text-[10px] font-medium text-zinc-400">
-                      {truncateNote(note.content)}
+                      {handle}
                     </span>
                   </button>
                 );

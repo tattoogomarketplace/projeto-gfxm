@@ -6,7 +6,14 @@ import { useRouter } from 'next/navigation';
 import { Pencil, Plus, Radio, Zap } from 'lucide-react';
 import { FlashNoteCreatorSheet, FLASH_NOTE_MAX_LENGTH } from '@/components/chat/flash-note-creator-sheet';
 import { FlashNoteModal } from '@/components/features/flash-note-modal';
+import { FlashNoteStoryRing } from '@/components/features/flash-note-story-ring';
 import { getFlashNoteBackground, type FlashNoteStyle } from '@/lib/flash-notes-style';
+import {
+  flashNoteViewedFlags,
+  formatFlashNoteHandle,
+  groupFlashNotesByArtist,
+  pickFlashNoteToOpen,
+} from '@/lib/flash-note-ring';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -26,12 +33,6 @@ async function authHeaders(getToken: () => Promise<string | null>): Promise<Head
   };
 }
 
-function truncateNote(content: string): string {
-  const trimmed = content.trim();
-  if (trimmed.length <= FLASH_NOTE_MAX_LENGTH) return trimmed;
-  return `${trimmed.slice(0, FLASH_NOTE_MAX_LENGTH - 1).trimEnd()}…`;
-}
-
 export function FlashNotesCarousel() {
   const { getToken } = useAuth();
   const router = useRouter();
@@ -46,7 +47,9 @@ export function FlashNotesCarousel() {
   const [loading, setLoading] = useState(true);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [selected, setSelected] = useState<FlashNoteDto | null>(null);
+  const [viewedIds, setViewedIds] = useState<ReadonlySet<string>>(() => new Set());
   const snapshotRef = useRef<FlashNoteDto[] | null>(null);
+  const artistStories = useMemo(() => groupFlashNotesByArtist(notes), [notes]);
 
   useEffect(() => {
     getTokenRef.current = getToken;
@@ -85,6 +88,23 @@ export function FlashNotesCarousel() {
   useEffect(() => {
     void loadNotes();
   }, [loadNotes]);
+
+  const markViewed = useCallback((noteId: string) => {
+    setViewedIds((current) => {
+      if (current.has(noteId)) return current;
+      const next = new Set(current);
+      next.add(noteId);
+      return next;
+    });
+  }, []);
+
+  const selectNote = useCallback(
+    (note: FlashNoteDto | null) => {
+      if (note) markViewed(note.id);
+      setSelected(note);
+    },
+    [markViewed]
+  );
 
   // The publish affordance is a first-class touch target: it always answers the
   // tap with a light haptic and lifts the immersive composer above the hub.
@@ -284,14 +304,16 @@ export function FlashNotesCarousel() {
                 <Skeleton className="h-2.5 w-12 rounded-full" />
               </div>
             ))
-          : notes.map((note) => {
-              const name = note.author?.name || t('flash.artist');
-              const initial = note.author?.initial ?? 'A';
-              const isOwn = actorId != null && note.userId === actorId;
-              const ring = getFlashNoteBackground(note.backgroundId).ring;
+          : artistStories.map((story) => {
+              const cover = pickFlashNoteToOpen(story, viewedIds) ?? story.notes[0];
+              if (!cover) return null;
+              const handle = formatFlashNoteHandle(story.author?.username, story.author?.name);
+              const name = story.author?.name || t('flash.artist');
+              const initial = story.author?.initial ?? 'A';
+              const isOwn = actorId != null && story.userId === actorId;
               return (
                 <button
-                  key={note.id}
+                  key={story.userId}
                   type="button"
                   role="listitem"
                   onClick={() => {
@@ -300,40 +322,40 @@ export function FlashNotesCarousel() {
                       openComposer();
                       return;
                     }
-                    setSelected(note);
+                    selectNote(cover);
                   }}
                   className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
-                  aria-label={t('flash.aria', { name })}
+                  aria-label={t('flash.aria', { name: handle })}
                 >
-                  <span
-                    className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center rounded-full p-[2px]"
-                    style={{
-                      backgroundImage: `conic-gradient(from 210deg at 50% 50%, ${ring}, #FFBF00, ${ring})`,
-                    }}
-                  >
-                     <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white bg-[#1a1a1a] text-sm font-semibold text-orange-400 dark:border-[#0a0a0a]">
-                       {note.imageUrl || note.author?.avatarUrl ? (
-                         <OptimizedImage
-                           src={note.imageUrl || note.author?.avatarUrl}
-                           alt={name}
-                           sizes="56px"
-                           className="h-full w-full rounded-full"
-                           fallback={
-                             <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
-                               {initial}
-                             </span>
-                           }
-                         />
-                       ) : (
-                         initial
-                       )}
-                     </span>
-                    <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
+                  <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center">
+                    <FlashNoteStoryRing
+                      segmentCount={story.notes.length}
+                      viewedFlags={flashNoteViewedFlags(story.notes, viewedIds)}
+                    >
+                      {cover.imageUrl || story.author?.avatarUrl ? (
+                        <OptimizedImage
+                          src={cover.imageUrl || story.author?.avatarUrl}
+                          alt={name}
+                          sizes="56px"
+                          className="h-full w-full rounded-full"
+                          fallback={
+                            <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                              {initial}
+                            </span>
+                          }
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                          {initial}
+                        </span>
+                      )}
+                    </FlashNoteStoryRing>
+                    <span className="absolute -bottom-0.5 -right-0.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
                       <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                     </span>
                   </span>
                   <span className="w-full truncate text-center text-[10px] font-medium text-neutral-600 dark:text-zinc-400">
-                    {truncateNote(note.content)}
+                    {handle}
                   </span>
                 </button>
               );
@@ -377,17 +399,32 @@ export function FlashNotesCarousel() {
         onNext={() => {
           setSelected((current) => {
             if (!current) return current;
-            const index = notes.findIndex((item) => item.id === current.id);
-            if (index < 0 || index >= notes.length - 1) return null;
-            return notes[index + 1] ?? null;
+            const storyIndex = artistStories.findIndex((story) => story.userId === current.userId);
+            if (storyIndex < 0) return null;
+            const story = artistStories[storyIndex];
+            const noteIndex = story.notes.findIndex((item) => item.id === current.id);
+            const next =
+              noteIndex >= 0 && noteIndex < story.notes.length - 1
+                ? story.notes[noteIndex + 1] ?? null
+                : artistStories[storyIndex + 1]?.notes[0] ?? null;
+            if (next) markViewed(next.id);
+            return next;
           });
         }}
         onPrev={() => {
           setSelected((current) => {
             if (!current) return current;
-            const index = notes.findIndex((item) => item.id === current.id);
-            if (index <= 0) return current;
-            return notes[index - 1] ?? current;
+            const storyIndex = artistStories.findIndex((story) => story.userId === current.userId);
+            if (storyIndex < 0) return current;
+            const story = artistStories[storyIndex];
+            const noteIndex = story.notes.findIndex((item) => item.id === current.id);
+            const previousStoryNotes = storyIndex > 0 ? artistStories[storyIndex - 1]?.notes : undefined;
+            const previous =
+              noteIndex > 0
+                ? story.notes[noteIndex - 1] ?? current
+                : previousStoryNotes?.[previousStoryNotes.length - 1] ?? current;
+            if (previous) markViewed(previous.id);
+            return previous;
           });
         }}
       />
