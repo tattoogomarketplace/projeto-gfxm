@@ -162,7 +162,7 @@ function FlashNoteStorySurface({
   }, [triggerHaptic]);
 
   useEffect(() => {
-    if (isGestureLocked || isPending || isSheetOpen) {
+    if (gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen) {
       lastTickRef.current = null;
       return undefined;
     }
@@ -184,7 +184,7 @@ function FlashNoteStorySurface({
       window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
-  }, [note.id, isGestureLocked, isPending, isSheetOpen, nextNote]);
+  }, [note.id, gestureState, isGestureLocked, isPending, isSheetOpen, nextNote]);
 
   const clearHoldTimer = useCallback(() => {
     if (holdTimerRef.current != null) {
@@ -485,7 +485,10 @@ function FlashNoteStorySurface({
               key={note.id}
               className="flash-story-progress-fill h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
               style={{
-                animationPlayState: isGestureLocked || isPending || isSheetOpen ? 'paused' : 'running',
+                animationPlayState:
+                  gestureState === 'BUDGET' || isGestureLocked || isPending || isSheetOpen
+                    ? 'paused'
+                    : 'running',
               }}
             />
           </div>
@@ -548,11 +551,11 @@ function FlashNoteStorySurface({
 
         <div
           className={cn(
-            'fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-opacity duration-300',
-            isSheetOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+            'fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+            gestureState === 'BUDGET' ? 'opacity-100' : 'pointer-events-none opacity-0'
           )}
           onClick={() => {
-            if (!isSheetOpen) return;
+            if (gestureState !== 'BUDGET') return;
             triggerHaptic('light');
             closeBudgetSheet();
           }}
@@ -560,12 +563,12 @@ function FlashNoteStorySurface({
 
         <div
           className={cn(
-            'fixed inset-x-0 bottom-0 z-[100] flex h-[55dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212]/70 px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] backdrop-blur-3xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
-            isSheetOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'
+            'fixed inset-x-0 bottom-0 z-[100] flex w-full max-h-[65dvh] flex-col overflow-hidden rounded-t-[2.5rem] border-t border-white/10 bg-[#121212]/80 shadow-2xl backdrop-blur-3xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+            gestureState === 'BUDGET' ? 'translate-y-0' : 'pointer-events-none translate-y-full'
           )}
         >
-          <div className="relative mb-5 flex items-center justify-center">
-            <span className="h-1 w-10 rounded-full bg-white/25" />
+          <div className="relative shrink-0">
+            <div className="mx-auto mt-4 mb-6 h-1.5 w-12 rounded-full bg-white/20" />
             <button
               type="button"
               disabled={isPending}
@@ -575,68 +578,68 @@ function FlashNoteStorySurface({
                 closeBudgetSheet();
               }}
               aria-label={t('common.close')}
-              className="absolute right-0 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white"
+              className="absolute right-4 top-3 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white"
             >
               <X className="h-5 w-5" strokeWidth={1.75} />
             </button>
           </div>
 
-          {caption ? (
-            <p
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-2 [-webkit-overflow-scrolling:touch]">
+            {caption ? (
+              <p
+                className={cn(
+                  'mb-4 text-[15px] font-medium leading-relaxed text-zinc-100',
+                  note.fontClass,
+                  note.alignClass
+                )}
+              >
+                {caption}
+              </p>
+            ) : null}
+
+            {offer.originalPrice != null ? (
+              <div className="mb-8 flex flex-row items-end gap-3">
+                {offer.salePrice != null && offer.salePrice !== offer.originalPrice ? (
+                  <span className="text-lg text-gray-400 line-through">
+                    {formatFlashNotePrice(offer.originalPrice, priceLocale)}
+                  </span>
+                ) : null}
+                {offer.discountPercent != null ? (
+                  <span className="rounded-md bg-[#FF5F1F]/20 px-2 py-1 text-xs font-bold text-[#FF5F1F]">
+                    {t('flash.discountOff', { value: String(offer.discountPercent) })}
+                  </span>
+                ) : null}
+                <span className="text-4xl font-black tracking-tight text-[#FF5F1F]">
+                  {formatFlashNotePrice(
+                    offer.salePrice != null && offer.salePrice !== offer.originalPrice
+                      ? offer.salePrice
+                      : offer.originalPrice,
+                    priceLocale
+                  )}
+                </span>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              disabled={isPending}
+              aria-busy={isPending}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleBook}
               className={cn(
-                'mb-4 text-[15px] font-medium leading-relaxed text-zinc-100',
-                note.fontClass,
-                note.alignClass
+                'mt-auto flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#FF5F1F] py-4 text-lg font-bold text-white',
+                'transition-transform active:scale-[0.98]',
+                'disabled:pointer-events-none disabled:opacity-80'
               )}
             >
-              {caption}
-            </p>
-          ) : null}
-
-          {offer.originalPrice != null ? (
-            <div className="flex flex-row items-end gap-3">
-              {offer.salePrice != null && offer.salePrice !== offer.originalPrice ? (
-                <span className="text-[13px] font-medium text-zinc-400 line-through decoration-zinc-500">
-                  {formatFlashNotePrice(offer.originalPrice, priceLocale)}
-                </span>
-              ) : null}
-              {offer.discountPercent != null ? (
-                <span className="rounded-full border border-[#FF5F1F]/50 bg-[#FF5F1F]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-200">
-                  {t('flash.discountOff', { value: String(offer.discountPercent) })}
-                </span>
-              ) : null}
-              <span className="text-3xl font-black leading-none tracking-tight text-[#FF5F1F]">
-                {formatFlashNotePrice(
-                  offer.salePrice != null && offer.salePrice !== offer.originalPrice
-                    ? offer.salePrice
-                    : offer.originalPrice,
-                  priceLocale
-                )}
-              </span>
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            disabled={isPending}
-            aria-busy={isPending}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleBook}
-            className={cn(
-              'mt-auto flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl',
-              'bg-gradient-to-b from-orange-500 to-orange-600 px-4 text-[15px] font-bold text-white',
-              'shadow-[0_0_22px_rgba(249,115,22,0.45)] transition-[transform,box-shadow,opacity] duration-100',
-              'active:scale-[0.97] hover:shadow-[0_0_28px_rgba(249,115,22,0.7)]',
-              'disabled:pointer-events-none disabled:opacity-80'
-            )}
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.4} />
-            ) : (
-              <Zap className="h-4 w-4" strokeWidth={2.4} />
-            )}
-            {isPending ? t('booking.reserving') : t('flash.bookNow')}
-          </button>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.4} />
+              ) : (
+                <Zap className="h-4 w-4" strokeWidth={2.4} />
+              )}
+              {isPending ? t('booking.reserving') : t('flash.bookNow')}
+            </button>
+          </div>
         </div>
       </motion.article>
     </motion.div>
