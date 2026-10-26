@@ -57,6 +57,7 @@ function PersistentAppChromeBase() {
   const pathname = usePathname();
   const visible = isPersistentChromeVisible(pathname);
   const machineVisible = isPersistentMachineTriggerVisible(pathname);
+  const headerHidden = useUiStore((s) => s.headerHidden);
   const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
@@ -65,7 +66,9 @@ function PersistentAppChromeBase() {
       <div
         aria-hidden={!machineVisible}
         className={cn(
-          'fixed right-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[65]',
+          'fixed right-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[65] transform-gpu will-change-transform',
+          'transition-transform duration-300 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]',
+          headerHidden ? '-translate-y-[calc(100%+max(0.75rem,env(safe-area-inset-top)))]' : 'translate-y-0',
           !machineVisible && 'invisible pointer-events-none'
         )}
       >

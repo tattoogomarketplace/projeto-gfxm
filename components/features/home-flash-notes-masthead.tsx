@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, Zap } from 'lucide-react';
-import { BRAND_NAME, BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { artistProfileHref } from '@/lib/artist-profile';
 import {
   flashNoteViewedFlags,
@@ -19,47 +18,6 @@ import { FlashNoteModal } from '@/components/features/flash-note-modal';
 import { FlashNoteStoryRing } from '@/components/features/flash-note-story-ring';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import { cn } from '@/lib/utils';
-
-function BrandWordmark() {
-  return (
-    <div className="relative z-10 flex h-11 w-full items-center justify-center overflow-visible bg-transparent px-4">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-28 -translate-x-[68%] -translate-y-1/2 rounded-full bg-[#90EE90]/25 blur-xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-14 translate-x-[8%] -translate-y-1/2 rounded-full bg-[#FF5F1F]/30 blur-xl"
-      />
-      <p
-        className="relative flex max-w-full items-baseline justify-center gap-1.5 select-none leading-none"
-        aria-label={BRAND_NAME}
-      >
-        <span className="relative inline-block leading-none">
-          <span className="font-caveat text-2xl font-bold leading-none tracking-tight text-[#90EE90] drop-shadow-[0_0_8px_rgba(144,238,144,0.4)] sm:text-3xl">
-            {BRAND_WORDMARK.main}
-          </span>
-          <svg
-            aria-hidden
-            viewBox="0 0 88 8"
-            className="pointer-events-none absolute inset-x-0 -bottom-[5px] mx-auto h-[7px] w-[92%] text-[#90EE90] drop-shadow-[0_0_6px_rgba(144,238,144,0.45)]"
-          >
-            <path
-              d="M2 5.4 C 20 1.8, 44 1.4, 68 3.6 C 76 4.4, 82 5.8, 86 6.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-        <span className="shrink-0 font-sans text-lg font-black leading-none tracking-tight text-[#FF5F1F] drop-shadow-[0_0_8px_rgba(255,95,31,0.4)] sm:text-xl">
-          {BRAND_WORDMARK.mark}
-        </span>
-      </p>
-    </div>
-  );
-}
 
 function StoryAvatar({
   src,
@@ -172,12 +130,10 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
 
   return (
     <div className="-mx-4 min-w-0 sm:-mx-6">
-      <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
-        <BrandWordmark />
-
+      <div className="sticky top-0 z-30 w-full border-b border-white/5 bg-[#121212]/90 pb-3 backdrop-blur-2xl">
         <div
           data-ptr-slot
-          className="relative isolate mt-1 flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
+          className="relative isolate flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
           aria-hidden
         />
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ProfileSettingsDrawer } from '@/components/features/profile-settings-drawer';
@@ -24,6 +25,8 @@ import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useRouteTab } from '@/hooks/use-route-tab';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
+import { BrandLogo } from '@/components/brand/brand-logo';
+import { useSmartHeader } from '@/hooks/use-smart-header';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -42,6 +45,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const pending = useOfflineQueue((s) => s.queue.length);
   const { t } = useI18n();
   const pathnameRef = useRef(pathname);
+  const headerHost = useSyncExternalStore(
+    () => () => undefined,
+    () => document.body,
+    () => null
+  );
 
   // Papel derivado da PRÓPRIA rota. Como o pathname é conhecido de forma
   // síncrona no primeiro frame (antes de `/api/perfil/ensure` resolver o papel
@@ -80,7 +88,6 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isArtistProfile =
     pathname.startsWith('/dashboard/artista/') ||
     /^\/dashboard\/artistas\/.+/.test(pathname);
-  const isClienteHome = pathname.startsWith('/dashboard/cliente');
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
@@ -112,10 +119,10 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isArtistProfile ||
     isAgenda ||
     isGaleria ||
-    isProfileSettings ||
-    isClienteHome;
+    isProfileSettings;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
+  const headerHidden = useSmartHeader(!hideShellHeader);
 
   // Estável entre renders (só muda com o locale): evita recriar o array de
   // opções a cada render e mantém a referência limpa para o SegmentedControl
@@ -314,6 +321,45 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isAgenda ||
     isProfileSettings;
 
+  const headerNode = hideShellHeader ? null : (
+    <header
+      data-app-header
+      className={cn(
+        'glass-chrome fixed inset-x-0 top-0 z-50 shrink-0 border-b border-black/[0.04] bg-[#121212]/90 backdrop-blur-2xl dark:border-white/[0.05]',
+        'safe-header-pad transform-gpu will-change-transform',
+        'transition-transform duration-300 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]',
+        headerHidden ? '-translate-y-full' : 'translate-y-0'
+      )}
+    >
+      <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="sr-only">{headerTitle}</h1>
+          <BrandLogo className="h-11 justify-start px-0" size="sm" />
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isOnline || pending > 0 ? (
+            <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
+              {!isOnline ? t('common.offline') : `${pending} na fila`}
+            </span>
+          ) : null}
+          {showMachineTrigger ? (
+            <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+          ) : null}
+        </div>
+      </div>
+      {hideTabs ? null : (
+        <div className="hidden px-4 pb-3 md:block">
+          <SegmentedControl
+            options={tabsByRole[tabRole]}
+            value={selectedTab}
+            onChange={handleTabChange}
+            ariaLabel={t('nav.home')}
+          />
+        </div>
+      )}
+    </header>
+  );
+
   return (
     // A unidade de viewport (`100dvh`) é propriedade EXCLUSIVA do layout raiz
     // (`app/dashboard/layout.tsx`). O casco apenas PREENCHE esse pai de forma
@@ -321,42 +367,21 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     // seja definida em um único lugar e nunca recalculada/duplicada aqui.
     <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
       {hideShellHeader ? null : (
-      <header
-        className={cn(
-            'glass-chrome z-40 shrink-0 border-b border-black/[0.04] dark:border-white/[0.05]',
-          'safe-header-pad'
-        )}
-      >
-        <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
-            <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-tight">
-              {headerTitle}
-            </h1>
-          <div className="flex shrink-0 items-center gap-2">
-            {!isOnline || pending > 0 ? (
-              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-                {!isOnline ? t('common.offline') : `${pending} na fila`}
-              </span>
-            ) : null}
-            {showMachineTrigger ? (
-              // Slot geométrico do gatilho de configurações. O botão real é
-              // montado pelo `PersistentAppChrome` (root layout), fora do
-              // handoff de hidratação — aqui reservamos apenas os 44x44px para
-              // que o header nunca mude de largura quando o ícone aparece.
-              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
-            ) : null}
+        <>
+          {headerHost && headerNode ? createPortal(headerNode, headerHost) : headerNode}
+          <div
+            aria-hidden
+            data-app-header-spacer
+            className="safe-header-pad pointer-events-none invisible shrink-0"
+          >
+            <div className="min-h-11 px-4 pb-3" />
+            {hideTabs ? null : (
+              <div className="hidden px-4 pb-3 md:block">
+                <div className="h-11" />
+              </div>
+            )}
           </div>
-        </div>
-        {hideTabs ? null : (
-          <div className="hidden px-4 pb-3 md:block">
-            <SegmentedControl
-              options={tabsByRole[tabRole]}
-              value={selectedTab}
-              onChange={handleTabChange}
-              ariaLabel={t('nav.home')}
-            />
-          </div>
-        )}
-      </header>
+        </>
       )}
 
       <div

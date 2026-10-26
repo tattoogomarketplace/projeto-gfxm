@@ -1,8 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { useI18n } from '@/hooks/use-i18n';
-import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 
 function isLoginPath(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -16,10 +16,7 @@ export function AuthBrandHeader() {
 
   return (
     <header className="mb-8 w-full text-center">
-      <h1 className="text-3xl font-extrabold text-white">
-        {BRAND_WORDMARK.main}
-        <span className="text-orange-500"> {BRAND_WORDMARK.mark}</span>
-      </h1>
+      <BrandLogo size="lg" className="h-auto px-0" />
       {showLoginSubtitle ? (
         <p className="mt-2 text-sm text-zinc-500">{t('auth.loginSubtitle')}</p>
       ) : null}

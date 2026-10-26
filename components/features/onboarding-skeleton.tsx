@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export function OnboardingSkeleton() {
   return (
-    <div className="gpu-layer relative flex h-full min-h-[100dvh] w-full flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-background [-webkit-overflow-scrolling:touch]">
+    <div className="gpu-layer relative flex h-full min-h-[100dvh] w-full flex-col overflow-x-hidden overflow-y-auto overscroll-none bg-[#121212] [-webkit-overflow-scrolling:touch]">
       <div
         className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))]"
         aria-hidden

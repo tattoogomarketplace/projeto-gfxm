@@ -35,6 +35,8 @@ interface UiState {
   setPendingChatPeer: (id: string | null) => void;
   pendingChatArtwork: string | null;
   setPendingChatArtwork: (id: string | null) => void;
+  headerHidden: boolean;
+  setHeaderHidden: (hidden: boolean) => void;
   settingsDrawerPhase: SettingsDrawerPhase;
   openSettingsDrawer: () => void;
   closeSettingsDrawer: () => void;
@@ -53,6 +55,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   setPendingChatPeer: (id) => set({ pendingChatPeer: id }),
   pendingChatArtwork: null,
   setPendingChatArtwork: (id) => set({ pendingChatArtwork: id }),
+  headerHidden: false,
+  setHeaderHidden: (hidden) => set({ headerHidden: hidden }),
   settingsDrawerPhase: 'closed',
   openSettingsDrawer: () => {
     if (get().settingsDrawerPhase !== 'closed') return;

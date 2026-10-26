@@ -166,7 +166,7 @@ export function PullToRefresh({
         ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
         : 'none';
       indicator.style.willChange = 'transform, opacity';
-      indicator.style.transform = `translate3d(-50%, ${pull - INDICATOR_HIDE_PX}px, 0)`;
+      indicator.style.transform = `translate3d(-50%, ${Math.max(0, pull - INDICATOR_HIDE_PX)}px, 0)`;
     }
 
     const pullProgress = clamp01(pull / THRESHOLD_PX);
@@ -451,7 +451,7 @@ export function PullToRefresh({
   const indicatorStyle: CSSProperties = {
     width: INDICATOR_SIZE,
     height: INDICATOR_SIZE,
-    transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
+    transform: 'translate3d(-50%, 0, 0)',
     opacity: 0,
     willChange: 'transform, opacity',
     color: ACCENT_MINT_CSS,
@@ -460,11 +460,12 @@ export function PullToRefresh({
   };
 
   const badge = (
-    <div
-      ref={indicatorRef}
-      className={cn(
-        'pointer-events-none absolute left-1/2 top-0 z-[35] flex items-center justify-center transform-gpu'
-      )}
+      <div
+        ref={indicatorRef}
+        className={cn(
+          'pointer-events-none absolute left-1/2 z-[35] flex items-center justify-center transform-gpu'
+        )}
+        data-ptr-indicator
       style={indicatorStyle}
       aria-hidden={phase === 'idle'}
       aria-live="polite"

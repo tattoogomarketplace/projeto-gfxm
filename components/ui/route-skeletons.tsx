@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BRAND_NAME } from '@/lib/i18n/brands';
 import { cn } from '@/lib/utils';
 
 const PROFILE_SCROLL_SHELL =
@@ -69,13 +69,10 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
   return (
     <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4', className)}>
       <div className="-mx-4 min-w-0 sm:-mx-6">
-        <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
-          <div className="relative z-10 flex h-11 w-full items-center justify-center bg-transparent px-4">
-            <Skeleton className="h-7 w-44 rounded-full" />
-          </div>
+        <div className="sticky top-0 z-30 w-full border-b border-white/5 bg-[#121212]/90 pb-3 backdrop-blur-2xl">
           <div
             data-ptr-slot
-            className="relative isolate mt-1 flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
+            className="relative isolate flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
             aria-hidden
           />
           <div className="relative w-full bg-transparent pt-2">
@@ -603,11 +600,12 @@ export function UsernameOnboardingSkeleton({ className }: { className?: string }
       aria-live="polite"
       aria-label="Preparando sua identidade..."
       className={cn(
-        'relative flex h-full min-h-[100dvh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0a] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]',
+        'relative flex h-full min-h-[100dvh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden overflow-y-auto overscroll-none bg-[#121212] px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]',
         className
       )}
     >
       <div className="relative flex flex-col items-center gap-6">
+        <BrandLogo size="lg" className="h-auto px-0" />
         <span className="relative flex h-16 w-16 items-center justify-center">
           <span aria-hidden className="absolute inset-0 rounded-full border border-white/[0.06]" />
           <span
@@ -617,9 +615,6 @@ export function UsernameOnboardingSkeleton({ className }: { className?: string }
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500 shadow-[0_0_16px_rgba(249,115,22,0.85)]" />
         </span>
         <div className="w-full space-y-2 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-orange-500">
-            {BRAND_NAME}
-          </p>
           <Skeleton className="mx-auto h-4 w-52 rounded-full" />
         </div>
       </div>
