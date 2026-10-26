@@ -324,7 +324,7 @@ export function FlashNotesCarousel() {
                     }
                     selectNote(cover);
                   }}
-                  className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 active:scale-[0.97]"
+                  className="relative z-[1] flex w-[clamp(4.25rem,20vw,4.75rem)] shrink-0 touch-manipulation snap-start flex-col items-center gap-1.5 transition-transform duration-150 ease-out [transform:translateZ(0)] active:scale-[0.97]"
                   aria-label={t('flash.aria', { name: handle })}
                 >
                   <span className="relative flex h-14 w-14 min-h-11 min-w-11 items-center justify-center">
@@ -337,24 +337,24 @@ export function FlashNotesCarousel() {
                           src={cover.imageUrl || story.author?.avatarUrl}
                           alt={name}
                           sizes="56px"
-                          className="h-full w-full rounded-full"
+                          className="h-full w-full rounded-full object-cover"
                           fallback={
-                            <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                            <span className="flex h-full w-full items-center justify-center bg-[#121212] text-sm font-semibold uppercase text-[#FF5F1F]">
                               {initial}
                             </span>
                           }
                         />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-orange-400">
+                        <span className="flex h-full w-full items-center justify-center bg-[#121212] text-sm font-semibold uppercase text-[#FF5F1F]">
                           {initial}
                         </span>
                       )}
                     </FlashNoteStoryRing>
-                    <span className="absolute -bottom-0.5 -right-0.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full border border-[#0a0a0a] bg-orange-500 text-black">
+                    <span className="absolute -bottom-0.5 -right-0.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full border border-[#121212] bg-[#FF5F1F] text-black shadow-[0_0_8px_rgba(255,95,31,0.4)]">
                       <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                     </span>
                   </span>
-                  <span className="w-full truncate text-center text-[10px] font-medium text-neutral-600 dark:text-zinc-400">
+                  <span className="w-full truncate text-center text-[10px] font-medium tracking-tight text-zinc-500">
                     {handle}
                   </span>
                 </button>

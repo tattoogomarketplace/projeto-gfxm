@@ -3,9 +3,14 @@ import type { FlashNoteAuthorDto, FlashNoteDto } from '@/lib/types/chat';
 
 export const FLASH_NOTE_RING_UNVIEWED = '#FF5F1F';
 export const FLASH_NOTE_RING_VIEWED = '#90EE90';
-export const FLASH_NOTE_RING_GAP_DEGREES = 12;
+export const FLASH_NOTE_RING_TRACK = '#121212';
 export const FLASH_NOTE_RING_SIZE = 56;
-export const FLASH_NOTE_RING_STROKE = 2.25;
+export const FLASH_NOTE_RING_STROKE = 2.5;
+export const FLASH_NOTE_RING_INNER_GAP = 2.5;
+export const FLASH_NOTE_RING_GAP_PX = 3.5;
+export const FLASH_NOTE_RING_GAP_MIN_PX = 2;
+
+export type FlashNoteRingLinecap = 'butt' | 'round';
 
 export type FlashNoteRingSegment = {
   index: number;
@@ -13,6 +18,7 @@ export type FlashNoteRingSegment = {
   viewed: boolean;
   dashArray: string;
   dashOffset: number;
+  linecap: FlashNoteRingLinecap;
 };
 
 export type FlashNoteArtistStory = {
@@ -67,6 +73,39 @@ export function flashNoteViewedFlags(
   return notes.map((note) => viewedIds.has(note.id));
 }
 
+function ringColor(viewed: boolean): string {
+  return viewed ? FLASH_NOTE_RING_VIEWED : FLASH_NOTE_RING_UNVIEWED;
+}
+
+export function resolveFlashNoteRingGapLength(
+  count: number,
+  circumference: number,
+  strokeWidth: number
+): { gapLength: number; segmentLength: number; slot: number; linecap: FlashNoteRingLinecap } {
+  const safeCount = Math.max(1, count);
+  const slot = circumference / safeCount;
+
+  if (safeCount === 1 || circumference <= 0) {
+    return { gapLength: 0, segmentLength: circumference, slot: circumference, linecap: 'butt' };
+  }
+
+  const roundCaps = slot > strokeWidth * 3;
+  const capPad = roundCaps ? strokeWidth : 0;
+  const maxVisualGap = slot * 0.38;
+  const visualGap = Math.max(
+    FLASH_NOTE_RING_GAP_MIN_PX,
+    Math.min(FLASH_NOTE_RING_GAP_PX, maxVisualGap)
+  );
+  const maxGap = slot * 0.72;
+  const gapLength = Math.min(visualGap + capPad, maxGap);
+  return {
+    gapLength,
+    segmentLength: slot - gapLength,
+    slot,
+    linecap: roundCaps ? 'round' : 'butt',
+  };
+}
+
 export function buildFlashNoteRingSegments(input: {
   count: number;
   viewed?: readonly boolean[];
@@ -75,21 +114,21 @@ export function buildFlashNoteRingSegments(input: {
 }): FlashNoteRingSegment[] {
   const count = Math.max(1, Math.floor(Number.isFinite(input.count) ? input.count : 1));
   const strokeWidth = input.strokeWidth ?? FLASH_NOTE_RING_STROKE;
-  const circumference = 2 * Math.PI * input.radius;
-  const gapDegrees = count === 1 ? 0 : FLASH_NOTE_RING_GAP_DEGREES;
-  const capCompensation = count === 1 ? 0 : strokeWidth;
-  const gapLength = (gapDegrees / 360) * circumference + capCompensation;
-  const rawSegment = circumference / count - gapLength;
-  const segmentLength = Math.max(circumference * 0.04, rawSegment);
+  const circumference = 2 * Math.PI * Math.max(0, input.radius);
+  const geometry = resolveFlashNoteRingGapLength(count, circumference, strokeWidth);
 
   return Array.from({ length: count }, (_, index) => {
     const viewed = Boolean(input.viewed?.[index]);
     return {
       index,
       viewed,
-      color: viewed ? FLASH_NOTE_RING_VIEWED : FLASH_NOTE_RING_UNVIEWED,
-      dashArray: `${segmentLength} ${Math.max(0, circumference - segmentLength)}`,
-      dashOffset: -(index * (segmentLength + gapLength)),
+      color: ringColor(viewed),
+      dashArray:
+        count === 1
+          ? `${circumference} 0`
+          : `${geometry.segmentLength} ${Math.max(0, circumference - geometry.segmentLength)}`,
+      dashOffset: -(index * geometry.slot),
+      linecap: geometry.linecap,
     };
   });
 }
