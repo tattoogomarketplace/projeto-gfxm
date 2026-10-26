@@ -1093,11 +1093,10 @@ export function GalleryInspirationGrid({
                           data-gallery-action=""
                           onClick={() => {
                             triggerHaptic('light');
-                            setLikesSheetCount(likeCount);
-                            setIsLikesModalOpen(true);
+                            toggleLiked(item.id);
                           }}
                           className={FEED_TOP_ACTION_METRIC_CLASS}
-                          aria-label={likeLabel}
+                          aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
                         >
                           {formatNumber(12300)}
                         </button>
@@ -1157,11 +1156,11 @@ export function GalleryInspirationGrid({
                     <button
                       type="button"
                       data-gallery-action=""
-                      aria-label={isLiked ? t('aria.unlike') : t('aria.like')}
-                      aria-pressed={isLiked}
+                      aria-label={likeLabel}
                       onClick={() => {
                         triggerHaptic('light');
-                        toggleLiked(item.id);
+                        setLikesSheetCount(likeCount);
+                        setIsLikesModalOpen(true);
                       }}
                       className="flex flex-row items-center gap-1.5 mt-2 cursor-pointer transition-transform active:scale-95 touch-manipulation group"
                     >
@@ -1176,8 +1175,9 @@ export function GalleryInspirationGrid({
                       aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
                       onClick={() => {
                         triggerHaptic('light');
-                        setLikesSheetCount(likeCount);
-                        setIsLikesModalOpen(true);
+                        setViewsSheetPostId(item.id);
+                        setViewsSheetCount(item.viewsCount ?? 0);
+                        setIsViewsModalOpen(true);
                       }}
                       className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
                     >
