@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
-import { Loader2, MapPin, Radio, Send, Sparkles, X, Zap } from 'lucide-react';
+import { Loader2, Radio, Send, X, Zap } from 'lucide-react';
 import { bookFlashNote, type BookFlashNoteCode } from '@/app/actions/flash-note-booking';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -119,6 +119,41 @@ function remainingLabel(expiresAt: string, expiringLabel: string): string {
   return hours === 1 ? '1h' : `${hours}h`;
 }
 
+function FlashNoteCaptionMachineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
+      <path
+        d="M10.15 1.7h3.7c.42 0 .75.33.75.75v1.05h-5.2V2.45c0-.42.33-.75.75-.75Z"
+        fill="#FF5F1F"
+      />
+      <path
+        d="M8.2 3.5h7.6c.5 0 .9.4.9.9v1.85H7.3V4.4c0-.5.4-.9.9-.9Z"
+        fill="#FF5F1F"
+      />
+      <path
+        d="M9.35 8.05a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Zm0 1.55a1.65 1.65 0 1 1 0 3.3 1.65 1.65 0 0 1 0-3.3Z"
+        fill="#FF5F1F"
+        fillRule="evenodd"
+      />
+      <path
+        d="M14.65 8.05a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Zm0 1.55a1.65 1.65 0 1 1 0 3.3 1.65 1.65 0 0 1 0-3.3Z"
+        fill="#FF5F1F"
+        fillRule="evenodd"
+      />
+      <path d="M11.2 7.15h1.6v6.9h-1.6z" fill="#FF5F1F" />
+      <path
+        d="M4.15 8.7h2.35c.4 0 .7.3.7.7v3.2c0 .4-.3.7-.7.7H4.15c-.4 0-.7-.3-.7-.7V9.4c0-.4.3-.7.7-.7Z"
+        fill="#FF5F1F"
+      />
+      <path
+        d="M10.45 14.2h3.1c.72 0 1.3.58 1.3 1.3v4.05c0 .88-.72 1.6-1.6 1.6h-2.5c-.88 0-1.6-.72-1.6-1.6V15.5c0-.72.58-1.3 1.3-1.3Z"
+        fill="#FF5F1F"
+      />
+      <path d="M12 21.05v1.55" stroke="#FF5F1F" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function FlashNoteModal({
   note,
   open,
@@ -226,7 +261,6 @@ function FlashNoteStorySurface({
     discountPercentage: note.discountPercentage,
   });
   const caption = offer.caption || note.content.trim();
-  const location = [note.author?.cidade, note.author?.estado].filter(Boolean).join(', ');
   const surface = getFlashNoteBackground(note.backgroundId);
 
   const nextNote = useCallback(() => {
@@ -969,29 +1003,16 @@ function FlashNoteStorySurface({
           )}
         >
           <div className="pointer-events-auto flex w-full flex-col gap-3">
-            {caption || location ? (
+            {caption ? (
               <div
                 className={cn(
-                  'flex min-w-0 items-start gap-2.5 rounded-2xl border border-[#FF5F1F]/50',
-                  'bg-[#121212]/60 px-3.5 py-2.5 backdrop-blur-md',
-                  'shadow-[0_0_20px_rgba(255,95,31,0.16)]'
+                  'flex w-fit max-w-full items-center gap-3 self-start rounded-2xl',
+                  'border border-[#FF5F1F]/60 bg-black/40 px-4 py-3 backdrop-blur-md',
+                  'shadow-[0_0_15px_rgba(255,95,31,0.2)]'
                 )}
               >
-                {location ? (
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5F1F]" strokeWidth={2} aria-hidden />
-                ) : (
-                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#FF5F1F]" strokeWidth={2} aria-hidden />
-                )}
-                <div className="min-w-0">
-                  {caption ? (
-                    <p className="text-[13px] font-medium leading-snug text-white">{caption}</p>
-                  ) : null}
-                  {location ? (
-                    <p className={cn('truncate text-[11px] font-medium text-zinc-300', caption ? 'mt-0.5' : null)}>
-                      {location}
-                    </p>
-                  ) : null}
-                </div>
+                <FlashNoteCaptionMachineIcon />
+                <p className="min-w-0 text-sm font-medium leading-tight text-white">{caption}</p>
               </div>
             ) : null}
 
