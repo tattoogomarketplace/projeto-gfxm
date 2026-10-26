@@ -33,11 +33,11 @@ const STORY_DURATION_MS = 15000;
 const HOLD_THRESHOLD_MS = 200;
 const HOLD_MOVE_CANCEL_PX = 10;
 const DIRECTION_LOCK_PX = 15;
-const ZOOM_SCALE_DIVISOR = 300;
+const ZOOM_SCALE_DIVISOR = 240;
 const ZOOM_MIN = 1;
-const ZOOM_MAX = 3;
-const ZOOM_DAMPING = 0.35;
-const PAN_DAMPING = 0.38;
+const ZOOM_MAX = 2.5;
+const ZOOM_DAMPING = 0.48;
+const PAN_DAMPING = 0.55;
 const SNAP_BACK_TRANSFORM = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
@@ -364,8 +364,19 @@ function FlashNoteStorySurface({
 
     if (!mountedRef.current) return;
 
+    if (hasCommittedToZoomRef.current || state === 'ZOOMING') {
+      hasCommittedToZoomRef.current = true;
+      if (state !== 'ZOOMING') safeSetGestureState('ZOOMING');
+      const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
+      applyZoomTransform(
+        damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
+        damp(panXRef.current, deltaX, PAN_DAMPING),
+        damp(panYRef.current, deltaY, PAN_DAMPING)
+      );
+      return;
+    }
+
     if (state === 'HOLDING') {
-      if (hasCommittedToZoomRef.current) return;
       if (deltaY > DIRECTION_LOCK_PX) {
         didHoldRef.current = true;
         hasCommittedToZoomRef.current = true;
@@ -388,17 +399,6 @@ function FlashNoteStorySurface({
         resetZoomTransform();
         triggerHaptic('medium');
       }
-      return;
-    }
-
-    if (state === 'ZOOMING') {
-      hasCommittedToZoomRef.current = true;
-      const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
-      applyZoomTransform(
-        damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
-        damp(panXRef.current, deltaX, PAN_DAMPING),
-        damp(panYRef.current, deltaY, PAN_DAMPING)
-      );
     }
   }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
 
