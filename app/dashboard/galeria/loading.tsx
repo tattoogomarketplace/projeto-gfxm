@@ -4,8 +4,8 @@ export default function GaleriaLoading() {
       aria-hidden
       className="absolute inset-0 z-0 min-h-0 w-full max-w-none overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]"
     >
-      <div className="px-4 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/5 border-l-2 border-l-[#F97316] bg-[#121212]/60 p-3 backdrop-blur-sm">
+      <div className="px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="flex w-full flex-row items-center p-3 mb-4 bg-[#121212]/80 border border-white/5 rounded-2xl backdrop-blur-sm">
           <div className="h-7 w-7 rounded-md bg-orange-500/10" />
           <div className="h-4 w-40 rounded bg-zinc-800" />
         </div>

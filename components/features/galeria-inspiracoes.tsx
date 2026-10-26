@@ -58,12 +58,12 @@ export function GaleriaInspiracoes({
 
   return (
     <div className="relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 text-white">
-      <div className="px-4 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/5 border-l-2 border-l-[#F97316] bg-[#121212]/60 p-3 backdrop-blur-sm">
+      <div className="px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="flex w-full flex-row items-center p-3 mb-4 bg-[#121212]/80 border border-white/5 rounded-2xl backdrop-blur-sm">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500/10 p-1.5 text-orange-500">
             <Compass className="h-4 w-4" strokeWidth={1.75} />
           </span>
-          <h1 className="text-base font-semibold tracking-tight text-zinc-100">{t('gallery.title')}</h1>
+          <h1 className="ml-3 text-base font-semibold tracking-tight text-zinc-100">{t('gallery.title')}</h1>
         </div>
       </div>
       <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)]">
