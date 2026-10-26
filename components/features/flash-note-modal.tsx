@@ -30,7 +30,8 @@ type GestureState = 'IDLE' | 'HOLDING' | 'ZOOMING' | 'BUDGET';
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
 const STORY_DURATION_MS = 15000;
-const HOLD_DELAY_MS = 180;
+const HOLD_THRESHOLD_MS = 200;
+const HOLD_MOVE_CANCEL_PX = 10;
 const ZOOM_TRIGGER_PX = 15;
 const BUDGET_TRIGGER_PX = -15;
 const ZOOM_SCALE_DIVISOR = 300;
@@ -127,8 +128,10 @@ function FlashNoteStorySurface({
   const onCloseRef = useRef(onClose);
   const remainingMsRef = useRef(STORY_DURATION_MS);
   const lastTickRef = useRef<number | null>(null);
-  const holdTimerRef = useRef<number | null>(null);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const didHoldRef = useRef(false);
+  const isPointerDownRef = useRef(false);
+  const mountedRef = useRef(true);
   const isGestureLocked = gestureState !== 'IDLE';
 
   useEffect(() => {
@@ -191,13 +194,20 @@ function FlashNoteStorySurface({
   }, [note.id, gestureState, isGestureLocked, isPending, isSheetOpen, nextNote]);
 
   const clearHoldTimer = useCallback(() => {
-    if (holdTimerRef.current != null) {
-      window.clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
+    if (holdTimeoutRef.current != null) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
     }
   }, []);
 
+  const safeSetGestureState = useCallback((next: GestureState) => {
+    if (!mountedRef.current) return;
+    gestureStateRef.current = next;
+    setGestureState(next);
+  }, []);
+
   const resetZoomTransform = useCallback(() => {
+    if (!mountedRef.current) return;
     setDragStartY(null);
     dragStartXRef.current = null;
     dragStartYRef.current = null;
@@ -210,6 +220,7 @@ function FlashNoteStorySurface({
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
     didHoldRef.current = false;
+    isPointerDownRef.current = true;
     const target = overlayRef.current;
     const bounds = target?.getBoundingClientRect();
     const originX = bounds && bounds.width > 0
@@ -218,36 +229,53 @@ function FlashNoteStorySurface({
     const originY = bounds && bounds.height > 0
       ? Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100))
       : 50;
-    setTransformOrigin(`${originX}% ${originY}%`);
-    setDragStartY(event.clientY);
+    if (mountedRef.current) {
+      setTransformOrigin(`${originX}% ${originY}%`);
+      setDragStartY(event.clientY);
+      setPanX(0);
+      setPanY(0);
+    }
     dragStartXRef.current = event.clientX;
     dragStartYRef.current = event.clientY;
-    setPanX(0);
-    setPanY(0);
-    setGestureState('HOLDING');
-    gestureStateRef.current = 'HOLDING';
     clearHoldTimer();
-    holdTimerRef.current = window.setTimeout(() => {
+    holdTimeoutRef.current = setTimeout(() => {
+      holdTimeoutRef.current = null;
+      if (!mountedRef.current || !isPointerDownRef.current) return;
+      if (gestureStateRef.current !== 'IDLE') return;
       didHoldRef.current = true;
+      safeSetGestureState('HOLDING');
       triggerHaptic('light');
-    }, HOLD_DELAY_MS);
-  }, [clearHoldTimer, isSheetOpen, triggerHaptic]);
+    }, HOLD_THRESHOLD_MS);
+  }, [clearHoldTimer, isSheetOpen, safeSetGestureState, triggerHaptic]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    const state = gestureStateRef.current;
+    if (!isPointerDownRef.current) return;
     const startX = dragStartXRef.current;
     const startY = dragStartYRef.current;
-    if (state === 'IDLE' || startY == null) return;
+    if (startY == null) return;
 
     const deltaX = startX == null ? 0 : event.clientX - startX;
     const deltaY = event.clientY - startY;
+    const state = gestureStateRef.current;
+
+    if (state === 'IDLE') {
+      if (holdTimeoutRef.current == null) return;
+      const movedFar =
+        Math.abs(deltaX) > HOLD_MOVE_CANCEL_PX || Math.abs(deltaY) > HOLD_MOVE_CANCEL_PX;
+      if (movedFar) {
+        didHoldRef.current = true;
+        clearHoldTimer();
+      }
+      return;
+    }
+
+    if (!mountedRef.current) return;
 
     if (state === 'HOLDING') {
       if (deltaY > ZOOM_TRIGGER_PX) {
         didHoldRef.current = true;
         clearHoldTimer();
-        setGestureState('ZOOMING');
-        gestureStateRef.current = 'ZOOMING';
+        safeSetGestureState('ZOOMING');
         setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
         setPanX(deltaX);
         setPanY(deltaY);
@@ -257,8 +285,7 @@ function FlashNoteStorySurface({
       if (deltaY < BUDGET_TRIGGER_PX) {
         didHoldRef.current = true;
         clearHoldTimer();
-        setGestureState('BUDGET');
-        gestureStateRef.current = 'BUDGET';
+        safeSetGestureState('BUDGET');
         setIsSheetOpen(true);
         resetZoomTransform();
         triggerHaptic('medium');
@@ -272,25 +299,34 @@ function FlashNoteStorySurface({
       setPanX(deltaX);
       setPanY(deltaY);
     }
-  }, [clearHoldTimer, resetZoomTransform, triggerHaptic]);
+  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
 
   const endHold = useCallback(() => {
+    isPointerDownRef.current = false;
     clearHoldTimer();
+    if (!mountedRef.current) return;
     resetZoomTransform();
-    if (gestureStateRef.current === 'ZOOMING' || gestureStateRef.current === 'HOLDING') {
-      setGestureState('IDLE');
-      gestureStateRef.current = 'IDLE';
+    const state = gestureStateRef.current;
+    if (state === 'ZOOMING' || state === 'HOLDING') {
+      safeSetGestureState('IDLE');
     }
-  }, [clearHoldTimer, resetZoomTransform]);
+  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState]);
 
   const closeBudgetSheet = useCallback(() => {
+    if (!mountedRef.current) return;
     setIsSheetOpen(false);
-    setGestureState('IDLE');
-    gestureStateRef.current = 'IDLE';
+    safeSetGestureState('IDLE');
     resetZoomTransform();
-  }, [resetZoomTransform]);
+  }, [resetZoomTransform, safeSetGestureState]);
 
-  useEffect(() => () => clearHoldTimer(), [clearHoldTimer]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      isPointerDownRef.current = false;
+      clearHoldTimer();
+    };
+  }, [clearHoldTimer]);
 
   const handleZoneClick = useCallback(
     (direction: 'prev' | 'next') => {
