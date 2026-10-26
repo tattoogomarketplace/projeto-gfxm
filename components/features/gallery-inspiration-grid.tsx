@@ -1123,24 +1123,24 @@ export function GalleryInspirationGrid({
                     <button
                       type="button"
                       data-gallery-action=""
-                      onClick={() => shareInspiration(item)}
+                      onClick={() => {
+                        setBudgetItem(item);
+                        setIsBudgetModalOpen(true);
+                      }}
                       className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}
-                      aria-label="Compartilhar"
+                      aria-label={t('chat.quotes')}
                     >
-                      <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <ReceiptText className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(12300000)}</span>
                     </button>
                     <button
                       type="button"
                       data-gallery-action=""
-                      onClick={() => {
-                        setBudgetItem(item);
-                        setIsBudgetModalOpen(true);
-                      }}
+                      onClick={() => shareInspiration(item)}
                       className={FEED_TOP_ACTION_BTN_CLASS}
-                      aria-label={t('chat.quotes')}
+                      aria-label="Compartilhar"
                     >
-                      <ReceiptText className="h-6 w-6 shrink-0" strokeWidth={2} />
+                      <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
                       <span className={FEED_TOP_ACTION_METRIC_CLASS}>{formatNumber(12300000)}</span>
                     </button>
                   </div>
