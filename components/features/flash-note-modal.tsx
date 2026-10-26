@@ -25,11 +25,15 @@ type FlashNoteModalProps = {
   onPrev?: () => void;
 };
 
+type GestureState = 'IDLE' | 'HOLDING' | 'ZOOMING' | 'BUDGET';
+
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
 const STORY_DURATION_MS = 15000;
 const HOLD_DELAY_MS = 180;
-const SHEET_OPEN_DELTA_Y = -50;
+const ZOOM_TRIGGER_PX = 15;
+const BUDGET_TRIGGER_PX = -15;
+const ZOOM_SCALE_DIVISOR = 300;
 const ZOOM_MAX = 2.5;
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
@@ -107,12 +111,12 @@ function FlashNoteStorySurface({
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.18]);
   const [isPending, startTransition] = useTransition();
-  const [isHolding, setIsHolding] = useState(false);
+  const [gestureState, setGestureState] = useState<GestureState>('IDLE');
   const [dragStartY, setDragStartY] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isPendingRef = useRef(isPending);
-  const isHoldingRef = useRef(isHolding);
+  const gestureStateRef = useRef<GestureState>('IDLE');
   const dragStartYRef = useRef<number | null>(null);
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
@@ -121,15 +125,16 @@ function FlashNoteStorySurface({
   const lastTickRef = useRef<number | null>(null);
   const holdTimerRef = useRef<number | null>(null);
   const didHoldRef = useRef(false);
+  const isGestureLocked = gestureState !== 'IDLE';
 
   useEffect(() => {
     isPendingRef.current = isPending;
-    isHoldingRef.current = isHolding;
+    gestureStateRef.current = gestureState;
     dragStartYRef.current = dragStartY;
     onNextRef.current = onNext;
     onPrevRef.current = onPrev;
     onCloseRef.current = onClose;
-  }, [dragStartY, isHolding, isPending, onClose, onNext, onPrev]);
+  }, [dragStartY, gestureState, isPending, onClose, onNext, onPrev]);
 
   const name = note.author?.name || t('flash.artist');
   const initial = note.author?.initial ?? 'A';
@@ -157,7 +162,7 @@ function FlashNoteStorySurface({
   }, [triggerHaptic]);
 
   useEffect(() => {
-    if (isHolding || isPending || isSheetOpen) {
+    if (isGestureLocked || isPending || isSheetOpen) {
       lastTickRef.current = null;
       return undefined;
     }
@@ -179,7 +184,7 @@ function FlashNoteStorySurface({
       window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
-  }, [note.id, isHolding, isPending, isSheetOpen, nextNote]);
+  }, [note.id, isGestureLocked, isPending, isSheetOpen, nextNote]);
 
   const clearHoldTimer = useCallback(() => {
     if (holdTimerRef.current != null) {
@@ -189,45 +194,73 @@ function FlashNoteStorySurface({
   }, []);
 
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    if (isPendingRef.current || isSheetOpen) return;
+    if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
     didHoldRef.current = false;
     setDragStartY(event.clientY);
     dragStartYRef.current = event.clientY;
+    setGestureState('HOLDING');
+    gestureStateRef.current = 'HOLDING';
     clearHoldTimer();
     holdTimerRef.current = window.setTimeout(() => {
       didHoldRef.current = true;
       triggerHaptic('light');
-      setIsHolding(true);
     }, HOLD_DELAY_MS);
   }, [clearHoldTimer, isSheetOpen, triggerHaptic]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    if (!isHoldingRef.current) return;
+    const state = gestureStateRef.current;
     const startY = dragStartYRef.current;
-    if (startY == null) return;
+    if (state === 'IDLE' || startY == null) return;
+
     const deltaY = event.clientY - startY;
-    if (deltaY > 0) {
-      setZoomScale(Math.min(ZOOM_MAX, 1 + deltaY / 400));
+
+    if (state === 'HOLDING') {
+      if (deltaY > ZOOM_TRIGGER_PX) {
+        didHoldRef.current = true;
+        clearHoldTimer();
+        setGestureState('ZOOMING');
+        gestureStateRef.current = 'ZOOMING';
+        setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
+        triggerHaptic('light');
+        return;
+      }
+      if (deltaY < BUDGET_TRIGGER_PX) {
+        didHoldRef.current = true;
+        clearHoldTimer();
+        setGestureState('BUDGET');
+        gestureStateRef.current = 'BUDGET';
+        setIsSheetOpen(true);
+        setZoomScale(1);
+        triggerHaptic('medium');
+      }
       return;
     }
-    if (deltaY < SHEET_OPEN_DELTA_Y) {
-      clearHoldTimer();
-      setIsSheetOpen(true);
-      setIsHolding(false);
-      setDragStartY(null);
-      dragStartYRef.current = null;
-      setZoomScale(1);
-      triggerHaptic('medium');
+
+    if (state === 'ZOOMING') {
+      if (deltaY < 0) return;
+      setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
     }
   }, [clearHoldTimer, triggerHaptic]);
 
   const endHold = useCallback(() => {
     clearHoldTimer();
-    setIsHolding(false);
     setDragStartY(null);
     dragStartYRef.current = null;
     setZoomScale(1);
+    if (gestureStateRef.current === 'ZOOMING' || gestureStateRef.current === 'HOLDING') {
+      setGestureState('IDLE');
+      gestureStateRef.current = 'IDLE';
+    }
   }, [clearHoldTimer]);
+
+  const closeBudgetSheet = useCallback(() => {
+    setIsSheetOpen(false);
+    setGestureState('IDLE');
+    gestureStateRef.current = 'IDLE';
+    setDragStartY(null);
+    dragStartYRef.current = null;
+    setZoomScale(1);
+  }, []);
 
   useEffect(() => () => clearHoldTimer(), [clearHoldTimer]);
 
@@ -248,7 +281,7 @@ function FlashNoteStorySurface({
       if (isPendingRef.current) return;
       if (event.key === 'Escape') {
         if (isSheetOpen) {
-          setIsSheetOpen(false);
+          closeBudgetSheet();
           return;
         }
         onClose();
@@ -277,7 +310,7 @@ function FlashNoteStorySurface({
       window.removeEventListener('keydown', onKeyDown);
       overlay?.removeEventListener('wheel', blockWheel);
     };
-  }, [isSheetOpen, nextNote, onClose, prevNote]);
+  }, [closeBudgetSheet, isSheetOpen, nextNote, onClose, prevNote]);
 
   const handleDrag = (_event: unknown, info: { offset: { y: number } }) => {
     dragY.set(Math.max(0, info.offset.y));
@@ -336,7 +369,7 @@ function FlashNoteStorySurface({
       aria-label={t('flash.storyAria', { name })}
       className={cn(
         'fixed inset-0 z-[120] flex h-[100dvh] w-screen flex-col overflow-hidden bg-black',
-        'touch-none overscroll-none contain-paint',
+        'supports-[height:100cqh]:h-[100cqh] touch-none overscroll-none contain-paint',
         GPU_LAYER
       )}
       initial={{ opacity: 0 }}
@@ -353,7 +386,7 @@ function FlashNoteStorySurface({
       />
 
       <motion.article
-        drag={isPending || isHolding || isSheetOpen ? false : 'y'}
+        drag={isPending || isGestureLocked || isSheetOpen ? false : 'y'}
         dragElastic={0.18}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragMomentum={false}
@@ -366,6 +399,7 @@ function FlashNoteStorySurface({
         exit={{ opacity: 0, transition: EXIT_SNAP }}
         className={cn(
           'relative flex h-[100dvh] w-screen cursor-grab flex-col overflow-hidden bg-black active:cursor-grabbing',
+          'supports-[height:100cqh]:h-[100cqh]',
           GPU_LAYER
         )}
       >
@@ -374,10 +408,10 @@ function FlashNoteStorySurface({
         {mediaUrl ? (
           <div
             className={cn(
-              'absolute inset-0 z-0 origin-center will-change-transform',
-              dragStartY == null ? 'transition-transform duration-300 ease-out' : ''
+              'absolute inset-0 z-0 origin-center will-change-transform transform-gpu',
+              gestureState !== 'ZOOMING' ? 'transition-transform duration-300 ease-out' : ''
             )}
-            style={{ transform: `scale(${zoomScale})` }}
+            style={{ transform: `scale3d(${zoomScale}, ${zoomScale}, 1)` }}
           >
             <OptimizedImage
               key={note.id}
@@ -421,8 +455,8 @@ function FlashNoteStorySurface({
 
         <div
           className={cn(
-            'absolute inset-0 z-30 flex flex-col items-center justify-center gap-12 pointer-events-none transition-opacity duration-300',
-            isHolding ? 'opacity-100' : 'opacity-0'
+            'absolute inset-0 z-30 flex flex-col items-center justify-center gap-12 pointer-events-none transition-opacity duration-150',
+            gestureState === 'HOLDING' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           )}
         >
           <div className="flex flex-col items-center gap-2 animate-bounce-slow">
@@ -451,7 +485,7 @@ function FlashNoteStorySurface({
               key={note.id}
               className="flash-story-progress-fill h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
               style={{
-                animationPlayState: isHolding || isPending || isSheetOpen ? 'paused' : 'running',
+                animationPlayState: isGestureLocked || isPending || isSheetOpen ? 'paused' : 'running',
               }}
             />
           </div>
@@ -460,7 +494,7 @@ function FlashNoteStorySurface({
         <header
           className={cn(
             'absolute left-4 right-4 top-[max(2rem,calc(env(safe-area-inset-top)+1.5rem))] z-20 flex items-center justify-between transition-opacity duration-300',
-            isHolding || isSheetOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            isGestureLocked || isSheetOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           )}
         >
           <button
@@ -520,13 +554,13 @@ function FlashNoteStorySurface({
           onClick={() => {
             if (!isSheetOpen) return;
             triggerHaptic('light');
-            setIsSheetOpen(false);
+            closeBudgetSheet();
           }}
         />
 
         <div
           className={cn(
-            'fixed inset-x-0 bottom-0 z-[100] flex h-[55dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212]/70 p-6 backdrop-blur-3xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+            'fixed inset-x-0 bottom-0 z-[100] flex h-[55dvh] flex-col rounded-t-3xl border-t border-white/10 bg-[#121212]/70 px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] backdrop-blur-3xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
             isSheetOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'
           )}
         >
@@ -538,7 +572,7 @@ function FlashNoteStorySurface({
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => {
                 triggerHaptic('light');
-                setIsSheetOpen(false);
+                closeBudgetSheet();
               }}
               aria-label={t('common.close')}
               className="absolute right-0 flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white"
