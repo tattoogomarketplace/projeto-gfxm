@@ -144,7 +144,7 @@ function SectionHeader({
         </div>
         <Link
           href={href}
-          className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors whitespace-nowrap flex-shrink-0"
+          className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors whitespace-nowrap flex-shrink-0 self-center m-0 flex items-center"
         >
           {ctaLabel}
         </Link>
