@@ -32,16 +32,27 @@ const DISMISS_VELOCITY = 650;
 const STORY_DURATION_MS = 15000;
 const HOLD_THRESHOLD_MS = 200;
 const HOLD_MOVE_CANCEL_PX = 10;
-const ZOOM_TRIGGER_PX = 15;
-const BUDGET_TRIGGER_PX = -15;
+const DIRECTION_LOCK_PX = 15;
 const ZOOM_SCALE_DIVISOR = 300;
-const ZOOM_MAX = 2.5;
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 3;
+const ZOOM_DAMPING = 0.35;
+const PAN_DAMPING = 0.38;
+const SNAP_BACK_TRANSFORM = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
 const GPU_LAYER =
   'transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]';
 
 const clientMountedSubscribe = () => () => {};
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function damp(current: number, target: number, factor: number) {
+  return current + (target - current) * factor;
+}
 
 function bookErrorKey(code: BookFlashNoteCode) {
   if (code === 'UNAUTHENTICATED') return 'toast.flashBookAuth' as const;
@@ -132,6 +143,9 @@ function FlashNoteStorySurface({
   const didHoldRef = useRef(false);
   const isPointerDownRef = useRef(false);
   const mountedRef = useRef(true);
+  const zoomScaleRef = useRef(1);
+  const panXRef = useRef(0);
+  const panYRef = useRef(0);
   const isGestureLocked = gestureState !== 'IDLE';
 
   useEffect(() => {
@@ -206,12 +220,26 @@ function FlashNoteStorySurface({
     setGestureState(next);
   }, []);
 
+  const applyZoomTransform = useCallback((nextScale: number, nextPanX: number, nextPanY: number) => {
+    if (!mountedRef.current) return;
+    const scale = clamp(nextScale, ZOOM_MIN, ZOOM_MAX);
+    zoomScaleRef.current = scale;
+    panXRef.current = nextPanX;
+    panYRef.current = nextPanY;
+    setZoomScale(scale);
+    setPanX(nextPanX);
+    setPanY(nextPanY);
+  }, []);
+
   const resetZoomTransform = useCallback(() => {
     if (!mountedRef.current) return;
     setDragStartY(null);
     dragStartXRef.current = null;
     dragStartYRef.current = null;
-    setZoomScale(1);
+    zoomScaleRef.current = ZOOM_MIN;
+    panXRef.current = 0;
+    panYRef.current = 0;
+    setZoomScale(ZOOM_MIN);
     setPanX(0);
     setPanY(0);
     setTransformOrigin('center center');
@@ -229,9 +257,13 @@ function FlashNoteStorySurface({
     const originY = bounds && bounds.height > 0
       ? Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100))
       : 50;
+    zoomScaleRef.current = ZOOM_MIN;
+    panXRef.current = 0;
+    panYRef.current = 0;
     if (mountedRef.current) {
       setTransformOrigin(`${originX}% ${originY}%`);
       setDragStartY(event.clientY);
+      setZoomScale(ZOOM_MIN);
       setPanX(0);
       setPanY(0);
     }
@@ -272,17 +304,20 @@ function FlashNoteStorySurface({
     if (!mountedRef.current) return;
 
     if (state === 'HOLDING') {
-      if (deltaY > ZOOM_TRIGGER_PX) {
+      if (deltaY > DIRECTION_LOCK_PX) {
         didHoldRef.current = true;
         clearHoldTimer();
         safeSetGestureState('ZOOMING');
-        setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
-        setPanX(deltaX);
-        setPanY(deltaY);
+        const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
+        applyZoomTransform(
+          damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
+          damp(panXRef.current, deltaX, PAN_DAMPING),
+          damp(panYRef.current, deltaY, PAN_DAMPING)
+        );
         triggerHaptic('light');
         return;
       }
-      if (deltaY < BUDGET_TRIGGER_PX) {
+      if (deltaY < -DIRECTION_LOCK_PX) {
         didHoldRef.current = true;
         clearHoldTimer();
         safeSetGestureState('BUDGET');
@@ -294,23 +329,33 @@ function FlashNoteStorySurface({
     }
 
     if (state === 'ZOOMING') {
-      if (deltaY < 0) return;
-      setZoomScale(Math.min(ZOOM_MAX, 1 + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR));
-      setPanX(deltaX);
-      setPanY(deltaY);
+      const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
+      applyZoomTransform(
+        damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
+        damp(panXRef.current, deltaX, PAN_DAMPING),
+        damp(panYRef.current, deltaY, PAN_DAMPING)
+      );
     }
-  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
+  }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
 
   const endHold = useCallback(() => {
     isPointerDownRef.current = false;
     clearHoldTimer();
     if (!mountedRef.current) return;
-    resetZoomTransform();
     const state = gestureStateRef.current;
-    if (state === 'ZOOMING' || state === 'HOLDING') {
+    if (state === 'ZOOMING') {
+      applyZoomTransform(ZOOM_MIN, 0, 0);
+      safeSetGestureState('IDLE');
+      setDragStartY(null);
+      dragStartXRef.current = null;
+      dragStartYRef.current = null;
+      return;
+    }
+    if (state === 'HOLDING') {
+      resetZoomTransform();
       safeSetGestureState('IDLE');
     }
-  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState]);
+  }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState]);
 
   const closeBudgetSheet = useCallback(() => {
     if (!mountedRef.current) return;
@@ -471,13 +516,11 @@ function FlashNoteStorySurface({
 
         {mediaUrl ? (
           <div
-            className={cn(
-              'absolute inset-0 z-0 will-change-transform transform-gpu',
-              gestureState !== 'ZOOMING' ? 'transition-transform duration-300 ease-out' : ''
-            )}
+            className="absolute inset-0 z-0 will-change-transform transform-gpu"
             style={{
               transform: `translate3d(${panX}px, ${panY}px, 0) scale3d(${zoomScale}, ${zoomScale}, 1)`,
               transformOrigin,
+              transition: gestureState === 'ZOOMING' ? 'none' : SNAP_BACK_TRANSFORM,
             }}
           >
             <OptimizedImage
