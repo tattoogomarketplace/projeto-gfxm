@@ -386,11 +386,17 @@ export function HomeDiscover({
       </section>
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-region">
-        <SectionHeader
-          id="discover-region"
-          title={t('home.exploreRegion')}
-          subtitle={t('home.exploreRegionSubtitle')}
-        />
+        <div className="flex max-w-full flex-col gap-1.5">
+          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-white/10 bg-[#121212]/80 px-3.5 py-2 shadow-[0_0_20px_rgba(255,95,31,0.14),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
+            <MapPin className="h-4 w-4 shrink-0 text-[#FF5F1F]" strokeWidth={2} aria-hidden />
+            <h2 id="discover-region" className="truncate text-base font-bold tracking-tight text-white">
+              {t('home.exploreRegion')}
+            </h2>
+          </div>
+          <p className="px-3.5 text-[13px] font-medium leading-snug text-zinc-400">
+            {t('home.exploreRegionSubtitle')}
+          </p>
+        </div>
         <Link
           href="/dashboard/mapa"
           onClick={() => triggerHaptic('light')}
