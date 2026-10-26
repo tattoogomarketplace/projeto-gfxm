@@ -121,35 +121,21 @@ function remainingLabel(expiresAt: string, expiringLabel: string): string {
 
 function FlashNoteCaptionMachineIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
-      <path
-        d="M10.15 1.7h3.7c.42 0 .75.33.75.75v1.05h-5.2V2.45c0-.42.33-.75.75-.75Z"
-        fill="#FF5F1F"
-      />
-      <path
-        d="M8.2 3.5h7.6c.5 0 .9.4.9.9v1.85H7.3V4.4c0-.5.4-.9.9-.9Z"
-        fill="#FF5F1F"
-      />
-      <path
-        d="M9.35 8.05a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Zm0 1.55a1.65 1.65 0 1 1 0 3.3 1.65 1.65 0 0 1 0-3.3Z"
-        fill="#FF5F1F"
-        fillRule="evenodd"
-      />
-      <path
-        d="M14.65 8.05a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Zm0 1.55a1.65 1.65 0 1 1 0 3.3 1.65 1.65 0 0 1 0-3.3Z"
-        fill="#FF5F1F"
-        fillRule="evenodd"
-      />
-      <path d="M11.2 7.15h1.6v6.9h-1.6z" fill="#FF5F1F" />
-      <path
-        d="M4.15 8.7h2.35c.4 0 .7.3.7.7v3.2c0 .4-.3.7-.7.7H4.15c-.4 0-.7-.3-.7-.7V9.4c0-.4.3-.7.7-.7Z"
-        fill="#FF5F1F"
-      />
-      <path
-        d="M10.45 14.2h3.1c.72 0 1.3.58 1.3 1.3v4.05c0 .88-.72 1.6-1.6 1.6h-2.5c-.88 0-1.6-.72-1.6-1.6V15.5c0-.72.58-1.3 1.3-1.3Z"
-        fill="#FF5F1F"
-      />
-      <path d="M12 21.05v1.55" stroke="#FF5F1F" strokeWidth="1.4" strokeLinecap="round" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0 text-[#FF5F1F] drop-shadow-md"
+      fill="none"
+      aria-hidden
+    >
+      <path d="M9.4 2.1h5.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="9.9" y="2.1" width="4.2" height="1.7" rx="0.4" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="7.6" y="3.8" width="8.8" height="2.3" rx="0.6" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="3.7" y="8.7" width="2.4" height="4.6" rx="0.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="9.5" cy="11" r="2.85" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="14.5" cy="11" r="2.85" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="11.15" y="7.2" width="1.7" height="6.6" rx="0.4" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="10.35" y="14.4" width="3.3" height="5.3" rx="1.15" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 19.7v2.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -997,22 +983,16 @@ function FlashNoteStorySurface({
           className={cn(
             'pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col justify-end',
             'bg-gradient-to-t from-black/80 to-transparent',
-            'px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-28',
+            'pb-[max(1rem,env(safe-area-inset-bottom))] pt-28',
             'transition-opacity duration-300',
             isGestureLocked || isSheetOpen ? 'opacity-0' : 'opacity-100'
           )}
         >
-          <div className="pointer-events-auto flex w-full flex-col gap-3">
+          <div className="pointer-events-auto flex w-full flex-col">
             {caption ? (
-              <div
-                className={cn(
-                  'flex w-fit max-w-full items-center gap-3 self-start rounded-2xl',
-                  'border border-[#FF5F1F]/60 bg-black/40 px-4 py-3 backdrop-blur-md',
-                  'shadow-[0_0_15px_rgba(255,95,31,0.2)]'
-                )}
-              >
+              <div className="mx-4 mb-3 flex flex-row items-center gap-3 rounded-2xl border border-[#FF5F1F]/70 bg-transparent px-4 py-2.5">
                 <FlashNoteCaptionMachineIcon />
-                <p className="min-w-0 text-sm font-medium leading-tight text-white">{caption}</p>
+                <p className="min-w-0 text-sm font-medium leading-snug text-white drop-shadow-md">{caption}</p>
               </div>
             ) : null}
 
@@ -1020,7 +1000,7 @@ function FlashNoteStorySurface({
               data-flash-chat-composer
               onSubmit={handleChatSubmit}
               onPointerDown={(event) => event.stopPropagation()}
-              className="flex w-full items-center gap-2.5"
+              className="flex w-full items-center gap-2.5 px-4"
             >
               <input
                 type="text"
