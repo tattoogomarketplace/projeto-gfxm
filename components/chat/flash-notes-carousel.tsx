@@ -17,6 +17,7 @@ import {
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { useFlashNoteViewed } from '@/hooks/use-flash-note-viewed';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { toast } from '@/lib/toast';
 import type { FlashNoteDto } from '@/lib/types/chat';
@@ -47,7 +48,7 @@ export function FlashNotesCarousel() {
   const [loading, setLoading] = useState(true);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [selected, setSelected] = useState<FlashNoteDto | null>(null);
-  const [viewedIds, setViewedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const { viewedIds, markViewed } = useFlashNoteViewed();
   const snapshotRef = useRef<FlashNoteDto[] | null>(null);
   const artistStories = useMemo(() => groupFlashNotesByArtist(notes), [notes]);
 
@@ -88,15 +89,6 @@ export function FlashNotesCarousel() {
   useEffect(() => {
     void loadNotes();
   }, [loadNotes]);
-
-  const markViewed = useCallback((noteId: string) => {
-    setViewedIds((current) => {
-      if (current.has(noteId)) return current;
-      const next = new Set(current);
-      next.add(noteId);
-      return next;
-    });
-  }, []);
 
   const selectNote = useCallback(
     (note: FlashNoteDto | null) => {

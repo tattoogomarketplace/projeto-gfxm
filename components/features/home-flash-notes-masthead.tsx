@@ -11,6 +11,7 @@ import {
   groupFlashNotesByArtist,
   pickFlashNoteToOpen,
 } from '@/lib/flash-note-ring';
+import { useFlashNoteViewed } from '@/hooks/use-flash-note-viewed';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -88,20 +89,11 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
   const { t } = useI18n();
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
+  const { viewedIds, markViewed } = useFlashNoteViewed();
   const [selected, setSelected] = useState<FlashNoteDto | null>(null);
   const [consumedIds, setConsumedIds] = useState<ReadonlySet<string>>(() => new Set());
-  const [viewedIds, setViewedIds] = useState<ReadonlySet<string>>(() => new Set());
   const visibleNotes = notes.filter((note) => !consumedIds.has(note.id));
   const artistStories = useMemo(() => groupFlashNotesByArtist(visibleNotes), [visibleNotes]);
-
-  const markViewed = useCallback((noteId: string) => {
-    setViewedIds((current) => {
-      if (current.has(noteId)) return current;
-      const next = new Set(current);
-      next.add(noteId);
-      return next;
-    });
-  }, []);
 
   const selectNote = useCallback(
     (note: FlashNoteDto | null) => {
