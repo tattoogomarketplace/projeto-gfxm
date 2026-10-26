@@ -54,6 +54,28 @@ function damp(current: number, target: number, factor: number) {
   return current + (target - current) * factor;
 }
 
+function clampPanToViewport(
+  panX: number,
+  panY: number,
+  scale: number,
+  originXPct: number,
+  originYPct: number,
+  width: number,
+  height: number
+) {
+  if (scale <= ZOOM_MIN || width <= 0 || height <= 0) {
+    return { x: 0, y: 0 };
+  }
+  const extraW = (scale - ZOOM_MIN) * width;
+  const extraH = (scale - ZOOM_MIN) * height;
+  const ox = clamp(originXPct, 0, 100) / 100;
+  const oy = clamp(originYPct, 0, 100) / 100;
+  return {
+    x: clamp(panX, -(1 - ox) * extraW, ox * extraW),
+    y: clamp(panY, -(1 - oy) * extraH, oy * extraH),
+  };
+}
+
 function bookErrorKey(code: BookFlashNoteCode) {
   if (code === 'UNAUTHENTICATED') return 'toast.flashBookAuth' as const;
   if (code === 'INVALID_PRICE') return 'toast.flashBookPrice' as const;
@@ -146,6 +168,9 @@ function FlashNoteStorySurface({
   const zoomScaleRef = useRef(1);
   const panXRef = useRef(0);
   const panYRef = useRef(0);
+  const originXRef = useRef(50);
+  const originYRef = useRef(50);
+  const hasCommittedToZoomRef = useRef(false);
   const isGestureLocked = gestureState !== 'IDLE';
 
   useEffect(() => {
@@ -223,12 +248,24 @@ function FlashNoteStorySurface({
   const applyZoomTransform = useCallback((nextScale: number, nextPanX: number, nextPanY: number) => {
     if (!mountedRef.current) return;
     const scale = clamp(nextScale, ZOOM_MIN, ZOOM_MAX);
+    const bounds = overlayRef.current?.getBoundingClientRect();
+    const width = bounds?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 0);
+    const height = bounds?.height ?? (typeof window !== 'undefined' ? window.innerHeight : 0);
+    const pan = clampPanToViewport(
+      nextPanX,
+      nextPanY,
+      scale,
+      originXRef.current,
+      originYRef.current,
+      width,
+      height
+    );
     zoomScaleRef.current = scale;
-    panXRef.current = nextPanX;
-    panYRef.current = nextPanY;
+    panXRef.current = pan.x;
+    panYRef.current = pan.y;
     setZoomScale(scale);
-    setPanX(nextPanX);
-    setPanY(nextPanY);
+    setPanX(pan.x);
+    setPanY(pan.y);
   }, []);
 
   const resetZoomTransform = useCallback(() => {
@@ -257,6 +294,8 @@ function FlashNoteStorySurface({
     const originY = bounds && bounds.height > 0
       ? Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100))
       : 50;
+    originXRef.current = originX;
+    originYRef.current = originY;
     zoomScaleRef.current = ZOOM_MIN;
     panXRef.current = 0;
     panYRef.current = 0;
@@ -304,8 +343,10 @@ function FlashNoteStorySurface({
     if (!mountedRef.current) return;
 
     if (state === 'HOLDING') {
+      if (hasCommittedToZoomRef.current) return;
       if (deltaY > DIRECTION_LOCK_PX) {
         didHoldRef.current = true;
+        hasCommittedToZoomRef.current = true;
         clearHoldTimer();
         safeSetGestureState('ZOOMING');
         const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
@@ -329,6 +370,7 @@ function FlashNoteStorySurface({
     }
 
     if (state === 'ZOOMING') {
+      hasCommittedToZoomRef.current = true;
       const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
       applyZoomTransform(
         damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
@@ -340,6 +382,7 @@ function FlashNoteStorySurface({
 
   const endHold = useCallback(() => {
     isPointerDownRef.current = false;
+    hasCommittedToZoomRef.current = false;
     clearHoldTimer();
     if (!mountedRef.current) return;
     const state = gestureStateRef.current;
@@ -369,6 +412,7 @@ function FlashNoteStorySurface({
     return () => {
       mountedRef.current = false;
       isPointerDownRef.current = false;
+      hasCommittedToZoomRef.current = false;
       clearHoldTimer();
     };
   }, [clearHoldTimer]);
@@ -515,23 +559,25 @@ function FlashNoteStorySurface({
         <div className="absolute inset-0 z-0" style={{ backgroundImage: surface.css }} />
 
         {mediaUrl ? (
-          <div
-            className="absolute inset-0 z-0 will-change-transform transform-gpu"
-            style={{
-              transform: `translate3d(${panX}px, ${panY}px, 0) scale3d(${zoomScale}, ${zoomScale}, 1)`,
-              transformOrigin,
-              transition: gestureState === 'ZOOMING' ? 'none' : SNAP_BACK_TRANSFORM,
-            }}
-          >
-            <OptimizedImage
-              key={note.id}
-              src={mediaUrl}
-              alt={name}
-              sizes="100vw"
-              className="absolute inset-0 z-0 h-full w-full object-cover"
-              fallback={null}
-              priority
-            />
+          <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-center pointer-events-none">
+            <div
+              className="absolute inset-0 will-change-transform transform-gpu"
+              style={{
+                transform: `translate3d(${panX}px, ${panY}px, 0) scale3d(${zoomScale}, ${zoomScale}, 1)`,
+                transformOrigin,
+                transition: gestureState === 'ZOOMING' ? 'none' : SNAP_BACK_TRANSFORM,
+              }}
+            >
+              <OptimizedImage
+                key={note.id}
+                src={mediaUrl}
+                alt={name}
+                sizes="100vw"
+                className="absolute inset-0 z-0 h-full w-full object-cover"
+                fallback={null}
+                priority
+              />
+            </div>
           </div>
         ) : null}
 
