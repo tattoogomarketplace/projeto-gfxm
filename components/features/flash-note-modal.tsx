@@ -171,6 +171,8 @@ function FlashNoteStorySurface({
   const originXRef = useRef(50);
   const originYRef = useRef(50);
   const hasCommittedToZoomRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
+  const activePointerCountRef = useRef(0);
   const isGestureLocked = gestureState !== 'IDLE';
 
   useEffect(() => {
@@ -282,10 +284,35 @@ function FlashNoteStorySurface({
     setTransformOrigin('center center');
   }, []);
 
+  const abortGesture = useCallback(() => {
+    isPointerDownRef.current = false;
+    hasCommittedToZoomRef.current = false;
+    activePointerIdRef.current = null;
+    activePointerCountRef.current = 0;
+    clearHoldTimer();
+    if (!mountedRef.current) return;
+    const state = gestureStateRef.current;
+    resetZoomTransform();
+    if (state === 'ZOOMING' || state === 'HOLDING') {
+      safeSetGestureState('IDLE');
+    }
+  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState]);
+
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (
+      event.isPrimary === false ||
+      (activePointerIdRef.current != null && activePointerIdRef.current !== event.pointerId)
+    ) {
+      didHoldRef.current = true;
+      abortGesture();
+      return;
+    }
     if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
     didHoldRef.current = false;
     isPointerDownRef.current = true;
+    activePointerCountRef.current = 1;
+    activePointerIdRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
     const target = overlayRef.current;
     const bounds = target?.getBoundingClientRect();
     const originX = bounds && bounds.width > 0
@@ -317,9 +344,11 @@ function FlashNoteStorySurface({
       safeSetGestureState('HOLDING');
       triggerHaptic('light');
     }, HOLD_THRESHOLD_MS);
-  }, [clearHoldTimer, isSheetOpen, safeSetGestureState, triggerHaptic]);
+  }, [abortGesture, clearHoldTimer, isSheetOpen, safeSetGestureState, triggerHaptic]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.isPrimary === false) return;
+    if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) return;
     if (!isPointerDownRef.current) return;
     const startX = dragStartXRef.current;
     const startY = dragStartYRef.current;
@@ -380,9 +409,18 @@ function FlashNoteStorySurface({
     }
   }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
 
-  const endHold = useCallback(() => {
+  const endHold = useCallback((event?: PointerEvent<HTMLDivElement>) => {
+    if (event) {
+      if (event.isPrimary === false) return;
+      if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) return;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    }
     isPointerDownRef.current = false;
     hasCommittedToZoomRef.current = false;
+    activePointerIdRef.current = null;
+    activePointerCountRef.current = 0;
     clearHoldTimer();
     if (!mountedRef.current) return;
     const state = gestureStateRef.current;
@@ -400,6 +438,19 @@ function FlashNoteStorySurface({
     }
   }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState]);
 
+  const handlePointerAbort = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current == null || event.pointerId !== activePointerIdRef.current) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    abortGesture();
+  }, [abortGesture]);
+
+  const handlePointerLeave = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) return;
+    endHold(event);
+  }, [endHold]);
+
   const closeBudgetSheet = useCallback(() => {
     if (!mountedRef.current) return;
     setIsSheetOpen(false);
@@ -413,6 +464,8 @@ function FlashNoteStorySurface({
       mountedRef.current = false;
       isPointerDownRef.current = false;
       hasCommittedToZoomRef.current = false;
+      activePointerIdRef.current = null;
+      activePointerCountRef.current = 0;
       clearHoldTimer();
     };
   }, [clearHoldTimer]);
@@ -592,8 +645,9 @@ function FlashNoteStorySurface({
           onPointerDown={beginHold}
           onPointerMove={handlePointerMove}
           onPointerUp={endHold}
-          onPointerCancel={endHold}
-          onPointerLeave={endHold}
+          onPointerCancel={handlePointerAbort}
+          onLostPointerCapture={handlePointerAbort}
+          onPointerLeave={handlePointerLeave}
           onContextMenu={(event) => event.preventDefault()}
           onClick={() => handleZoneClick('prev')}
         />
@@ -603,8 +657,9 @@ function FlashNoteStorySurface({
           onPointerDown={beginHold}
           onPointerMove={handlePointerMove}
           onPointerUp={endHold}
-          onPointerCancel={endHold}
-          onPointerLeave={endHold}
+          onPointerCancel={handlePointerAbort}
+          onLostPointerCapture={handlePointerAbort}
+          onPointerLeave={handlePointerLeave}
           onContextMenu={(event) => event.preventDefault()}
           onClick={() => handleZoneClick('next')}
         />
