@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useSyncExternalStore, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
@@ -28,6 +28,7 @@ type FlashNoteModalProps = {
 const DISMISS_DISTANCE = 110;
 const DISMISS_VELOCITY = 650;
 const STORY_DURATION_MS = 15000;
+const HOLD_DELAY_MS = 180;
 const STORY_SPRING = { type: 'spring', stiffness: 420, damping: 32, mass: 0.72 } as const;
 const EXIT_SNAP = { duration: 0.12, ease: [0.16, 1, 0.3, 1] as const };
 const GPU_LAYER =
@@ -104,10 +105,15 @@ function FlashNoteStorySurface({
   const dragY = useMotionValue(0);
   const backdropOpacity = useTransform(dragY, [0, 260], [1, 0.18]);
   const [isPending, startTransition] = useTransition();
+  const [isHolding, setIsHolding] = useState(false);
   const isPendingRef = useRef(isPending);
   const onNextRef = useRef(onNext);
   const onPrevRef = useRef(onPrev);
   const onCloseRef = useRef(onClose);
+  const remainingMsRef = useRef(STORY_DURATION_MS);
+  const lastTickRef = useRef<number | null>(null);
+  const holdTimerRef = useRef<number | null>(null);
+  const didHoldRef = useRef(false);
 
   useEffect(() => {
     isPendingRef.current = isPending;
@@ -142,13 +148,66 @@ function FlashNoteStorySurface({
   }, [triggerHaptic]);
 
   useEffect(() => {
+    if (isHolding || isPending) {
+      lastTickRef.current = null;
+      return undefined;
+    }
+    lastTickRef.current = performance.now();
     const timeoutId = window.setTimeout(() => {
       nextNote();
-    }, STORY_DURATION_MS);
+    }, remainingMsRef.current);
+    const intervalId = window.setInterval(() => {
+      const now = performance.now();
+      const last = lastTickRef.current ?? now;
+      remainingMsRef.current = Math.max(0, remainingMsRef.current - (now - last));
+      lastTickRef.current = now;
+    }, 50);
     return () => {
+      const now = performance.now();
+      const last = lastTickRef.current ?? now;
+      remainingMsRef.current = Math.max(0, remainingMsRef.current - (now - last));
+      lastTickRef.current = null;
       window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
     };
-  }, [note.id, nextNote]);
+  }, [note.id, isHolding, isPending, nextNote]);
+
+  const clearHoldTimer = useCallback(() => {
+    if (holdTimerRef.current != null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
+
+  const beginHold = useCallback(() => {
+    if (isPendingRef.current) return;
+    didHoldRef.current = false;
+    clearHoldTimer();
+    holdTimerRef.current = window.setTimeout(() => {
+      didHoldRef.current = true;
+      triggerHaptic('light');
+      setIsHolding(true);
+    }, HOLD_DELAY_MS);
+  }, [clearHoldTimer, triggerHaptic]);
+
+  const endHold = useCallback(() => {
+    clearHoldTimer();
+    setIsHolding(false);
+  }, [clearHoldTimer]);
+
+  useEffect(() => () => clearHoldTimer(), [clearHoldTimer]);
+
+  const handleZoneClick = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (didHoldRef.current) {
+        didHoldRef.current = false;
+        return;
+      }
+      if (direction === 'prev') prevNote();
+      else nextNote();
+    },
+    [nextNote, prevNote]
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -294,15 +353,45 @@ function FlashNoteStorySurface({
         <div
           aria-hidden
           className="absolute bottom-32 left-0 top-20 z-10 w-[30%]"
-          onClick={prevNote}
+          onPointerDown={beginHold}
+          onPointerUp={endHold}
+          onPointerCancel={endHold}
+          onPointerLeave={endHold}
+          onContextMenu={(event) => event.preventDefault()}
+          onClick={() => handleZoneClick('prev')}
         />
         <div
           aria-hidden
           className="absolute bottom-32 right-0 top-20 z-10 w-[70%]"
-          onClick={nextNote}
+          onPointerDown={beginHold}
+          onPointerUp={endHold}
+          onPointerCancel={endHold}
+          onPointerLeave={endHold}
+          onContextMenu={(event) => event.preventDefault()}
+          onClick={() => handleZoneClick('next')}
         />
 
-        <div className="absolute left-4 right-4 top-[max(1rem,env(safe-area-inset-top))] z-20 flex h-1 gap-1">
+        <div
+          className={cn(
+            'absolute inset-0 z-30 flex flex-col items-center justify-center gap-12 pointer-events-none transition-opacity duration-300',
+            isHolding ? 'opacity-100' : 'opacity-0'
+          )}
+        >
+          <div className="flex flex-col items-center gap-2 animate-bounce-slow">
+            <span className="text-white text-xl">↑</span>
+            <div className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium tracking-wide shadow-2xl">
+              Deslize para Orçamento
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2 animate-bounce-slow-reverse">
+            <div className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium tracking-wide shadow-2xl">
+              Deslize para Zoom
+            </div>
+            <span className="text-white text-xl">↓</span>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute left-4 right-4 top-[max(1rem,env(safe-area-inset-top))] z-20 flex h-1 gap-1">
           <div
             className="h-1 w-full overflow-hidden rounded-full bg-white/25"
             role="progressbar"
@@ -310,17 +399,22 @@ function FlashNoteStorySurface({
             aria-valuemax={100}
             aria-label={t('flash.expiring')}
           >
-            <motion.div
+            <div
               key={note.id}
-              className="h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: STORY_DURATION_MS / 1000, ease: 'linear' }}
+              className="flash-story-progress-fill h-full w-full origin-left rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.55)]"
+              style={{
+                animationPlayState: isHolding || isPending ? 'paused' : 'running',
+              }}
             />
           </div>
         </div>
 
-        <header className="absolute left-4 right-4 top-[max(2rem,calc(env(safe-area-inset-top)+1.5rem))] z-20 flex items-center justify-between">
+        <header
+          className={cn(
+            'absolute left-4 right-4 top-[max(2rem,calc(env(safe-area-inset-top)+1.5rem))] z-20 flex items-center justify-between transition-opacity duration-300',
+            isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          )}
+        >
           <button
             type="button"
             disabled={isPending}
@@ -370,7 +464,12 @@ function FlashNoteStorySurface({
           </motion.button>
         </header>
 
-        <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 right-4 z-20 flex flex-col gap-3">
+        <div
+          className={cn(
+            'absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-4 right-4 z-20 flex flex-col gap-3 transition-opacity duration-300',
+            isHolding ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          )}
+        >
           {offer.originalPrice != null ? (
             <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
               {offer.discountPercent != null ? (

@@ -18,6 +18,8 @@
   --color-card: var(--card);
   --spacing-safe: max(0.75rem, env(safe-area-inset-bottom, 0px));
   --animate-float: float 3.5s ease-in-out infinite;
+  --animate-bounce-slow: bounce-slow 1.8s ease-in-out infinite;
+  --animate-bounce-slow-reverse: bounce-slow-reverse 1.8s ease-in-out infinite;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -986,6 +988,40 @@
   }
 }
 
+@keyframes bounce-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes bounce-slow-reverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 10px, 0);
+  }
+}
+
+@keyframes flash-story-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.flash-story-progress-fill {
+  transform-origin: left center;
+  animation: flash-story-progress 15000ms linear forwards;
+}
+
 html.splash-seen .splash-root {
   display: none !important;
 }
@@ -996,7 +1032,9 @@ html.splash-seen .splash-root {
   .splash-glow,
   .pass-sweep,
   .today-pulse,
-  .animate-float {
+  .animate-float,
+  .animate-bounce-slow,
+  .animate-bounce-slow-reverse {
     animation: none;
   }
 }
