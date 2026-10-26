@@ -123,6 +123,7 @@ function SectionHeader({
   icon: Icon,
   href,
   ctaLabel,
+  capsule,
 }: {
   id: string;
   title: string;
@@ -130,8 +131,31 @@ function SectionHeader({
   icon?: LucideIcon;
   href?: string;
   ctaLabel?: string;
+  capsule?: boolean;
 }) {
   if (href && Icon && ctaLabel) {
+    if (capsule) {
+      return (
+        <div className="flex w-full flex-row items-center justify-between p-3 mb-4 bg-[#121212]/80 border border-white/5 rounded-2xl backdrop-blur-sm">
+          <div className="flex flex-row items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FF5F1F]/10 text-[#FF5F1F]">
+              <Icon className="h-5 w-5 shrink-0" strokeWidth={1.9} aria-hidden />
+            </div>
+            <h2 id={id} className="text-base sm:text-lg font-semibold text-white tracking-tight">
+              {title}
+            </h2>
+          </div>
+          <Link
+            href={href}
+            className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors"
+          >
+            {ctaLabel}
+            <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="mb-4 flex w-full items-center justify-between">
         <div className="flex min-w-0 items-center gap-2">
@@ -430,6 +454,7 @@ export function HomeDiscover({
           icon={Compass}
           href="/dashboard/galeria"
           ctaLabel={t('home.viewAll')}
+          capsule
         />
         <GalleryInspirationGrid
           items={inspirations}

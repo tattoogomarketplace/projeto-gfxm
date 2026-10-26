@@ -126,10 +126,12 @@ export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[]
   return (
     <>
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-inspiracoes">
-        <div className="mb-4 flex w-full items-center justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <Bookmark className="h-5 w-5 shrink-0 text-[#FF6600]" strokeWidth={1.9} fill="currentColor" aria-hidden />
-            <h2 id="discover-inspiracoes" className="truncate text-lg font-bold text-zinc-100 md:text-xl">
+        <div className="flex w-full flex-row items-center justify-between p-3 mb-4 bg-[#121212]/80 border border-white/5 rounded-2xl backdrop-blur-sm">
+          <div className="flex flex-row items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FF5F1F]/10 text-[#FF5F1F]">
+              <Bookmark className="h-5 w-5 shrink-0" strokeWidth={1.9} fill="currentColor" aria-hidden />
+            </div>
+            <h2 id="discover-inspiracoes" className="text-base sm:text-lg font-semibold text-white tracking-tight">
               {t('home.inspiracoes')}
             </h2>
           </div>
@@ -139,7 +141,7 @@ export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[]
               triggerHaptic('light');
               router.push(SAVED_GALLERY_HREF);
             }}
-            className="min-h-11 shrink-0 text-[13px] font-semibold text-orange-500 active:opacity-70 transition-opacity"
+            className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors"
           >
             {t('home.viewAll')}
           </button>

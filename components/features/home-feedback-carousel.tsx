@@ -69,16 +69,18 @@ export function HomeFeedbackCarousel() {
 
   return (
     <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-reviews">
-      <div className="mb-4 flex w-full items-center justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <Star className="h-5 w-5 shrink-0 text-orange-500" strokeWidth={1.9} aria-hidden />
-          <h2 id="discover-reviews" className="truncate text-lg font-bold text-zinc-100 md:text-xl">
+      <div className="flex w-full flex-row items-center justify-between p-3 mb-4 bg-[#121212]/80 border border-white/5 rounded-2xl backdrop-blur-sm">
+        <div className="flex flex-row items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FF5F1F]/10 text-[#FF5F1F]">
+            <Star className="h-5 w-5 shrink-0" strokeWidth={1.9} aria-hidden />
+          </div>
+          <h2 id="discover-reviews" className="text-base sm:text-lg font-semibold text-white tracking-tight">
             {t('home.featuredReviews')}
           </h2>
         </div>
         <Link
           href="/dashboard/avaliacoes"
-          className="flex shrink-0 items-center gap-1 text-sm font-bold text-orange-500 transition-colors hover:text-orange-400"
+          className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors"
         >
           {t('home.viewAll')}
           <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden />
