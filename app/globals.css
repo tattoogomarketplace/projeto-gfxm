@@ -1038,31 +1038,39 @@
     transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translate3d(-5px, 1px, 0);
+    transform: translate3d(-6px, 0, 0);
   }
 }
 
 .ptr-ring-spin {
   animation: ptr-ring-spin 1.05s linear infinite;
+  will-change: transform;
 }
 
 .ptr-wave-shift {
-  animation: ptr-wave-shift 1.35s ease-in-out infinite;
+  animation: ptr-wave-shift 1.2s linear infinite;
+  will-change: transform;
 }
 
 .ptr-badge {
   color: var(--ptr-accent, #90EE90);
-  transition: color 0.1s linear, filter 0.1s linear;
+  will-change: transform, border-color, fill;
 }
 
 .ptr-accent-stroke {
   stroke: var(--ptr-accent, currentColor);
-  transition: stroke 0.1s linear, color 0.1s linear;
+  will-change: transform, border-color, fill;
 }
 
 .ptr-accent-fill {
   fill: var(--ptr-accent, currentColor);
-  transition: fill 0.1s linear, color 0.1s linear;
+  will-change: transform, border-color, fill;
+}
+
+.ptr-wave-lift {
+  will-change: transform;
+  transform: translate3d(0, 46%, 0);
+  backface-visibility: hidden;
 }
 
 .flash-story-progress-fill {

@@ -109,6 +109,7 @@ export function PullToRefresh({
   const indicatorRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
   const ringRef = useRef<SVGCircleElement>(null);
+  const waveRef = useRef<HTMLSpanElement>(null);
   const slotRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLElement | Window | null>(null);
   const [slotEl, setSlotEl] = useState<HTMLElement | null>(null);
@@ -184,19 +185,25 @@ export function PullToRefresh({
       : 0;
     const progress = refreshingNow ? Math.max(pullProgress, loadProgress) : pullProgress;
     const accent = accentCss(progress);
+    const wave = waveRef.current;
 
     if (indicator) {
       indicator.style.opacity = String(Math.min(1, pull / 28));
+      indicator.style.setProperty('--ptr-progress', progress.toFixed(4));
       indicator.style.setProperty('--ptr-accent', accent);
-      indicator.style.color = 'var(--ptr-accent)';
+      indicator.style.color = accent;
     }
     if (ring) {
-      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pullProgress));
+      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
       ring.style.opacity = phaseRef.current === 'refreshing' ? '0' : '1';
+      ring.style.stroke = accent;
+    }
+    if (wave) {
+      wave.style.transform = `translate3d(0, ${(1 - progress) * 46}%, 0)`;
     }
     if (mark) {
-      mark.style.opacity = String(0.45 + pullProgress * 0.55);
-      mark.style.transform = `scale(${0.92 + pullProgress * 0.08})`;
+      mark.style.opacity = String(0.55 + progress * 0.45);
+      mark.style.transform = 'translate3d(0, 0, 0)';
     }
   }, []);
 
@@ -437,8 +444,9 @@ export function PullToRefresh({
         height: INDICATOR_SIZE,
         transform: 'translate3d(-50%, -50%, 0)',
         opacity: 0,
-        willChange: 'opacity',
+        willChange: 'transform, opacity',
         color: ACCENT_MINT_CSS,
+        ['--ptr-progress' as string]: '0',
         ['--ptr-accent' as string]: ACCENT_MINT_CSS,
       }
     : {
@@ -448,6 +456,7 @@ export function PullToRefresh({
         opacity: 0,
         willChange: 'transform, opacity',
         color: ACCENT_MINT_CSS,
+        ['--ptr-progress' as string]: '0',
         ['--ptr-accent' as string]: ACCENT_MINT_CSS,
       };
 
@@ -508,32 +517,37 @@ export function PullToRefresh({
           className="pointer-events-none absolute inset-[6px] overflow-hidden rounded-full bg-[#161616] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
           aria-hidden
         >
-          <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/15 via-transparent to-black/35" />
-          <svg
-            className={cn(
-              'pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full text-current',
-              refreshing && 'ptr-wave-shift'
-            )}
-            viewBox="0 0 34 20"
-            preserveAspectRatio="none"
+          <span className="pointer-events-none absolute inset-0 z-[1] rounded-full bg-gradient-to-b from-white/18 via-transparent to-black/30" />
+          <span
+            ref={waveRef}
+            className="ptr-wave-lift pointer-events-none absolute inset-x-[-20%] bottom-0 h-[118%] w-[140%] transform-gpu"
           >
-            <path
-              className="ptr-accent-fill"
-              d="M0 9 C 5.5 5.2, 11 12.8, 17 9 C 23 5.2, 28.5 12.8, 34 9 L 34 20 L 0 20 Z"
-              fill="currentColor"
-              opacity="0.92"
-            />
-            <path
-              className="ptr-accent-fill"
-              d="M0 12 C 6 9.4, 11.5 14.6, 17 12 C 22.5 9.4, 28 14.6, 34 12 L 34 20 L 0 20 Z"
-              fill="currentColor"
-              opacity="0.55"
-            />
-          </svg>
+            <svg
+              className={cn(
+                'pointer-events-none absolute inset-0 h-full w-full text-current',
+                refreshing && 'ptr-wave-shift'
+              )}
+              viewBox="0 0 48 32"
+              preserveAspectRatio="none"
+            >
+              <path
+                className="ptr-accent-fill"
+                d="M0 10 C 8 4, 16 16, 24 10 C 32 4, 40 16, 48 10 L 48 32 L 0 32 Z"
+                fill="currentColor"
+                opacity="0.92"
+              />
+              <path
+                className="ptr-accent-fill"
+                d="M0 14 C 9 9, 17 18, 24 14 C 31 10, 39 18, 48 14 L 48 32 L 0 32 Z"
+                fill="currentColor"
+                opacity="0.52"
+              />
+            </svg>
+          </span>
         </span>
         <span
           ref={markRef}
-          className="relative z-[1] select-none text-[11px] font-black tracking-tight text-[#FF5F1F] drop-shadow-[0_0_8px_rgba(255,95,31,0.45)] transform-gpu"
+          className="relative z-[2] flex h-full w-full items-center justify-center select-none text-[11px] font-black leading-none tracking-tight text-[#FF5F1F] drop-shadow-[0_0_8px_rgba(255,95,31,0.45)] transform-gpu"
         >
           {BRAND_WORDMARK.mark}
         </span>
