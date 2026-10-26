@@ -1026,6 +1026,30 @@
   }
 }
 
+@keyframes ptr-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ptr-wave-shift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-5px, 1px, 0);
+  }
+}
+
+.ptr-ring-spin {
+  animation: ptr-ring-spin 1.05s linear infinite;
+}
+
+.ptr-wave-shift {
+  animation: ptr-wave-shift 1.35s ease-in-out infinite;
+}
+
 .flash-story-progress-fill {
   transform-origin: left center;
   animation: flash-story-progress 15000ms linear forwards;
@@ -1043,7 +1067,9 @@ html.splash-seen .splash-root {
   .today-pulse,
   .animate-float,
   .animate-bounce-slow,
-  .animate-bounce-slow-reverse {
+  .animate-bounce-slow-reverse,
+  .ptr-ring-spin,
+  .ptr-wave-shift {
     animation: none;
   }
 }

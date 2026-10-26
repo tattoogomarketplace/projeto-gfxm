@@ -73,6 +73,11 @@ export function HomeDiscoverSkeleton({ className }: { className?: string }) {
           <div className="relative flex h-11 w-full items-center justify-center bg-transparent px-4">
             <Skeleton className="h-7 w-44 rounded-full" />
           </div>
+          <div
+            data-ptr-slot
+            className="relative flex h-0 w-full shrink-0 items-center justify-center overflow-hidden bg-[#121212]"
+            aria-hidden
+          />
           <div className="relative w-full bg-transparent pt-2">
             <div className="mb-2 flex items-center gap-2 px-4">
               <Skeleton className="h-3.5 w-3.5 rounded-full" />

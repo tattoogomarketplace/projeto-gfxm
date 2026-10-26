@@ -3,12 +3,14 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useTransition,
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -19,14 +21,15 @@ const MAX_PULL_PX = 112;
 const DAMPING = 0.38;
 const INDICATOR_SIZE = 44;
 const INDICATOR_HIDE_PX = 56;
-const REST_PULL_PX = 68;
+const REST_PULL_PX = 60;
 const MIN_REFRESH_MS = 560;
 const MAX_REFRESH_MS = 2400;
 const SNAP_MS = 380;
 const SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const AXIS_LOCK_PX = 8;
-const RING_RADIUS = 18;
+const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const RING_DASH = '3.15 4.55';
 
 type Phase = 'idle' | 'pulling' | 'refreshing';
 
@@ -88,7 +91,9 @@ export function PullToRefresh({
   const indicatorRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
   const ringRef = useRef<SVGCircleElement>(null);
+  const slotRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLElement | Window | null>(null);
+  const [slotEl, setSlotEl] = useState<HTMLElement | null>(null);
 
   const phaseRef = useRef<Phase>('idle');
   const pullingRef = useRef(false);
@@ -117,33 +122,49 @@ export function PullToRefresh({
     const indicator = indicatorRef.current;
     const mark = markRef.current;
     const ring = ringRef.current;
-    if (!content || !indicator) return;
+    const slot = slotRef.current;
+    if (!content) return;
 
-    const transition = withSnap ? `transform ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
-    content.style.transition = transition;
-    indicator.style.transition = withSnap
-      ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
-      : 'none';
+    const snapTransform = withSnap ? `transform ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
+    const snapHeight = withSnap ? `height ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
 
-    content.style.transform = pull === 0 ? 'translate3d(0, 0, 0)' : `translate3d(0, ${pull}px, 0)`;
-    content.style.willChange = pull === 0 ? 'auto' : 'transform';
-    if (pull === 0 && withSnap) {
-      if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
-      restTimerRef.current = window.setTimeout(() => {
-        restTimerRef.current = 0;
-        if (pullRef.current !== 0 || !contentRef.current) return;
-        contentRef.current.style.transform = 'none';
-        contentRef.current.style.transition = 'none';
-        contentRef.current.style.willChange = 'auto';
-      }, SNAP_MS);
+    if (slot) {
+      slot.style.transition = snapHeight;
+      slot.style.height = `${pull}px`;
+      content.style.transition = 'none';
+      content.style.transform = 'none';
+      content.style.willChange = 'auto';
+      if (indicator) {
+        indicator.style.transition = withSnap ? 'opacity 160ms linear' : 'none';
+        indicator.style.transform = 'translate3d(-50%, -50%, 0)';
+      }
+    } else if (indicator) {
+      content.style.transition = snapTransform;
+      indicator.style.transition = withSnap
+        ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
+        : 'none';
+      content.style.transform = pull === 0 ? 'translate3d(0, 0, 0)' : `translate3d(0, ${pull}px, 0)`;
+      content.style.willChange = pull === 0 ? 'auto' : 'transform';
+      if (pull === 0 && withSnap) {
+        if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
+        restTimerRef.current = window.setTimeout(() => {
+          restTimerRef.current = 0;
+          if (pullRef.current !== 0 || !contentRef.current) return;
+          contentRef.current.style.transform = 'none';
+          contentRef.current.style.transition = 'none';
+          contentRef.current.style.willChange = 'auto';
+        }, SNAP_MS);
+      }
+      indicator.style.transform = `translate3d(-50%, ${pull - INDICATOR_HIDE_PX}px, 0)`;
     }
-    const indicatorY = pull - INDICATOR_HIDE_PX;
-    indicator.style.transform = `translate3d(-50%, ${indicatorY}px, 0)`;
 
     const progress = Math.min(1, pull / THRESHOLD_PX);
-    indicator.style.opacity = String(Math.min(1, pull / 28));
+    if (indicator) {
+      indicator.style.opacity = String(Math.min(1, pull / 28));
+    }
     if (ring) {
       ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
+      ring.style.opacity = phaseRef.current === 'refreshing' ? '0' : '1';
     }
     if (mark) {
       mark.style.opacity = String(0.45 + progress * 0.55);
@@ -235,6 +256,30 @@ export function PullToRefresh({
     if (!sawPendingRef.current) return;
     finishRefresh();
   }, [finishRefresh, isPending, onRefresh, phase]);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const attachSlot = (node: HTMLElement | null) => {
+      slotRef.current = node;
+      setSlotEl(node);
+    };
+
+    attachSlot(root.querySelector<HTMLElement>('[data-ptr-slot]'));
+
+    const observer = new MutationObserver(() => {
+      const next = root.querySelector<HTMLElement>('[data-ptr-slot]');
+      if (next === slotRef.current) return;
+      attachSlot(next);
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    applyFrame(pullRef.current, false);
+  }, [applyFrame, slotEl]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -335,13 +380,108 @@ export function PullToRefresh({
   }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);
 
   const refreshing = phase === 'refreshing';
-  const indicatorStyle: CSSProperties = {
-    width: INDICATOR_SIZE,
-    height: INDICATOR_SIZE,
-    transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
-    opacity: 0,
-    willChange: 'transform, opacity',
-  };
+  const slotted = Boolean(slotEl);
+  const indicatorStyle: CSSProperties = slotted
+    ? {
+        width: INDICATOR_SIZE,
+        height: INDICATOR_SIZE,
+        transform: 'translate3d(-50%, -50%, 0)',
+        opacity: 0,
+        willChange: 'opacity',
+      }
+    : {
+        width: INDICATOR_SIZE,
+        height: INDICATOR_SIZE,
+        transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
+        opacity: 0,
+        willChange: 'transform, opacity',
+      };
+
+  const badge = (
+    <div
+      ref={indicatorRef}
+      className={cn(
+        'pointer-events-none z-[35] flex items-center justify-center transform-gpu',
+        slotted ? 'absolute left-1/2 top-1/2' : 'absolute left-1/2 top-0'
+      )}
+      style={indicatorStyle}
+      aria-hidden={phase === 'idle'}
+      aria-live="polite"
+      role="status"
+    >
+      <div
+        className={cn(
+          'relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-visible rounded-full',
+          'border border-white/10 bg-[#121212] shadow-[0_8px_24px_rgba(0,0,0,0.45)]',
+          refreshing && 'drop-shadow-[0_0_12px_rgba(144,238,144,0.28)]'
+        )}
+      >
+        <svg
+          className={cn(
+            'pointer-events-none absolute inset-0 h-full w-full',
+            phase !== 'idle' && 'ptr-ring-spin'
+          )}
+          viewBox="0 0 44 44"
+          aria-hidden
+        >
+          <circle
+            cx="22"
+            cy="22"
+            r={RING_RADIUS}
+            fill="none"
+            stroke="#90EE90"
+            strokeWidth="1.45"
+            strokeDasharray={RING_DASH}
+            strokeLinecap="round"
+            opacity="0.88"
+          />
+          <circle
+            ref={ringRef}
+            cx="22"
+            cy="22"
+            r={RING_RADIUS}
+            fill="none"
+            stroke="#90EE90"
+            strokeWidth="1.55"
+            strokeLinecap="round"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={RING_CIRCUMFERENCE}
+          />
+        </svg>
+        <span
+          className="pointer-events-none absolute inset-[6px] overflow-hidden rounded-full bg-[#161616] shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]"
+          aria-hidden
+        >
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/15 via-transparent to-black/35" />
+          <svg
+            className={cn(
+              'pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full text-[#90EE90]',
+              refreshing && 'ptr-wave-shift'
+            )}
+            viewBox="0 0 34 20"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0 9 C 5.5 5.2, 11 12.8, 17 9 C 23 5.2, 28.5 12.8, 34 9 L 34 20 L 0 20 Z"
+              fill="currentColor"
+              opacity="0.92"
+            />
+            <path
+              d="M0 12 C 6 9.4, 11.5 14.6, 17 12 C 22.5 9.4, 28 14.6, 34 12 L 34 20 L 0 20 Z"
+              fill="#7FE07F"
+              opacity="0.55"
+            />
+          </svg>
+        </span>
+        <span
+          ref={markRef}
+          className="relative z-[1] select-none text-[11px] font-black tracking-tight text-[#FF5F1F] drop-shadow-[0_0_8px_rgba(255,95,31,0.45)] transform-gpu"
+        >
+          {BRAND_WORDMARK.mark}
+        </span>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -349,55 +489,7 @@ export function PullToRefresh({
       className={cn('relative flex min-h-0 min-w-0 w-full flex-1 flex-col', className)}
       data-ptr-root
     >
-      <div
-        ref={indicatorRef}
-        className="pointer-events-none absolute left-1/2 top-0 z-[35] flex items-center justify-center transform-gpu"
-        style={indicatorStyle}
-        aria-hidden={phase === 'idle'}
-        aria-live="polite"
-        role="status"
-      >
-        <div
-          className={cn(
-            'relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full',
-            'border border-white/10 bg-[#121212]/80 shadow-2xl backdrop-blur-xl',
-            refreshing && 'animate-pulse drop-shadow-[0_0_15px_#FF5F1F]'
-          )}
-        >
-          <svg
-            className="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
-            viewBox="0 0 44 44"
-            aria-hidden
-          >
-            <circle
-              cx="22"
-              cy="22"
-              r={RING_RADIUS}
-              fill="none"
-              stroke="rgba(255,95,31,0.18)"
-              strokeWidth="1.5"
-            />
-            <circle
-              ref={ringRef}
-              cx="22"
-              cy="22"
-              r={RING_RADIUS}
-              fill="none"
-              stroke="#FF5F1F"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeDasharray={RING_CIRCUMFERENCE}
-              strokeDashoffset={RING_CIRCUMFERENCE}
-            />
-          </svg>
-          <span
-            ref={markRef}
-            className="relative z-[1] select-none text-[11px] font-black tracking-tight text-[#FF5F1F] transform-gpu"
-          >
-            {BRAND_WORDMARK.mark}
-          </span>
-        </div>
-      </div>
+      {slotted && slotEl ? createPortal(badge, slotEl) : badge}
       <div
         ref={contentRef}
         className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"

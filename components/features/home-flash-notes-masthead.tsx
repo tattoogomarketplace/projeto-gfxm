@@ -150,6 +150,12 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
       <div className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#121212]/90 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-3 backdrop-blur-2xl">
         <BrandWordmark />
 
+        <div
+          data-ptr-slot
+          className="relative flex h-0 w-full shrink-0 items-center justify-center overflow-hidden bg-[#121212]"
+          aria-hidden
+        />
+
         {visibleNotes.length === 0 ? null : (
           <section className="relative w-full shrink-0 bg-transparent px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pt-2">
             <div className="mb-2 flex items-center gap-2 px-4">
