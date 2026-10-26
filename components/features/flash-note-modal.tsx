@@ -416,31 +416,43 @@ function FlashNoteStorySurface({
     if (event) {
       if (!event.isPrimary) return;
       if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) return;
-      if (blockDismissRef.current || gestureStateRef.current === 'ZOOMING') {
+      if (
+        blockDismissRef.current ||
+        hasCommittedToZoomRef.current ||
+        gestureStateRef.current === 'ZOOMING'
+      ) {
         event.stopPropagation();
       }
     }
     const capturedId = event?.pointerId;
+    const zoomedSession =
+      hasCommittedToZoomRef.current || gestureStateRef.current === 'ZOOMING';
     isPointerDownRef.current = false;
-    hasCommittedToZoomRef.current = false;
-    activePointerIdRef.current = null;
-    activePointerCountRef.current = 0;
     clearHoldTimer();
-    if (event && capturedId != null && event.currentTarget.hasPointerCapture(capturedId)) {
-      event.currentTarget.releasePointerCapture(capturedId);
-    }
-    if (!mountedRef.current) return;
-    const state = gestureStateRef.current;
-    if (state === 'ZOOMING') {
+    if (zoomedSession) {
+      if (event && capturedId != null && event.currentTarget.hasPointerCapture(capturedId)) {
+        event.currentTarget.releasePointerCapture(capturedId);
+      }
+      activePointerIdRef.current = null;
+      activePointerCountRef.current = 0;
+      if (!mountedRef.current) return;
       dragY.set(0);
       applyZoomTransform(ZOOM_MIN, 0, 0);
       safeSetGestureState('IDLE');
       setDragStartY(null);
       dragStartXRef.current = null;
       dragStartYRef.current = null;
+      hasCommittedToZoomRef.current = false;
       return;
     }
-    if (state === 'HOLDING') {
+    hasCommittedToZoomRef.current = false;
+    activePointerIdRef.current = null;
+    activePointerCountRef.current = 0;
+    if (event && capturedId != null && event.currentTarget.hasPointerCapture(capturedId)) {
+      event.currentTarget.releasePointerCapture(capturedId);
+    }
+    if (!mountedRef.current) return;
+    if (gestureStateRef.current === 'HOLDING') {
       dragY.set(0);
       resetZoomTransform();
       safeSetGestureState('IDLE');
