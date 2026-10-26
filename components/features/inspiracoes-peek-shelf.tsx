@@ -141,7 +141,7 @@ export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[]
               triggerHaptic('light');
               router.push(SAVED_GALLERY_HREF);
             }}
-            className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors"
+            className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors whitespace-nowrap flex-shrink-0"
           >
             {t('home.viewAll')}
           </button>

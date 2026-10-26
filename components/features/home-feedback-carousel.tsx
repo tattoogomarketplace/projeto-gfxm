@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, MessageCircle, Star } from 'lucide-react';
+import { MessageCircle, Star } from 'lucide-react';
 import { FeedbackCard, FeedbackCardSkeleton } from '@/components/features/feedback-card';
 import { HomeCarouselActionCard } from '@/components/features/home-carousel-action-card';
 import { ReviewHapticPreview } from '@/components/features/review-haptic-preview';
@@ -80,10 +80,9 @@ export function HomeFeedbackCarousel() {
         </div>
         <Link
           href="/dashboard/avaliacoes"
-          className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors"
+          className="text-sm font-medium text-[#FF5F1F] hover:text-[#FF5F1F]/80 transition-colors whitespace-nowrap flex-shrink-0"
         >
           {t('home.viewAll')}
-          <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden />
         </Link>
       </div>
 
