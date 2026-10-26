@@ -171,6 +171,7 @@ function FlashNoteStorySurface({
   const originXRef = useRef(50);
   const originYRef = useRef(50);
   const hasCommittedToZoomRef = useRef(false);
+  const blockDismissRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
   const activePointerCountRef = useRef(0);
   const isGestureLocked = gestureState !== 'IDLE';
@@ -287,8 +288,10 @@ function FlashNoteStorySurface({
   const abortGesture = useCallback(() => {
     isPointerDownRef.current = false;
     hasCommittedToZoomRef.current = false;
+    blockDismissRef.current = false;
     activePointerIdRef.current = null;
     activePointerCountRef.current = 0;
+    dragY.set(0);
     clearHoldTimer();
     if (!mountedRef.current) return;
     const state = gestureStateRef.current;
@@ -296,11 +299,12 @@ function FlashNoteStorySurface({
     if (state === 'ZOOMING' || state === 'HOLDING') {
       safeSetGestureState('IDLE');
     }
-  }, [clearHoldTimer, resetZoomTransform, safeSetGestureState]);
+  }, [clearHoldTimer, dragY, resetZoomTransform, safeSetGestureState]);
 
   const beginHold = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary) return;
     if (isPendingRef.current || gestureStateRef.current === 'BUDGET' || isSheetOpen) return;
+    blockDismissRef.current = false;
     didHoldRef.current = false;
     isPointerDownRef.current = true;
     activePointerCountRef.current = 1;
@@ -365,8 +369,11 @@ function FlashNoteStorySurface({
     if (!mountedRef.current) return;
 
     if (hasCommittedToZoomRef.current || state === 'ZOOMING') {
+      event.stopPropagation();
       hasCommittedToZoomRef.current = true;
+      blockDismissRef.current = true;
       if (state !== 'ZOOMING') safeSetGestureState('ZOOMING');
+      dragY.set(0);
       const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
       applyZoomTransform(
         damp(zoomScaleRef.current, targetScale, ZOOM_DAMPING),
@@ -378,9 +385,12 @@ function FlashNoteStorySurface({
 
     if (state === 'HOLDING') {
       if (deltaY > DIRECTION_LOCK_PX) {
+        event.stopPropagation();
         didHoldRef.current = true;
         hasCommittedToZoomRef.current = true;
+        blockDismissRef.current = true;
         clearHoldTimer();
+        dragY.set(0);
         safeSetGestureState('ZOOMING');
         const targetScale = clamp(ZOOM_MIN + Math.max(0, deltaY) / ZOOM_SCALE_DIVISOR, ZOOM_MIN, ZOOM_MAX);
         applyZoomTransform(
@@ -400,12 +410,15 @@ function FlashNoteStorySurface({
         triggerHaptic('medium');
       }
     }
-  }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState, triggerHaptic]);
+  }, [applyZoomTransform, clearHoldTimer, dragY, resetZoomTransform, safeSetGestureState, triggerHaptic]);
 
   const endHold = useCallback((event?: PointerEvent<HTMLDivElement>) => {
     if (event) {
       if (!event.isPrimary) return;
       if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) return;
+      if (blockDismissRef.current || gestureStateRef.current === 'ZOOMING') {
+        event.stopPropagation();
+      }
     }
     const capturedId = event?.pointerId;
     isPointerDownRef.current = false;
@@ -419,6 +432,7 @@ function FlashNoteStorySurface({
     if (!mountedRef.current) return;
     const state = gestureStateRef.current;
     if (state === 'ZOOMING') {
+      dragY.set(0);
       applyZoomTransform(ZOOM_MIN, 0, 0);
       safeSetGestureState('IDLE');
       setDragStartY(null);
@@ -427,10 +441,11 @@ function FlashNoteStorySurface({
       return;
     }
     if (state === 'HOLDING') {
+      dragY.set(0);
       resetZoomTransform();
       safeSetGestureState('IDLE');
     }
-  }, [applyZoomTransform, clearHoldTimer, resetZoomTransform, safeSetGestureState]);
+  }, [applyZoomTransform, clearHoldTimer, dragY, resetZoomTransform, safeSetGestureState]);
 
   const handlePointerAbort = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary) return;
@@ -515,6 +530,15 @@ function FlashNoteStorySurface({
   }, [closeBudgetSheet, isSheetOpen, nextNote, onClose, prevNote]);
 
   const handleDrag = (_event: unknown, info: { offset: { y: number } }) => {
+    if (
+      blockDismissRef.current ||
+      hasCommittedToZoomRef.current ||
+      gestureStateRef.current === 'ZOOMING' ||
+      gestureStateRef.current === 'HOLDING'
+    ) {
+      dragY.set(0);
+      return;
+    }
     dragY.set(Math.max(0, info.offset.y));
   };
 
@@ -522,6 +546,15 @@ function FlashNoteStorySurface({
     _event: unknown,
     info: { offset: { y: number }; velocity: { y: number } }
   ) => {
+    const zoomSession =
+      blockDismissRef.current ||
+      hasCommittedToZoomRef.current ||
+      gestureStateRef.current === 'ZOOMING' ||
+      gestureStateRef.current === 'HOLDING';
+    if (zoomSession) {
+      dragY.set(0);
+      return;
+    }
     if (isPending) {
       dragY.set(0);
       return;
