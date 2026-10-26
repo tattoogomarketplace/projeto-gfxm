@@ -77,9 +77,10 @@ const FEED_ACTION_METRIC_CLASS =
   'text-xs font-semibold tracking-wide text-gray-300 whitespace-nowrap';
 
 const FEED_TOP_ACTION_BTN_CLASS =
-  'flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px] bg-white/[0.02] text-zinc-300 transition-all hover:border-orange-500/50';
+  'flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all bg-white/[0.02] text-zinc-300 hover:border-orange-500/50';
 
-const FEED_TOP_ACTION_METRIC_CLASS = 'text-sm font-medium leading-none';
+const FEED_TOP_ACTION_METRIC_CLASS =
+  'text-xs font-medium tracking-tight leading-none whitespace-nowrap';
 
 type FeedListUser = {
   id: string;
@@ -890,20 +891,20 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
               <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex w-full flex-row justify-between items-center gap-2">
-                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                <div className="flex w-full flex-row justify-between items-center gap-1.5">
+                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-5" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-2 px-3 py-1.5 border border-white/10 rounded-full h-9 flex-1 max-w-[85px]">
+                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
@@ -1063,7 +1064,7 @@ export function GalleryInspirationGrid({
                 viewport={{ once: true, margin: '-20px' }}
               >
                 <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex w-full flex-row justify-between items-center gap-2">
+                  <div className="flex w-full flex-row justify-between items-center gap-1.5">
                     {showLike ? (
                       <div
                         className={cn(
