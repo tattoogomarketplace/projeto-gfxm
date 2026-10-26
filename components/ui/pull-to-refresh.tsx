@@ -30,6 +30,24 @@ const AXIS_LOCK_PX = 8;
 const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const RING_DASH = '3.15 4.55';
+const ACCENT_MINT = { r: 144, g: 238, b: 144 };
+const ACCENT_ORANGE = { r: 255, g: 95, b: 31 };
+const ACCENT_MINT_CSS = '#90EE90';
+
+function clamp01(value: number): number {
+  if (value <= 0) return 0;
+  if (value >= 1) return 1;
+  return value;
+}
+
+function lerpChannel(from: number, to: number, t: number): number {
+  return Math.round(from + (to - from) * t);
+}
+
+function accentCss(t: number): string {
+  const k = clamp01(t);
+  return `rgb(${lerpChannel(ACCENT_MINT.r, ACCENT_ORANGE.r, k)} ${lerpChannel(ACCENT_MINT.g, ACCENT_ORANGE.g, k)} ${lerpChannel(ACCENT_MINT.b, ACCENT_ORANGE.b, k)})`;
+}
 
 type Phase = 'idle' | 'pulling' | 'refreshing';
 
@@ -111,6 +129,7 @@ export function PullToRefresh({
   const maxTimerRef = useRef(0);
   const minTimerRef = useRef(0);
   const restTimerRef = useRef(0);
+  const colorRafRef = useRef(0);
 
   const setPhaseSafe = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -158,17 +177,26 @@ export function PullToRefresh({
       indicator.style.transform = `translate3d(-50%, ${pull - INDICATOR_HIDE_PX}px, 0)`;
     }
 
-    const progress = Math.min(1, pull / THRESHOLD_PX);
+    const pullProgress = clamp01(pull / THRESHOLD_PX);
+    const refreshingNow = phaseRef.current === 'refreshing' && !finishingRef.current;
+    const loadProgress = refreshingNow
+      ? clamp01((performance.now() - refreshStartedAtRef.current) / MIN_REFRESH_MS)
+      : 0;
+    const progress = refreshingNow ? Math.max(pullProgress, loadProgress) : pullProgress;
+    const accent = accentCss(progress);
+
     if (indicator) {
       indicator.style.opacity = String(Math.min(1, pull / 28));
+      indicator.style.setProperty('--ptr-accent', accent);
+      indicator.style.color = 'var(--ptr-accent)';
     }
     if (ring) {
-      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
+      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pullProgress));
       ring.style.opacity = phaseRef.current === 'refreshing' ? '0' : '1';
     }
     if (mark) {
-      mark.style.opacity = String(0.45 + progress * 0.55);
-      mark.style.transform = `scale(${0.92 + progress * 0.08})`;
+      mark.style.opacity = String(0.45 + pullProgress * 0.55);
+      mark.style.transform = `scale(${0.92 + pullProgress * 0.08})`;
     }
   }, []);
 
@@ -185,15 +213,35 @@ export function PullToRefresh({
     [applyFrame]
   );
 
+  const stopColorTicker = useCallback(() => {
+    if (!colorRafRef.current) return;
+    window.cancelAnimationFrame(colorRafRef.current);
+    colorRafRef.current = 0;
+  }, []);
+
+  const startColorTicker = useCallback(() => {
+    stopColorTicker();
+    const tick = () => {
+      if (phaseRef.current !== 'refreshing') {
+        colorRafRef.current = 0;
+        return;
+      }
+      applyFrame(pullRef.current, false);
+      colorRafRef.current = window.requestAnimationFrame(tick);
+    };
+    colorRafRef.current = window.requestAnimationFrame(tick);
+  }, [applyFrame, stopColorTicker]);
+
   const retract = useCallback(() => {
+    stopColorTicker();
     finishingRef.current = false;
     pullingRef.current = false;
     armedRef.current = false;
     pullRef.current = 0;
     pendingPullRef.current = 0;
-    applyFrame(0, true);
     setPhaseSafe('idle');
-  }, [applyFrame, setPhaseSafe]);
+    applyFrame(0, true);
+  }, [applyFrame, setPhaseSafe, stopColorTicker]);
 
   const finishRefresh = useCallback(() => {
     if (finishingRef.current) return;
@@ -219,11 +267,12 @@ export function PullToRefresh({
     pullingRef.current = false;
     pullRef.current = REST_PULL_PX;
     pendingPullRef.current = REST_PULL_PX;
-    applyFrame(REST_PULL_PX, true);
-    triggerHaptic('success');
-    refreshStartedAtRef.current = performance.now();
     sawPendingRef.current = false;
     finishingRef.current = false;
+    refreshStartedAtRef.current = performance.now();
+    applyFrame(REST_PULL_PX, true);
+    startColorTicker();
+    triggerHaptic('success');
 
     maxTimerRef.current = window.setTimeout(() => {
       finishRefresh();
@@ -245,7 +294,7 @@ export function PullToRefresh({
         finishRefresh();
       }
     }, MIN_REFRESH_MS);
-  }, [applyFrame, finishRefresh, onRefresh, router, setPhaseSafe, startTransition, triggerHaptic]);
+  }, [applyFrame, finishRefresh, onRefresh, router, setPhaseSafe, startColorTicker, startTransition, triggerHaptic]);
 
   useEffect(() => {
     if (phase !== 'refreshing' || onRefresh) return;
@@ -373,6 +422,7 @@ export function PullToRefresh({
       root.removeEventListener('touchend', onEnd);
       root.removeEventListener('touchcancel', onEnd);
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+      if (colorRafRef.current) window.cancelAnimationFrame(colorRafRef.current);
       if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
       if (minTimerRef.current) window.clearTimeout(minTimerRef.current);
       if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
@@ -388,6 +438,8 @@ export function PullToRefresh({
         transform: 'translate3d(-50%, -50%, 0)',
         opacity: 0,
         willChange: 'opacity',
+        color: ACCENT_MINT_CSS,
+        ['--ptr-accent' as string]: ACCENT_MINT_CSS,
       }
     : {
         width: INDICATOR_SIZE,
@@ -395,6 +447,8 @@ export function PullToRefresh({
         transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
         opacity: 0,
         willChange: 'transform, opacity',
+        color: ACCENT_MINT_CSS,
+        ['--ptr-accent' as string]: ACCENT_MINT_CSS,
       };
 
   const badge = (
@@ -411,9 +465,9 @@ export function PullToRefresh({
     >
       <div
         className={cn(
-          'relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-visible rounded-full',
+          'ptr-badge relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-visible rounded-full',
           'border border-white/10 bg-[#121212] shadow-[0_8px_24px_rgba(0,0,0,0.45)]',
-          refreshing && 'drop-shadow-[0_0_12px_rgba(144,238,144,0.28)]'
+          refreshing && 'drop-shadow-[0_0_12px_var(--ptr-accent)]'
         )}
       >
         <svg
@@ -425,11 +479,12 @@ export function PullToRefresh({
           aria-hidden
         >
           <circle
+            className="ptr-accent-stroke"
             cx="22"
             cy="22"
             r={RING_RADIUS}
             fill="none"
-            stroke="#90EE90"
+            stroke="currentColor"
             strokeWidth="1.45"
             strokeDasharray={RING_DASH}
             strokeLinecap="round"
@@ -437,11 +492,12 @@ export function PullToRefresh({
           />
           <circle
             ref={ringRef}
+            className="ptr-accent-stroke"
             cx="22"
             cy="22"
             r={RING_RADIUS}
             fill="none"
-            stroke="#90EE90"
+            stroke="currentColor"
             strokeWidth="1.55"
             strokeLinecap="round"
             strokeDasharray={RING_CIRCUMFERENCE}
@@ -455,20 +511,22 @@ export function PullToRefresh({
           <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/15 via-transparent to-black/35" />
           <svg
             className={cn(
-              'pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full text-[#90EE90]',
+              'pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full text-current',
               refreshing && 'ptr-wave-shift'
             )}
             viewBox="0 0 34 20"
             preserveAspectRatio="none"
           >
             <path
+              className="ptr-accent-fill"
               d="M0 9 C 5.5 5.2, 11 12.8, 17 9 C 23 5.2, 28.5 12.8, 34 9 L 34 20 L 0 20 Z"
               fill="currentColor"
               opacity="0.92"
             />
             <path
+              className="ptr-accent-fill"
               d="M0 12 C 6 9.4, 11.5 14.6, 17 12 C 22.5 9.4, 28 14.6, 34 12 L 34 20 L 0 20 Z"
-              fill="#7FE07F"
+              fill="currentColor"
               opacity="0.55"
             />
           </svg>
