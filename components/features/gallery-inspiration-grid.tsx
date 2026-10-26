@@ -77,10 +77,12 @@ const FEED_ACTION_METRIC_CLASS =
   'text-xs font-semibold tracking-wide text-gray-300 whitespace-nowrap';
 
 const FEED_TOP_ACTION_BTN_CLASS =
-  'flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all bg-white/[0.02] text-zinc-300 hover:border-orange-500/50';
+  'flex flex-1 flex-row items-center justify-center gap-1.5 py-2 hover:bg-white/5 transition-colors cursor-pointer';
+
+const FEED_TOP_ACTION_DIVIDER_CLASS = 'border-r border-white/10';
 
 const FEED_TOP_ACTION_METRIC_CLASS =
-  'text-xs font-medium tracking-tight leading-none whitespace-nowrap';
+  'text-[11px] sm:text-xs font-medium tracking-tight whitespace-nowrap leading-none';
 
 type FeedListUser = {
   id: string;
@@ -890,21 +892,21 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
-              <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                <div className="flex w-full flex-row justify-between items-center gap-1.5">
-                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
+              <div className="w-full max-w-none my-1">
+                <div className="flex w-full flex-row items-center justify-between border border-white/10 rounded-full overflow-hidden bg-transparent">
+                  <div className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}>
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-7" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
+                  <div className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}>
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
+                  <div className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}>
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-5" />
                   </div>
-                  <div className="flex flex-row items-center justify-center gap-1.5 px-2 py-1.5 border border-white/10 rounded-full flex-1 min-w-0 transition-all">
+                  <div className={FEED_TOP_ACTION_BTN_CLASS}>
                     <Skeleton className="h-6 w-6 rounded-full border border-white/10 bg-white/[0.02]" />
                     <Skeleton className="h-3 w-6" />
                   </div>
@@ -1063,13 +1065,14 @@ export function GalleryInspirationGrid({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 viewport={{ once: true, margin: '-20px' }}
               >
-                <div className="w-full max-w-none rounded-[2rem] border border-white/10 bg-zinc-950/60 backdrop-blur-md overflow-hidden my-1">
-                  <div className="flex w-full flex-row justify-between items-center gap-1.5">
+                <div className="w-full max-w-none my-1">
+                  <div className="flex w-full flex-row items-center justify-between border border-white/10 rounded-full overflow-hidden bg-transparent">
                     {showLike ? (
                       <div
                         className={cn(
                           FEED_TOP_ACTION_BTN_CLASS,
-                          isLiked && 'text-orange-500 border-orange-500/50'
+                          FEED_TOP_ACTION_DIVIDER_CLASS,
+                          isLiked && 'text-orange-500'
                         )}
                       >
                         <button
@@ -1109,7 +1112,7 @@ export function GalleryInspirationGrid({
                         setViewsSheetCount(item.viewsCount ?? 0);
                         setIsViewsModalOpen(true);
                       }}
-                      className={FEED_TOP_ACTION_BTN_CLASS}
+                      className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}
                       aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
                     >
                       <Eye className="h-6 w-6 shrink-0" strokeWidth={2} />
@@ -1121,7 +1124,7 @@ export function GalleryInspirationGrid({
                       type="button"
                       data-gallery-action=""
                       onClick={() => shareInspiration(item)}
-                      className={FEED_TOP_ACTION_BTN_CLASS}
+                      className={cn(FEED_TOP_ACTION_BTN_CLASS, FEED_TOP_ACTION_DIVIDER_CLASS)}
                       aria-label="Compartilhar"
                     >
                       <Send className="h-6 w-6 shrink-0" strokeWidth={2} />
@@ -1161,7 +1164,7 @@ export function GalleryInspirationGrid({
                         setLikesSheetCount(likeCount);
                         setIsLikesModalOpen(true);
                       }}
-                      className="mt-2 flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white cursor-pointer transition-all active:scale-95 touch-manipulation"
+                      className="mt-2 flex items-center gap-1.5 text-sm font-normal text-white/70 hover:text-white/90 transition-colors cursor-pointer"
                     >
                       <Heart className="h-3.5 w-3.5 shrink-0" strokeWidth={2} fill="currentColor" />
                       <span>{likeCount.toLocaleString('pt-BR')} curtidas</span>
