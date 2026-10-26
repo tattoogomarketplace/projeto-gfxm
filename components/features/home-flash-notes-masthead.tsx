@@ -79,6 +79,25 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
 
   const closeNote = useCallback(() => setSelected(null), []);
 
+  const goNextNote = useCallback(() => {
+    setSelected((current) => {
+      if (!current) return current;
+      const index = visibleNotes.findIndex((item) => item.id === current.id);
+      if (index < 0) return null;
+      if (index >= visibleNotes.length - 1) return null;
+      return visibleNotes[index + 1] ?? null;
+    });
+  }, [visibleNotes]);
+
+  const goPrevNote = useCallback(() => {
+    setSelected((current) => {
+      if (!current) return current;
+      const index = visibleNotes.findIndex((item) => item.id === current.id);
+      if (index <= 0) return current;
+      return visibleNotes[index - 1] ?? current;
+    });
+  }, [visibleNotes]);
+
   const visitArtist = useCallback(
     (note: FlashNoteDto) => {
       triggerHaptic('light');
@@ -170,6 +189,8 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
         onClose={closeNote}
         onBook={bookArtist}
         onVisitArtist={visitArtist}
+        onNext={goNextNote}
+        onPrev={goPrevNote}
       />
     </div>
   );

@@ -374,6 +374,22 @@ export function FlashNotesCarousel() {
           void loadNotes();
           router.refresh();
         }}
+        onNext={() => {
+          setSelected((current) => {
+            if (!current) return current;
+            const index = notes.findIndex((item) => item.id === current.id);
+            if (index < 0 || index >= notes.length - 1) return null;
+            return notes[index + 1] ?? null;
+          });
+        }}
+        onPrev={() => {
+          setSelected((current) => {
+            if (!current) return current;
+            const index = notes.findIndex((item) => item.id === current.id);
+            if (index <= 0) return current;
+            return notes[index - 1] ?? current;
+          });
+        }}
       />
     </section>
   );
