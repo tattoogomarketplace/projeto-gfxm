@@ -10,7 +10,6 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -23,9 +22,11 @@ const INDICATOR_SIZE = 44;
 const INDICATOR_HIDE_PX = 56;
 const REST_PULL_PX = 60;
 const MIN_REFRESH_MS = 560;
+const FINISHING_MS = 800;
 const MAX_REFRESH_MS = 2400;
 const SNAP_MS = 380;
 const SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const SUCCESS_GREEN = '#22c55e';
 const AXIS_LOCK_PX = 8;
 const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -49,7 +50,7 @@ function accentCss(t: number): string {
   return `rgb(${lerpChannel(ACCENT_MINT.r, ACCENT_ORANGE.r, k)} ${lerpChannel(ACCENT_MINT.g, ACCENT_ORANGE.g, k)} ${lerpChannel(ACCENT_MINT.b, ACCENT_ORANGE.b, k)})`;
 }
 
-type Phase = 'idle' | 'pulling' | 'refreshing';
+type Phase = 'idle' | 'pulling' | 'refreshing' | 'finishing';
 
 type PullToRefreshProps = {
   children: ReactNode;
@@ -110,9 +111,7 @@ export function PullToRefresh({
   const markRef = useRef<HTMLSpanElement>(null);
   const ringRef = useRef<SVGCircleElement>(null);
   const waveRef = useRef<HTMLSpanElement>(null);
-  const slotRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLElement | Window | null>(null);
-  const [slotEl, setSlotEl] = useState<HTMLElement | null>(null);
 
   const phaseRef = useRef<Phase>('idle');
   const pullingRef = useRef(false);
@@ -130,6 +129,7 @@ export function PullToRefresh({
   const maxTimerRef = useRef(0);
   const minTimerRef = useRef(0);
   const restTimerRef = useRef(0);
+  const finishingTimerRef = useRef(0);
   const colorRafRef = useRef(0);
 
   const setPhaseSafe = useCallback((next: Phase) => {
@@ -142,50 +142,44 @@ export function PullToRefresh({
     const indicator = indicatorRef.current;
     const mark = markRef.current;
     const ring = ringRef.current;
-    const slot = slotRef.current;
     if (!content) return;
 
+    const finishingNow = phaseRef.current === 'finishing';
     const snapTransform = withSnap ? `transform ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
-    const snapHeight = withSnap ? `height ${SNAP_MS}ms ${SNAP_EASING}` : 'none';
 
-    if (slot) {
-      slot.style.transition = snapHeight;
-      slot.style.height = `${pull}px`;
-      content.style.transition = 'none';
-      content.style.transform = 'none';
-      content.style.willChange = 'auto';
-      if (indicator) {
-        indicator.style.transition = withSnap ? 'opacity 160ms linear' : 'none';
-        const inset = Math.max(0, (pull - INDICATOR_SIZE) / 2);
-        indicator.style.transform = `translate3d(-50%, ${inset}px, 0)`;
-      }
-    } else if (indicator) {
-      content.style.transition = snapTransform;
+    content.style.transition = snapTransform;
+    content.style.willChange = 'transform, opacity';
+    content.style.transform = `translate3d(0, ${pull}px, 0)`;
+    if (pull === 0 && withSnap) {
+      if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
+      restTimerRef.current = window.setTimeout(() => {
+        restTimerRef.current = 0;
+        if (pullRef.current !== 0 || !contentRef.current) return;
+        contentRef.current.style.transform = 'translate3d(0, 0, 0)';
+        contentRef.current.style.transition = 'none';
+        contentRef.current.style.willChange = 'transform, opacity';
+      }, SNAP_MS);
+    }
+
+    if (indicator) {
       indicator.style.transition = withSnap
         ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
         : 'none';
-      content.style.transform = pull === 0 ? 'translate3d(0, 0, 0)' : `translate3d(0, ${pull}px, 0)`;
-      content.style.willChange = pull === 0 ? 'auto' : 'transform';
-      if (pull === 0 && withSnap) {
-        if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
-        restTimerRef.current = window.setTimeout(() => {
-          restTimerRef.current = 0;
-          if (pullRef.current !== 0 || !contentRef.current) return;
-          contentRef.current.style.transform = 'none';
-          contentRef.current.style.transition = 'none';
-          contentRef.current.style.willChange = 'auto';
-        }, SNAP_MS);
-      }
+      indicator.style.willChange = 'transform, opacity';
       indicator.style.transform = `translate3d(-50%, ${pull - INDICATOR_HIDE_PX}px, 0)`;
     }
 
     const pullProgress = clamp01(pull / THRESHOLD_PX);
-    const refreshingNow = phaseRef.current === 'refreshing' && !finishingRef.current;
+    const refreshingNow = phaseRef.current === 'refreshing' && !finishingNow;
     const loadProgress = refreshingNow
       ? clamp01((performance.now() - refreshStartedAtRef.current) / MIN_REFRESH_MS)
       : 0;
-    const progress = refreshingNow ? Math.max(pullProgress, loadProgress) : pullProgress;
-    const accent = accentCss(progress);
+    const progress = finishingNow
+      ? 1
+      : refreshingNow
+        ? Math.max(pullProgress, loadProgress)
+        : pullProgress;
+    const accent = finishingNow ? SUCCESS_GREEN : accentCss(progress);
     const wave = waveRef.current;
 
     if (indicator) {
@@ -195,9 +189,25 @@ export function PullToRefresh({
       indicator.style.color = accent;
     }
     if (ring) {
-      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
-      ring.style.opacity = phaseRef.current === 'refreshing' ? '0' : '1';
       ring.style.stroke = accent;
+      if (finishingNow) {
+        ring.style.opacity = '1';
+        if (ring.dataset.emptying !== '1') {
+          ring.dataset.emptying = '1';
+          ring.style.transition = 'none';
+          ring.style.strokeDashoffset = '0';
+          window.requestAnimationFrame(() => {
+            if (phaseRef.current !== 'finishing' || !ringRef.current) return;
+            ringRef.current.style.transition = `stroke-dashoffset ${FINISHING_MS}ms ${SNAP_EASING}, stroke 160ms linear`;
+            ringRef.current.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
+          });
+        }
+      } else {
+        ring.dataset.emptying = '0';
+        ring.style.transition = 'none';
+        ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
+        ring.style.opacity = phaseRef.current === 'refreshing' ? '0' : '1';
+      }
     }
     if (wave) {
       wave.style.transform = `translate3d(0, ${(1 - progress) * 46}%, 0)`;
@@ -247,13 +257,19 @@ export function PullToRefresh({
     armedRef.current = false;
     pullRef.current = 0;
     pendingPullRef.current = 0;
+    if (finishingTimerRef.current) {
+      window.clearTimeout(finishingTimerRef.current);
+      finishingTimerRef.current = 0;
+    }
     setPhaseSafe('idle');
     applyFrame(0, true);
   }, [applyFrame, setPhaseSafe, stopColorTicker]);
 
   const finishRefresh = useCallback(() => {
     if (finishingRef.current) return;
+    if (phaseRef.current !== 'refreshing') return;
     finishingRef.current = true;
+    stopColorTicker();
     if (maxTimerRef.current) {
       window.clearTimeout(maxTimerRef.current);
       maxTimerRef.current = 0;
@@ -262,13 +278,25 @@ export function PullToRefresh({
       window.clearTimeout(minTimerRef.current);
       minTimerRef.current = 0;
     }
+    if (finishingTimerRef.current) {
+      window.clearTimeout(finishingTimerRef.current);
+      finishingTimerRef.current = 0;
+    }
     const elapsed = performance.now() - refreshStartedAtRef.current;
     const wait = Math.max(0, MIN_REFRESH_MS - elapsed);
     minTimerRef.current = window.setTimeout(() => {
       minTimerRef.current = 0;
-      retract();
+      if (phaseRef.current !== 'refreshing') return;
+      pullRef.current = REST_PULL_PX;
+      pendingPullRef.current = REST_PULL_PX;
+      setPhaseSafe('finishing');
+      applyFrame(REST_PULL_PX, false);
+      finishingTimerRef.current = window.setTimeout(() => {
+        finishingTimerRef.current = 0;
+        retract();
+      }, FINISHING_MS);
     }, wait);
-  }, [retract]);
+  }, [applyFrame, retract, setPhaseSafe, stopColorTicker]);
 
   const runRefresh = useCallback(() => {
     setPhaseSafe('refreshing');
@@ -315,35 +343,15 @@ export function PullToRefresh({
   }, [finishRefresh, isPending, onRefresh, phase]);
 
   useLayoutEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const attachSlot = (node: HTMLElement | null) => {
-      slotRef.current = node;
-      setSlotEl(node);
-    };
-
-    attachSlot(root.querySelector<HTMLElement>('[data-ptr-slot]'));
-
-    const observer = new MutationObserver(() => {
-      const next = root.querySelector<HTMLElement>('[data-ptr-slot]');
-      if (next === slotRef.current) return;
-      attachSlot(next);
-    });
-    observer.observe(root, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-
-  useLayoutEffect(() => {
     applyFrame(pullRef.current, false);
-  }, [applyFrame, slotEl]);
+  }, [applyFrame]);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root || disabled) return;
 
     const onStart = (event: TouchEvent) => {
-      if (phaseRef.current === 'refreshing') return;
+      if (phaseRef.current === 'refreshing' || phaseRef.current === 'finishing') return;
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
       if (!touch) return;
@@ -367,7 +375,7 @@ export function PullToRefresh({
     };
 
     const onMove = (event: TouchEvent) => {
-      if (phaseRef.current === 'refreshing') return;
+      if (phaseRef.current === 'refreshing' || phaseRef.current === 'finishing') return;
       if (!trackingRef.current) return;
       if (event.touches.length !== 1) return;
       const touch = event.touches[0];
@@ -404,7 +412,7 @@ export function PullToRefresh({
 
     const onEnd = () => {
       trackingRef.current = false;
-      if (phaseRef.current === 'refreshing') return;
+      if (phaseRef.current === 'refreshing' || phaseRef.current === 'finishing') return;
       if (!pullingRef.current) {
         axisLockedRef.current = null;
         return;
@@ -433,33 +441,23 @@ export function PullToRefresh({
       if (colorRafRef.current) window.cancelAnimationFrame(colorRafRef.current);
       if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
       if (minTimerRef.current) window.clearTimeout(minTimerRef.current);
+      if (finishingTimerRef.current) window.clearTimeout(finishingTimerRef.current);
       if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
     };
   }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);
 
   const refreshing = phase === 'refreshing';
-  const slotted = Boolean(slotEl);
-  const indicatorStyle: CSSProperties = slotted
-    ? {
-        width: INDICATOR_SIZE,
-        height: INDICATOR_SIZE,
-        transform: 'translate3d(-50%, 0, 0)',
-        opacity: 0,
-        willChange: 'transform, opacity',
-        color: ACCENT_MINT_CSS,
-        ['--ptr-progress' as string]: '0',
-        ['--ptr-accent' as string]: ACCENT_MINT_CSS,
-      }
-    : {
-        width: INDICATOR_SIZE,
-        height: INDICATOR_SIZE,
-        transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
-        opacity: 0,
-        willChange: 'transform, opacity',
-        color: ACCENT_MINT_CSS,
-        ['--ptr-progress' as string]: '0',
-        ['--ptr-accent' as string]: ACCENT_MINT_CSS,
-      };
+  const active = refreshing || phase === 'finishing';
+  const indicatorStyle: CSSProperties = {
+    width: INDICATOR_SIZE,
+    height: INDICATOR_SIZE,
+    transform: `translate3d(-50%, ${-INDICATOR_HIDE_PX}px, 0)`,
+    opacity: 0,
+    willChange: 'transform, opacity',
+    color: ACCENT_MINT_CSS,
+    ['--ptr-progress' as string]: '0',
+    ['--ptr-accent' as string]: ACCENT_MINT_CSS,
+  };
 
   const badge = (
     <div
@@ -476,13 +474,14 @@ export function PullToRefresh({
         className={cn(
           'ptr-badge relative flex h-11 w-11 min-h-11 min-w-11 items-center justify-center overflow-visible rounded-full',
           'border border-white/10 bg-[#121212] shadow-[0_8px_24px_rgba(0,0,0,0.45)]',
-          refreshing && 'drop-shadow-[0_0_12px_var(--ptr-accent)]'
+          'transform-gpu',
+          active && 'drop-shadow-[0_0_12px_var(--ptr-accent)]'
         )}
       >
         <svg
           className={cn(
-            'pointer-events-none absolute inset-0 h-full w-full',
-            phase !== 'idle' && 'ptr-ring-spin'
+            'pointer-events-none absolute inset-0 h-full w-full transform-gpu',
+            (phase === 'pulling' || refreshing) && 'ptr-ring-spin'
           )}
           viewBox="0 0 44 44"
           aria-hidden
@@ -558,13 +557,18 @@ export function PullToRefresh({
   return (
     <div
       ref={rootRef}
-      className={cn('relative flex min-h-0 min-w-0 w-full flex-1 flex-col', className)}
+      className={cn(
+        'relative flex min-h-0 min-w-0 w-full flex-1 flex-col transform-gpu',
+        className
+      )}
+      style={{ willChange: 'transform, opacity' }}
       data-ptr-root
     >
-      {slotted && slotEl ? createPortal(badge, slotEl) : badge}
+      {badge}
       <div
         ref={contentRef}
-        className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"
+        className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col transform-gpu"
+        style={{ willChange: 'transform, opacity', transform: 'translate3d(0, 0, 0)' }}
       >
         {children}
       </div>
