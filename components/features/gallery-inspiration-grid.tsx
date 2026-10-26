@@ -1176,9 +1176,8 @@ export function GalleryInspirationGrid({
                       aria-label={`${(item.viewsCount ?? 0).toLocaleString('pt-BR')} visualizações`}
                       onClick={() => {
                         triggerHaptic('light');
-                        setViewsSheetPostId(item.id);
-                        setViewsSheetCount(item.viewsCount ?? 0);
-                        setIsViewsModalOpen(true);
+                        setLikesSheetCount(likeCount);
+                        setIsLikesModalOpen(true);
                       }}
                       className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white active:scale-95 transition-all cursor-pointer"
                     >
