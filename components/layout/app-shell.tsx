@@ -364,21 +364,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     // seja definida em um único lugar e nunca recalculada/duplicada aqui.
     <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
       {hideShellHeader ? null : (
-        <>
-          {headerHost && headerNode ? createPortal(headerNode, headerHost) : headerNode}
-          <div
-            aria-hidden
-            data-app-header-spacer
-            className="pointer-events-none invisible shrink-0 border-0 pt-[max(env(safe-area-inset-top),_16px)]"
-          >
-            <div className="h-14" />
-            {hideTabs ? null : (
-              <div className="hidden px-4 pb-3 md:block">
-                <div className="h-11" />
-              </div>
-            )}
-          </div>
-        </>
+        headerHost && headerNode ? createPortal(headerNode, headerHost) : headerNode
       )}
 
       <div
@@ -427,6 +413,20 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'
           )}
         >
+          {hideShellHeader ? null : (
+            <div
+              aria-hidden
+              data-app-header-spacer
+              className="pointer-events-none shrink-0 pt-[max(env(safe-area-inset-top),_16px)]"
+            >
+              <div className="h-14" />
+              {hideTabs ? null : (
+                <div className="hidden px-4 pb-3 md:block">
+                  <div className="h-11" />
+                </div>
+              )}
+            </div>
+          )}
           {children}
         </div>
       </div>

@@ -52,7 +52,7 @@
     --safe-right: env(safe-area-inset-right, 0px);
     --header-safe-top: env(safe-area-inset-top, 0px);
     --app-header-content: 3.5rem;
-    --app-header-height: calc(var(--header-safe-top) + var(--app-header-content));
+    --app-header-height: calc(max(16px, var(--header-safe-top)) + var(--app-header-content));
     --dock-height: 2.75rem;
     --dock-offset: env(safe-area-inset-bottom, 0px);
     --dock-clearance: calc(var(--dock-offset) + var(--dock-height) + 0.5rem);
