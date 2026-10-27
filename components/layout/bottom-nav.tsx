@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[94%] max-w-sm -translate-x-1/2 items-center justify-around overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-1.5 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
+  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[94%] max-w-sm -translate-x-1/2 items-center justify-around overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -80,8 +80,8 @@ const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping:
 
 function dockItemClass(active: boolean) {
   return cn(
-    'relative flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
-    active ? 'flex-row gap-1 px-2.5 py-1.5' : 'flex-col gap-px px-1.5 py-0.5'
+    'relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
+    active ? 'scale-105 px-2.5 py-1.5' : 'flex-col gap-px px-1 py-0.5'
   );
 }
 
@@ -108,18 +108,24 @@ function DockGlyph({
       {active && !sliding ? (
         <span className="absolute inset-0 z-0 rounded-full bg-[#FF6600]" />
       ) : null}
-      <span className="relative z-10 flex items-center justify-center">
+      <span
+        className={cn(
+          'relative z-10 flex items-center justify-center transition-transform duration-300 ease-in-out',
+          active && 'scale-105'
+        )}
+      >
         <NavIcon icon={item.icon} className={active ? 'text-white' : 'text-zinc-500'} />
       </span>
       <span
         className={cn(
-          'relative z-10 max-w-full truncate whitespace-nowrap leading-none tracking-tight',
-          active
-            ? 'text-[11px] font-semibold text-[#121212]'
-            : 'text-[9px] font-medium text-zinc-500'
+          'relative z-10 grid max-w-full transition-[grid-template-rows,opacity] duration-300 ease-in-out',
+          active ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
         )}
+        aria-hidden={active}
       >
-        {label}
+        <span className="overflow-hidden whitespace-nowrap text-[10px] font-medium leading-none tracking-tight text-zinc-500 sm:text-xs">
+          {label}
+        </span>
       </span>
     </>
   );
@@ -316,7 +322,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-0.5">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -328,7 +334,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   ? '/dashboard/agenda'
                   : `${homePath}?tab=${item.tab}`;
           return (
-            <li key={item.tab} className="flex min-w-0">
+            <li key={item.tab} className="flex min-w-0 flex-1">
               <Link
                 href={href}
                 prefetch
@@ -380,11 +386,11 @@ function BottomNavFallbackInner() {
 
   return (
     <nav aria-hidden className={PILL_CLASS}>
-      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-0.5">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-1">
         {ITEMS.map((item, index) => {
           const active = index === 0;
           return (
-            <li key={item.tab} className="flex min-w-0">
+            <li key={item.tab} className="flex min-w-0 flex-1">
               <span className={dockItemClass(active)}>
                 <DockGlyph item={item} active={active} label={t(item.labelKey)} />
               </span>
