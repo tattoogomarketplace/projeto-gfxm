@@ -68,6 +68,48 @@ const PILL_CLASS =
 
 const DRAG_THRESHOLD_PX = 6;
 const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
+const DOCK_TICK_DURATION = 0.018;
+const DOCK_TICK_GAP_MS = 38;
+
+type DockAudioEngine = {
+  ctx: AudioContext;
+  master: GainNode;
+  noiseBuffer: AudioBuffer;
+};
+
+function getAudioContextCtor(): typeof AudioContext | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return (
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+  );
+}
+
+function createDockNoiseBuffer(ctx: AudioContext): AudioBuffer {
+  const length = Math.max(1, Math.floor(ctx.sampleRate * DOCK_TICK_DURATION));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i += 1) {
+    const decay = 1 - i / length;
+    data[i] = (Math.random() * 2 - 1) * decay;
+  }
+  return buffer;
+}
+
+function createDockAudioEngine(Ctor: typeof AudioContext): DockAudioEngine {
+  const ctx = new Ctor();
+  const master = ctx.createGain();
+  master.gain.value = 1;
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -22;
+  compressor.knee.value = 6;
+  compressor.ratio.value = 3.2;
+  compressor.attack.value = 0.001;
+  compressor.release.value = 0.05;
+  master.connect(compressor);
+  compressor.connect(ctx.destination);
+  return { ctx, master, noiseBuffer: createDockNoiseBuffer(ctx) };
+}
 
 function hrefForTab(tab: AppTab, homePath: string): string {
   if (tab === 'perfil') return '/dashboard/perfil';
@@ -150,21 +192,20 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioEngineRef = useRef<DockAudioEngine | null>(null);
   const lastPlayedRef = useRef(0);
 
   const unlockTick = useCallback(() => {
     try {
-      if (typeof window === 'undefined') return;
-      const AudioContextCtor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
+      const AudioContextCtor = getAudioContextCtor();
       if (!AudioContextCtor) return;
-      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        audioCtxRef.current = new AudioContextCtor();
+      let engine = audioEngineRef.current;
+      if (!engine || engine.ctx.state === 'closed') {
+        engine = createDockAudioEngine(AudioContextCtor);
+        audioEngineRef.current = engine;
       }
-      if (audioCtxRef.current.state === 'suspended') {
-        void audioCtxRef.current.resume().catch(() => {});
+      if (engine.ctx.state === 'suspended') {
+        void engine.ctx.resume().catch(() => {});
       }
     } catch {
       console.log('Feedback suppressed');
@@ -173,46 +214,76 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const playTick = useCallback(() => {
     try {
-      if (typeof window === 'undefined') return;
       const now = Date.now();
-      if (now - lastPlayedRef.current < 70) return;
+      if (now - lastPlayedRef.current < DOCK_TICK_GAP_MS) return;
       lastPlayedRef.current = now;
 
       window.navigator?.vibrate?.(5);
+      unlockTick();
 
-      const AudioContextCtor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
-      if (!AudioContextCtor) return;
+      const engine = audioEngineRef.current;
+      if (!engine) return;
+      const { ctx, master, noiseBuffer } = engine;
 
-      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        audioCtxRef.current = new AudioContextCtor();
-      }
-      const ctx = audioCtxRef.current;
+      const fire = () => {
+        const t = ctx.currentTime;
+        const end = t + DOCK_TICK_DURATION;
 
-      const play = () => {
-        const osc = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.022);
-        gainNode.gain.setValueAtTime(0.018, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 0.024);
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.028);
+        const sine = ctx.createOscillator();
+        sine.type = 'sine';
+        sine.frequency.setValueAtTime(120, t);
+        sine.frequency.exponentialRampToValueAtTime(40, end);
+        const sineGain = ctx.createGain();
+        sineGain.gain.setValueAtTime(0.0001, t);
+        sineGain.gain.exponentialRampToValueAtTime(0.079, t + 0.0012);
+        sineGain.gain.exponentialRampToValueAtTime(0.0001, end);
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const highpass = ctx.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.setValueAtTime(180, t);
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = 'lowpass';
+        lowpass.frequency.setValueAtTime(1200, t);
+        lowpass.Q.setValueAtTime(0.65, t);
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.0001, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.056, t + 0.0009);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, end);
+
+        sine.connect(sineGain);
+        sineGain.connect(master);
+        noise.connect(highpass);
+        highpass.connect(lowpass);
+        lowpass.connect(noiseGain);
+        noiseGain.connect(master);
+
+        sine.start(t);
+        noise.start(t);
+        sine.stop(end + 0.004);
+        noise.stop(end + 0.004);
+        sine.onended = () => {
+          sine.disconnect();
+          sineGain.disconnect();
+        };
+        noise.onended = () => {
+          noise.disconnect();
+          highpass.disconnect();
+          lowpass.disconnect();
+          noiseGain.disconnect();
+        };
       };
 
       if (ctx.state === 'suspended') {
-        void ctx.resume().then(play).catch(() => {});
+        void ctx.resume().then(fire).catch(() => {});
         return;
       }
-      play();
+      fire();
     } catch {
       console.log('Feedback suppressed');
     }
-  }, []);
+  }, [unlockTick]);
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -399,10 +470,18 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     };
   }, [pathname]);
 
+  useEffect(() => {
+    return () => {
+      const engine = audioEngineRef.current;
+      audioEngineRef.current = null;
+      if (!engine || engine.ctx.state === 'closed') return;
+      void engine.ctx.close().catch(() => {});
+    };
+  }, []);
+
   const handleSelect = useCallback(
     (tab: AppTab, href: string) => {
       triggerHaptic('light');
-      playTick();
       if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
         router.prefetch(href);
       }
@@ -420,7 +499,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         });
       }
     },
-    [chatThreadActive, pathname, playTick, router, setActiveTab, triggerHaptic]
+    [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
   );
 
   const commitTab = useCallback(
@@ -532,6 +611,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   }
                   pendingIndexRef.current = null;
                   unlockTick();
+                  if (index !== routeIndex) playTick();
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
