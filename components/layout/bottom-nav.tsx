@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[min(94%,calc(100vw-2*max(8px,env(safe-area-inset-left,0px),env(safe-area-inset-right,0px))))] max-w-sm -translate-x-1/2 items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
+  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
