@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 bg-black/20 px-2 py-1 shadow-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-2xl select-none touch-none';
+  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/[0.15] bg-white/[0.08] px-2 py-1 shadow-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] backdrop-blur-2xl select-none touch-none';
 
 const DRAG_THRESHOLD_PX = 6;
 const DRAG_HOLD_MS = 150;
