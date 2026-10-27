@@ -282,8 +282,8 @@
     translate: none;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    will-change: transform, opacity;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+    will-change: transform;
+    transition: transform 300ms ease-in-out, opacity 300ms ease-in-out;
   }
 
   [data-app-header] {

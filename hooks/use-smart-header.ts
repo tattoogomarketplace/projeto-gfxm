@@ -4,14 +4,13 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUiStore } from '@/hooks/use-ui-store';
 
-const DELTA_PX = 6;
-const TOP_REVEAL_PX = 20;
-const HEADER_HIDDEN_TRANSFORM = 'translate3d(0, calc(-100% - 8px), 0)';
+const DELTA_PX = 15;
+const HIDE_AFTER_Y = 50;
+const HEADER_HIDDEN_TRANSFORM = 'translateY(-100%)';
 const CHROME_HIDDEN_TRANSFORM =
-  'translate3d(0, calc(-1 * var(--app-header-height) - 8px), 0)';
-const VISIBLE_TRANSFORM = 'translate3d(0, 0, 0)';
-const HIDE_TRANSITION =
-  'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out';
+  'translateY(calc(-1 * var(--app-header-height)))';
+const VISIBLE_TRANSFORM = 'translateY(0)';
+const HIDE_TRANSITION = 'transform 300ms ease-in-out, opacity 300ms ease-in-out';
 
 function readScrollTop(): number {
   const scroller = document.querySelector<HTMLElement>('[data-shell-viewport]');
@@ -22,18 +21,11 @@ function readScrollTop(): number {
 }
 
 function applyHideStyles(el: HTMLElement, hidden: boolean, hiddenTransform: string) {
-  el.style.willChange = 'transform, opacity';
+  el.style.willChange = 'transform';
   el.style.transition = HIDE_TRANSITION;
-  el.style.pointerEvents = hidden ? 'none' : '';
-  if (hidden) {
-    el.style.transform = hiddenTransform;
-    el.style.opacity = '0';
-    el.style.visibility = 'hidden';
-    return;
-  }
-  el.style.visibility = 'visible';
-  el.style.transform = VISIBLE_TRANSFORM;
-  el.style.opacity = '1';
+  el.style.pointerEvents = hidden ? 'none' : 'auto';
+  el.style.transform = hidden ? hiddenTransform : VISIBLE_TRANSFORM;
+  el.style.opacity = hidden ? '0' : '1';
 }
 
 function applyChromeHide(hidden: boolean) {
@@ -87,10 +79,10 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
       tickingRef.current = true;
       window.requestAnimationFrame(() => {
         tickingRef.current = false;
-        const y = readScrollTop();
+        const y = window.scrollY || readScrollTop();
         const delta = y - lastYRef.current;
         lastYRef.current = y;
-        if (y <= TOP_REVEAL_PX) {
+        if (y <= HIDE_AFTER_Y) {
           applyHidden(false);
           return;
         }
