@@ -96,8 +96,8 @@ const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping:
 
 function dockItemClass(active: boolean) {
   return cn(
-    'relative flex h-full min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
-    active ? 'px-1.5 py-1' : 'gap-px px-1 py-0.5'
+    'relative flex h-full min-h-0 min-w-0 w-full items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
+    active ? 'flex-row gap-1 px-2 py-1' : 'px-1 py-0.5'
   );
 }
 
@@ -119,7 +119,7 @@ function DockGlyph({
       ) : null}
       <span
         className={cn(
-          'relative z-10 flex shrink-0 items-center justify-center transition-transform duration-300 ease-in-out',
+          'relative z-10 flex shrink-0 items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
           active && 'scale-105'
         )}
       >
@@ -127,12 +127,12 @@ function DockGlyph({
       </span>
       <span
         className={cn(
-          'relative z-10 grid w-full min-w-0 max-w-full transition-[grid-template-rows,opacity] duration-300 ease-in-out',
-          active ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+          'relative z-10 grid min-w-0 transition-[grid-template-columns,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+          active ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0'
         )}
-        aria-hidden={active}
+        aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-center text-[10px] font-medium leading-none tracking-tight text-zinc-500">
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#121212]">
           {label}
         </span>
       </span>
@@ -152,11 +152,29 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const lastPlayedRef = useRef(0);
 
-  const playPremiumFeedback = useCallback(() => {
+  const unlockTick = useCallback(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContextCtor();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        void audioCtxRef.current.resume().catch(() => {});
+      }
+    } catch {
+      console.log('Feedback suppressed');
+    }
+  }, []);
+
+  const playTick = useCallback(() => {
     try {
       if (typeof window === 'undefined') return;
       const now = Date.now();
-      if (now - lastPlayedRef.current < 120) return;
+      if (now - lastPlayedRef.current < 70) return;
       lastPlayedRef.current = now;
 
       window.navigator?.vibrate?.(5);
@@ -174,15 +192,15 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       const play = () => {
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
-        gainNode.gain.setValueAtTime(0.02, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.022);
+        gainNode.gain.setValueAtTime(0.018, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 0.024);
         osc.connect(gainNode);
         gainNode.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.05);
+        osc.stop(ctx.currentTime + 0.028);
       };
 
       if (ctx.state === 'suspended') {
@@ -280,9 +298,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     if (liveIndexRef.current !== nextIndex) {
       liveIndexRef.current = nextIndex;
       triggerHaptic('light');
+      playTick();
     }
     setDragIndex(nextIndex);
-  }, [pillW, pillX, triggerHaptic]);
+  }, [pillW, pillX, playTick, triggerHaptic]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -319,9 +338,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pillMountedRef = useRef(false);
   useLayoutEffect(() => {
     if (draggingRef.current) return;
-    measurePill(routeIndex, !pillMountedRef.current);
+    measurePill(visualIndex, !pillMountedRef.current);
     pillMountedRef.current = true;
-  }, [conceal, measurePill, routeIndex]);
+  }, [conceal, measurePill, visualIndex]);
 
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
@@ -351,6 +370,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const handleSelect = useCallback(
     (tab: AppTab, href: string) => {
       triggerHaptic('light');
+      playTick();
       if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
         router.prefetch(href);
       }
@@ -368,7 +388,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         });
       }
     },
-    [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
+    [chatThreadActive, pathname, playTick, router, setActiveTab, triggerHaptic]
   );
 
   const commitTab = useCallback(
@@ -385,6 +405,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (event.button !== 0) return;
+      unlockTick();
       draggingRef.current = true;
       dragMovedRef.current = false;
       suppressClickRef.current = false;
@@ -395,7 +416,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       measurePill(liveIndexRef.current, true);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [measurePill]
+    [measurePill, unlockTick]
   );
 
   const onDockPointerMove = useCallback(
@@ -470,12 +491,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                     suppressClickRef.current = false;
                     return;
                   }
-                  playPremiumFeedback();
+                  unlockTick();
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
                   dockItemClass(active),
-                  'transition-[padding,gap] duration-300 ease-in-out active:scale-95',
+                  'transition-[padding,gap] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
                 aria-current={active ? 'page' : undefined}
