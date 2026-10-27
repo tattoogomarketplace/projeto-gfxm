@@ -168,7 +168,7 @@ export function PullToRefresh({
         ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
         : 'none';
       indicator.style.willChange = 'transform, opacity';
-      indicator.style.transform = `translate3d(0, ${Math.max(0, pull - INDICATOR_HIDE_PX)}px, 0)`;
+      indicator.style.transform = `translate3d(-50%, ${Math.max(0, pull - INDICATOR_HIDE_PX)}px, 0)`;
     }
 
     const pullProgress = clamp01(pull / THRESHOLD_PX);
@@ -453,7 +453,7 @@ export function PullToRefresh({
   const indicatorStyle: CSSProperties = {
     width: INDICATOR_SIZE,
     height: INDICATOR_SIZE,
-    transform: 'translate3d(0, 0, 0)',
+    transform: 'translate3d(-50%, 0, 0)',
     opacity: 0,
     willChange: 'transform, opacity',
     color: ACCENT_MINT_CSS,
@@ -465,7 +465,7 @@ export function PullToRefresh({
       <div
         ref={indicatorRef}
         className={cn(
-          'pointer-events-none absolute inset-x-0 z-[30] flex w-full justify-center transform-gpu',
+          'pointer-events-none absolute left-[50%] z-[30] flex items-center justify-center translate-x-[-50%] transform-gpu',
           topOffsetClass ?? 'top-[var(--app-header-height)]'
         )}
         data-ptr-indicator
