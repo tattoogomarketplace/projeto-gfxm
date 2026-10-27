@@ -34,7 +34,7 @@ export function CreatorWorkCard({
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
       <div className="relative h-56 w-full overflow-hidden">
-        <OptimizedImage src={item.imageUrl} alt={styleLabel(item.style)} className="h-full w-full" />
+        <OptimizedImage src={item.imageUrl} alt={styleLabel(item.style)} className="h-full w-full" priority />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
           <Eye className="h-3 w-3 text-orange-400" strokeWidth={2} />

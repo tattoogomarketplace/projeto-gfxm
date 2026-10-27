@@ -7,7 +7,8 @@ import { GalleryInspirationGrid } from '@/components/features/gallery-inspiratio
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useI18n } from '@/hooks/use-i18n';
-import type { InspirationItem } from '@/lib/gallery-mock';
+import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
+import { hydrateGridItems } from '@/lib/grid-hydration';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 
 type GaleriaInspiracoesProps = {
@@ -63,9 +64,9 @@ export function GaleriaInspiracoes({
     ]);
   }, []);
 
-  const loading = false;
   const inspirations = useMemo<InspirationItem[]>(() => {
-    return style ? items.filter((item) => item.style === style) : items;
+    const source = hydrateGridItems(items, PLACEHOLDER_INSPIRATIONS);
+    return style ? source.filter((item) => item.style === style) : source;
   }, [items, style]);
 
   return (
@@ -97,7 +98,6 @@ export function GaleriaInspiracoes({
         <div className="w-full">
           <GalleryInspirationGrid
             items={inspirations}
-            loading={loading}
             skeletonCount={9}
             layout="feed"
             showLike

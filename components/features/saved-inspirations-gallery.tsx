@@ -24,6 +24,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { toggleSave } from '@/actions/saved-actions';
 import { artistProfileHref } from '@/lib/artist-profile';
 import type { InspirationItem } from '@/lib/gallery-mock';
+import { isEagerGridIndex } from '@/lib/grid-hydration';
 import { PORTFOLIO_STYLES, portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { cn } from '@/lib/utils';
 
@@ -167,7 +168,7 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-[1px]">
-          {visibleItems.map((item) => (
+          {visibleItems.map((item, index) => (
             <motion.article
               key={item.id}
               whileTap={{ scale: 0.98 }}
@@ -189,6 +190,7 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
                   src={item.imageUrl}
                   alt={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
                   className="object-cover w-full h-full"
+                  priority={isEagerGridIndex(index)}
                 />
               </button>
               <span

@@ -6,6 +6,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useI18n } from '@/hooks/use-i18n';
 import { REVIEW_FEATURED_ARTISTS } from '@/lib/review-mock';
 import { artistProfileHref } from '@/lib/artist-profile';
+import { isEagerGridIndex } from '@/lib/grid-hydration';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 const ARTISTS = [
@@ -30,7 +31,7 @@ export default function ArtistasClient() {
       </header>
 
       <ul className="grid grid-cols-2 gap-3">
-        {ARTISTS.map((artist) => (
+        {ARTISTS.map((artist, index) => (
           <li key={artist.id}>
             <Link
               href={artistProfileHref(artist)}
@@ -41,6 +42,8 @@ export default function ArtistasClient() {
                   src={artist.avatarUrl}
                   alt={artist.name}
                   className="h-full w-full rounded-full"
+                  sizes="80px"
+                  priority={isEagerGridIndex(index)}
                 />
                 {artist.verified ? (
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-950 bg-orange-500 text-black">

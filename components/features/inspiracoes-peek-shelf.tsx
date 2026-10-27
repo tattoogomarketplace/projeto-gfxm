@@ -17,6 +17,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { artistProfileHref } from '@/lib/artist-profile';
 import type { InspirationItem } from '@/lib/gallery-mock';
+import { isEagerGridIndex } from '@/lib/grid-hydration';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 
 const SAVED_GALLERY_HREF = '/dashboard/inspiracoes';
@@ -147,7 +148,7 @@ export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[]
           </button>
         </div>
         <div className={SHELF_CLASS} role="list" aria-label={t('home.inspiracoes')}>
-          {peekCards.map((item) => (
+          {peekCards.map((item, index) => (
             <motion.button
               key={item.id}
               type="button"
@@ -167,6 +168,8 @@ export function InspiracoesPeekShelf({ items = [] }: { items?: InspirationItem[]
                 src={item.imageUrl}
                 alt={item.style ? styleLabel(item.style) : t('home.inspiracoes')}
                 className="h-full w-full"
+                sizes="156px"
+                priority={isEagerGridIndex(index)}
               />
               <div
                 aria-hidden

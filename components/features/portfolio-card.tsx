@@ -72,7 +72,7 @@ export function PortfolioCard({
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative h-64 w-full overflow-hidden">
-        <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" />
+        <OptimizedImage src={imageUrl} alt="Tattoo" className="w-full h-full" priority />
         {location ? (
           <div className="pointer-events-none absolute left-3 top-3 z-[2] inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
             <MapPin className="h-3 w-3 text-orange-400" strokeWidth={2} />

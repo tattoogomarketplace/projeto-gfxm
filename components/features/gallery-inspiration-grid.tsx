@@ -26,7 +26,6 @@ import {
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
 import {
   GalleryHapticPreview,
-  galleryPreviewLayoutId,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
 import { TattooLikeButton, TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
@@ -47,7 +46,8 @@ import { useViewTracker } from '@/hooks/use-view-tracker';
 import { CLICK_SUPPRESSION_MS, LONG_PRESS_MS, LONG_PRESS_MOVE_TOLERANCE } from '@/hooks/use-long-press-preview';
 import { toggleSave } from '@/actions/saved-actions';
 import { getPostViewers, type PostViewerUser } from '@/actions/view-actions';
-import type { InspirationItem } from '@/lib/gallery-mock';
+import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
+import { hydrateGridItems, isEagerGridIndex } from '@/lib/grid-hydration';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
 import { cn } from '@/lib/utils';
@@ -639,6 +639,10 @@ export function GalleryInspirationGrid({
   actionCard,
   savedIds = [],
 }: GalleryInspirationGridProps) {
+  const hydratedItems = useMemo(
+    () => hydrateGridItems(items, PLACEHOLDER_INSPIRATIONS),
+    [items]
+  );
   const { t } = useI18n();
   const { styleLabel } = portfolioLabelResolver(t);
   const router = useRouter();
@@ -884,13 +888,9 @@ export function GalleryInspirationGrid({
                 <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
               </div>
               <HudCuratorshipFrame>
-              <motion.div
+              <div
                 className={HUD_CURATORSHIP_CLASS}
                 style={HUD_CURATORSHIP_STYLE}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                viewport={{ once: true, margin: '-20px' }}
               >
               <div className="w-full max-w-none my-1">
                 <div className="flex w-full flex-row items-center justify-between border border-white/10 rounded-full overflow-hidden bg-transparent">
@@ -924,7 +924,7 @@ export function GalleryInspirationGrid({
                 </div>
               </div>
                 <TattooDnaSpecsBar />
-              </motion.div>
+              </div>
               </HudCuratorshipFrame>
             </article>
           ))}
@@ -950,10 +950,11 @@ export function GalleryInspirationGrid({
           isCarousel ? CAROUSEL_CLASS : isFeed ? FEED_LIST_CLASS : GRID_CLASS
         }
       >
-        {items.map((item) => {
+        {hydratedItems.map((item, index) => {
           const isLiked = Boolean(liked[item.id]);
           const isSaved = optimisticSaved.has(item.id);
           const artistName = item.artistName || t('welcome.artistFallback');
+          const eager = isEagerGridIndex(index);
 
           if (isFeed) {
             const artistInitial = item.artistInitial || artistName.charAt(0) || 'A';
@@ -1019,19 +1020,14 @@ export function GalleryInspirationGrid({
                   className="relative isolate w-full aspect-[9/16] overflow-hidden bg-white/5 contain-paint"
                 >
                     <FeedPinchZoom>
-                    <motion.div
-                      layout="position"
-                      layoutId={galleryPreviewLayoutId(item.id)}
-                      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
-                      style={{ backfaceVisibility: 'hidden' }}
-                      className="relative h-full w-full [backface-visibility:hidden]"
-                    >
+                    <div className="relative h-full w-full [backface-visibility:hidden]">
                       <OptimizedImage
                         src={item.imageUrl}
                         alt={`${styleLabel(item.style)} — ${artistName}`}
                         className="object-cover w-full h-full"
+                        priority={eager}
                       />
-                    </motion.div>
+                    </div>
                     </FeedPinchZoom>
                     <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
                     <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
@@ -1057,13 +1053,9 @@ export function GalleryInspirationGrid({
                   </div>
 
               <HudCuratorshipFrame>
-              <motion.div
+              <div
                 className={HUD_CURATORSHIP_CLASS}
                 style={HUD_CURATORSHIP_STYLE}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                viewport={{ once: true, margin: '-20px' }}
               >
                 <div className="w-full max-w-none my-1">
                   <div className="flex w-full flex-row items-center justify-between border border-white/10 rounded-full overflow-hidden bg-transparent">
@@ -1193,7 +1185,7 @@ export function GalleryInspirationGrid({
                   />
                 </div>
               <TattooDnaSpecsBar />
-              </motion.div>
+              </div>
               </HudCuratorshipFrame>
               </TrackedPostCard>
             );
@@ -1216,19 +1208,14 @@ export function GalleryInspirationGrid({
                   : GRID_TILE_CLASS
               )}
             >
-              <motion.div
-                layout="position"
-                layoutId={galleryPreviewLayoutId(item.id)}
-                transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
-                style={{ backfaceVisibility: 'hidden' }}
-                className="absolute inset-0 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
-              >
+              <div className="absolute inset-0 transform-gpu [backface-visibility:hidden] [transform:translateZ(0)]">
                 <OptimizedImage
                   src={item.imageUrl}
                   alt={`${styleLabel(item.style)} — ${artistName}`}
-                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-[1.04]"
+                  className="object-cover w-full h-full"
+                  priority={eager}
                 />
-              </motion.div>
+              </div>
               {isCarousel ? (
                 <>
                   <button

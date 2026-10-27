@@ -15,6 +15,7 @@ import { useHapticLongPress } from '@/hooks/use-haptic-long-press';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { useUiStore } from '@/hooks/use-ui-store';
+import { isEagerGridIndex } from '@/lib/grid-hydration';
 import { portfolioLabelResolver, type PortfolioItemDto } from '@/lib/portfolio-metadata';
 import type { PublicArtistVitrine } from '@/lib/services/artist-vitrine';
 import type { GeoAddress } from '@/lib/types/geo';
@@ -241,12 +242,13 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
           </div>
         ) : (
           <ul className="grid w-full grid-cols-3 gap-[1px] md:gap-0.5">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <PortfolioGridTile
                 key={item.id}
                 item={item}
                 alt={styleLabel(item.style)}
                 onPeek={openPeek}
+                priority={isEagerGridIndex(index)}
               />
             ))}
           </ul>
@@ -345,10 +347,12 @@ function PortfolioGridTile({
   item,
   alt,
   onPeek,
+  priority = false,
 }: {
   item: PortfolioItemDto;
   alt: string;
   onPeek: (item: PortfolioItemDto) => void;
+  priority?: boolean;
 }) {
   const onHapticTrigger = useCallback(() => {
     onPeek(item);
@@ -371,11 +375,14 @@ function PortfolioGridTile({
           alt={alt}
           fill
           sizes="(max-width: 768px) 33vw, 240px"
-          className="h-full w-full object-cover select-none transform-gpu will-change-transform"
+          className="h-full w-full object-cover select-none transform-gpu"
           style={NATIVE_APP_IMAGE_STYLE}
           draggable={false}
           onDragStart={(event) => event.preventDefault()}
           onContextMenu={(event) => event.preventDefault()}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding={priority ? 'sync' : 'async'}
+          priority={priority}
         />
       </div>
     </li>

@@ -7,17 +7,18 @@ import { reviewDestination } from '@/components/features/home-feedback-carousel'
 import { useFeaturedReviews } from '@/hooks/use-featured-reviews';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { hydrateGridItems } from '@/lib/grid-hydration';
 import { PLACEHOLDER_REVIEWS } from '@/lib/review-mock';
 
 export default function AvaliacoesClient() {
   const { t } = useI18n();
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
-  const { data, isLoading } = useFeaturedReviews();
-  const reviews = (Array.isArray(data) && data.length > 0 ? data : PLACEHOLDER_REVIEWS).filter(
-    (item) => item?.id && item.content
+  const { data } = useFeaturedReviews();
+  const reviews = hydrateGridItems(
+    Array.isArray(data) ? data.filter((item) => item?.id && item.content) : [],
+    PLACEHOLDER_REVIEWS
   );
-  const loading = isLoading && !data;
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto px-4 pb-24 pt-4">
@@ -26,7 +27,7 @@ export default function AvaliacoesClient() {
         <p className="text-sm text-zinc-400">{t('home.reviewsSubtitle')}</p>
       </header>
 
-      {loading ? (
+      {reviews.length === 0 ? (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((index) => (
             <FeedbackCardSkeleton key={index} />

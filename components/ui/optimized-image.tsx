@@ -73,13 +73,14 @@ export function OptimizedImage({ src, alt, className, sizes, fallback, priority 
         alt={alt?.trim() || 'Imagem'}
         fill
         sizes={sizes ?? '(max-width: 480px) 100vw, 480px'}
-        className="object-cover select-none transition-opacity duration-300"
+        className="object-cover select-none opacity-100"
         style={NATIVE_APP_IMAGE_STYLE}
         draggable={false}
         onDragStart={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
         onError={() => setBrokenSrc(resolved)}
-        loading={priority ? undefined : 'lazy'}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding={priority ? 'sync' : 'async'}
         priority={priority}
         quality={75}
         unoptimized={unoptimized}

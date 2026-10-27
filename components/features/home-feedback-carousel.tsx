@@ -13,6 +13,7 @@ import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { useLongPressPreview } from '@/hooks/use-long-press-preview';
 import { HOME_CAROUSEL_LIMIT } from '@/lib/gallery-mock';
+import { hydrateGridItems } from '@/lib/grid-hydration';
 import { PLACEHOLDER_REVIEWS } from '@/lib/review-mock';
 import type { ReviewDto } from '@/lib/types/review';
 
@@ -29,17 +30,14 @@ export function HomeFeedbackCarousel() {
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
   const longPress = useLongPressPreview();
-  const { data, isLoading } = useFeaturedReviews();
+  const { data } = useFeaturedReviews();
   const [preview, setPreview] = useState<ReviewDto | null>(null);
 
   const reviews = useMemo<ReviewDto[]>(() => {
     const source = Array.isArray(data) ? data : [];
     const valid = source.filter((item) => item?.id && item.content);
-    const pool = valid.length > 0 ? valid : PLACEHOLDER_REVIEWS;
-    return pool.slice(0, HOME_CAROUSEL_LIMIT);
+    return hydrateGridItems(valid, PLACEHOLDER_REVIEWS).slice(0, HOME_CAROUSEL_LIMIT);
   }, [data]);
-
-  const loading = isLoading && !data;
 
   const firePreview = (review: ReviewDto) => {
     if (!review?.id) return;
@@ -93,15 +91,11 @@ export function HomeFeedbackCarousel() {
           </div>
         }
       >
-        {loading ? (
+        {reviews.length === 0 ? (
           <div className={CAROUSEL_CLASS} role="list" aria-label={t('home.reviews')}>
             {[0, 1, 2, 3, 4].map((index) => (
               <FeedbackCardSkeleton key={index} />
             ))}
-          </div>
-        ) : reviews.length === 0 ? (
-          <div className="flex min-h-[8rem] items-center justify-center rounded-2xl border border-zinc-800/50 bg-zinc-900/40 px-4 py-6 text-center">
-            <p className="text-sm text-zinc-400">{t('home.noFeaturedReviews')}</p>
           </div>
         ) : (
           <div className={CAROUSEL_CLASS} role="list" aria-label={t('home.reviews')}>

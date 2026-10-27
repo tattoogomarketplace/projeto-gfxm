@@ -99,6 +99,8 @@ export function FeedbackCard({
               src={review.author.avatarUrl}
               alt={authorName}
               className="h-full w-full rounded-full"
+              sizes="36px"
+              priority
             />
           ) : (
             authorInitial
@@ -128,6 +130,8 @@ export function FeedbackCard({
               src={review.portfolio.imageUrl}
               alt={style || targetName}
               className="h-full w-full"
+              sizes="40px"
+              priority
             />
           </span>
         ) : null}

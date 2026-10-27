@@ -9,6 +9,7 @@ import { TattooMachineGlyph } from '@/components/ui/tattoo-machine-glyph';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/segmented-control';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
+import { isEagerGridIndex } from '@/lib/grid-hydration';
 import { cn } from '@/lib/utils';
 import type { MessageKey } from '@/lib/i18n/types';
 
@@ -218,13 +219,14 @@ function MediaGrid({ items, emptyLabel }: { items: ProfileMediaItem[]; emptyLabe
 
   return (
     <ul className="grid grid-cols-3 gap-[3px] sm:gap-1">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const tile = (
           <span className="relative block aspect-square w-full overflow-hidden rounded-[10px] bg-neutral-800">
             <OptimizedImage
               src={item.imageUrl}
               alt={item.alt}
               className="absolute inset-0 h-full w-full"
+              priority={isEagerGridIndex(index)}
             />
           </span>
         );

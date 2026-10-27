@@ -80,7 +80,8 @@ export function GaleriaCard({ item, onStartConversation }: GaleriaCardProps) {
         <OptimizedImage
           src={item.imageUrl}
           alt={`${styleLabel(item.style)} por ${artistName}`}
-          className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
+          className="h-full w-full"
+          priority
         />
         <button
           type="button"

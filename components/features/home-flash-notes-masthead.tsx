@@ -23,10 +23,12 @@ function StoryAvatar({
   src,
   alt,
   fallback,
+  priority = false,
 }: {
   src?: string | null;
   alt: string;
   fallback: string;
+  priority?: boolean;
 }) {
   return (
     <OptimizedImage
@@ -34,6 +36,7 @@ function StoryAvatar({
       alt={alt}
       sizes="56px"
       className="h-full w-full rounded-full object-cover"
+      priority={priority}
       fallback={
         <span className="flex h-full w-full items-center justify-center bg-[#121212] text-sm font-semibold uppercase text-[#FF5F1F]">
           {fallback}
@@ -156,7 +159,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
               role="list"
               aria-label={t('flash.listAria')}
             >
-              {artistStories.map((story) => {
+              {artistStories.map((story, index) => {
                 const cover = pickFlashNoteToOpen(story, viewedIds) ?? story.notes[0];
                 if (!cover) return null;
                 const handle = formatFlashNoteHandle(story.author?.username, story.author?.name);
@@ -180,6 +183,7 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
                           src={cover.imageUrl || story.author?.avatarUrl}
                           alt={name}
                           fallback={initial}
+                          priority={index < 6}
                         />
                       </FlashNoteStoryRing>
                       <span className="absolute -bottom-0.5 -right-0.5 z-[1] flex h-4 w-4 items-center justify-center rounded-full border border-[#121212] bg-[#FF5F1F] text-black shadow-[0_0_8px_rgba(255,95,31,0.4)]">
