@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[94%] max-w-sm -translate-x-1/2 items-center justify-around overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
+  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[min(94%,calc(100vw-2*max(8px,env(safe-area-inset-left,0px),env(safe-area-inset-right,0px))))] max-w-sm -translate-x-1/2 items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -80,8 +80,8 @@ const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping:
 
 function dockItemClass(active: boolean) {
   return cn(
-    'relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
-    active ? 'scale-105 px-2.5 py-1.5' : 'flex-col gap-px px-1 py-0.5'
+    'relative flex h-full min-h-0 min-w-0 w-full flex-col items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
+    active ? 'px-1.5 py-1' : 'gap-px px-1 py-0.5'
   );
 }
 
@@ -110,7 +110,7 @@ function DockGlyph({
       ) : null}
       <span
         className={cn(
-          'relative z-10 flex items-center justify-center transition-transform duration-300 ease-in-out',
+          'relative z-10 flex shrink-0 items-center justify-center transition-transform duration-300 ease-in-out',
           active && 'scale-105'
         )}
       >
@@ -118,12 +118,12 @@ function DockGlyph({
       </span>
       <span
         className={cn(
-          'relative z-10 grid max-w-full transition-[grid-template-rows,opacity] duration-300 ease-in-out',
+          'relative z-10 grid w-full min-w-0 max-w-full transition-[grid-template-rows,opacity] duration-300 ease-in-out',
           active ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
         )}
         aria-hidden={active}
       >
-        <span className="overflow-hidden whitespace-nowrap text-[10px] font-medium leading-none tracking-tight text-zinc-500 sm:text-xs">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-center text-[10px] font-medium leading-none tracking-tight text-zinc-500">
           {label}
         </span>
       </span>
@@ -322,7 +322,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-1">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center gap-1">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -348,7 +348,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 }}
                 className={cn(
                   dockItemClass(active),
-                  'transition-all duration-300 ease-in-out active:scale-90',
+                  'transition-[padding,gap] duration-300 ease-in-out active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
                 aria-current={active ? 'page' : undefined}
@@ -386,7 +386,7 @@ function BottomNavFallbackInner() {
 
   return (
     <nav aria-hidden className={PILL_CLASS}>
-      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-1">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center gap-1">
         {ITEMS.map((item, index) => {
           const active = index === 0;
           return (

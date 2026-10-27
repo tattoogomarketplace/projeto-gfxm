@@ -331,9 +331,9 @@
     left: 50%;
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    width: 94%;
-    max-width: 24rem;
+    justify-content: center;
+    width: min(94%, 24rem, calc(100vw - 2 * max(8px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))));
+    max-width: min(24rem, calc(100vw - 16px));
     height: 3rem;
     max-height: 3rem;
     min-height: 3rem;
