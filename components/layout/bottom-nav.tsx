@@ -67,6 +67,7 @@ const PILL_CLASS =
   'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const DRAG_THRESHOLD_PX = 6;
+const DRAG_HOLD_MS = 150;
 const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
 const DOCK_PLUMP_SCALE = 1.08;
 const DOCK_PLUMP_SPRING = { stiffness: 480, damping: 26, mass: 0.28 };
@@ -430,8 +431,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pillScale = useSpring(grabScale, DOCK_PLUMP_SPRING);
   const draggingRef = useRef(false);
   const dragMovedRef = useRef(false);
+  const pressActiveRef = useRef(false);
+  const pressTimerRef = useRef<number | null>(null);
   const pointerIdRef = useRef<number | null>(null);
   const originXRef = useRef(0);
+  const lastClientXRef = useRef(0);
   const liveIndexRef = useRef(routeIndex);
   const pendingIndexRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
@@ -621,6 +625,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   useEffect(() => {
     return () => {
+      if (pressTimerRef.current !== null) {
+        window.clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
       const engine = audioEngineRef.current;
       audioEngineRef.current = null;
       if (!engine || engine.ctx.state === 'closed') return;
@@ -664,58 +672,86 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [handleSelect, homePath, router]
   );
 
+  const clearPressTimer = useCallback(() => {
+    if (pressTimerRef.current === null) return;
+    window.clearTimeout(pressTimerRef.current);
+    pressTimerRef.current = null;
+  }, []);
+
+  const engageDockDrag = useCallback(() => {
+    if (draggingRef.current || !pressActiveRef.current) return;
+    draggingRef.current = true;
+    grabScale.set(DOCK_PLUMP_SCALE);
+    pillX.stop();
+    pillW.stop();
+    hoverIndex.stop();
+  }, [grabScale, hoverIndex, pillW, pillX]);
+
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (event.button !== 0) return;
       unlockTick();
       cacheDockSlots();
-      pillX.stop();
-      pillW.stop();
-      hoverIndex.stop();
-      grabScale.set(DOCK_PLUMP_SCALE);
-      draggingRef.current = true;
+      clearPressTimer();
+      pressActiveRef.current = true;
+      draggingRef.current = false;
       dragMovedRef.current = false;
       suppressClickRef.current = false;
       pointerIdRef.current = event.pointerId;
       originXRef.current = event.clientX;
+      lastClientXRef.current = event.clientX;
       const startIndex = indexFromPointer(event.currentTarget, event.clientX);
       liveIndexRef.current = startIndex;
       tickIndexRef.current = startIndex;
       event.currentTarget.setPointerCapture(event.pointerId);
+      pressTimerRef.current = window.setTimeout(() => {
+        pressTimerRef.current = null;
+        engageDockDrag();
+        followPointer(lastClientXRef.current);
+      }, DRAG_HOLD_MS);
     },
-    [cacheDockSlots, grabScale, hoverIndex, pillW, pillX, unlockTick]
+    [cacheDockSlots, clearPressTimer, engageDockDrag, followPointer, unlockTick]
   );
 
   const onDockPointerMove = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
-      if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
-      if (!dragMovedRef.current && Math.abs(event.clientX - originXRef.current) < DRAG_THRESHOLD_PX) {
-        return;
+      if (!pressActiveRef.current || pointerIdRef.current !== event.pointerId) return;
+      lastClientXRef.current = event.clientX;
+      const travel = Math.abs(event.clientX - originXRef.current);
+      if (!draggingRef.current) {
+        if (travel < DRAG_THRESHOLD_PX) return;
+        clearPressTimer();
+        engageDockDrag();
       }
       dragMovedRef.current = true;
       suppressClickRef.current = true;
       followPointer(event.clientX);
     },
-    [followPointer]
+    [clearPressTimer, engageDockDrag, followPointer]
   );
 
   const onDockPointerEnd = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
-      if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
+      if (!pressActiveRef.current || pointerIdRef.current !== event.pointerId) return;
+      const wasDragging = draggingRef.current;
+      const didMove = dragMovedRef.current;
+      clearPressTimer();
+      pressActiveRef.current = false;
       draggingRef.current = false;
       grabScale.set(1);
       pointerIdRef.current = null;
+      dragMovedRef.current = false;
+      if (!wasDragging) return;
       const nextIndex = liveIndexRef.current;
       pendingIndexRef.current = nextIndex;
       measurePill(nextIndex);
-      if (dragMovedRef.current && nextIndex !== routeIndex) {
+      if (didMove && nextIndex !== routeIndex) {
         commitTab(nextIndex);
-      } else if (!dragMovedRef.current) {
+      } else if (!didMove) {
         pendingIndexRef.current = null;
       }
-      dragMovedRef.current = false;
     },
-    [commitTab, grabScale, measurePill, routeIndex]
+    [clearPressTimer, commitTab, grabScale, measurePill, routeIndex]
   );
 
   return (
