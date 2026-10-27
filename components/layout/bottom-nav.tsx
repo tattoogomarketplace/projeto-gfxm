@@ -1,9 +1,9 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { animate, motion, useMotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -66,6 +66,22 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 const PILL_CLASS =
   'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
+const DRAG_THRESHOLD_PX = 6;
+
+function hrefForTab(tab: AppTab, homePath: string): string {
+  if (tab === 'perfil') return '/dashboard/perfil';
+  if (tab === 'chat') return '/dashboard/chat';
+  if (tab === 'agendar') return '/dashboard/agenda';
+  return `${homePath}?tab=${tab}`;
+}
+
+function indexFromPointer(list: HTMLElement, clientX: number): number {
+  const rect = list.getBoundingClientRect();
+  if (rect.width <= 0) return 0;
+  const x = Math.min(Math.max(clientX - rect.left, 0), rect.width - 0.001);
+  return Math.min(ITEMS.length - 1, Math.floor((x / rect.width) * ITEMS.length));
+}
+
 const NavIcon = memo(function NavIcon({
   icon: Icon,
   className,
@@ -89,23 +105,16 @@ function DockGlyph({
   item,
   active,
   label,
-  sliding = false,
+  staticPill = false,
 }: {
   item: (typeof ITEMS)[number];
   active: boolean;
   label: string;
-  sliding?: boolean;
+  staticPill?: boolean;
 }) {
   return (
     <>
-      {active && sliding ? (
-        <motion.span
-          layoutId="dock-active-pill"
-          className="absolute inset-0 z-0 rounded-full bg-[#FF6600]"
-          transition={DOCK_PILL_TRANSITION}
-        />
-      ) : null}
-      {active && !sliding ? (
+      {active && staticPill ? (
         <span className="absolute inset-0 z-0 rounded-full bg-[#FF6600]" />
       ) : null}
       <span
@@ -224,7 +233,56 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, [router, homePath]);
 
   const navRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const itemRefs = useRef<Array<HTMLLIElement | null>>([]);
   const scrollIdleRef = useRef<number | null>(null);
+  const pillX = useMotionValue(0);
+  const pillW = useMotionValue(0);
+  const draggingRef = useRef(false);
+  const dragMovedRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+  const originXRef = useRef(0);
+  const liveIndexRef = useRef(0);
+  const suppressClickRef = useRef(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const routeIndex = Math.max(0, ITEMS.findIndex((item) => item.tab === activeTab));
+  const visualIndex = dragIndex ?? routeIndex;
+
+  const measurePill = useCallback((index: number, instant = false) => {
+    const item = itemRefs.current[index];
+    const list = listRef.current;
+    if (!item || !list) return;
+    const itemRect = item.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    const nextX = itemRect.left - listRect.left;
+    const nextW = itemRect.width;
+    if (instant) {
+      pillX.set(nextX);
+      pillW.set(nextW);
+      return;
+    }
+    void animate(pillX, nextX, DOCK_PILL_TRANSITION);
+    void animate(pillW, nextW, DOCK_PILL_TRANSITION);
+  }, [pillW, pillX]);
+
+  const followPointer = useCallback((clientX: number) => {
+    const list = listRef.current;
+    if (!list) return;
+    const nextIndex = indexFromPointer(list, clientX);
+    const item = itemRefs.current[nextIndex];
+    if (!item) return;
+    const itemRect = item.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    const targetX = itemRect.left - listRect.left;
+    pillX.set(targetX);
+    pillW.set(itemRect.width);
+    if (liveIndexRef.current !== nextIndex) {
+      liveIndexRef.current = nextIndex;
+      triggerHaptic('light');
+    }
+    setDragIndex(nextIndex);
+  }, [pillW, pillX, triggerHaptic]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -258,6 +316,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     };
   }, [conceal, pathname]);
 
+  const pillMountedRef = useRef(false);
+  useLayoutEffect(() => {
+    if (draggingRef.current) return;
+    measurePill(routeIndex, !pillMountedRef.current);
+    pillMountedRef.current = true;
+  }, [conceal, measurePill, routeIndex]);
+
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
     const scrollers = [
@@ -286,18 +351,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const handleSelect = useCallback(
     (tab: AppTab, href: string) => {
       triggerHaptic('light');
-      // Aquece a rota de destino no mesmo tick do toque. Para as abas que
-      // alternam estado na MESMA rota (Início/Agenda via `?tab=`), envolvemos a
-      // atualização do store em `startTransition`: o React mantém o frame atual
-      // pintado até que o próximo esteja pronto, eliminando o flash de estado
-      // vazio durante a recomposição.
       if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
         router.prefetch(href);
       }
-      // "Hard clean-up" ao sair de uma sub-rota sem casco: purga foco, zoom e
-      // transforms residuais imediatamente e agenda uma segunda passada após o
-      // iOS restaurar a escala de forma assíncrona, evitando que o sub-route
-      // estados vazem para o container raiz da aba de destino.
       if (isShellBypassedRoute(pathname, chatThreadActive)) {
         resetViewportScale({ forceBlur: true });
         forceViewportRecalibration();
@@ -315,6 +371,62 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
   );
 
+  const commitTab = useCallback(
+    (index: number) => {
+      const item = ITEMS[index];
+      if (!item) return;
+      const href = hrefForTab(item.tab, homePath);
+      handleSelect(item.tab, href);
+      router.push(href, { scroll: false });
+    },
+    [handleSelect, homePath, router]
+  );
+
+  const onDockPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLUListElement>) => {
+      if (event.button !== 0) return;
+      draggingRef.current = true;
+      dragMovedRef.current = false;
+      suppressClickRef.current = false;
+      pointerIdRef.current = event.pointerId;
+      originXRef.current = event.clientX;
+      liveIndexRef.current = indexFromPointer(event.currentTarget, event.clientX);
+      setDragIndex(liveIndexRef.current);
+      measurePill(liveIndexRef.current, true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [measurePill]
+  );
+
+  const onDockPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLUListElement>) => {
+      if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
+      if (!dragMovedRef.current && Math.abs(event.clientX - originXRef.current) < DRAG_THRESHOLD_PX) {
+        return;
+      }
+      dragMovedRef.current = true;
+      suppressClickRef.current = true;
+      followPointer(event.clientX);
+    },
+    [followPointer]
+  );
+
+  const endDockPointer = useCallback(
+    (event: React.PointerEvent<HTMLUListElement>) => {
+      if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
+      draggingRef.current = false;
+      pointerIdRef.current = null;
+      const nextIndex = liveIndexRef.current;
+      setDragIndex(null);
+      measurePill(nextIndex);
+      if (dragMovedRef.current && nextIndex !== routeIndex) {
+        commitTab(nextIndex);
+      }
+      dragMovedRef.current = false;
+    },
+    [commitTab, measurePill, routeIndex]
+  );
+
   return (
     <nav
       ref={navRef}
@@ -322,27 +434,42 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 flex h-full w-full min-w-0 items-center gap-1">
-        {ITEMS.map((item) => {
-          const active = activeTab === item.tab;
-          const href =
-            item.tab === 'perfil'
-              ? '/dashboard/perfil'
-              : item.tab === 'chat'
-                ? '/dashboard/chat'
-                : item.tab === 'agendar'
-                  ? '/dashboard/agenda'
-                  : `${homePath}?tab=${item.tab}`;
+      <ul
+        ref={listRef}
+        className="relative z-10 flex h-full w-full min-w-0 items-center gap-1"
+        onPointerDown={onDockPointerDown}
+        onPointerMove={onDockPointerMove}
+        onPointerUp={endDockPointer}
+        onPointerCancel={endDockPointer}
+      >
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute top-0 bottom-0 z-0 rounded-full bg-[#FF6600]"
+          style={{ x: pillX, width: pillW }}
+        />
+        {ITEMS.map((item, index) => {
+          const active = visualIndex === index;
+          const href = hrefForTab(item.tab, homePath);
           return (
-            <li key={item.tab} className="flex min-w-0 flex-1">
+            <li
+              key={item.tab}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+              }}
+              className="relative z-10 flex min-w-0 flex-1"
+            >
               <Link
                 href={href}
                 prefetch
                 scroll={false}
                 draggable={false}
                 onContextMenu={(event) => event.preventDefault()}
-                onPointerDown={playPremiumFeedback}
-                onClick={() => {
+                onClick={(event) => {
+                  if (suppressClickRef.current) {
+                    event.preventDefault();
+                    suppressClickRef.current = false;
+                    return;
+                  }
                   playPremiumFeedback();
                   handleSelect(item.tab, href);
                 }}
@@ -354,7 +481,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 aria-current={active ? 'page' : undefined}
                 aria-label={t(item.labelKey)}
               >
-                <DockGlyph item={item} active={active} label={t(item.labelKey)} sliding />
+                <DockGlyph item={item} active={active} label={t(item.labelKey)} />
               </Link>
             </li>
           );
@@ -392,7 +519,7 @@ function BottomNavFallbackInner() {
           return (
             <li key={item.tab} className="flex min-w-0 flex-1">
               <span className={dockItemClass(active)}>
-                <DockGlyph item={item} active={active} label={t(item.labelKey)} />
+                <DockGlyph item={item} active={active} label={t(item.labelKey)} staticPill />
               </span>
             </li>
           );
