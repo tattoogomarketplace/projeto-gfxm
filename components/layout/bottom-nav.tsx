@@ -315,7 +315,14 @@ function DockGlyph({
           active && 'scale-105'
         )}
       >
-        <NavIcon icon={item.icon} className={active ? 'text-[#90EE90]' : 'text-zinc-500'} />
+        <NavIcon
+          icon={item.icon}
+          className={
+            active
+              ? 'text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
+              : 'text-zinc-500'
+          }
+        />
       </span>
       <span
         className={cn(
@@ -324,7 +331,12 @@ function DockGlyph({
         )}
         aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]">
+        <span
+          className={cn(
+            'min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]',
+            active && 'drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
+          )}
+        >
           {label}
         </span>
       </span>
@@ -368,14 +380,26 @@ function DockGlyphLive({
         className="relative z-10 flex shrink-0 items-center justify-center will-change-transform"
         style={{ scale }}
       >
-        <NavIcon icon={item.icon} className={active ? 'text-[#90EE90]' : 'text-zinc-500'} />
+        <NavIcon
+          icon={item.icon}
+          className={
+            active
+              ? 'text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
+              : 'text-zinc-500'
+          }
+        />
       </motion.span>
       <motion.span
         className="relative z-10 grid min-w-0"
         style={{ gridTemplateColumns: labelColumns, opacity: labelProgress }}
         aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]">
+        <span
+          className={cn(
+            'min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]',
+            active && 'drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
+          )}
+        >
           {label}
         </span>
       </motion.span>
