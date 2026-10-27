@@ -329,21 +329,18 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="relative isolate h-14 min-h-14 max-h-14 w-full shrink-0 contain-layout">
-        <div className="absolute inset-0 flex h-full w-full items-center justify-between px-4">
-          <div className="w-10 shrink-0" aria-hidden />
-          <div className="flex flex-1 items-center justify-center">
-            <BrandLogo className="h-auto w-auto px-0" size="sm" />
-          </div>
-          <div className="flex w-10 shrink-0 items-center justify-end gap-2">
-            {!isOnline || pending > 0 ? (
-              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-                {!isOnline ? t('common.offline') : `${pending} na fila`}
-              </span>
-            ) : null}
-            {showMachineTrigger ? (
-              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
-            ) : null}
-          </div>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+          <BrandLogo className="pointer-events-auto h-auto w-auto px-0" size="sm" />
+        </div>
+        <div className="absolute right-4 top-1/2 z-20 flex -translate-y-1/2 items-center justify-end gap-2">
+          {!isOnline || pending > 0 ? (
+            <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
+              {!isOnline ? t('common.offline') : `${pending} na fila`}
+            </span>
+          ) : null}
+          {showMachineTrigger ? (
+            <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+          ) : null}
         </div>
       </div>
       {hideTabs ? null : (
