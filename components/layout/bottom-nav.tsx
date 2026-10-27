@@ -3,7 +3,7 @@
 import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { animate, motion, useMotionValue, useTransform, type MotionValue } from 'framer-motion';
+import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -68,6 +68,8 @@ const PILL_CLASS =
 
 const DRAG_THRESHOLD_PX = 6;
 const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
+const DOCK_PLUMP_SCALE = 1.08;
+const DOCK_PLUMP_SPRING = { stiffness: 480, damping: 26, mass: 0.28 };
 const DOCK_TICK_DURATION = 0.018;
 
 type DockAudioEngine = {
@@ -187,18 +189,22 @@ function DockGlyphLive({
   active,
   label,
   hoverIndex,
+  plumpScale,
   index,
 }: {
   item: (typeof ITEMS)[number];
   active: boolean;
   label: string;
   hoverIndex: MotionValue<number>;
+  plumpScale: MotionValue<number>;
   index: number;
 }) {
-  const scale = useTransform(hoverIndex, (value) => {
+  const scale = useTransform([hoverIndex, plumpScale], (values) => {
+    const value = values[0] as number;
+    const plump = values[1] as number;
     const distance = Math.abs(value - index);
     const proximity = distance >= 1 ? 0 : 1 - distance;
-    return 1 + proximity * 0.05;
+    return 1 + proximity * 0.05 + proximity * (plump - 1);
   });
   const labelProgress = useTransform(hoverIndex, (value) => {
     const distance = Math.abs(value - index);
@@ -400,6 +406,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pillX = useMotionValue(0);
   const pillW = useMotionValue(0);
   const hoverIndex = useMotionValue(routeIndex);
+  const grabScale = useMotionValue(1);
+  const pillScale = useSpring(grabScale, DOCK_PLUMP_SPRING);
   const draggingRef = useRef(false);
   const dragMovedRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
@@ -644,6 +652,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       pillX.stop();
       pillW.stop();
       hoverIndex.stop();
+      grabScale.set(DOCK_PLUMP_SCALE);
       draggingRef.current = true;
       dragMovedRef.current = false;
       suppressClickRef.current = false;
@@ -654,7 +663,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       tickIndexRef.current = startIndex;
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [cacheDockSlots, hoverIndex, pillW, pillX, unlockTick]
+    [cacheDockSlots, grabScale, hoverIndex, pillW, pillX, unlockTick]
   );
 
   const onDockPointerMove = useCallback(
@@ -674,6 +683,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
       draggingRef.current = false;
+      grabScale.set(1);
       pointerIdRef.current = null;
       const nextIndex = liveIndexRef.current;
       pendingIndexRef.current = nextIndex;
@@ -685,7 +695,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       }
       dragMovedRef.current = false;
     },
-    [commitTab, measurePill, routeIndex]
+    [commitTab, grabScale, measurePill, routeIndex]
   );
 
   return (
@@ -710,7 +720,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         <motion.div
           aria-hidden
           className="pointer-events-none absolute top-0 bottom-0 z-0 rounded-full bg-[#FF6600] transform-gpu will-change-transform"
-          style={{ x: pillX, width: pillW }}
+          style={{ x: pillX, width: pillW, scale: pillScale }}
         />
         {ITEMS.map((item, index) => {
           const visualActive = liveTabIndex === index;
@@ -757,6 +767,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   active={visualActive}
                   label={t(item.labelKey)}
                   hoverIndex={hoverIndex}
+                  plumpScale={pillScale}
                   index={index}
                 />
               </Link>
