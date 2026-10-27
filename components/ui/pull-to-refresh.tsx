@@ -22,6 +22,7 @@ const INDICATOR_SIZE = 44;
 const INDICATOR_HIDE_PX = 56;
 const REST_PULL_PX = 60;
 const MIN_REFRESH_MS = 560;
+const MDT_MS = 1200;
 const FINISHING_MS = 800;
 const MAX_REFRESH_MS = 2400;
 const SNAP_MS = 380;
@@ -285,7 +286,7 @@ export function PullToRefresh({
       finishingTimerRef.current = 0;
     }
     const elapsed = performance.now() - refreshStartedAtRef.current;
-    const wait = Math.max(0, MIN_REFRESH_MS - elapsed);
+    const wait = Math.max(0, MDT_MS - elapsed);
     minTimerRef.current = window.setTimeout(() => {
       minTimerRef.current = 0;
       if (phaseRef.current !== 'refreshing') return;
@@ -316,22 +317,25 @@ export function PullToRefresh({
       finishRefresh();
     }, MAX_REFRESH_MS);
 
+    const mdtLock = new Promise<void>((resolve) => {
+      window.setTimeout(resolve, MDT_MS);
+    });
+
     if (onRefresh) {
-      Promise.resolve(onRefresh())
-        .catch(() => undefined)
-        .finally(() => finishRefresh());
+      Promise.all([Promise.resolve(onRefresh()).catch(() => undefined), mdtLock]).finally(() =>
+        finishRefresh()
+      );
       return;
     }
 
     startTransition(() => {
       router.refresh();
     });
-    minTimerRef.current = window.setTimeout(() => {
-      minTimerRef.current = 0;
+    Promise.all([mdtLock]).then(() => {
       if (phaseRef.current === 'refreshing' && !sawPendingRef.current) {
         finishRefresh();
       }
-    }, MIN_REFRESH_MS);
+    });
   }, [applyFrame, finishRefresh, onRefresh, router, setPhaseSafe, startColorTicker, startTransition, triggerHaptic]);
 
   useEffect(() => {
