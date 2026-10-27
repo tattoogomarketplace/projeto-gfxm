@@ -136,6 +136,27 @@ function createDockAudioEngine(Ctor: typeof AudioContext): DockAudioEngine {
   };
 }
 
+let dockAudioSingleton: DockAudioEngine | null = null;
+
+function getOrCreateDockAudioEngine(): DockAudioEngine | null {
+  try {
+    const AudioContextCtor = getAudioContextCtor();
+    if (!AudioContextCtor) return null;
+    if (!dockAudioSingleton || dockAudioSingleton.ctx.state === 'closed') {
+      dockAudioSingleton = createDockAudioEngine(AudioContextCtor);
+    }
+    return dockAudioSingleton;
+  } catch {
+    console.log('Feedback suppressed');
+    return null;
+  }
+}
+
+function resumeDockAudioEngine(engine: DockAudioEngine | null) {
+  if (!engine || engine.ctx.state !== 'suspended') return;
+  void engine.ctx.resume().catch(() => {});
+}
+
 function hrefForTab(tab: AppTab, homePath: string): string {
   if (tab === 'perfil') return '/dashboard/perfil';
   if (tab === 'chat') return '/dashboard/chat';
@@ -273,20 +294,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const audioPrimedRef = useRef(false);
 
   const ensureDockAudio = useCallback((): DockAudioEngine | null => {
-    try {
-      const AudioContextCtor = getAudioContextCtor();
-      if (!AudioContextCtor) return null;
-      let engine = audioEngineRef.current;
-      if (!engine || engine.ctx.state === 'closed') {
-        engine = createDockAudioEngine(AudioContextCtor);
-        audioEngineRef.current = engine;
-        audioPrimedRef.current = false;
-      }
-      return engine;
-    } catch {
-      console.log('Feedback suppressed');
-      return null;
+    const engine = getOrCreateDockAudioEngine();
+    if (engine !== audioEngineRef.current) {
+      audioEngineRef.current = engine;
+      audioPrimedRef.current = false;
     }
+    return engine;
   }, []);
 
   const unlockTick = useCallback(() => {
@@ -382,8 +395,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       };
 
       if (ctx.state === 'suspended') {
-        void ctx.resume().then(fire).catch(() => {});
-        return;
+        void ctx.resume().catch(() => {});
       }
       fire();
     } catch {
@@ -616,21 +628,41 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, [pathname]);
 
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
+    if (typeof window === 'undefined') return;
 
-    const unlockOnGesture = () => {
-      unlockTick();
+    resumeDockAudioEngine(ensureDockAudio());
+    unlockTick();
+
+    const resumeOnInteraction = () => {
+      resumeDockAudioEngine(ensureDockAudio());
     };
 
-    nav.addEventListener('pointerdown', unlockOnGesture, { capture: true });
-    nav.addEventListener('touchstart', unlockOnGesture, { capture: true, passive: true });
+    const gestureOpts: AddEventListenerOptions = { capture: true, passive: true };
+    const gestureEvents: Array<keyof WindowEventMap> = [
+      'pointerdown',
+      'touchstart',
+      'mousedown',
+      'keydown',
+      'click',
+    ];
+    for (const eventName of gestureEvents) {
+      document.addEventListener(eventName, resumeOnInteraction, gestureOpts);
+      window.addEventListener(eventName, resumeOnInteraction, gestureOpts);
+    }
+    document.addEventListener('visibilitychange', resumeOnInteraction);
+    window.addEventListener('pageshow', resumeOnInteraction);
+    window.addEventListener('focus', resumeOnInteraction);
 
     return () => {
-      nav.removeEventListener('pointerdown', unlockOnGesture, { capture: true });
-      nav.removeEventListener('touchstart', unlockOnGesture, { capture: true });
+      for (const eventName of gestureEvents) {
+        document.removeEventListener(eventName, resumeOnInteraction, gestureOpts);
+        window.removeEventListener(eventName, resumeOnInteraction, gestureOpts);
+      }
+      document.removeEventListener('visibilitychange', resumeOnInteraction);
+      window.removeEventListener('pageshow', resumeOnInteraction);
+      window.removeEventListener('focus', resumeOnInteraction);
     };
-  }, [conceal, unlockTick]);
+  }, [ensureDockAudio, unlockTick]);
 
   useEffect(() => {
     return () => {
@@ -638,10 +670,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         window.clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
       }
-      const engine = audioEngineRef.current;
-      audioEngineRef.current = null;
-      if (!engine || engine.ctx.state === 'closed') return;
-      void engine.ctx.close().catch(() => {});
     };
   }, []);
 
