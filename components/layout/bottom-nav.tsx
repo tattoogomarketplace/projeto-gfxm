@@ -63,12 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed bottom-0 left-0 z-50 flex w-full items-center overflow-visible rounded-none border-t border-white/[0.06] px-5 pt-0 pb-[max(env(safe-area-inset-bottom),_8px)]';
-
-const DOCK_PAD = {
-  bottom: '0px',
-  marginBottom: '0px',
-} as const;
+  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[92%] max-w-md -translate-x-1/2 items-center justify-around overflow-visible rounded-full border border-white/10 bg-[#121212]/90 px-3 py-1 shadow-2xl backdrop-blur-xl';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -180,11 +175,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     if (!nav) return;
 
     const applyDockMetrics = () => {
-      const height = Math.ceil(nav.getBoundingClientRect().height);
+      const rect = nav.getBoundingClientRect();
+      const height = Math.ceil(rect.height);
       if (height <= 0) return;
+      const inset = Math.max(0, Math.ceil(window.innerHeight - rect.bottom));
       const root = document.documentElement;
       root.style.setProperty('--dock-height', `${height}px`);
-      root.style.setProperty('--dock-clearance', `calc(${height}px + 0.5rem)`);
+      root.style.setProperty('--dock-clearance', `${height + inset + 8}px`);
     };
 
     applyDockMetrics();
@@ -266,11 +263,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     <nav
       ref={navRef}
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
-      style={DOCK_PAD}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 mx-auto flex h-14 w-full max-w-[400px] items-center justify-between">
+      <ul className="relative z-10 flex h-full w-full items-center justify-around">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -293,7 +289,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  'flex min-h-0 min-w-11 flex-col items-center justify-center gap-px px-3 py-1 rounded-2xl',
+                  'flex min-h-0 min-w-11 flex-col items-center justify-center gap-px rounded-full px-3 py-0.5',
                   'text-[10px] font-medium leading-none tracking-tight',
                   'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
@@ -340,11 +336,11 @@ function BottomNavFallbackInner() {
   if (shouldHideNav(pathname, false)) return null;
 
   return (
-    <nav aria-hidden className={PILL_CLASS} style={DOCK_PAD}>
-      <ul className="relative z-10 mx-auto flex h-14 w-full max-w-[400px] items-center justify-between">
+    <nav aria-hidden className={PILL_CLASS}>
+      <ul className="relative z-10 flex h-full w-full items-center justify-around">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
-            <span className="flex min-h-0 min-w-11 flex-col items-center justify-center gap-px px-3 py-1 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
+            <span className="flex min-h-0 min-w-11 flex-col items-center justify-center gap-px rounded-full px-3 py-0.5 bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
               <span className="flex items-center justify-center">
                 <NavIcon icon={item.icon} />
               </span>
