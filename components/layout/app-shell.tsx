@@ -326,7 +326,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       data-app-header
       className={cn(
         'fixed inset-x-0 top-0 z-50 w-full overflow-hidden border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
-        'pt-[env(safe-area-inset-top)]',
+        'pt-[max(env(safe-area-inset-top),_16px)]',
         'transform-gpu will-change-transform transition-transform duration-300 ease-in-out',
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
@@ -373,7 +373,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           <div
             aria-hidden
             data-app-header-spacer
-            className="pointer-events-none invisible shrink-0 border-b border-transparent pt-[env(safe-area-inset-top)]"
+            className="pointer-events-none invisible shrink-0 border-b border-transparent pt-[max(env(safe-area-inset-top),_16px)]"
           >
             <div className="h-14" />
             {hideTabs ? null : (
