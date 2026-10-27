@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { animate, motion, useMotionValue } from 'framer-motion';
@@ -67,6 +67,7 @@ const PILL_CLASS =
   'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-2 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const DRAG_THRESHOLD_PX = 6;
+const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
 
 function hrefForTab(tab: AppTab, homePath: string): string {
   if (tab === 'perfil') return '/dashboard/perfil';
@@ -92,7 +93,7 @@ const NavIcon = memo(function NavIcon({
   return <Icon className={cn('h-[18px] w-[18px]', className)} strokeWidth={1.75} aria-hidden />;
 });
 
-const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping: 32 };
+const DOCK_PILL_TRANSITION = DOCK_PILL_SPRING;
 
 function dockItemClass(active: boolean) {
   return cn(
@@ -261,46 +262,70 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pointerIdRef = useRef<number | null>(null);
   const originXRef = useRef(0);
   const liveIndexRef = useRef(0);
+  const pendingIndexRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const slotsRef = useRef<Array<{ x: number; w: number }>>([]);
+  const listLeftRef = useRef(0);
+  const listWidthRef = useRef(0);
 
   const routeIndex = Math.max(0, ITEMS.findIndex((item) => item.tab === activeTab));
-  const visualIndex = dragIndex ?? routeIndex;
+
+  const cacheDockSlots = useCallback(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const listRect = list.getBoundingClientRect();
+    listLeftRef.current = listRect.left;
+    listWidthRef.current = listRect.width;
+    slotsRef.current = itemRefs.current.map((item) => {
+      if (!item) return { x: 0, w: 0 };
+      const itemRect = item.getBoundingClientRect();
+      return { x: itemRect.left - listRect.left, w: itemRect.width };
+    });
+  }, []);
 
   const measurePill = useCallback((index: number, instant = false) => {
-    const item = itemRefs.current[index];
-    const list = listRef.current;
-    if (!item || !list) return;
-    const itemRect = item.getBoundingClientRect();
-    const listRect = list.getBoundingClientRect();
-    const nextX = itemRect.left - listRect.left;
-    const nextW = itemRect.width;
-    if (instant) {
-      pillX.set(nextX);
-      pillW.set(nextW);
+    const slot = slotsRef.current[index];
+    if (!slot || slot.w <= 0) {
+      const item = itemRefs.current[index];
+      const list = listRef.current;
+      if (!item || !list) return;
+      const itemRect = item.getBoundingClientRect();
+      const listRect = list.getBoundingClientRect();
+      const nextX = itemRect.left - listRect.left;
+      const nextW = itemRect.width;
+      if (instant) {
+        pillX.set(nextX);
+        pillW.set(nextW);
+        return;
+      }
+      void animate(pillX, nextX, DOCK_PILL_TRANSITION);
+      void animate(pillW, nextW, DOCK_PILL_TRANSITION);
       return;
     }
-    void animate(pillX, nextX, DOCK_PILL_TRANSITION);
-    void animate(pillW, nextW, DOCK_PILL_TRANSITION);
+    if (instant) {
+      pillX.set(slot.x);
+      pillW.set(slot.w);
+      return;
+    }
+    void animate(pillX, slot.x, DOCK_PILL_TRANSITION);
+    void animate(pillW, slot.w, DOCK_PILL_TRANSITION);
   }, [pillW, pillX]);
 
   const followPointer = useCallback((clientX: number) => {
-    const list = listRef.current;
-    if (!list) return;
-    const nextIndex = indexFromPointer(list, clientX);
-    const item = itemRefs.current[nextIndex];
-    if (!item) return;
-    const itemRect = item.getBoundingClientRect();
-    const listRect = list.getBoundingClientRect();
-    const targetX = itemRect.left - listRect.left;
-    pillX.set(targetX);
-    pillW.set(itemRect.width);
+    const listWidth = listWidthRef.current;
+    if (listWidth <= 0) return;
+    const x = Math.min(Math.max(clientX - listLeftRef.current, 0), listWidth - 0.001);
+    const nextIndex = Math.min(ITEMS.length - 1, Math.floor((x / listWidth) * ITEMS.length));
+    const slot = slotsRef.current[nextIndex];
+    if (!slot || slot.w <= 0) return;
+    const nextX = Math.min(Math.max(x - slot.w / 2, 0), listWidth - slot.w);
+    pillX.set(nextX);
+    pillW.set(slot.w);
     if (liveIndexRef.current !== nextIndex) {
       liveIndexRef.current = nextIndex;
       triggerHaptic('light');
       playTick();
     }
-    setDragIndex(nextIndex);
   }, [pillW, pillX, playTick, triggerHaptic]);
 
   useLayoutEffect(() => {
@@ -315,6 +340,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       const root = document.documentElement;
       root.style.setProperty('--dock-height', `${height}px`);
       root.style.setProperty('--dock-clearance', `${height + inset + 8}px`);
+      if (!draggingRef.current) cacheDockSlots();
     };
 
     applyDockMetrics();
@@ -333,14 +359,20 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       window.removeEventListener('orientationchange', applyDockMetrics);
       window.visualViewport?.removeEventListener('resize', applyDockMetrics);
     };
-  }, [conceal, pathname]);
+  }, [cacheDockSlots, conceal, pathname]);
 
   const pillMountedRef = useRef(false);
   useLayoutEffect(() => {
+    cacheDockSlots();
     if (draggingRef.current) return;
-    measurePill(visualIndex, !pillMountedRef.current);
+    const settledIndex =
+      pendingIndexRef.current !== null ? pendingIndexRef.current : routeIndex;
+    if (pendingIndexRef.current === routeIndex) {
+      pendingIndexRef.current = null;
+    }
+    measurePill(settledIndex, !pillMountedRef.current);
     pillMountedRef.current = true;
-  }, [conceal, measurePill, visualIndex]);
+  }, [cacheDockSlots, conceal, measurePill, routeIndex]);
 
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
@@ -397,7 +429,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (!item) return;
       const href = hrefForTab(item.tab, homePath);
       handleSelect(item.tab, href);
-      router.push(href, { scroll: false });
+      startTransition(() => {
+        router.push(href, { scroll: false });
+      });
     },
     [handleSelect, homePath, router]
   );
@@ -406,17 +440,18 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (event.button !== 0) return;
       unlockTick();
+      cacheDockSlots();
+      pillX.stop();
+      pillW.stop();
       draggingRef.current = true;
       dragMovedRef.current = false;
       suppressClickRef.current = false;
       pointerIdRef.current = event.pointerId;
       originXRef.current = event.clientX;
       liveIndexRef.current = indexFromPointer(event.currentTarget, event.clientX);
-      setDragIndex(liveIndexRef.current);
-      measurePill(liveIndexRef.current, true);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [measurePill, unlockTick]
+    [cacheDockSlots, pillW, pillX, unlockTick]
   );
 
   const onDockPointerMove = useCallback(
@@ -432,16 +467,18 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [followPointer]
   );
 
-  const endDockPointer = useCallback(
+  const onDockPointerEnd = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (!draggingRef.current || pointerIdRef.current !== event.pointerId) return;
       draggingRef.current = false;
       pointerIdRef.current = null;
       const nextIndex = liveIndexRef.current;
-      setDragIndex(null);
+      pendingIndexRef.current = nextIndex;
       measurePill(nextIndex);
       if (dragMovedRef.current && nextIndex !== routeIndex) {
         commitTab(nextIndex);
+      } else if (!dragMovedRef.current) {
+        pendingIndexRef.current = null;
       }
       dragMovedRef.current = false;
     },
@@ -457,19 +494,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     >
       <ul
         ref={listRef}
-        className="relative z-10 flex h-full w-full min-w-0 items-center gap-1"
+        className="relative z-10 flex h-full w-full min-w-0 touch-none items-center gap-1"
+        style={{ touchAction: 'none' }}
         onPointerDown={onDockPointerDown}
         onPointerMove={onDockPointerMove}
-        onPointerUp={endDockPointer}
-        onPointerCancel={endDockPointer}
+        onPointerUp={onDockPointerEnd}
+        onPointerCancel={onDockPointerEnd}
+        onLostPointerCapture={onDockPointerEnd}
       >
-        <motion.span
+        <motion.div
           aria-hidden
-          className="pointer-events-none absolute top-0 bottom-0 z-0 rounded-full bg-[#FF6600]"
+          className="pointer-events-none absolute top-0 bottom-0 z-0 rounded-full bg-[#FF6600] transform-gpu will-change-transform"
           style={{ x: pillX, width: pillW }}
         />
         {ITEMS.map((item, index) => {
-          const active = visualIndex === index;
+          const active = routeIndex === index;
           const href = hrefForTab(item.tab, homePath);
           return (
             <li
@@ -491,6 +530,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                     suppressClickRef.current = false;
                     return;
                   }
+                  pendingIndexRef.current = null;
                   unlockTick();
                   handleSelect(item.tab, href);
                 }}
