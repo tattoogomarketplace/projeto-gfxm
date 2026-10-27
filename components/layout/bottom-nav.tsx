@@ -71,11 +71,16 @@ const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42,
 const DOCK_PLUMP_SCALE = 1.08;
 const DOCK_PLUMP_SPRING = { stiffness: 480, damping: 26, mass: 0.28 };
 const DOCK_TICK_DURATION = 0.018;
+const DOCK_TICK_ATTACK = 0.002;
+const DOCK_TICK_GAIN = 10 ** (-20 / 20);
+const DOCK_TICK_NOISE_GAIN = DOCK_TICK_GAIN * 0.7;
+const DOCK_WARMUP_DURATION = 0.04;
 
 type DockAudioEngine = {
   ctx: AudioContext;
   master: GainNode;
   noiseBuffer: AudioBuffer;
+  silentBuffer: AudioBuffer;
 };
 
 function getAudioContextCtor(): typeof AudioContext | undefined {
@@ -97,6 +102,19 @@ function createDockNoiseBuffer(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+function createSilentWarmupBuffer(ctx: AudioContext): AudioBuffer {
+  const length = Math.max(1, Math.floor(ctx.sampleRate * DOCK_WARMUP_DURATION));
+  return ctx.createBuffer(1, length, ctx.sampleRate);
+}
+
+function scheduleTickEnvelope(param: AudioParam, time: number, peak: number, end: number) {
+  const attackEnd = Math.min(time + DOCK_TICK_ATTACK, end);
+  param.cancelScheduledValues(time);
+  param.setValueAtTime(0, time);
+  param.linearRampToValueAtTime(peak, attackEnd);
+  param.linearRampToValueAtTime(0, end);
+}
+
 function createDockAudioEngine(Ctor: typeof AudioContext): DockAudioEngine {
   const ctx = new Ctor();
   const master = ctx.createGain();
@@ -109,7 +127,12 @@ function createDockAudioEngine(Ctor: typeof AudioContext): DockAudioEngine {
   compressor.release.value = 0.05;
   master.connect(compressor);
   compressor.connect(ctx.destination);
-  return { ctx, master, noiseBuffer: createDockNoiseBuffer(ctx) };
+  return {
+    ctx,
+    master,
+    noiseBuffer: createDockNoiseBuffer(ctx),
+    silentBuffer: createSilentWarmupBuffer(ctx),
+  };
 }
 
 function hrefForTab(tab: AppTab, homePath: string): string {
@@ -269,23 +292,22 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     try {
       const engine = ensureDockAudio();
       if (!engine) return;
-      const { ctx, master } = engine;
+      const { ctx, master, silentBuffer } = engine;
       if (ctx.state === 'suspended') {
         void ctx.resume().catch(() => {});
       }
       if (audioPrimedRef.current) return;
       audioPrimedRef.current = true;
       const mute = ctx.createGain();
-      mute.gain.value = 0.0001;
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = 1;
-      osc.connect(mute);
+      mute.gain.setValueAtTime(0, ctx.currentTime);
+      const warmup = ctx.createBufferSource();
+      warmup.buffer = silentBuffer;
+      warmup.connect(mute);
       mute.connect(master);
-      osc.start(0);
-      osc.stop(ctx.currentTime + 0.02);
-      osc.onended = () => {
-        osc.disconnect();
+      warmup.start(0);
+      warmup.stop(ctx.currentTime + DOCK_WARMUP_DURATION);
+      warmup.onended = () => {
+        warmup.disconnect();
         mute.disconnect();
       };
     } catch {
@@ -310,9 +332,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         sine.frequency.setValueAtTime(120, t);
         sine.frequency.exponentialRampToValueAtTime(40, end);
         const sineGain = ctx.createGain();
-        sineGain.gain.setValueAtTime(0.0001, t);
-        sineGain.gain.exponentialRampToValueAtTime(0.079, t + 0.0012);
-        sineGain.gain.exponentialRampToValueAtTime(0.0001, end);
+        sineGain.gain.value = 0;
+        scheduleTickEnvelope(sineGain.gain, t, DOCK_TICK_GAIN, end);
 
         const noise = ctx.createBufferSource();
         noise.buffer = noiseBuffer;
@@ -324,9 +345,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         lowpass.frequency.setValueAtTime(1200, t);
         lowpass.Q.setValueAtTime(0.65, t);
         const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.0001, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.056, t + 0.0009);
-        noiseGain.gain.exponentialRampToValueAtTime(0.0001, end);
+        noiseGain.gain.value = 0;
+        scheduleTickEnvelope(noiseGain.gain, t, DOCK_TICK_NOISE_GAIN, end);
 
         sine.connect(sineGain);
         sineGain.connect(master);
