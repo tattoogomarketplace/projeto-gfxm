@@ -326,7 +326,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       ref={headerRef}
       data-app-header
       className={cn(
-        'fixed top-0 left-0 z-50 w-full border-b border-[#121212] bg-[#121212]',
+        'fixed top-0 left-0 z-50 w-full overflow-hidden border-0 bg-[#121212] shadow-none outline-none',
         'pt-[max(env(safe-area-inset-top),_16px)]'
       )}
     >
@@ -372,7 +372,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           <div
             aria-hidden
             data-app-header-spacer
-            className="pointer-events-none invisible shrink-0 border-b border-transparent pt-[max(env(safe-area-inset-top),_16px)]"
+            className="pointer-events-none invisible shrink-0 border-0 pt-[max(env(safe-area-inset-top),_16px)]"
           >
             <div className="h-14" />
             {hideTabs ? null : (

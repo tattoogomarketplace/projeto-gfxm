@@ -288,6 +288,10 @@
 
   [data-app-header] {
     background-color: #121212;
+    border: 0;
+    box-shadow: none;
+    outline: none;
+    overflow: hidden;
   }
 
   .safe-sticky-top {

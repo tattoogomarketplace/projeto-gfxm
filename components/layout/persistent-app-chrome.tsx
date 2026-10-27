@@ -57,7 +57,6 @@ function PersistentAppChromeBase() {
   const pathname = usePathname();
   const visible = isPersistentChromeVisible(pathname);
   const machineVisible = isPersistentMachineTriggerVisible(pathname);
-  const headerHidden = useUiStore((s) => s.headerHidden);
   const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
@@ -67,14 +66,9 @@ function PersistentAppChromeBase() {
         aria-hidden={!machineVisible}
         data-header-follow
         className={cn(
-          'fixed right-4 top-[calc(env(safe-area-inset-top)+0.375rem)] z-[65]',
+          'fixed right-4 top-[calc(env(safe-area-inset-top)+0.375rem)] z-[65] overflow-hidden',
           !machineVisible && 'invisible pointer-events-none'
         )}
-        style={{
-          transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
-          opacity: headerHidden ? 0 : 1,
-          visibility: headerHidden ? 'hidden' : 'visible',
-        }}
       >
         <TattooMachineMenuTrigger
           open={settingsDrawerOpen}

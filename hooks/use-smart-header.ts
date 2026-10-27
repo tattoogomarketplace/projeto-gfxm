@@ -6,8 +6,10 @@ import { useUiStore } from '@/hooks/use-ui-store';
 
 const DELTA_PX = 6;
 const TOP_REVEAL_PX = 20;
-const HIDDEN_TRANSFORM = 'translateY(-100%)';
-const VISIBLE_TRANSFORM = 'translateY(0)';
+const HEADER_HIDDEN_TRANSFORM = 'translate3d(0, calc(-100% - 8px), 0)';
+const CHROME_HIDDEN_TRANSFORM =
+  'translate3d(0, calc(-1 * var(--app-header-height) - 8px), 0)';
+const VISIBLE_TRANSFORM = 'translate3d(0, 0, 0)';
 const HIDE_TRANSITION =
   'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out';
 
@@ -19,25 +21,24 @@ function readScrollTop(): number {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
-function applyHideStyles(el: HTMLElement, hidden: boolean) {
+function applyHideStyles(el: HTMLElement, hidden: boolean, hiddenTransform: string) {
   el.style.willChange = 'transform, opacity';
   el.style.transition = HIDE_TRANSITION;
+  el.style.pointerEvents = hidden ? 'none' : '';
   if (hidden) {
-    el.style.transform = HIDDEN_TRANSFORM;
+    el.style.transform = hiddenTransform;
     el.style.opacity = '0';
     el.style.visibility = 'hidden';
-    el.style.pointerEvents = 'none';
     return;
   }
   el.style.visibility = 'visible';
   el.style.transform = VISIBLE_TRANSFORM;
   el.style.opacity = '1';
-  el.style.pointerEvents = '';
 }
 
 function applyChromeHide(hidden: boolean) {
   document.querySelectorAll<HTMLElement>('[data-header-follow]').forEach((el) => {
-    applyHideStyles(el, hidden);
+    applyHideStyles(el, hidden, CHROME_HIDDEN_TRANSFORM);
   });
 }
 
@@ -53,7 +54,7 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
     hiddenRef.current = false;
     setHeaderHidden(false);
     const header = headerRef.current;
-    if (header) applyHideStyles(header, false);
+    if (header) applyHideStyles(header, false, HEADER_HIDDEN_TRANSFORM);
     applyChromeHide(false);
   }, [pathname, setHeaderHidden]);
 
@@ -61,12 +62,12 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
     const applyHidden = (nextHidden: boolean) => {
       const header = headerRef.current;
       if (hiddenRef.current === nextHidden) {
-        if (header) applyHideStyles(header, nextHidden);
+        if (header) applyHideStyles(header, nextHidden, HEADER_HIDDEN_TRANSFORM);
         applyChromeHide(nextHidden);
         return;
       }
       hiddenRef.current = nextHidden;
-      if (header) applyHideStyles(header, nextHidden);
+      if (header) applyHideStyles(header, nextHidden, HEADER_HIDDEN_TRANSFORM);
       applyChromeHide(nextHidden);
       if (useUiStore.getState().headerHidden !== nextHidden) {
         setHeaderHidden(nextHidden);
