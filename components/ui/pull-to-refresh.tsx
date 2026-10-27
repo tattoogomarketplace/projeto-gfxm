@@ -134,6 +134,13 @@ export function PullToRefresh({
   const restTimerRef = useRef(0);
   const finishingTimerRef = useRef(0);
   const colorRafRef = useRef(0);
+  const onRefreshRef = useRef(onRefresh);
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    onRefreshRef.current = onRefresh;
+    routerRef.current = router;
+  }, [onRefresh, router]);
 
   const setPhaseSafe = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -285,7 +292,8 @@ export function PullToRefresh({
       window.clearTimeout(finishingTimerRef.current);
       finishingTimerRef.current = 0;
     }
-    const elapsed = performance.now() - refreshStartedAtRef.current;
+    const startedAt = refreshStartedAtRef.current;
+    const elapsed = startedAt > 0 ? performance.now() - startedAt : 0;
     const wait = Math.max(0, MDT_MS - elapsed);
     minTimerRef.current = window.setTimeout(() => {
       minTimerRef.current = 0;
@@ -313,6 +321,10 @@ export function PullToRefresh({
     startColorTicker();
     triggerHaptic('success');
 
+    if (maxTimerRef.current) {
+      window.clearTimeout(maxTimerRef.current);
+      maxTimerRef.current = 0;
+    }
     maxTimerRef.current = window.setTimeout(() => {
       finishRefresh();
     }, MAX_REFRESH_MS);
@@ -321,22 +333,22 @@ export function PullToRefresh({
       window.setTimeout(resolve, MDT_MS);
     });
 
-    if (onRefresh) {
-      Promise.all([Promise.resolve(onRefresh()).catch(() => undefined), mdtLock]).finally(() =>
-        finishRefresh()
-      );
-      return;
-    }
+    const refreshWork = Promise.resolve()
+      .then(() => {
+        const handler = onRefreshRef.current;
+        if (handler) return handler();
+        startTransition(() => {
+          routerRef.current.refresh();
+        });
+      })
+      .catch(() => undefined);
 
-    startTransition(() => {
-      router.refresh();
-    });
-    Promise.all([mdtLock]).then(() => {
-      if (phaseRef.current === 'refreshing' && !sawPendingRef.current) {
+    Promise.all([refreshWork, mdtLock]).finally(() => {
+      if (phaseRef.current === 'refreshing') {
         finishRefresh();
       }
     });
-  }, [applyFrame, finishRefresh, onRefresh, router, setPhaseSafe, startColorTicker, startTransition, triggerHaptic]);
+  }, [applyFrame, finishRefresh, setPhaseSafe, startColorTicker, startTransition, triggerHaptic]);
 
   useEffect(() => {
     if (phase !== 'refreshing' || onRefresh) return;
@@ -345,6 +357,7 @@ export function PullToRefresh({
       return;
     }
     if (!sawPendingRef.current) return;
+    if (performance.now() - refreshStartedAtRef.current < MDT_MS) return;
     finishRefresh();
   }, [finishRefresh, isPending, onRefresh, phase]);
 
@@ -444,13 +457,18 @@ export function PullToRefresh({
       root.removeEventListener('touchend', onEnd);
       root.removeEventListener('touchcancel', onEnd);
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+    };
+  }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);
+
+  useEffect(() => {
+    return () => {
       if (colorRafRef.current) window.cancelAnimationFrame(colorRafRef.current);
       if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
       if (minTimerRef.current) window.clearTimeout(minTimerRef.current);
       if (finishingTimerRef.current) window.clearTimeout(finishingTimerRef.current);
       if (restTimerRef.current) window.clearTimeout(restTimerRef.current);
     };
-  }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);
+  }, []);
 
   const refreshing = phase === 'refreshing';
   const active = refreshing || phase === 'finishing';

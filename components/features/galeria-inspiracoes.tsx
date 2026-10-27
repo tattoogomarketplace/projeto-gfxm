@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState, useTransition } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ChevronRight, Compass, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
@@ -49,21 +48,20 @@ export function GaleriaInspiracoes({
   savedIds = [],
 }: GaleriaInspiracoesProps) {
   const { t } = useI18n();
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
 
   const handleRefresh = useCallback(async () => {
-    const mdtLock = new Promise<void>((resolve) => {
-      window.setTimeout(resolve, 1200);
-    });
-    startTransition(() => {
-      router.refresh();
-    });
-    await Promise.all([mdtLock]);
-  }, [router, startTransition]);
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 1200);
+      }),
+      fetch('/api/galeria', { cache: 'no-store' })
+        .then(() => undefined)
+        .catch(() => undefined),
+    ]);
+  }, []);
 
   const loading = false;
   const inspirations = useMemo<InspirationItem[]>(() => {
