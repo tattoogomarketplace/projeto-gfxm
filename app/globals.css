@@ -277,6 +277,12 @@
     padding-top: var(--header-safe-top);
   }
 
+  [data-app-header] {
+    translate: none;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
   .safe-sticky-top {
     top: var(--safe-top);
   }

@@ -325,11 +325,15 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <header
       data-app-header
       className={cn(
-        'fixed inset-x-0 top-0 z-50 w-full overflow-hidden border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
+        'fixed top-0 z-50 w-full border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
         'pt-[max(env(safe-area-inset-top),_16px)]',
-        'transform-gpu will-change-transform transition-transform duration-300 ease-in-out',
+        'transition-transform duration-300',
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
+      style={{
+        translate: 'none',
+        transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
+      }}
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="grid h-14 w-full grid-cols-3 items-center px-4">
