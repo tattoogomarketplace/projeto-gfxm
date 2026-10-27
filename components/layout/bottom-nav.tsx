@@ -307,7 +307,7 @@ function DockGlyph({
   return (
     <>
       {active && staticPill ? (
-        <span className="absolute inset-0 z-0 rounded-full bg-[#FF6600]/15" />
+        <span className="absolute inset-0 z-0 rounded-full bg-[#90EE90]/15" />
       ) : null}
       <span
         className={cn(
@@ -942,7 +942,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#FF6600]/15 transform-gpu will-change-transform"
+          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform"
           style={{ x: pillX, width: pillW, scale: pillScale }}
         />
         {ITEMS.map((item, index) => {
