@@ -297,20 +297,29 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (ctx.state === 'suspended') {
         void ctx.resume().catch(() => {});
       }
-      if (audioPrimedRef.current) return;
-      audioPrimedRef.current = true;
+      const t = ctx.currentTime;
       const mute = ctx.createGain();
-      mute.gain.setValueAtTime(0, ctx.currentTime);
+      mute.gain.setValueAtTime(0, t);
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1, t);
+      osc.connect(mute);
       const warmup = ctx.createBufferSource();
       warmup.buffer = silentBuffer;
       warmup.connect(mute);
       mute.connect(master);
-      warmup.start(0);
-      warmup.stop(ctx.currentTime + DOCK_WARMUP_DURATION);
+      osc.start(t);
+      warmup.start(t);
+      osc.stop(t + DOCK_WARMUP_DURATION);
+      warmup.stop(t + DOCK_WARMUP_DURATION);
+      osc.onended = () => {
+        osc.disconnect();
+      };
       warmup.onended = () => {
         warmup.disconnect();
         mute.disconnect();
       };
+      audioPrimedRef.current = true;
     } catch {
       console.log('Feedback suppressed');
     }
