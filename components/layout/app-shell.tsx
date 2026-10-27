@@ -331,22 +331,20 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
     >
-      <div className="px-4 pb-3">
-        <div className="relative flex min-h-11 w-full items-center justify-between">
-          <h1 className="sr-only">{headerTitle}</h1>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <BrandLogo className="h-11 w-auto px-0" size="sm" />
-          </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            {!isOnline || pending > 0 ? (
-              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-                {!isOnline ? t('common.offline') : `${pending} na fila`}
-              </span>
-            ) : null}
-            {showMachineTrigger ? (
-              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
-            ) : null}
-          </div>
+      <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
+        <h1 className="sr-only">{headerTitle}</h1>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <BrandLogo className="h-11 w-auto px-0" size="sm" />
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {!isOnline || pending > 0 ? (
+            <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
+              {!isOnline ? t('common.offline') : `${pending} na fila`}
+            </span>
+          ) : null}
+          {showMachineTrigger ? (
+            <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+          ) : null}
         </div>
       </div>
       {hideTabs ? null : (
@@ -374,9 +372,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           <div
             aria-hidden
             data-app-header-spacer
-            className="safe-header-pad pointer-events-none invisible shrink-0"
+            className="safe-header-pad pointer-events-none invisible shrink-0 border-b border-transparent"
           >
-            <div className="min-h-11 px-4 pb-3" />
+            <div className="h-[var(--app-header-content)]" />
             {hideTabs ? null : (
               <div className="hidden px-4 pb-3 md:block">
                 <div className="h-11" />
