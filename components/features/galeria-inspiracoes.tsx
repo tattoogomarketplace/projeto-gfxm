@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronRight, Compass, Images } from 'lucide-react';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
@@ -48,9 +49,19 @@ export function GaleriaInspiracoes({
   savedIds = [],
 }: GaleriaInspiracoesProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 1500);
+      }),
+      Promise.resolve(router.refresh()),
+    ]);
+  }, [router]);
 
   const loading = false;
   const inspirations = useMemo<InspirationItem[]>(() => {
@@ -70,6 +81,7 @@ export function GaleriaInspiracoes({
       <PullToRefresh
         className="relative z-0 flex min-h-0 w-full flex-1 flex-col"
         topOffsetClass="top-0"
+        onRefresh={handleRefresh}
       >
         <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)]">
           <PortfolioFilterBar
