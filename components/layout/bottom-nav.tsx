@@ -80,8 +80,8 @@ const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping:
 
 function dockItemClass(active: boolean) {
   return cn(
-    'relative flex min-h-11 min-w-0 items-center justify-center gap-1 overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
-    active ? 'px-2' : 'min-w-11 px-1.5'
+    'relative flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
+    active ? 'flex-row gap-1 px-2.5 py-1.5' : 'flex-col gap-px px-1.5 py-0.5'
   );
 }
 
@@ -113,14 +113,13 @@ function DockGlyph({
       </span>
       <span
         className={cn(
-          'relative z-10 grid transition-[grid-template-columns,opacity] duration-300 ease-in-out',
-          active ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0'
+          'relative z-10 max-w-full truncate whitespace-nowrap leading-none tracking-tight',
+          active
+            ? 'text-[11px] font-semibold text-[#121212]'
+            : 'text-[9px] font-medium text-zinc-500'
         )}
-        aria-hidden={!active}
       >
-        <span className="overflow-hidden whitespace-nowrap text-[11px] font-semibold leading-none tracking-tight text-[#121212]">
-          {label}
-        </span>
+        {label}
       </span>
     </>
   );
