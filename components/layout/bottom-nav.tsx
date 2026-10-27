@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/[0.15] bg-white/[0.08] px-2 py-1 shadow-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] backdrop-blur-2xl select-none touch-none';
+  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/20 bg-white/[0.02] px-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),_0_20px_40px_rgba(0,0,0,0.4)] backdrop-blur-[40px] select-none touch-none';
 
 const DRAG_THRESHOLD_PX = 6;
 const DRAG_HOLD_MS = 150;
@@ -918,7 +918,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute top-0 bottom-0 z-0 rounded-full bg-[#FF6600] transform-gpu will-change-transform"
+          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#FF6600] transform-gpu will-change-transform"
           style={{ x: pillX, width: pillW, scale: pillScale }}
         />
         {ITEMS.map((item, index) => {
