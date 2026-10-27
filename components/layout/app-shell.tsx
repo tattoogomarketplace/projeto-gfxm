@@ -322,12 +322,12 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isProfileSettings;
 
   const headerNode = hideShellHeader ? null : (
-    <header
+    <div
       data-app-header
       className={cn(
-        'glass-chrome fixed inset-x-0 top-0 z-50 shrink-0 border-b border-black/[0.04] bg-[#121212]/90 backdrop-blur-2xl dark:border-white/[0.05]',
-        'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
-        'transition-transform duration-300 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]',
+        'fixed inset-x-0 top-0 z-50 w-full border-b border-black/[0.04] bg-[#121212]/90 backdrop-blur-2xl dark:border-white/[0.05]',
+        'pt-[env(safe-area-inset-top)]',
+        'transition-transform duration-300 ease-in-out',
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
     >
@@ -358,7 +358,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           />
         </div>
       )}
-    </header>
+    </div>
   );
 
   return (
