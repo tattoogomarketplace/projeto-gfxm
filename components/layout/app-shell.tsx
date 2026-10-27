@@ -329,11 +329,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="relative flex h-14 w-full items-center justify-between px-4">
-        <div></div>
-        <div className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
+        <div className="w-10 shrink-0" aria-hidden />
+        <div className="flex flex-1 justify-center">
           <BrandLogo className="h-auto w-auto px-0" size="sm" />
         </div>
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex w-10 shrink-0 items-center justify-end gap-2">
           {!isOnline || pending > 0 ? (
             <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
               {!isOnline ? t('common.offline') : `${pending} na fila`}
