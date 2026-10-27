@@ -279,10 +279,21 @@
 
   [data-app-header],
   [data-header-follow] {
-    translate: none;
-    transform: none;
-    opacity: 1;
-    pointer-events: auto;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
+    transition: transform 300ms ease-in-out;
+    transform: translateY(0);
+  }
+
+  [data-app-header].is-header-hidden {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  [data-header-follow].is-header-hidden {
+    transform: translateY(calc(-1 * var(--app-header-height)));
+    pointer-events: none;
   }
 
   [data-app-header] {
