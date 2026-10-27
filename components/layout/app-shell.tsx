@@ -326,13 +326,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       data-app-header
       className={cn(
         'glass-chrome fixed inset-x-0 top-0 z-50 shrink-0 border-b border-black/[0.04] bg-[#121212]/90 backdrop-blur-2xl dark:border-white/[0.05]',
-        'safe-header-pad transform-gpu will-change-transform',
+        'pt-[max(env(safe-area-inset-top),_16px)] transform-gpu will-change-transform',
         'transition-transform duration-300 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]',
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
     >
       <h1 className="sr-only">{headerTitle}</h1>
-      <div className="grid grid-cols-3 items-center h-16 w-full px-4">
+      <div className="grid grid-cols-3 items-center h-14 w-full px-4">
         <div></div>
         <div className="justify-self-center flex items-center">
           <BrandLogo className="w-auto px-0" size="sm" />
@@ -373,9 +373,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
           <div
             aria-hidden
             data-app-header-spacer
-            className="safe-header-pad pointer-events-none invisible shrink-0 border-b border-transparent"
+            className="pointer-events-none invisible shrink-0 border-b border-transparent pt-[max(env(safe-area-inset-top),_16px)]"
           >
-            <div className="h-16" />
+            <div className="h-14" />
             {hideTabs ? null : (
               <div className="hidden px-4 pb-3 md:block">
                 <div className="h-11" />
