@@ -153,6 +153,8 @@ const dockTickPool: HTMLAudioElement[] = [];
 let dockTickCursor = 0;
 let dockUnlockBound = false;
 let dockHtmlUnlocked = false;
+let dockAudioPrimed = false;
+let dockWarmupNode: HTMLAudioElement | null = null;
 
 function ensureDockTickPool(): HTMLAudioElement[] {
   if (typeof Audio === 'undefined') return [];
@@ -164,9 +166,42 @@ function ensureDockTickPool(): HTMLAudioElement[] {
     node.volume = 0.42;
     node.setAttribute('playsinline', 'true');
     node.setAttribute('webkit-playsinline', 'true');
+    node.load();
     dockTickPool.push(node);
   }
   return dockTickPool;
+}
+
+function ensureDockWarmupNode(): HTMLAudioElement | null {
+  if (typeof Audio === 'undefined') return null;
+  if (dockWarmupNode) return dockWarmupNode;
+  const node = new Audio(DOCK_TICK_WAV);
+  node.preload = 'auto';
+  node.loop = false;
+  node.muted = true;
+  node.volume = 0;
+  node.setAttribute('playsinline', 'true');
+  node.setAttribute('webkit-playsinline', 'true');
+  node.load();
+  dockWarmupNode = node;
+  return node;
+}
+
+function primeDockAudioEngine(): DockAudioEngine | null {
+  if (typeof window === 'undefined') return dockAudioSingleton;
+  try {
+    ensureDockTickPool();
+    ensureDockWarmupNode();
+    const AudioContextCtor = getAudioContextCtor();
+    if (!AudioContextCtor) return dockAudioSingleton;
+    if (!dockAudioSingleton || dockAudioSingleton.ctx.state === 'closed') {
+      dockAudioSingleton = createDockAudioEngine(AudioContextCtor);
+    }
+    return dockAudioSingleton;
+  } catch {
+    console.log('Feedback suppressed');
+    return dockAudioSingleton;
+  }
 }
 
 function playHtmlTick() {
@@ -175,6 +210,9 @@ function playHtmlTick() {
     const node = pool[dockTickCursor % pool.length];
     dockTickCursor += 1;
     if (!node) return;
+    node.muted = false;
+    node.volume = 0.42;
+    node.pause();
     node.currentTime = 0;
     const playResult = node.play();
     if (playResult) void playResult.catch(() => {});
@@ -185,10 +223,26 @@ function playHtmlTick() {
 
 function unlockHtmlTickPool() {
   const pool = ensureDockTickPool();
+  const warmup = ensureDockWarmupNode();
+  if (warmup) {
+    warmup.muted = true;
+    warmup.volume = 0;
+    warmup.currentTime = 0;
+    const warmupPlay = warmup.play();
+    if (warmupPlay) {
+      void warmupPlay
+        .then(() => {
+          warmup.pause();
+          warmup.currentTime = 0;
+        })
+        .catch(() => {});
+    }
+  }
   if (dockHtmlUnlocked || pool.length === 0) return;
   dockHtmlUnlocked = true;
   for (const node of pool) {
     node.muted = true;
+    node.volume = 0;
     const playResult = node.play();
     if (playResult) {
       void playResult
@@ -196,17 +250,21 @@ function unlockHtmlTickPool() {
           node.pause();
           node.currentTime = 0;
           node.muted = false;
+          node.volume = 0.42;
         })
         .catch(() => {
           node.muted = false;
+          node.volume = 0.42;
         });
     } else {
       node.muted = false;
+      node.volume = 0.42;
     }
   }
 }
 
 function pumpSilentBuffer(engine: DockAudioEngine) {
+  if (!isDockAudioRunning(engine.ctx)) return;
   const { ctx, silentBuffer } = engine;
   const src = ctx.createBufferSource();
   src.buffer = silentBuffer;
@@ -219,25 +277,35 @@ function pumpSilentBuffer(engine: DockAudioEngine) {
 }
 
 function resumeDockAudioEngine(engine: DockAudioEngine | null) {
-  if (!engine || isDockAudioRunning(engine.ctx) || engine.ctx.state === 'closed') return;
-  const resumeResult = engine.ctx.resume();
-  if (resumeResult) void resumeResult.catch(() => {});
+  if (!engine || engine.ctx.state === 'closed') return;
+  if (isDockAudioRunning(engine.ctx)) {
+    pumpSilentBuffer(engine);
+    return;
+  }
+  try {
+    const resumeResult = engine.ctx.resume();
+    if (resumeResult) {
+      void resumeResult
+        .then(() => {
+          if (isDockAudioRunning(engine.ctx)) pumpSilentBuffer(engine);
+        })
+        .catch(() => {});
+    }
+  } catch {
+    console.log('Feedback suppressed');
+  }
 }
 
 function unlockDockAudioFromUserGesture(): DockAudioEngine | null {
   try {
+    const engine = primeDockAudioEngine();
     unlockHtmlTickPool();
-    const AudioContextCtor = getAudioContextCtor();
-    if (!AudioContextCtor) return dockAudioSingleton;
-
-    let engine = dockAudioSingleton;
-    if (!engine || engine.ctx.state === 'closed') {
-      engine = createDockAudioEngine(AudioContextCtor);
-      dockAudioSingleton = engine;
-    }
-
+    if (!engine) return dockAudioSingleton;
     resumeDockAudioEngine(engine);
-    pumpSilentBuffer(engine);
+    if (isDockAudioRunning(engine.ctx)) {
+      pumpSilentBuffer(engine);
+      dockAudioPrimed = true;
+    }
     return engine;
   } catch {
     console.log('Feedback suppressed');
@@ -248,14 +316,21 @@ function unlockDockAudioFromUserGesture(): DockAudioEngine | null {
 function bindGlobalDockAudioUnlock() {
   if (typeof window === 'undefined' || dockUnlockBound) return;
   dockUnlockBound = true;
+  primeDockAudioEngine();
   const opts: AddEventListenerOptions = { capture: true, passive: true };
+  const gestureEvents = ['touchstart', 'pointerdown', 'touchend', 'mousedown'] as const;
   const unlock = () => {
-    unlockDockAudioFromUserGesture();
+    const engine = unlockDockAudioFromUserGesture();
+    if (!engine || !isDockAudioRunning(engine.ctx)) return;
+    for (const eventName of gestureEvents) {
+      window.removeEventListener(eventName, unlock, opts);
+      document.removeEventListener(eventName, unlock, opts);
+    }
   };
-  window.addEventListener('touchstart', unlock, opts);
-  document.addEventListener('touchstart', unlock, opts);
-  window.addEventListener('pointerdown', unlock, opts);
-  document.addEventListener('pointerdown', unlock, opts);
+  for (const eventName of gestureEvents) {
+    window.addEventListener(eventName, unlock, opts);
+    document.addEventListener(eventName, unlock, opts);
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -421,12 +496,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const audioPrimedRef = useRef(false);
 
   const ensureDockAudio = useCallback((): DockAudioEngine | null => {
-    const engine =
-      dockAudioSingleton && dockAudioSingleton.ctx.state !== 'closed' ? dockAudioSingleton : null;
+    const engine = primeDockAudioEngine();
     if (engine !== audioEngineRef.current) {
       audioEngineRef.current = engine;
-      audioPrimedRef.current = false;
     }
+    audioPrimedRef.current = dockAudioPrimed;
     return engine;
   }, []);
 
@@ -445,12 +519,14 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     try {
       const now =
         typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (now - lastTickAtRef.current < DOCK_TICK_MIN_INTERVAL_MS) return;
+      const isFirstTick = lastTickAtRef.current === 0;
+      if (!isFirstTick && now - lastTickAtRef.current < DOCK_TICK_MIN_INTERVAL_MS) return;
       lastTickAtRef.current = now;
       window.navigator?.vibrate?.(5);
 
       const engine = audioEngineRef.current ?? ensureDockAudio();
       if (!engine || engine.ctx.state !== 'running') {
+        unlockDockAudioFromUserGesture();
         resumeDockAudioEngine(engine);
         playHtmlTick();
         return;
@@ -625,6 +701,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, [hoverIndex, hoverIndexRaw, snapTrack, springTrack]);
 
   const followPointer = useCallback((clientX: number) => {
+    if (listWidthRef.current <= 0) cacheDockSlots();
     const listWidth = listWidthRef.current;
     if (listWidth <= 0) return;
     const x = Math.min(Math.max(clientX - listLeftRef.current, 0), listWidth - 0.001);
@@ -642,7 +719,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       liveIndexRef.current = nextIndex;
       playTick();
     }
-  }, [hoverIndexRaw, pillWRaw, pillXRaw, playTick]);
+  }, [cacheDockSlots, hoverIndexRaw, pillWRaw, pillXRaw, playTick]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -679,6 +756,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const pillMountedRef = useRef(false);
   useLayoutEffect(() => {
+    primeDockAudioEngine();
     cacheDockSlots();
     if (draggingRef.current) return;
     const settledIndex =
@@ -688,8 +766,25 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     }
     liveIndexRef.current = settledIndex;
     tickIndexRef.current = settledIndex;
-    measurePill(settledIndex, !pillMountedRef.current);
+    const instant = !pillMountedRef.current;
+    measurePill(settledIndex, instant);
     pillMountedRef.current = true;
+    if (!instant) return;
+    let innerFrame = 0;
+    const outerFrame = window.requestAnimationFrame(() => {
+      cacheDockSlots();
+      if (draggingRef.current) return;
+      measurePill(pendingIndexRef.current ?? routeIndex, true);
+      innerFrame = window.requestAnimationFrame(() => {
+        cacheDockSlots();
+        if (draggingRef.current) return;
+        measurePill(pendingIndexRef.current ?? routeIndex, true);
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(outerFrame);
+      window.cancelAnimationFrame(innerFrame);
+    };
   }, [cacheDockSlots, conceal, measurePill, routeIndex]);
 
   useEffect(() => {
