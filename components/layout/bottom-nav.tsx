@@ -63,7 +63,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed bottom-0 left-0 z-50 h-auto w-full overflow-visible rounded-none border-t border-white/[0.06] px-5 pt-3 pb-[max(env(safe-area-inset-bottom),_16px)]';
+  'bottom-nav-dock fixed bottom-0 left-0 z-50 flex w-full items-center overflow-visible rounded-none border-t border-white/[0.06] px-5 pt-0 pb-[max(env(safe-area-inset-bottom),_8px)]';
 
 const DOCK_PAD = {
   bottom: '0px',
@@ -270,7 +270,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 mx-auto flex w-full max-w-[400px] items-center justify-between">
+      <ul className="relative z-10 mx-auto flex h-14 w-full max-w-[400px] items-center justify-between">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -341,7 +341,7 @@ function BottomNavFallbackInner() {
 
   return (
     <nav aria-hidden className={PILL_CLASS} style={DOCK_PAD}>
-      <ul className="relative z-10 mx-auto flex w-full max-w-[400px] items-center justify-between">
+      <ul className="relative z-10 mx-auto flex h-14 w-full max-w-[400px] items-center justify-between">
         {ITEMS.map((item) => (
           <li key={item.tab} className="flex">
             <span className="flex min-h-0 min-w-11 flex-col items-center justify-center gap-px px-3 py-1 rounded-2xl bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
