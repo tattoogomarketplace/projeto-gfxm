@@ -325,19 +325,15 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <header
       ref={headerRef}
       data-app-header
-      className={cn(
-        'fixed top-0 left-0 z-50 w-full overflow-hidden border-0 bg-[#121212] shadow-none outline-none backdrop-blur-md',
-        'pt-[max(env(safe-area-inset-top),_16px)]',
-        'transition-transform duration-300 ease-in-out will-change-transform'
-      )}
+      className="fixed top-0 left-0 z-50 w-full bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)]"
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="grid h-14 w-full grid-cols-3 items-center px-4">
         <div></div>
-        <div className="flex items-center justify-self-center">
+        <div className="flex items-center justify-center">
           <BrandLogo className="h-auto w-auto px-0" size="sm" />
         </div>
-        <div className="justify-self-end flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           {!isOnline || pending > 0 ? (
             <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
               {!isOnline ? t('common.offline') : `${pending} na fila`}

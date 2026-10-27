@@ -280,18 +280,21 @@
   [data-app-header],
   [data-header-follow] {
     translate: none;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    will-change: transform;
-    transition: transform 300ms ease-in-out, opacity 300ms ease-in-out;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   [data-app-header] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50;
     background-color: #121212;
     border: 0;
     box-shadow: none;
     outline: none;
-    overflow: hidden;
   }
 
   .safe-sticky-top {
