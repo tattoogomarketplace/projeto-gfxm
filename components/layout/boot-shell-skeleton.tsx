@@ -86,11 +86,12 @@ function ShellChrome({
       <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
         {hideHeader ? null : (
           <header className="glass-chrome safe-header-pad z-50 shrink-0 border-b border-black/[0.04] bg-[#121212] dark:border-white/[0.05]">
-            <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
-              <div className="absolute left-[50%] top-[50%] flex translate-x-[-50%] translate-y-[-50%] items-center">
-                <BrandLogo className="h-auto w-auto px-0" size="sm" />
+            <div className="grid grid-cols-3 items-center h-16 w-full px-4">
+              <div></div>
+              <div className="justify-self-center flex items-center">
+                <BrandLogo className="w-auto px-0" size="sm" />
               </div>
-              <div className="ml-auto flex shrink-0 items-center gap-2">
+              <div className="justify-self-end flex items-center">
                 <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
               </div>
             </div>
@@ -132,10 +133,12 @@ export function BootShellSkeleton() {
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#121212]">
         <header className="safe-header-pad z-50 shrink-0 border-b border-white/[0.05] bg-[#121212]">
-          <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
-            <div className="absolute left-[50%] top-[50%] flex translate-x-[-50%] translate-y-[-50%] items-center">
-              <BrandLogo className="h-auto w-auto px-0" size="sm" />
+          <div className="grid grid-cols-3 items-center h-16 w-full px-4">
+            <div></div>
+            <div className="justify-self-center flex items-center">
+              <BrandLogo className="w-auto px-0" size="sm" />
             </div>
+            <div></div>
           </div>
         </header>
         <AppRouteSkeleton />

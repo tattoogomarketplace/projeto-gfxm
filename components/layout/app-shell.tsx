@@ -331,12 +331,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
     >
-      <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
-        <h1 className="sr-only">{headerTitle}</h1>
-        <div className="absolute left-[50%] top-[50%] flex translate-x-[-50%] translate-y-[-50%] items-center">
-          <BrandLogo className="h-auto w-auto px-0" size="sm" />
+      <h1 className="sr-only">{headerTitle}</h1>
+      <div className="grid grid-cols-3 items-center h-16 w-full px-4">
+        <div></div>
+        <div className="justify-self-center flex items-center">
+          <BrandLogo className="w-auto px-0" size="sm" />
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="justify-self-end flex items-center gap-2">
           {!isOnline || pending > 0 ? (
             <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
               {!isOnline ? t('common.offline') : `${pending} na fila`}
@@ -374,7 +375,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
             data-app-header-spacer
             className="safe-header-pad pointer-events-none invisible shrink-0 border-b border-transparent"
           >
-            <div className="h-[var(--app-header-content)]" />
+            <div className="h-16" />
             {hideTabs ? null : (
               <div className="hidden px-4 pb-3 md:block">
                 <div className="h-11" />
