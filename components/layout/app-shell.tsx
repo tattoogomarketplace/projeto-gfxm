@@ -331,20 +331,22 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         headerHidden ? '-translate-y-full' : 'translate-y-0'
       )}
     >
-      <div className="flex min-h-11 items-center justify-between gap-3 px-4 pb-3">
-        <div className="min-w-0 flex-1">
+      <div className="px-4 pb-3">
+        <div className="relative flex min-h-11 w-full items-center justify-between">
           <h1 className="sr-only">{headerTitle}</h1>
-          <BrandLogo className="h-11 justify-start px-0" size="sm" />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {!isOnline || pending > 0 ? (
-            <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-              {!isOnline ? t('common.offline') : `${pending} na fila`}
-            </span>
-          ) : null}
-          {showMachineTrigger ? (
-            <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
-          ) : null}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <BrandLogo className="h-11 w-auto px-0" size="sm" />
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {!isOnline || pending > 0 ? (
+              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
+                {!isOnline ? t('common.offline') : `${pending} na fila`}
+              </span>
+            ) : null}
+            {showMachineTrigger ? (
+              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+            ) : null}
+          </div>
         </div>
       </div>
       {hideTabs ? null : (
