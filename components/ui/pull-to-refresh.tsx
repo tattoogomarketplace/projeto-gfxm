@@ -10,7 +10,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
@@ -57,6 +57,7 @@ type PullToRefreshProps = {
   onRefresh?: () => void | Promise<void>;
   className?: string;
   disabled?: boolean;
+  topOffsetClass?: string;
 };
 
 function dampen(raw: number): number {
@@ -99,6 +100,7 @@ export function PullToRefresh({
   onRefresh,
   className,
   disabled = false,
+  topOffsetClass,
 }: PullToRefreshProps) {
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
@@ -166,7 +168,7 @@ export function PullToRefresh({
         ? `transform ${SNAP_MS}ms ${SNAP_EASING}, opacity 160ms linear`
         : 'none';
       indicator.style.willChange = 'transform, opacity';
-      indicator.style.transform = `translate3d(-50%, ${Math.max(0, pull - INDICATOR_HIDE_PX)}px, 0)`;
+      indicator.style.transform = `translate3d(0, ${Math.max(0, pull - INDICATOR_HIDE_PX)}px, 0)`;
     }
 
     const pullProgress = clamp01(pull / THRESHOLD_PX);
@@ -451,7 +453,7 @@ export function PullToRefresh({
   const indicatorStyle: CSSProperties = {
     width: INDICATOR_SIZE,
     height: INDICATOR_SIZE,
-    transform: 'translate3d(-50%, 0, 0)',
+    transform: 'translate3d(0, 0, 0)',
     opacity: 0,
     willChange: 'transform, opacity',
     color: ACCENT_MINT_CSS,
@@ -459,11 +461,12 @@ export function PullToRefresh({
     ['--ptr-accent' as string]: ACCENT_MINT_CSS,
   };
 
-  const badge = (
+  const badge = disabled ? null : (
       <div
         ref={indicatorRef}
         className={cn(
-          'pointer-events-none absolute left-1/2 z-[35] flex items-center justify-center transform-gpu'
+          'pointer-events-none absolute inset-x-0 z-[30] flex w-full justify-center transform-gpu',
+          topOffsetClass ?? 'top-[var(--app-header-height)]'
         )}
         data-ptr-indicator
       style={indicatorStyle}
@@ -574,5 +577,24 @@ export function PullToRefresh({
         {children}
       </div>
     </div>
+  );
+}
+
+function isGaleriaPath(pathname: string | null): boolean {
+  return Boolean(pathname?.startsWith('/dashboard/galeria'));
+}
+
+export function PullToRefreshHost({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const pathname = usePathname();
+  return (
+    <PullToRefresh className={className} disabled={isGaleriaPath(pathname)}>
+      {children}
+    </PullToRefresh>
   );
 }

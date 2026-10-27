@@ -277,10 +277,6 @@
     padding-top: var(--header-safe-top);
   }
 
-  [data-ptr-indicator] {
-    top: var(--app-header-height);
-  }
-
   .safe-sticky-top {
     top: var(--safe-top);
   }

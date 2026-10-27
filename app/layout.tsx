@@ -15,7 +15,7 @@ import { SessionTaskGuard } from "@/components/layout/session-task-guard";
 import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
 import { PersistentAppChrome } from "@/components/layout/persistent-app-chrome";
 import { SplashGate } from "@/components/ui/splash-gate";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { PullToRefreshHost } from "@/components/ui/pull-to-refresh";
 import { BootShellSkeleton } from "@/components/layout/boot-shell-skeleton";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 import { caveat } from "@/app/fonts";
@@ -170,9 +170,9 @@ export default function RootLayout({
                   <BootShellSkeleton />
                 </ClerkLoading>
                 <ClerkLoaded>
-                  <PullToRefresh className="flex h-full min-h-screen min-h-0 w-full flex-1 flex-col overflow-hidden">
+                  <PullToRefreshHost className="flex h-full min-h-screen min-h-0 w-full flex-1 flex-col overflow-hidden">
                     {children}
-                  </PullToRefresh>
+                  </PullToRefreshHost>
                 </ClerkLoaded>
               </main>
               {/* Chrome persistente do casco (gatilho de configurações + FAB
