@@ -333,8 +333,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     >
       <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
         <h1 className="sr-only">{headerTitle}</h1>
-        <div className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
-          <BrandLogo className="h-11 w-auto px-0" size="sm" />
+        <div className="absolute left-[50%] top-[50%] flex translate-x-[-50%] translate-y-[-50%] items-center">
+          <BrandLogo className="h-auto w-auto px-0" size="sm" />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {!isOnline || pending > 0 ? (
