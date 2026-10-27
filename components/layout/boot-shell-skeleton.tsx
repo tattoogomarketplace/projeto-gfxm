@@ -85,11 +85,11 @@ function ShellChrome({
     >
       <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
         {hideHeader ? null : (
-          <header className="glass-chrome z-50 shrink-0 border-b border-black/[0.04] bg-[#121212] pt-[max(env(safe-area-inset-top),_16px)] dark:border-white/[0.05]">
-            <div className="grid grid-cols-3 items-center h-14 w-full px-4">
+          <header className="glass-chrome z-50 shrink-0 border-b border-black/[0.04] bg-[#121212] pt-[env(safe-area-inset-top)] dark:border-white/[0.05]">
+            <div className="grid h-14 w-full grid-cols-3 items-center px-4">
               <div></div>
-              <div className="justify-self-center flex items-center">
-                <BrandLogo className="w-auto px-0" size="sm" />
+              <div className="flex items-center justify-self-center">
+                <BrandLogo className="h-auto w-auto px-0" size="sm" />
               </div>
               <div className="justify-self-end flex items-center">
                 <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
@@ -132,11 +132,11 @@ export function BootShellSkeleton() {
     }
     return (
       <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#121212]">
-        <header className="z-50 shrink-0 border-b border-white/[0.05] bg-[#121212] pt-[max(env(safe-area-inset-top),_16px)]">
-          <div className="grid grid-cols-3 items-center h-14 w-full px-4">
+        <header className="z-50 shrink-0 border-b border-white/[0.05] bg-[#121212] pt-[env(safe-area-inset-top)]">
+          <div className="grid h-14 w-full grid-cols-3 items-center px-4">
             <div></div>
-            <div className="justify-self-center flex items-center">
-              <BrandLogo className="w-auto px-0" size="sm" />
+            <div className="flex items-center justify-self-center">
+              <BrandLogo className="h-auto w-auto px-0" size="sm" />
             </div>
             <div></div>
           </div>

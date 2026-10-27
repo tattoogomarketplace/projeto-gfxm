@@ -31,7 +31,7 @@ export function BrandLogo({
   return (
     <div
       className={cn(
-        'relative z-10 flex h-11 w-full items-center justify-center overflow-visible bg-transparent px-4',
+        'relative z-10 flex h-auto w-full items-center justify-center overflow-visible bg-transparent px-4',
         className
       )}
     >

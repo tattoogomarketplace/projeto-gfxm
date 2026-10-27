@@ -66,9 +66,9 @@ function PersistentAppChromeBase() {
       <div
         aria-hidden={!machineVisible}
         className={cn(
-          'fixed right-4 top-[calc(max(env(safe-area-inset-top),16px)+0.375rem)] z-[65] transform-gpu will-change-transform',
+          'fixed right-4 top-[calc(env(safe-area-inset-top)+0.375rem)] z-[65] transform-gpu will-change-transform',
           'transition-transform duration-300 [transition-timing-function:cubic-bezier(0.4,0,0.2,1)]',
-          headerHidden ? '-translate-y-[calc(100%+max(env(safe-area-inset-top),16px)+0.375rem)]' : 'translate-y-0',
+          headerHidden ? '-translate-y-[calc(100%+env(safe-area-inset-top)+0.375rem)]' : 'translate-y-0',
           !machineVisible && 'invisible pointer-events-none'
         )}
       >
