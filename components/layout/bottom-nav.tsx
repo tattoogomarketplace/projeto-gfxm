@@ -307,7 +307,7 @@ function DockGlyph({
   return (
     <>
       {active && staticPill ? (
-        <span className="absolute inset-0 z-0 rounded-full bg-[#FF6600]" />
+        <span className="absolute inset-0 z-0 rounded-full bg-[#90EE90]/15" />
       ) : null}
       <span
         className={cn(
@@ -315,7 +315,7 @@ function DockGlyph({
           active && 'scale-105'
         )}
       >
-        <NavIcon icon={item.icon} className={active ? 'text-white' : 'text-zinc-500'} />
+        <NavIcon icon={item.icon} className={active ? 'text-[#90EE90]' : 'text-zinc-500'} />
       </span>
       <span
         className={cn(
@@ -324,7 +324,7 @@ function DockGlyph({
         )}
         aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#121212]">
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]">
           {label}
         </span>
       </span>
@@ -368,14 +368,14 @@ function DockGlyphLive({
         className="relative z-10 flex shrink-0 items-center justify-center will-change-transform"
         style={{ scale }}
       >
-        <NavIcon icon={item.icon} className={active ? 'text-white' : 'text-zinc-500'} />
+        <NavIcon icon={item.icon} className={active ? 'text-[#90EE90]' : 'text-zinc-500'} />
       </motion.span>
       <motion.span
         className="relative z-10 grid min-w-0"
         style={{ gridTemplateColumns: labelColumns, opacity: labelProgress }}
         aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#121212]">
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]">
           {label}
         </span>
       </motion.span>
@@ -918,7 +918,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#FF6600] transform-gpu will-change-transform"
+          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform"
           style={{ x: pillX, width: pillW, scale: pillScale }}
         />
         {ITEMS.map((item, index) => {
