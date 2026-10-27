@@ -69,7 +69,6 @@ const PILL_CLASS =
 const DRAG_THRESHOLD_PX = 6;
 const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
 const DOCK_TICK_DURATION = 0.018;
-const DOCK_TICK_GAP_MS = 38;
 
 type DockAudioEngine = {
   ctx: AudioContext;
@@ -240,35 +239,62 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const audioEngineRef = useRef<DockAudioEngine | null>(null);
-  const lastPlayedRef = useRef(0);
+  const tickIndexRef = useRef(-1);
+  const audioPrimedRef = useRef(false);
 
-  const unlockTick = useCallback(() => {
+  const ensureDockAudio = useCallback((): DockAudioEngine | null => {
     try {
       const AudioContextCtor = getAudioContextCtor();
-      if (!AudioContextCtor) return;
+      if (!AudioContextCtor) return null;
       let engine = audioEngineRef.current;
       if (!engine || engine.ctx.state === 'closed') {
         engine = createDockAudioEngine(AudioContextCtor);
         audioEngineRef.current = engine;
+        audioPrimedRef.current = false;
       }
-      if (engine.ctx.state === 'suspended') {
-        void engine.ctx.resume().catch(() => {});
-      }
+      return engine;
     } catch {
       console.log('Feedback suppressed');
+      return null;
     }
   }, []);
 
+  const unlockTick = useCallback(() => {
+    try {
+      const engine = ensureDockAudio();
+      if (!engine) return;
+      const { ctx, master } = engine;
+      const primeSilent = () => {
+        if (audioPrimedRef.current) return;
+        audioPrimedRef.current = true;
+        const mute = ctx.createGain();
+        mute.gain.value = 0;
+        const prime = ctx.createBufferSource();
+        prime.buffer = engine.noiseBuffer;
+        prime.connect(mute);
+        mute.connect(master);
+        prime.start(0);
+        prime.stop(ctx.currentTime + 0.001);
+        prime.onended = () => {
+          prime.disconnect();
+          mute.disconnect();
+        };
+      };
+      if (ctx.state === 'suspended') {
+        void ctx.resume().then(primeSilent).catch(() => {});
+        return;
+      }
+      primeSilent();
+    } catch {
+      console.log('Feedback suppressed');
+    }
+  }, [ensureDockAudio]);
+
   const playTick = useCallback(() => {
     try {
-      const now = Date.now();
-      if (now - lastPlayedRef.current < DOCK_TICK_GAP_MS) return;
-      lastPlayedRef.current = now;
-
       window.navigator?.vibrate?.(5);
-      unlockTick();
 
-      const engine = audioEngineRef.current;
+      const engine = ensureDockAudio();
       if (!engine) return;
       const { ctx, master, noiseBuffer } = engine;
 
@@ -330,7 +356,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     } catch {
       console.log('Feedback suppressed');
     }
-  }, [unlockTick]);
+  }, [ensureDockAudio]);
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -457,7 +483,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       pillX.set(nextX);
       pillW.set(slot.w);
     }
-    if (liveIndexRef.current !== nextIndex) {
+    if (tickIndexRef.current !== nextIndex) {
+      tickIndexRef.current = nextIndex;
       liveIndexRef.current = nextIndex;
       setLiveTabIndex(nextIndex);
       triggerHaptic('light');
@@ -508,6 +535,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       pendingIndexRef.current = null;
     }
     liveIndexRef.current = settledIndex;
+    tickIndexRef.current = settledIndex;
     setLiveTabIndex(settledIndex);
     measurePill(settledIndex, !pillMountedRef.current);
     pillMountedRef.current = true;
@@ -607,7 +635,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       suppressClickRef.current = false;
       pointerIdRef.current = event.pointerId;
       originXRef.current = event.clientX;
-      liveIndexRef.current = indexFromPointer(event.currentTarget, event.clientX);
+      const startIndex = indexFromPointer(event.currentTarget, event.clientX);
+      liveIndexRef.current = startIndex;
+      tickIndexRef.current = startIndex;
       event.currentTarget.setPointerCapture(event.pointerId);
     },
     [cacheDockSlots, hoverIndex, pillW, pillX, unlockTick]
@@ -691,6 +721,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   }
                   pendingIndexRef.current = null;
                   liveIndexRef.current = index;
+                  tickIndexRef.current = index;
                   setLiveTabIndex(index);
                   hoverIndex.set(index);
                   unlockTick();
