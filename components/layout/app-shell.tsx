@@ -122,7 +122,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isProfileSettings;
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
-  const headerHidden = useSmartHeader(!hideShellHeader);
+  const headerRef = useSmartHeader(!hideShellHeader);
 
   // Estável entre renders (só muda com o locale): evita recriar o array de
   // opções a cada render e mantém a referência limpa para o SegmentedControl
@@ -323,17 +323,13 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
 
   const headerNode = hideShellHeader ? null : (
     <header
+      ref={headerRef}
       data-app-header
       className={cn(
-        'fixed top-0 z-50 w-full border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
+        'fixed top-0 left-0 z-50 w-full border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
         'pt-[max(env(safe-area-inset-top),_16px)]',
-        'transition-transform duration-300',
-        headerHidden ? '-translate-y-full' : 'translate-y-0'
+        'will-change-transform transition-transform duration-300 ease-in-out'
       )}
-      style={{
-        translate: 'none',
-        transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
-      }}
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="grid h-14 w-full grid-cols-3 items-center px-4">
