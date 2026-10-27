@@ -326,9 +326,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       ref={headerRef}
       data-app-header
       className={cn(
-        'fixed top-0 left-0 z-50 w-full border-b border-black/[0.04] bg-[#121212] backdrop-blur-md dark:border-white/[0.05]',
-        'pt-[max(env(safe-area-inset-top),_16px)]',
-        'will-change-transform transition-transform duration-300 ease-in-out'
+        'fixed top-0 left-0 z-50 w-full border-b border-[#121212] bg-[#121212]',
+        'pt-[max(env(safe-area-inset-top),_16px)]'
       )}
     >
       <h1 className="sr-only">{headerTitle}</h1>

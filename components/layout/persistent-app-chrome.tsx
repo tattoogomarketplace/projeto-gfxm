@@ -68,10 +68,13 @@ function PersistentAppChromeBase() {
         data-header-follow
         className={cn(
           'fixed right-4 top-[calc(env(safe-area-inset-top)+0.375rem)] z-[65]',
-          'will-change-transform transition-transform duration-300 ease-in-out',
           !machineVisible && 'invisible pointer-events-none'
         )}
-        style={{ transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)' }}
+        style={{
+          transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
+          opacity: headerHidden ? 0 : 1,
+          visibility: headerHidden ? 'hidden' : 'visible',
+        }}
       >
         <TattooMachineMenuTrigger
           open={settingsDrawerOpen}

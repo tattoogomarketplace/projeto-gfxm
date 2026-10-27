@@ -277,10 +277,17 @@
     padding-top: var(--header-safe-top);
   }
 
-  [data-app-header] {
+  [data-app-header],
+  [data-header-follow] {
     translate: none;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    will-change: transform, opacity;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+  }
+
+  [data-app-header] {
+    background-color: #121212;
   }
 
   .safe-sticky-top {
