@@ -325,23 +325,25 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <header
       ref={headerRef}
       data-app-header
-      className="fixed top-0 left-0 z-50 w-full bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)] transition-transform duration-300 ease-in-out will-change-transform"
+      className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)] transition-transform duration-300 ease-in-out will-change-transform"
     >
       <h1 className="sr-only">{headerTitle}</h1>
-      <div className="relative flex h-14 w-full items-center justify-between px-4">
-        <div className="w-10 shrink-0" aria-hidden />
-        <div className="flex flex-1 justify-center">
-          <BrandLogo className="h-auto w-auto px-0" size="sm" />
-        </div>
-        <div className="flex w-10 shrink-0 items-center justify-end gap-2">
-          {!isOnline || pending > 0 ? (
-            <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
-              {!isOnline ? t('common.offline') : `${pending} na fila`}
-            </span>
-          ) : null}
-          {showMachineTrigger ? (
-            <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
-          ) : null}
+      <div className="relative isolate h-14 min-h-14 max-h-14 w-full shrink-0 contain-layout">
+        <div className="absolute inset-0 flex h-full w-full items-center justify-between px-4">
+          <div className="w-10 shrink-0" aria-hidden />
+          <div className="flex flex-1 items-center justify-center">
+            <BrandLogo className="h-auto w-auto px-0" size="sm" />
+          </div>
+          <div className="flex w-10 shrink-0 items-center justify-end gap-2">
+            {!isOnline || pending > 0 ? (
+              <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
+                {!isOnline ? t('common.offline') : `${pending} na fila`}
+              </span>
+            ) : null}
+            {showMachineTrigger ? (
+              <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
+            ) : null}
+          </div>
         </div>
       </div>
       {hideTabs ? null : (
@@ -419,7 +421,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               data-app-header-spacer
               className="pointer-events-none shrink-0 pt-[max(env(safe-area-inset-top),_16px)]"
             >
-              <div className="h-14" />
+              <div className="h-14 min-h-14 max-h-14 shrink-0" />
               {hideTabs ? null : (
                 <div className="hidden px-4 pb-3 md:block">
                   <div className="h-11" />
