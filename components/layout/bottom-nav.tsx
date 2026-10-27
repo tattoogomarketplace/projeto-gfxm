@@ -1,9 +1,9 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { animate, motion, useMotionValue } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform, type MotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -183,6 +183,53 @@ function DockGlyph({
   );
 }
 
+function DockGlyphLive({
+  item,
+  active,
+  label,
+  hoverIndex,
+  index,
+}: {
+  item: (typeof ITEMS)[number];
+  active: boolean;
+  label: string;
+  hoverIndex: MotionValue<number>;
+  index: number;
+}) {
+  const scale = useTransform(hoverIndex, (value) => {
+    const distance = Math.abs(value - index);
+    const proximity = distance >= 1 ? 0 : 1 - distance;
+    return 1 + proximity * 0.05;
+  });
+  const labelProgress = useTransform(hoverIndex, (value) => {
+    const distance = Math.abs(value - index);
+    if (distance <= 0.32) return 1;
+    if (distance >= 0.68) return 0;
+    return 1 - (distance - 0.32) / 0.36;
+  });
+  const labelColumns = useTransform(labelProgress, (progress) => `${Math.max(0, progress)}fr`);
+
+  return (
+    <>
+      <motion.span
+        className="relative z-10 flex shrink-0 items-center justify-center will-change-transform"
+        style={{ scale }}
+      >
+        <NavIcon icon={item.icon} className={active ? 'text-white' : 'text-zinc-500'} />
+      </motion.span>
+      <motion.span
+        className="relative z-10 grid min-w-0"
+        style={{ gridTemplateColumns: labelColumns, opacity: labelProgress }}
+        aria-hidden={!active}
+      >
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#121212]">
+          {label}
+        </span>
+      </motion.span>
+    </>
+  );
+}
+
 function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -326,20 +373,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const itemRefs = useRef<Array<HTMLLIElement | null>>([]);
   const scrollIdleRef = useRef<number | null>(null);
+  const routeIndex = Math.max(0, ITEMS.findIndex((item) => item.tab === activeTab));
   const pillX = useMotionValue(0);
   const pillW = useMotionValue(0);
+  const hoverIndex = useMotionValue(routeIndex);
   const draggingRef = useRef(false);
   const dragMovedRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
   const originXRef = useRef(0);
-  const liveIndexRef = useRef(0);
+  const liveIndexRef = useRef(routeIndex);
   const pendingIndexRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
   const slotsRef = useRef<Array<{ x: number; w: number }>>([]);
   const listLeftRef = useRef(0);
   const listWidthRef = useRef(0);
-
-  const routeIndex = Math.max(0, ITEMS.findIndex((item) => item.tab === activeTab));
+  const [liveTabIndex, setLiveTabIndex] = useState(routeIndex);
 
   const cacheDockSlots = useCallback(() => {
     const list = listRef.current;
@@ -355,11 +403,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, []);
 
   const measurePill = useCallback((index: number, instant = false) => {
+    const snapHover = (nextIndex: number) => {
+      if (instant) {
+        hoverIndex.set(nextIndex);
+        return;
+      }
+      void animate(hoverIndex, nextIndex, DOCK_PILL_TRANSITION);
+    };
     const slot = slotsRef.current[index];
     if (!slot || slot.w <= 0) {
       const item = itemRefs.current[index];
       const list = listRef.current;
-      if (!item || !list) return;
+      if (!item || !list) {
+        snapHover(index);
+        return;
+      }
       const itemRect = item.getBoundingClientRect();
       const listRect = list.getBoundingClientRect();
       const nextX = itemRect.left - listRect.left;
@@ -367,37 +425,45 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (instant) {
         pillX.set(nextX);
         pillW.set(nextW);
+        hoverIndex.set(index);
         return;
       }
       void animate(pillX, nextX, DOCK_PILL_TRANSITION);
       void animate(pillW, nextW, DOCK_PILL_TRANSITION);
+      void animate(hoverIndex, index, DOCK_PILL_TRANSITION);
       return;
     }
     if (instant) {
       pillX.set(slot.x);
       pillW.set(slot.w);
+      hoverIndex.set(index);
       return;
     }
     void animate(pillX, slot.x, DOCK_PILL_TRANSITION);
     void animate(pillW, slot.w, DOCK_PILL_TRANSITION);
-  }, [pillW, pillX]);
+    void animate(hoverIndex, index, DOCK_PILL_TRANSITION);
+  }, [hoverIndex, pillW, pillX]);
 
   const followPointer = useCallback((clientX: number) => {
     const listWidth = listWidthRef.current;
     if (listWidth <= 0) return;
     const x = Math.min(Math.max(clientX - listLeftRef.current, 0), listWidth - 0.001);
-    const nextIndex = Math.min(ITEMS.length - 1, Math.floor((x / listWidth) * ITEMS.length));
+    const continuous = (x / listWidth) * ITEMS.length;
+    const nextIndex = Math.min(ITEMS.length - 1, Math.floor(continuous));
+    hoverIndex.set(Math.min(ITEMS.length - 1, Math.max(0, continuous - 0.5)));
     const slot = slotsRef.current[nextIndex];
-    if (!slot || slot.w <= 0) return;
-    const nextX = Math.min(Math.max(x - slot.w / 2, 0), listWidth - slot.w);
-    pillX.set(nextX);
-    pillW.set(slot.w);
+    if (slot && slot.w > 0) {
+      const nextX = Math.min(Math.max(x - slot.w / 2, 0), listWidth - slot.w);
+      pillX.set(nextX);
+      pillW.set(slot.w);
+    }
     if (liveIndexRef.current !== nextIndex) {
       liveIndexRef.current = nextIndex;
+      setLiveTabIndex(nextIndex);
       triggerHaptic('light');
       playTick();
     }
-  }, [pillW, pillX, playTick, triggerHaptic]);
+  }, [hoverIndex, pillW, pillX, playTick, triggerHaptic]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -441,9 +507,22 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     if (pendingIndexRef.current === routeIndex) {
       pendingIndexRef.current = null;
     }
+    liveIndexRef.current = settledIndex;
+    setLiveTabIndex(settledIndex);
     measurePill(settledIndex, !pillMountedRef.current);
     pillMountedRef.current = true;
   }, [cacheDockSlots, conceal, measurePill, routeIndex]);
+
+  useLayoutEffect(() => {
+    if (!draggingRef.current) return;
+    cacheDockSlots();
+    const slot = slotsRef.current[liveTabIndex];
+    if (!slot || slot.w <= 0) return;
+    pillW.set(slot.w);
+    const listWidth = listWidthRef.current;
+    if (listWidth <= 0) return;
+    pillX.set(Math.min(Math.max(pillX.get(), 0), Math.max(0, listWidth - slot.w)));
+  }, [cacheDockSlots, liveTabIndex, pillW, pillX]);
 
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
@@ -522,6 +601,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       cacheDockSlots();
       pillX.stop();
       pillW.stop();
+      hoverIndex.stop();
       draggingRef.current = true;
       dragMovedRef.current = false;
       suppressClickRef.current = false;
@@ -530,7 +610,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       liveIndexRef.current = indexFromPointer(event.currentTarget, event.clientX);
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [cacheDockSlots, pillW, pillX, unlockTick]
+    [cacheDockSlots, hoverIndex, pillW, pillX, unlockTick]
   );
 
   const onDockPointerMove = useCallback(
@@ -587,7 +667,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           style={{ x: pillX, width: pillW }}
         />
         {ITEMS.map((item, index) => {
-          const active = routeIndex === index;
+          const visualActive = liveTabIndex === index;
           const href = hrefForTab(item.tab, homePath);
           return (
             <li
@@ -610,19 +690,28 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                     return;
                   }
                   pendingIndexRef.current = null;
+                  liveIndexRef.current = index;
+                  setLiveTabIndex(index);
+                  hoverIndex.set(index);
                   unlockTick();
                   if (index !== routeIndex) playTick();
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  dockItemClass(active),
-                  'transition-[padding,gap] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
+                  dockItemClass(visualActive),
+                  'transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
-                aria-current={active ? 'page' : undefined}
+                aria-current={routeIndex === index ? 'page' : undefined}
                 aria-label={t(item.labelKey)}
               >
-                <DockGlyph item={item} active={active} label={t(item.labelKey)} />
+                <DockGlyphLive
+                  item={item}
+                  active={visualActive}
+                  label={t(item.labelKey)}
+                  hoverIndex={hoverIndex}
+                  index={index}
+                />
               </Link>
             </li>
           );
