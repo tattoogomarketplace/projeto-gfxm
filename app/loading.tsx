@@ -13,7 +13,7 @@ export default function Loading() {
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#121212]">
       <header className="safe-header-pad z-50 shrink-0 border-b border-white/[0.05] bg-[#121212]">
         <div className="relative flex h-[var(--app-header-content)] w-full items-center px-4">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
             <BrandLogo className="h-11 w-auto px-0" size="sm" />
           </div>
         </div>
