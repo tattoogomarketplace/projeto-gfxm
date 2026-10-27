@@ -3,6 +3,7 @@
 import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -74,6 +75,56 @@ const NavIcon = memo(function NavIcon({
 }) {
   return <Icon className={cn('h-[18px] w-[18px]', className)} strokeWidth={1.75} aria-hidden />;
 });
+
+const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping: 32 };
+
+function dockItemClass(active: boolean) {
+  return cn(
+    'relative flex min-h-11 items-center justify-center gap-1.5 overflow-hidden rounded-full',
+    active ? 'px-3' : 'min-w-11 px-2'
+  );
+}
+
+function DockGlyph({
+  item,
+  active,
+  label,
+  sliding = false,
+}: {
+  item: (typeof ITEMS)[number];
+  active: boolean;
+  label: string;
+  sliding?: boolean;
+}) {
+  return (
+    <>
+      {active && sliding ? (
+        <motion.span
+          layoutId="dock-active-pill"
+          className="absolute inset-0 z-0 rounded-full bg-[#FF6600]"
+          transition={DOCK_PILL_TRANSITION}
+        />
+      ) : null}
+      {active && !sliding ? (
+        <span className="absolute inset-0 z-0 rounded-full bg-[#FF6600]" />
+      ) : null}
+      <span className="relative z-10 flex items-center justify-center">
+        <NavIcon icon={item.icon} className={active ? 'text-white' : 'text-zinc-500'} />
+      </span>
+      <span
+        className={cn(
+          'relative z-10 grid transition-[grid-template-columns,opacity] duration-300 ease-in-out',
+          active ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0'
+        )}
+        aria-hidden={!active}
+      >
+        <span className="overflow-hidden whitespace-nowrap pr-0.5 text-[11px] font-semibold leading-none tracking-tight text-[#121212]">
+          {label}
+        </span>
+      </span>
+    </>
+  );
+}
 
 function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
@@ -289,23 +340,14 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  'flex min-h-0 min-w-11 flex-col items-center justify-center gap-px rounded-full px-3 py-0.5',
-                  'text-[10px] font-medium leading-none tracking-tight',
-                  'transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-90',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
-                  active
-                    ? 'bg-orange-500/28 text-orange-400'
-                    : 'bg-transparent text-zinc-500'
+                  dockItemClass(active),
+                  'transition-all duration-300 ease-in-out active:scale-90',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
                 aria-current={active ? 'page' : undefined}
+                aria-label={t(item.labelKey)}
               >
-                <span className="flex items-center justify-center">
-                  <NavIcon
-                    icon={item.icon}
-                    className={active ? 'drop-shadow-[0_0_10px_rgba(249,115,22,0.85)]' : undefined}
-                  />
-                </span>
-                <span>{t(item.labelKey)}</span>
+                <DockGlyph item={item} active={active} label={t(item.labelKey)} sliding />
               </Link>
             </li>
           );
@@ -338,16 +380,16 @@ function BottomNavFallbackInner() {
   return (
     <nav aria-hidden className={PILL_CLASS}>
       <ul className="relative z-10 flex h-full w-full items-center justify-around">
-        {ITEMS.map((item) => (
-          <li key={item.tab} className="flex">
-            <span className="flex min-h-0 min-w-11 flex-col items-center justify-center gap-px rounded-full px-3 py-0.5 bg-transparent text-[10px] font-medium leading-none tracking-tight text-zinc-500">
-              <span className="flex items-center justify-center">
-                <NavIcon icon={item.icon} />
+        {ITEMS.map((item, index) => {
+          const active = index === 0;
+          return (
+            <li key={item.tab} className="flex">
+              <span className={dockItemClass(active)}>
+                <DockGlyph item={item} active={active} label={t(item.labelKey)} />
               </span>
-              <span>{t(item.labelKey)}</span>
-            </span>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
