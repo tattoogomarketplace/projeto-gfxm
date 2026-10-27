@@ -328,9 +328,9 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       className="fixed top-0 left-0 z-50 w-full bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)] transition-transform duration-300 ease-in-out will-change-transform"
     >
       <h1 className="sr-only">{headerTitle}</h1>
-      <div className="grid h-14 w-full grid-cols-3 items-center px-4">
+      <div className="relative flex h-14 w-full items-center justify-between px-4">
         <div></div>
-        <div className="flex items-center justify-center">
+        <div className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
           <BrandLogo className="h-auto w-auto px-0" size="sm" />
         </div>
         <div className="flex items-center justify-end gap-2">
