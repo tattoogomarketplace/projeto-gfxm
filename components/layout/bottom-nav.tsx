@@ -1,9 +1,9 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -68,9 +68,11 @@ const PILL_CLASS =
 
 const DRAG_THRESHOLD_PX = 6;
 const DRAG_HOLD_MS = 150;
-const DOCK_PILL_SPRING = { type: 'spring' as const, stiffness: 620, damping: 42, mass: 0.38 };
+const DOCK_TRACK_SPRING = { stiffness: 1400, damping: 48, mass: 0.16, restDelta: 0.08 };
+const DOCK_PILL_SPRING = { stiffness: 820, damping: 38, mass: 0.22, restDelta: 0.08 };
 const DOCK_PLUMP_SCALE = 1.08;
-const DOCK_PLUMP_SPRING = { stiffness: 480, damping: 26, mass: 0.28 };
+const DOCK_PLUMP_SPRING = { stiffness: 640, damping: 28, mass: 0.22, restDelta: 0.01 };
+const DOCK_TICK_MIN_INTERVAL_MS = 64;
 const DOCK_TICK_DURATION = 0.018;
 const DOCK_TICK_ATTACK = 0.002;
 const DOCK_TICK_GAIN = 10 ** (-20 / 20);
@@ -284,8 +286,6 @@ const NavIcon = memo(function NavIcon({
   return <Icon className={cn('h-[18px] w-[18px]', className)} strokeWidth={1.75} aria-hidden />;
 });
 
-const DOCK_PILL_TRANSITION = DOCK_PILL_SPRING;
-
 function dockItemClass(active: boolean) {
   return cn(
     'relative flex h-full min-h-0 min-w-0 w-full items-center justify-center overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
@@ -359,13 +359,24 @@ function DockGlyphLive({
   plumpScale: MotionValue<number>;
   index: number;
 }) {
-  const scale = useTransform([hoverIndex, plumpScale], (values) => {
-    const value = values[0] as number;
-    const plump = values[1] as number;
+  const proximity = useTransform(hoverIndex, (value) => {
     const distance = Math.abs(value - index);
-    const proximity = distance >= 1 ? 0 : 1 - distance;
-    return 1 + proximity * 0.05 + proximity * (plump - 1);
+    return distance >= 1 ? 0 : 1 - distance;
   });
+  const scale = useTransform([proximity, plumpScale], (values) => {
+    const near = values[0] as number;
+    const plump = values[1] as number;
+    return 1 + near * 0.05 + near * (plump - 1);
+  });
+  const iconColor = useTransform(proximity, (near) => {
+    const r = Math.round(113 + (144 - 113) * near);
+    const g = Math.round(113 + (238 - 113) * near);
+    const b = Math.round(122 + (144 - 122) * near);
+    return `rgb(${r} ${g} ${b})`;
+  });
+  const iconFilter = useTransform(proximity, (near) =>
+    near >= 0.5 ? 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.8))' : 'none'
+  );
   const labelProgress = useTransform(hoverIndex, (value) => {
     const distance = Math.abs(value - index);
     if (distance <= 0.32) return 1;
@@ -377,29 +388,17 @@ function DockGlyphLive({
   return (
     <>
       <motion.span
-        className="relative z-10 flex shrink-0 items-center justify-center will-change-transform"
-        style={{ scale }}
+        className="relative z-10 flex shrink-0 items-center justify-center transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+        style={{ scale, color: iconColor, filter: iconFilter }}
       >
-        <NavIcon
-          icon={item.icon}
-          className={
-            active
-              ? 'text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
-              : 'text-zinc-500'
-          }
-        />
+        <NavIcon icon={item.icon} className="text-current" />
       </motion.span>
       <motion.span
-        className="relative z-10 grid min-w-0"
+        className="relative z-10 grid min-w-0 transform-gpu will-change-transform [backface-visibility:hidden]"
         style={{ gridTemplateColumns: labelColumns, opacity: labelProgress }}
         aria-hidden={!active}
       >
-        <span
-          className={cn(
-            'min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]',
-            active && 'drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
-          )}
-        >
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]">
           {label}
         </span>
       </motion.span>
@@ -418,6 +417,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const { triggerHaptic } = useHapticFeedback();
   const audioEngineRef = useRef<DockAudioEngine | null>(null);
   const tickIndexRef = useRef(-1);
+  const lastTickAtRef = useRef(0);
   const audioPrimedRef = useRef(false);
 
   const ensureDockAudio = useCallback((): DockAudioEngine | null => {
@@ -443,6 +443,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const playTick = useCallback(() => {
     try {
+      const now =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastTickAtRef.current < DOCK_TICK_MIN_INTERVAL_MS) return;
+      lastTickAtRef.current = now;
       window.navigator?.vibrate?.(5);
 
       const engine = audioEngineRef.current ?? ensureDockAudio();
@@ -545,9 +549,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const itemRefs = useRef<Array<HTMLLIElement | null>>([]);
   const scrollIdleRef = useRef<number | null>(null);
   const routeIndex = Math.max(0, ITEMS.findIndex((item) => item.tab === activeTab));
-  const pillX = useMotionValue(0);
-  const pillW = useMotionValue(0);
-  const hoverIndex = useMotionValue(routeIndex);
+  const pillXRaw = useMotionValue(0);
+  const pillWRaw = useMotionValue(0);
+  const hoverIndexRaw = useMotionValue(routeIndex);
+  const pillX = useSpring(pillXRaw, DOCK_TRACK_SPRING);
+  const pillW = useSpring(pillWRaw, DOCK_TRACK_SPRING);
+  const hoverIndex = useSpring(hoverIndexRaw, DOCK_PILL_SPRING);
   const grabScale = useMotionValue(1);
   const pillScale = useSpring(grabScale, DOCK_PLUMP_SPRING);
   const draggingRef = useRef(false);
@@ -563,7 +570,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const slotsRef = useRef<Array<{ x: number; w: number }>>([]);
   const listLeftRef = useRef(0);
   const listWidthRef = useRef(0);
-  const [liveTabIndex, setLiveTabIndex] = useState(routeIndex);
 
   const cacheDockSlots = useCallback(() => {
     const list = listRef.current;
@@ -578,47 +584,45 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     });
   }, []);
 
+  const snapTrack = useCallback((x: number, w: number, index: number) => {
+    pillX.jump(x);
+    pillW.jump(w);
+    hoverIndex.jump(index);
+    pillXRaw.set(x);
+    pillWRaw.set(w);
+    hoverIndexRaw.set(index);
+  }, [hoverIndex, hoverIndexRaw, pillW, pillWRaw, pillX, pillXRaw]);
+
+  const springTrack = useCallback((x: number, w: number, index: number) => {
+    pillXRaw.set(x);
+    pillWRaw.set(w);
+    hoverIndexRaw.set(index);
+  }, [hoverIndexRaw, pillWRaw, pillXRaw]);
+
   const measurePill = useCallback((index: number, instant = false) => {
-    const snapHover = (nextIndex: number) => {
+    const apply = (nextX: number, nextW: number, nextIndex: number) => {
       if (instant) {
-        hoverIndex.set(nextIndex);
+        snapTrack(nextX, nextW, nextIndex);
         return;
       }
-      void animate(hoverIndex, nextIndex, DOCK_PILL_TRANSITION);
+      springTrack(nextX, nextW, nextIndex);
     };
     const slot = slotsRef.current[index];
     if (!slot || slot.w <= 0) {
       const item = itemRefs.current[index];
       const list = listRef.current;
       if (!item || !list) {
-        snapHover(index);
+        if (instant) hoverIndex.jump(index);
+        hoverIndexRaw.set(index);
         return;
       }
       const itemRect = item.getBoundingClientRect();
       const listRect = list.getBoundingClientRect();
-      const nextX = itemRect.left - listRect.left;
-      const nextW = itemRect.width;
-      if (instant) {
-        pillX.set(nextX);
-        pillW.set(nextW);
-        hoverIndex.set(index);
-        return;
-      }
-      void animate(pillX, nextX, DOCK_PILL_TRANSITION);
-      void animate(pillW, nextW, DOCK_PILL_TRANSITION);
-      void animate(hoverIndex, index, DOCK_PILL_TRANSITION);
+      apply(itemRect.left - listRect.left, itemRect.width, index);
       return;
     }
-    if (instant) {
-      pillX.set(slot.x);
-      pillW.set(slot.w);
-      hoverIndex.set(index);
-      return;
-    }
-    void animate(pillX, slot.x, DOCK_PILL_TRANSITION);
-    void animate(pillW, slot.w, DOCK_PILL_TRANSITION);
-    void animate(hoverIndex, index, DOCK_PILL_TRANSITION);
-  }, [hoverIndex, pillW, pillX]);
+    apply(slot.x, slot.w, index);
+  }, [hoverIndex, hoverIndexRaw, snapTrack, springTrack]);
 
   const followPointer = useCallback((clientX: number) => {
     const listWidth = listWidthRef.current;
@@ -626,21 +630,19 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     const x = Math.min(Math.max(clientX - listLeftRef.current, 0), listWidth - 0.001);
     const continuous = (x / listWidth) * ITEMS.length;
     const nextIndex = Math.min(ITEMS.length - 1, Math.floor(continuous));
-    hoverIndex.set(Math.min(ITEMS.length - 1, Math.max(0, continuous - 0.5)));
+    hoverIndexRaw.set(Math.min(ITEMS.length - 1, Math.max(0, continuous - 0.5)));
     const slot = slotsRef.current[nextIndex];
     if (slot && slot.w > 0) {
       const nextX = Math.min(Math.max(x - slot.w / 2, 0), listWidth - slot.w);
-      pillX.set(nextX);
-      pillW.set(slot.w);
+      pillXRaw.set(nextX);
+      pillWRaw.set(slot.w);
     }
     if (tickIndexRef.current !== nextIndex) {
       tickIndexRef.current = nextIndex;
       liveIndexRef.current = nextIndex;
-      setLiveTabIndex(nextIndex);
-      triggerHaptic('light');
       playTick();
     }
-  }, [hoverIndex, pillW, pillX, playTick, triggerHaptic]);
+  }, [hoverIndexRaw, pillWRaw, pillXRaw, playTick]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -686,21 +688,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     }
     liveIndexRef.current = settledIndex;
     tickIndexRef.current = settledIndex;
-    setLiveTabIndex(settledIndex);
     measurePill(settledIndex, !pillMountedRef.current);
     pillMountedRef.current = true;
   }, [cacheDockSlots, conceal, measurePill, routeIndex]);
-
-  useLayoutEffect(() => {
-    if (!draggingRef.current) return;
-    cacheDockSlots();
-    const slot = slotsRef.current[liveTabIndex];
-    if (!slot || slot.w <= 0) return;
-    pillW.set(slot.w);
-    const listWidth = listWidthRef.current;
-    if (listWidth <= 0) return;
-    pillX.set(Math.min(Math.max(pillX.get(), 0), Math.max(0, listWidth - slot.w)));
-  }, [cacheDockSlots, liveTabIndex, pillW, pillX]);
 
   useEffect(() => {
     const root = document.querySelector('[data-viewport-root]');
@@ -848,10 +838,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     if (draggingRef.current || !pressActiveRef.current) return;
     draggingRef.current = true;
     grabScale.set(DOCK_PLUMP_SCALE);
-    pillX.stop();
-    pillW.stop();
-    hoverIndex.stop();
-  }, [grabScale, hoverIndex, pillW, pillX]);
+    pillXRaw.set(pillX.get());
+    pillWRaw.set(pillW.get());
+    hoverIndexRaw.set(hoverIndex.get());
+  }, [grabScale, hoverIndex, hoverIndexRaw, pillW, pillWRaw, pillX, pillXRaw]);
 
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
@@ -942,11 +932,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform"
+          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
           style={{ x: pillX, width: pillW, scale: pillScale }}
         />
         {ITEMS.map((item, index) => {
-          const visualActive = liveTabIndex === index;
           const href = hrefForTab(item.tab, homePath);
           return (
             <li
@@ -971,14 +960,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   pendingIndexRef.current = null;
                   liveIndexRef.current = index;
                   tickIndexRef.current = index;
-                  setLiveTabIndex(index);
-                  hoverIndex.set(index);
+                  measurePill(index);
                   unlockTick();
                   if (index !== routeIndex) playTick();
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
-                  dockItemClass(visualActive),
+                  dockItemClass(routeIndex === index),
                   'transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
@@ -987,7 +975,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
               >
                 <DockGlyphLive
                   item={item}
-                  active={visualActive}
+                  active={routeIndex === index}
                   label={t(item.labelKey)}
                   hoverIndex={hoverIndex}
                   plumpScale={pillScale}
