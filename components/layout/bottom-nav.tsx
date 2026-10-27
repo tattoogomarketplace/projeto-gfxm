@@ -72,270 +72,6 @@ const DOCK_TRACK_SPRING = { stiffness: 1400, damping: 48, mass: 0.16, restDelta:
 const DOCK_PILL_SPRING = { stiffness: 820, damping: 38, mass: 0.22, restDelta: 0.08 };
 const DOCK_PLUMP_SCALE = 1.08;
 const DOCK_PLUMP_SPRING = { stiffness: 640, damping: 28, mass: 0.22, restDelta: 0.01 };
-const DOCK_TICK_MIN_INTERVAL_MS = 64;
-const DOCK_TICK_DURATION = 0.018;
-const DOCK_TICK_ATTACK = 0.002;
-const DOCK_TICK_GAIN = 10 ** (-20 / 20);
-const DOCK_TICK_NOISE_GAIN = DOCK_TICK_GAIN * 0.7;
-const DOCK_WARMUP_DURATION = 0.04;
-
-type DockAudioEngine = {
-  ctx: AudioContext;
-  master: GainNode;
-  noiseBuffer: AudioBuffer;
-  silentBuffer: AudioBuffer;
-};
-
-function getAudioContextCtor(): typeof AudioContext | undefined {
-  if (typeof window === 'undefined') return undefined;
-  return (
-    window.AudioContext ||
-    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-  );
-}
-
-function createDockNoiseBuffer(ctx: AudioContext): AudioBuffer {
-  const length = Math.max(1, Math.floor(ctx.sampleRate * DOCK_TICK_DURATION));
-  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i += 1) {
-    const decay = 1 - i / length;
-    data[i] = (Math.random() * 2 - 1) * decay;
-  }
-  return buffer;
-}
-
-function createSilentWarmupBuffer(ctx: AudioContext): AudioBuffer {
-  const length = Math.max(1, Math.floor(ctx.sampleRate * DOCK_WARMUP_DURATION));
-  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  data[0] = 0.0004;
-  return buffer;
-}
-
-function scheduleTickEnvelope(param: AudioParam, time: number, peak: number, end: number) {
-  const attackEnd = Math.min(time + DOCK_TICK_ATTACK, end);
-  param.cancelScheduledValues(time);
-  param.setValueAtTime(0, time);
-  param.linearRampToValueAtTime(peak, attackEnd);
-  param.linearRampToValueAtTime(0, end);
-}
-
-function isDockAudioRunning(ctx: AudioContext): boolean {
-  return ctx.state === 'running';
-}
-
-function createDockAudioEngine(Ctor: typeof AudioContext): DockAudioEngine {
-  const ctx = new Ctor();
-  const master = ctx.createGain();
-  master.gain.value = 1;
-  const compressor = ctx.createDynamicsCompressor();
-  compressor.threshold.value = -22;
-  compressor.knee.value = 6;
-  compressor.ratio.value = 3.2;
-  compressor.attack.value = 0.001;
-  compressor.release.value = 0.05;
-  master.connect(compressor);
-  compressor.connect(ctx.destination);
-  return {
-    ctx,
-    master,
-    noiseBuffer: createDockNoiseBuffer(ctx),
-    silentBuffer: createSilentWarmupBuffer(ctx),
-  };
-}
-
-const DOCK_TICK_WAV =
-  'data:audio/wav;base64,UklGRjwDAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YRgDAAAAAEQCdgSXBqQInQqBDE8OBxCoETEToxT9FT4XZxh4GXAaUBsXHMccXh3fHUgemx7YHv8eER8PH/oe0R6WHkke6x1+HQEddhzdGzcbhRrIGQEZMBhWF3UWjBWdFKkTsBKzEbMQsA+rDqYNnwyZC5QKkAmOCI8HkgaZBaQEswPHAuAB/gAjAE7/f/63/fX8O/yI+9z6OPqb+Qb5efj093f3AfeU9i720PV69Sv15fSl9G30PPQS9O/z0/O+867zpvOj86bzrvO888/z6PMF9Cb0TPR29KT01vQL9UT1f/W99f71QvaH9s/2GPdj96/3/PdL+Jr46vg7+Yz53fku+n/60Pog+3D7wPsO/Fz8qfz1/D/9if3R/Rj+Xf6h/uP+JP9j/6D/3P8VAE0AgwC3AOkAGgFIAXUBoAHJAfABFQI4AloCeQKXArMCzQLlAvwCEQMkAzUDRQNUA2EDbAN2A38DhgOLA5ADkwOVA5YDlgOUA5IDjwOKA4UDfwN4A3ADaANeA1QDSgM/AzMDJwMaAw0D/wLxAuMC1ALFArYCpwKXAocCdwJnAlcCRwI3AiYCFgIGAvYB5gHVAcUBtgGmAZYBhwF3AWgBWQFKATwBLgEfARIBBAH2AOkA3ADQAMMAtwCsAKAAlQCKAH8AdQBrAGEAVwBOAEUAPAA0ACsAJAAcABUADQAHAAAA+//1/+//6f/k/9//2v/V/9H/zf/J/8X/wv++/7v/uP+1/7P/sP+u/6z/qv+o/6f/pf+k/6P/ov+h/6D/n/+f/57/nv+e/57/nv+e/57/nv+e/5//n/+g/6D/of+i/6L/o/+k/6X/pv+n/6j/qf+q/6v/rf+u/6//sP+x/7P/tP+1/7f/uP+5/7v/vP+9/7//wP/C/8P/xP/G/8f/yP/K/8v/zf/O/8//0P/S/9P/1P/W/9f/2P/Z/9v/3P/d/97/3//g/+L/4//k/+X/5v/n/+j/6f/q/+v/7P/t/+7/7//w//H/8f/y//P/9P/1//X/9v/3//j/+P/5//r/+//7//z//P/9//7//v//////AAA=';
-
-let dockAudioSingleton: DockAudioEngine | null = null;
-const dockTickPool: HTMLAudioElement[] = [];
-let dockTickCursor = 0;
-let dockUnlockBound = false;
-let dockHtmlUnlocked = false;
-let dockAudioPrimed = false;
-let dockWarmupNode: HTMLAudioElement | null = null;
-
-function ensureDockTickPool(): HTMLAudioElement[] {
-  if (typeof Audio === 'undefined') return [];
-  if (dockTickPool.length > 0) return dockTickPool;
-  for (let i = 0; i < 4; i += 1) {
-    const node = new Audio(DOCK_TICK_WAV);
-    node.preload = 'auto';
-    node.loop = false;
-    node.volume = 0.42;
-    node.setAttribute('playsinline', 'true');
-    node.setAttribute('webkit-playsinline', 'true');
-    node.load();
-    dockTickPool.push(node);
-  }
-  return dockTickPool;
-}
-
-function ensureDockWarmupNode(): HTMLAudioElement | null {
-  if (typeof Audio === 'undefined') return null;
-  if (dockWarmupNode) return dockWarmupNode;
-  const node = new Audio(DOCK_TICK_WAV);
-  node.preload = 'auto';
-  node.loop = false;
-  node.muted = true;
-  node.volume = 0;
-  node.setAttribute('playsinline', 'true');
-  node.setAttribute('webkit-playsinline', 'true');
-  node.load();
-  dockWarmupNode = node;
-  return node;
-}
-
-function primeDockAudioEngine(): DockAudioEngine | null {
-  if (typeof window === 'undefined') return dockAudioSingleton;
-  try {
-    ensureDockTickPool();
-    ensureDockWarmupNode();
-    const AudioContextCtor = getAudioContextCtor();
-    if (!AudioContextCtor) return dockAudioSingleton;
-    if (!dockAudioSingleton || dockAudioSingleton.ctx.state === 'closed') {
-      dockAudioSingleton = createDockAudioEngine(AudioContextCtor);
-    }
-    return dockAudioSingleton;
-  } catch {
-    console.log('Feedback suppressed');
-    return dockAudioSingleton;
-  }
-}
-
-function playHtmlTick() {
-  try {
-    const pool = ensureDockTickPool();
-    const node = pool[dockTickCursor % pool.length];
-    dockTickCursor += 1;
-    if (!node) return;
-    node.muted = false;
-    node.volume = 0.42;
-    node.pause();
-    node.currentTime = 0;
-    const playResult = node.play();
-    if (playResult) void playResult.catch(() => {});
-  } catch {
-    console.log('Feedback suppressed');
-  }
-}
-
-function unlockHtmlTickPool() {
-  const pool = ensureDockTickPool();
-  const warmup = ensureDockWarmupNode();
-  if (warmup) {
-    warmup.muted = true;
-    warmup.volume = 0;
-    warmup.currentTime = 0;
-    const warmupPlay = warmup.play();
-    if (warmupPlay) {
-      void warmupPlay
-        .then(() => {
-          warmup.pause();
-          warmup.currentTime = 0;
-        })
-        .catch(() => {});
-    }
-  }
-  if (dockHtmlUnlocked || pool.length === 0) return;
-  dockHtmlUnlocked = true;
-  for (const node of pool) {
-    node.muted = true;
-    node.volume = 0;
-    const playResult = node.play();
-    if (playResult) {
-      void playResult
-        .then(() => {
-          node.pause();
-          node.currentTime = 0;
-          node.muted = false;
-          node.volume = 0.42;
-        })
-        .catch(() => {
-          node.muted = false;
-          node.volume = 0.42;
-        });
-    } else {
-      node.muted = false;
-      node.volume = 0.42;
-    }
-  }
-}
-
-function pumpSilentBuffer(engine: DockAudioEngine) {
-  if (!isDockAudioRunning(engine.ctx)) return;
-  const { ctx, silentBuffer } = engine;
-  const src = ctx.createBufferSource();
-  src.buffer = silentBuffer;
-  src.connect(ctx.destination);
-  src.start(0);
-  src.stop(ctx.currentTime + DOCK_WARMUP_DURATION);
-  src.onended = () => {
-    src.disconnect();
-  };
-}
-
-function resumeDockAudioEngine(engine: DockAudioEngine | null) {
-  if (!engine || engine.ctx.state === 'closed') return;
-  if (isDockAudioRunning(engine.ctx)) {
-    pumpSilentBuffer(engine);
-    return;
-  }
-  try {
-    const resumeResult = engine.ctx.resume();
-    if (resumeResult) {
-      void resumeResult
-        .then(() => {
-          if (isDockAudioRunning(engine.ctx)) pumpSilentBuffer(engine);
-        })
-        .catch(() => {});
-    }
-  } catch {
-    console.log('Feedback suppressed');
-  }
-}
-
-function unlockDockAudioFromUserGesture(): DockAudioEngine | null {
-  try {
-    const engine = primeDockAudioEngine();
-    unlockHtmlTickPool();
-    if (!engine) return dockAudioSingleton;
-    resumeDockAudioEngine(engine);
-    if (isDockAudioRunning(engine.ctx)) {
-      pumpSilentBuffer(engine);
-      dockAudioPrimed = true;
-    }
-    return engine;
-  } catch {
-    console.log('Feedback suppressed');
-    return dockAudioSingleton;
-  }
-}
-
-function bindGlobalDockAudioUnlock() {
-  if (typeof window === 'undefined' || dockUnlockBound) return;
-  dockUnlockBound = true;
-  primeDockAudioEngine();
-  const opts: AddEventListenerOptions = { capture: true, passive: true };
-  const gestureEvents = ['touchstart', 'pointerdown', 'touchend', 'mousedown'] as const;
-  const unlock = () => {
-    const engine = unlockDockAudioFromUserGesture();
-    if (!engine || !isDockAudioRunning(engine.ctx)) return;
-    for (const eventName of gestureEvents) {
-      window.removeEventListener(eventName, unlock, opts);
-      document.removeEventListener(eventName, unlock, opts);
-    }
-  };
-  for (const eventName of gestureEvents) {
-    window.addEventListener(eventName, unlock, opts);
-    document.addEventListener(eventName, unlock, opts);
-  }
-}
-
-if (typeof window !== 'undefined') {
-  bindGlobalDockAudioUnlock();
-}
 
 function hrefForTab(tab: AppTab, homePath: string): string {
   if (tab === 'perfil') return '/dashboard/perfil';
@@ -490,98 +226,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
-  const audioEngineRef = useRef<DockAudioEngine | null>(null);
-  const tickIndexRef = useRef(-1);
-  const lastTickAtRef = useRef(0);
-  const audioPrimedRef = useRef(false);
-
-  const ensureDockAudio = useCallback((): DockAudioEngine | null => {
-    const engine = primeDockAudioEngine();
-    if (engine !== audioEngineRef.current) {
-      audioEngineRef.current = engine;
-    }
-    audioPrimedRef.current = dockAudioPrimed;
-    return engine;
-  }, []);
-
-  const unlockTick = useCallback(() => {
-    try {
-      const engine = unlockDockAudioFromUserGesture();
-      if (!engine) return;
-      audioEngineRef.current = engine;
-      audioPrimedRef.current = true;
-    } catch {
-      console.log('Feedback suppressed');
-    }
-  }, []);
-
-  const playTick = useCallback(() => {
-    try {
-      const now =
-        typeof performance !== 'undefined' ? performance.now() : Date.now();
-      const isFirstTick = lastTickAtRef.current === 0;
-      if (!isFirstTick && now - lastTickAtRef.current < DOCK_TICK_MIN_INTERVAL_MS) return;
-      lastTickAtRef.current = now;
-      window.navigator?.vibrate?.(5);
-
-      const engine = audioEngineRef.current ?? ensureDockAudio();
-      if (!engine || engine.ctx.state !== 'running') {
-        unlockDockAudioFromUserGesture();
-        resumeDockAudioEngine(engine);
-        playHtmlTick();
-        return;
-      }
-      const { ctx, master, noiseBuffer } = engine;
-
-      const t = ctx.currentTime;
-      const end = t + DOCK_TICK_DURATION;
-
-      const sine = ctx.createOscillator();
-      sine.type = 'sine';
-      sine.frequency.setValueAtTime(120, t);
-      sine.frequency.exponentialRampToValueAtTime(40, end);
-      const sineGain = ctx.createGain();
-      sineGain.gain.value = 0;
-      scheduleTickEnvelope(sineGain.gain, t, DOCK_TICK_GAIN, end);
-
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const highpass = ctx.createBiquadFilter();
-      highpass.type = 'highpass';
-      highpass.frequency.setValueAtTime(180, t);
-      const lowpass = ctx.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.setValueAtTime(1200, t);
-      lowpass.Q.setValueAtTime(0.65, t);
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0;
-      scheduleTickEnvelope(noiseGain.gain, t, DOCK_TICK_NOISE_GAIN, end);
-
-      sine.connect(sineGain);
-      sineGain.connect(master);
-      noise.connect(highpass);
-      highpass.connect(lowpass);
-      lowpass.connect(noiseGain);
-      noiseGain.connect(master);
-
-      sine.start(t);
-      noise.start(t);
-      sine.stop(end + 0.004);
-      noise.stop(end + 0.004);
-      sine.onended = () => {
-        sine.disconnect();
-        sineGain.disconnect();
-      };
-      noise.onended = () => {
-        noise.disconnect();
-        highpass.disconnect();
-        lowpass.disconnect();
-        noiseGain.disconnect();
-      };
-    } catch {
-      console.log('Feedback suppressed');
-    }
-  }, [ensureDockAudio]);
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -714,12 +358,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       pillXRaw.set(nextX);
       pillWRaw.set(slot.w);
     }
-    if (tickIndexRef.current !== nextIndex) {
-      tickIndexRef.current = nextIndex;
+    if (liveIndexRef.current !== nextIndex) {
       liveIndexRef.current = nextIndex;
-      playTick();
     }
-  }, [cacheDockSlots, hoverIndexRaw, pillWRaw, pillXRaw, playTick]);
+  }, [cacheDockSlots, hoverIndexRaw, pillWRaw, pillXRaw]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -756,7 +398,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const pillMountedRef = useRef(false);
   useLayoutEffect(() => {
-    primeDockAudioEngine();
     cacheDockSlots();
     if (draggingRef.current) return;
     const settledIndex =
@@ -765,7 +406,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       pendingIndexRef.current = null;
     }
     liveIndexRef.current = settledIndex;
-    tickIndexRef.current = settledIndex;
     const instant = !pillMountedRef.current;
     measurePill(settledIndex, instant);
     pillMountedRef.current = true;
@@ -811,72 +451,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (scrollIdleRef.current) window.clearTimeout(scrollIdleRef.current);
     };
   }, [pathname]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    bindGlobalDockAudioUnlock();
-
-    const unlockFromGesture = () => {
-      unlockTick();
-    };
-
-    const resumeOnInteraction = () => {
-      resumeDockAudioEngine(audioEngineRef.current ?? dockAudioSingleton);
-    };
-
-    const gestureOpts: AddEventListenerOptions = { capture: true, passive: true };
-    const dockUnlockEvents: Array<keyof HTMLElementEventMap> = [
-      'touchstart',
-      'pointerdown',
-      'mousedown',
-    ];
-    const globalGestureEvents: Array<keyof WindowEventMap> = [
-      'pointerdown',
-      'touchstart',
-      'mousedown',
-      'keydown',
-      'click',
-    ];
-
-    const bindDockUnlock = (node: HTMLElement | null) => {
-      if (!node) return;
-      for (const eventName of dockUnlockEvents) {
-        node.addEventListener(eventName, unlockFromGesture, gestureOpts);
-      }
-    };
-    const unbindDockUnlock = (node: HTMLElement | null) => {
-      if (!node) return;
-      for (const eventName of dockUnlockEvents) {
-        node.removeEventListener(eventName, unlockFromGesture, gestureOpts);
-      }
-    };
-
-    const navNode = navRef.current;
-    const listNode = listRef.current;
-    bindDockUnlock(navNode);
-    bindDockUnlock(listNode);
-
-    for (const eventName of globalGestureEvents) {
-      document.addEventListener(eventName, unlockFromGesture, gestureOpts);
-      window.addEventListener(eventName, unlockFromGesture, gestureOpts);
-    }
-    document.addEventListener('visibilitychange', resumeOnInteraction);
-    window.addEventListener('pageshow', resumeOnInteraction);
-    window.addEventListener('focus', resumeOnInteraction);
-
-    return () => {
-      unbindDockUnlock(navNode);
-      unbindDockUnlock(listNode);
-      for (const eventName of globalGestureEvents) {
-        document.removeEventListener(eventName, unlockFromGesture, gestureOpts);
-        window.removeEventListener(eventName, unlockFromGesture, gestureOpts);
-      }
-      document.removeEventListener('visibilitychange', resumeOnInteraction);
-      window.removeEventListener('pageshow', resumeOnInteraction);
-      window.removeEventListener('focus', resumeOnInteraction);
-    };
-  }, [ensureDockAudio, unlockTick]);
 
   useEffect(() => {
     return () => {
@@ -941,7 +515,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (event.button !== 0) return;
-      unlockTick();
       cacheDockSlots();
       clearPressTimer();
       pressActiveRef.current = true;
@@ -953,7 +526,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       lastClientXRef.current = event.clientX;
       const startIndex = indexFromPointer(event.currentTarget, event.clientX);
       liveIndexRef.current = startIndex;
-      tickIndexRef.current = startIndex;
       event.currentTarget.setPointerCapture(event.pointerId);
       pressTimerRef.current = window.setTimeout(() => {
         pressTimerRef.current = null;
@@ -961,7 +533,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         followPointer(lastClientXRef.current);
       }, DRAG_HOLD_MS);
     },
-    [cacheDockSlots, clearPressTimer, engageDockDrag, followPointer, unlockTick]
+    [cacheDockSlots, clearPressTimer, engageDockDrag, followPointer]
   );
 
   const onDockPointerMove = useCallback(
@@ -1011,14 +583,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
-      onPointerDown={unlockTick}
-      onTouchStart={unlockTick}
     >
       <ul
         ref={listRef}
         className="relative z-10 flex h-full w-full min-w-0 touch-none items-center gap-1"
         style={{ touchAction: 'none' }}
-        onTouchStart={unlockTick}
         onPointerDown={onDockPointerDown}
         onPointerMove={onDockPointerMove}
         onPointerUp={onDockPointerEnd}
@@ -1054,10 +623,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   }
                   pendingIndexRef.current = null;
                   liveIndexRef.current = index;
-                  tickIndexRef.current = index;
                   measurePill(index);
-                  unlockTick();
-                  if (index !== routeIndex) playTick();
                   handleSelect(item.tab, href);
                 }}
                 className={cn(
