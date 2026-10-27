@@ -64,7 +64,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[92%] max-w-md -translate-x-1/2 items-center justify-around overflow-visible rounded-full border border-white/10 bg-[#121212]/90 px-3 py-1 shadow-2xl backdrop-blur-xl';
+  'bottom-nav-dock fixed left-1/2 z-50 flex h-12 w-[94%] max-w-sm -translate-x-1/2 items-center justify-around overflow-hidden rounded-full border border-white/10 bg-[#121212]/90 px-1.5 py-1 shadow-2xl backdrop-blur-xl select-none touch-none';
 
 const NavIcon = memo(function NavIcon({
   icon: Icon,
@@ -80,8 +80,8 @@ const DOCK_PILL_TRANSITION = { type: 'spring' as const, stiffness: 420, damping:
 
 function dockItemClass(active: boolean) {
   return cn(
-    'relative flex min-h-11 items-center justify-center gap-1.5 overflow-hidden rounded-full',
-    active ? 'px-3' : 'min-w-11 px-2'
+    'relative flex min-h-11 min-w-0 items-center justify-center gap-1 overflow-hidden rounded-full select-none [-webkit-touch-callout:none]',
+    active ? 'px-2' : 'min-w-11 px-1.5'
   );
 }
 
@@ -118,7 +118,7 @@ function DockGlyph({
         )}
         aria-hidden={!active}
       >
-        <span className="overflow-hidden whitespace-nowrap pr-0.5 text-[11px] font-semibold leading-none tracking-tight text-[#121212]">
+        <span className="overflow-hidden whitespace-nowrap text-[11px] font-semibold leading-none tracking-tight text-[#121212]">
           {label}
         </span>
       </span>
@@ -317,7 +317,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >
-      <ul className="relative z-10 flex h-full w-full items-center justify-around">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-0.5">
         {ITEMS.map((item) => {
           const active = activeTab === item.tab;
           const href =
@@ -329,11 +329,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   ? '/dashboard/agenda'
                   : `${homePath}?tab=${item.tab}`;
           return (
-            <li key={item.tab} className="flex">
+            <li key={item.tab} className="flex min-w-0">
               <Link
                 href={href}
                 prefetch
                 scroll={false}
+                draggable={false}
+                onContextMenu={(event) => event.preventDefault()}
                 onPointerDown={playPremiumFeedback}
                 onClick={() => {
                   playPremiumFeedback();
@@ -379,11 +381,11 @@ function BottomNavFallbackInner() {
 
   return (
     <nav aria-hidden className={PILL_CLASS}>
-      <ul className="relative z-10 flex h-full w-full items-center justify-around">
+      <ul className="relative z-10 flex h-full w-full min-w-0 items-center justify-around gap-0.5">
         {ITEMS.map((item, index) => {
           const active = index === 0;
           return (
-            <li key={item.tab} className="flex">
+            <li key={item.tab} className="flex min-w-0">
               <span className={dockItemClass(active)}>
                 <DockGlyph item={item} active={active} label={t(item.labelKey)} />
               </span>
