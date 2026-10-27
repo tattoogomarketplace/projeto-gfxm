@@ -264,27 +264,24 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       const engine = ensureDockAudio();
       if (!engine) return;
       const { ctx, master } = engine;
-      const primeSilent = () => {
-        if (audioPrimedRef.current) return;
-        audioPrimedRef.current = true;
-        const mute = ctx.createGain();
-        mute.gain.value = 0;
-        const prime = ctx.createBufferSource();
-        prime.buffer = engine.noiseBuffer;
-        prime.connect(mute);
-        mute.connect(master);
-        prime.start(0);
-        prime.stop(ctx.currentTime + 0.001);
-        prime.onended = () => {
-          prime.disconnect();
-          mute.disconnect();
-        };
-      };
       if (ctx.state === 'suspended') {
-        void ctx.resume().then(primeSilent).catch(() => {});
-        return;
+        void ctx.resume().catch(() => {});
       }
-      primeSilent();
+      if (audioPrimedRef.current) return;
+      audioPrimedRef.current = true;
+      const mute = ctx.createGain();
+      mute.gain.value = 0.0001;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 1;
+      osc.connect(mute);
+      mute.connect(master);
+      osc.start(0);
+      osc.stop(ctx.currentTime + 0.02);
+      osc.onended = () => {
+        osc.disconnect();
+        mute.disconnect();
+      };
     } catch {
       console.log('Feedback suppressed');
     }
@@ -578,6 +575,23 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, [pathname]);
 
   useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const unlockOnGesture = () => {
+      unlockTick();
+    };
+
+    nav.addEventListener('pointerdown', unlockOnGesture, { capture: true });
+    nav.addEventListener('touchstart', unlockOnGesture, { capture: true, passive: true });
+
+    return () => {
+      nav.removeEventListener('pointerdown', unlockOnGesture, { capture: true });
+      nav.removeEventListener('touchstart', unlockOnGesture, { capture: true });
+    };
+  }, [conceal, unlockTick]);
+
+  useEffect(() => {
     return () => {
       const engine = audioEngineRef.current;
       audioEngineRef.current = null;
@@ -680,6 +694,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
+      onPointerDown={unlockTick}
+      onTouchStart={unlockTick}
     >
       <ul
         ref={listRef}
