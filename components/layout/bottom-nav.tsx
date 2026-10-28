@@ -512,19 +512,21 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           forceViewportRecalibration();
         });
       }
-      if (tab !== 'perfil') {
-        setActiveTab(tab);
-      }
+      startTransition(() => {
+        if (tab !== 'perfil') {
+          setActiveTab(tab);
+        }
+      });
     },
     [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
   );
 
   const commitTab = useCallback(
-    (index: number) => {
+    (index: number, haptic = true) => {
       const item = ITEMS[index];
       if (!item) return;
       const href = hrefForTab(item.tab, homePath);
-      handleSelect(item.tab, href);
+      handleSelect(item.tab, href, haptic);
       startTransition(() => {
         router.push(href, { scroll: false });
       });
@@ -600,8 +602,14 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       grabScale.set(1);
       pointerIdRef.current = null;
       dragMovedRef.current = false;
-      if (!wasDragging) return;
       const nextIndex = liveIndexRef.current;
+      if (!wasDragging) {
+        suppressClickRef.current = true;
+        hapticOnPressRef.current = false;
+        pendingIndexRef.current = nextIndex;
+        commitTab(nextIndex, false);
+        return;
+      }
       pendingIndexRef.current = nextIndex;
       measurePill(nextIndex);
       if (didMove && nextIndex !== routeIndex) {
@@ -660,8 +668,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   triggerHaptic('light');
                 }}
                 onClick={(event) => {
+                  event.preventDefault();
                   if (suppressClickRef.current) {
-                    event.preventDefault();
                     suppressClickRef.current = false;
                     hapticOnPressRef.current = false;
                     return;
@@ -673,11 +681,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                     pendingIndexRef.current = index;
                     measurePill(index, false, true);
                   }
-                  handleSelect(item.tab, href, !skipHaptic);
+                  commitTab(index, !skipHaptic);
                 }}
                 className={cn(
                   dockItemClass(routeIndex === index),
-                  'touch-manipulation transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
+                  'touch-manipulation [touch-action:manipulation] transform-gpu will-change-transform transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
                 aria-current={routeIndex === index ? 'page' : undefined}
