@@ -8,6 +8,7 @@ import {
   AgendaWorkspaceSkeleton,
   GaleriaFeedSkeleton,
   InspiracoesGridSkeleton,
+  ReviewDetailSkeleton,
 } from '@/components/ui/destination-skeletons';
 import {
   AgendaPaymentsSkeleton,
@@ -87,6 +88,7 @@ export function resolveDestinationSkeleton(pathname: string): ReactNode {
   }
   if (/^\/dashboard\/artistas\/.+/.test(pathname)) return <PublicProfileSkeleton />;
   if (pathname === '/dashboard/artistas') return <GalleryGridSkeleton />;
+  if (/^\/dashboard\/avaliacoes\/.+/.test(pathname)) return <ReviewDetailSkeleton />;
   if (pathname === '/dashboard/avaliacoes') return <GalleryGridSkeleton />;
   return <AppRouteSkeleton />;
 }
