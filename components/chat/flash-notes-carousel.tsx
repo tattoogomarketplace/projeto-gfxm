@@ -246,8 +246,8 @@ export function FlashNotesCarousel() {
   return (
     <section className="flash-notes-piano relative shrink-0 bg-black px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(0.25rem,env(safe-area-inset-right,0px))]">
       <div className="mb-2 flex items-center gap-2 px-1">
-        <Zap className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" strokeWidth={2} />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">
+        <Zap className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 [filter:drop-shadow(0_0_8px_rgba(255,95,31,0.55))_drop-shadow(0_0_22px_rgba(255,102,0,0.7))_drop-shadow(0_0_40px_rgba(255,102,0,0.4))]" strokeWidth={2} />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400 [text-shadow:0_0_8px_rgba(255,95,31,0.7),0_0_18px_rgba(255,102,0,0.85),0_0_36px_rgba(255,102,0,0.5),0_0_56px_rgba(255,102,0,0.28)]">
           {t('flash.heading')}
         </p>
       </div>
@@ -346,7 +346,7 @@ export function FlashNotesCarousel() {
                       <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                     </span>
                   </span>
-                  <span className="w-full truncate bg-transparent text-center text-[10px] font-medium tracking-tight text-white [text-shadow:0_0_10px_rgba(255,255,255,0.42),0_1px_6px_rgba(240,240,240,0.28)]">
+                  <span className="w-full truncate bg-transparent text-center text-[10px] font-medium tracking-tight text-[#4D7CFF] [text-shadow:0_0_8px_rgba(77,124,255,0.95),0_0_16px_rgba(13,71,161,0.85),0_0_32px_rgba(26,35,126,0.6),0_0_52px_rgba(26,35,126,0.35)]">
                     {handle}
                   </span>
                 </button>
