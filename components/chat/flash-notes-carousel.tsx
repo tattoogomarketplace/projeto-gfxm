@@ -244,7 +244,7 @@ export function FlashNotesCarousel() {
   }, [notes, ownNote, t]);
 
   return (
-    <section className="relative shrink-0 px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(0.25rem,env(safe-area-inset-right,0px))]">
+    <section className="flash-notes-piano relative shrink-0 bg-black px-[max(0.25rem,env(safe-area-inset-left,0px))] pr-[max(0.25rem,env(safe-area-inset-right,0px))]">
       <div className="mb-2 flex items-center gap-2 px-1">
         <Zap className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" strokeWidth={2} />
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-500 dark:text-orange-400">

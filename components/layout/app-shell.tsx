@@ -325,7 +325,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <header
       ref={headerRef}
       data-app-header
-      className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-in-out will-change-transform"
+      className="fixed top-0 left-0 z-50 w-full shrink-0 bg-black backdrop-blur-md pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-in-out will-change-transform"
     >
       <h1 className="sr-only">{headerTitle}</h1>
       <div className="relative isolate h-11 min-h-11 max-h-11 w-full shrink-0 contain-layout">

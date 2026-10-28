@@ -316,7 +316,7 @@
     left: 0;
     width: 100%;
     z-index: 50;
-    background-color: #121212;
+    background-color: #000000;
     border: 0;
     box-shadow: none;
     outline: none;
@@ -1262,5 +1262,22 @@ html.splash-seen .splash-root {
 html:has([data-auth-shell]),
 html:has([data-auth-shell]) body {
   background-color: #0a0a0a !important;
+}
+
+.flash-notes-piano {
+  background-color: #000000;
+}
+
+.flash-notes-piano::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180' fill='none'%3E%3Cg stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M45 14l16 28-16 28-16-28z'/%3E%3Cpath d='M36 42h18'/%3E%3Cpath d='M132 16l4.2 12.8h13.5l-10.9 7.9 4.2 12.8-11-8-11 8 4.2-12.8-10.9-7.9h13.5z'/%3E%3Cpath d='M32 118v22M21 129h22M24.2 121.2l15.6 15.6M39.8 121.2l-15.6 15.6'/%3E%3Ccircle cx='132' cy='132' r='10'/%3E%3Ccircle cx='132' cy='132' r='4.5'/%3E%3Cpath d='M132 112v12'/%3E%3Cpath d='M132 122c-10-7-16 1-10 9'/%3E%3Cpath d='M132 122c10-7 16 1 10 9'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  opacity: 0.04;
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent);
+  mask-image: linear-gradient(to bottom, black 70%, transparent);
 }
 

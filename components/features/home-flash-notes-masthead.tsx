@@ -133,10 +133,10 @@ export function HomeFlashNotesMasthead({ notes = [] }: { notes?: FlashNoteDto[] 
 
   return (
     <div className="-mx-4 min-w-0 sm:-mx-6">
-      <div className="sticky top-0 z-30 w-full border-b border-white/5 bg-[#121212]/90 pb-3 backdrop-blur-2xl">
+      <div className="flash-notes-piano sticky top-0 z-30 w-full border-b border-white/5 bg-black pb-3 backdrop-blur-2xl">
         <div
           data-ptr-slot
-          className="relative isolate flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-[#121212] contain-paint"
+          className="relative isolate flex h-0 w-full shrink-0 items-start justify-center overflow-hidden bg-black contain-paint"
           aria-hidden
         />
 
