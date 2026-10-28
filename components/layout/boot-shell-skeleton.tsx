@@ -52,7 +52,7 @@ function ShellChrome({
         {hideHeader ? null : (
           <header
             data-app-header
-            className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)]"
+            className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[env(safe-area-inset-top)]"
           >
             <div className="relative isolate h-11 min-h-11 max-h-11 w-full shrink-0 contain-layout">
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
@@ -85,7 +85,7 @@ function ShellChrome({
               <div
                 aria-hidden
                 data-app-header-spacer
-                className="pointer-events-none shrink-0 pt-[max(env(safe-area-inset-top),_16px)]"
+                className="pointer-events-none shrink-0 pt-[env(safe-area-inset-top)]"
               >
                 <div className="h-11 min-h-11 max-h-11 shrink-0" />
                 <div className="hidden px-4 pb-3 md:block">
