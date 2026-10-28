@@ -107,6 +107,8 @@
     min-height: 100%;
     max-height: none;
     overscroll-behavior: none;
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
     background-color: #121212;
     color-scheme: inherit;
     user-select: none;
@@ -128,6 +130,7 @@
     margin: 0;
     padding: 0;
     overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
     background-color: #121212;
     color: var(--foreground);
     user-select: none;
@@ -192,8 +195,19 @@
    *
    * Todos os alvos interativos respondem ao toque com um scale sutil de 0.97
    * em 100ms ease-out — a mesma sensação do "press" nativo do iOS. A transição
-   * é limitada a `transform` para nunca disparar layout/reflow (60fps+).
+   * é limitada a `transform` para nunca disparar layout/reflow (120Hz).
    */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  summary {
+    transition-property: transform;
+    transition-duration: 100ms;
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
   button:active:not(:disabled),
   [role="button"]:active:not([aria-disabled="true"]) {
     transform: scale(0.97);
@@ -532,6 +546,14 @@
     min-height: 0;
     overflow: hidden;
     overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-shell-viewport] {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
   /*
