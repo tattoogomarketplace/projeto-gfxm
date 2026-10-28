@@ -889,18 +889,28 @@ function FlashNoteStorySurface({
             gestureState === 'HOLDING' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           )}
         >
-          <div className="flex flex-col items-center gap-2 animate-bounce-slow">
+          <motion.div
+            className="flex flex-col items-center gap-2 transform-gpu will-change-transform"
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity }}
+            style={{ backfaceVisibility: 'hidden' }}
+          >
             <span className="text-white text-xl">↑</span>
             <div className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium tracking-wide shadow-2xl">
               Deslize para Orçamento
             </div>
-          </div>
-          <div className="flex flex-col items-center gap-2 animate-bounce-slow-reverse">
+          </motion.div>
+          <motion.div
+            className="flex flex-col items-center gap-2 transform-gpu will-change-transform"
+            animate={{ y: [0, 5, 0] }}
+            transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity }}
+            style={{ backfaceVisibility: 'hidden' }}
+          >
             <div className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium tracking-wide shadow-2xl">
               Deslize para Zoom
             </div>
             <span className="text-white text-xl">↓</span>
-          </div>
+          </motion.div>
         </div>
 
         <div className="pointer-events-none absolute left-4 right-4 top-[max(1rem,env(safe-area-inset-top))] z-20 flex h-1 gap-1">
