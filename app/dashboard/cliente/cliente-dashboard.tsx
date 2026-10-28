@@ -1,17 +1,51 @@
 'use client';
 
+import { memo } from 'react';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { HomeDiscover } from '@/components/features/home-discover';
-import { HomeDiscoverSkeleton } from '@/components/ui/route-skeletons';
-import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
-import { useRouteTab } from '@/hooks/use-route-tab';
+import { ImmersiveAgenda } from '@/components/features/immersive-agenda';
+import { PersistentTabPane } from '@/components/layout/persistent-tab-pane';
+import { ProfileView } from '@/components/features/profile-view';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { useKeepAliveTab } from '@/hooks/use-keep-alive-tab';
 import type { AppTab } from '@/hooks/use-ui-store';
 import type { InspirationItem } from '@/lib/gallery-mock';
 import type { FlashNoteDto } from '@/lib/types/chat';
 import type { AppRole } from '@/lib/utils/auth-redirect';
 
+const HomePane = memo(function HomePane({
+  feedItems,
+  savedItems,
+  flashNotes,
+}: {
+  feedItems: InspirationItem[];
+  savedItems: InspirationItem[];
+  flashNotes: FlashNoteDto[];
+}) {
+  return (
+    <section className="nav-safe-pad min-h-0 min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
+      <HomeDiscover feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
+    </section>
+  );
+});
+
+const AgendaPane = memo(function AgendaPane() {
+  return <ImmersiveAgenda />;
+});
+
+const ChatPane = memo(function ChatPane() {
+  return <ChatWorkspace />;
+});
+
+const ProfilePane = memo(function ProfilePane() {
+  return (
+    <ErrorBoundary>
+      <ProfileView />
+    </ErrorBoundary>
+  );
+});
+
 export default function ClienteDashboard({
-  role = 'cliente',
   initialTab = 'portfolio',
   feedItems = [],
   savedItems = [],
@@ -23,52 +57,22 @@ export default function ClienteDashboard({
   savedItems?: InspirationItem[];
   flashNotes?: FlashNoteDto[];
 }) {
-  // Aba derivada da ROTA (pathname + query), idêntica no SSR e no 1º frame do
-  // cliente. Sem estado pós-hidratação: a aba "Agenda"/"Chat" já nasce correta
-  // no HTML do servidor, eliminando o swap de layout no cold boot.
-  const activeTab = useRouteTab(initialTab);
+  const activeTab = useKeepAliveTab(initialTab);
 
   return (
-    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 transition-opacity duration-300 ease-in-out dark:text-white">
-      <div className="relative flex min-w-0 w-full flex-1 flex-col gap-6">
-        {/*
-         * Ramificação EXAUSTIVA da aba "Início". O retorno nunca cai para um
-         * nó vazio: a aba 'portfolio' pinta o Feed de Descoberta e qualquer
-         * outro estado (a fase ambígua em que a query ainda não foi resolvida,
-         * ou o estado residual 'perfil' antes do redirecionamento do casco)
-         * resolve para o skeleton do `loading.tsx` desta rota. Assim o
-         * contêiner jamais fica transparente sobre o canvas `bg-background`
-         * (#0a0a0a), eliminando o apagão preto de 1 frame entre o `loading.tsx`
-         * e a hidratação do feed.
-         */}
-        {activeTab === 'agendar' ? (
-          <section key="agendar" className="flex min-w-0 w-full flex-1 flex-col">
-            <AgendaPaymentsWorkspace role={role} />
-          </section>
-        ) : activeTab === 'chat' ? (
-          <section
-            key="chat"
-            className="-mx-4 min-h-0 flex-1 transform-gpu transition-opacity duration-200 sm:-mx-6"
-          >
-            <ChatWorkspace />
-          </section>
-        ) : activeTab === 'portfolio' ? (
-          <section key="portfolio" className="min-w-0 w-full flex-1">
-            <HomeDiscover feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
-          </section>
-        ) : (
-          // Fase transitória: pinta EXATAMENTE o skeleton do `loading.tsx`
-          // desta rota até a aba final estar 100% resolvida. O skeleton
-          // espelha a geometria do feed, então a troca é imperceptível.
-          <section
-            key="portfolio-skeleton"
-            className="min-w-0 w-full flex-1"
-            aria-busy="true"
-          >
-            <HomeDiscoverSkeleton />
-          </section>
-        )}
-      </div>
+    <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 dark:text-white">
+      <PersistentTabPane active={activeTab === 'portfolio'}>
+        <HomePane feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
+      </PersistentTabPane>
+      <PersistentTabPane active={activeTab === 'agendar'}>
+        <AgendaPane />
+      </PersistentTabPane>
+      <PersistentTabPane active={activeTab === 'chat'}>
+        <ChatPane />
+      </PersistentTabPane>
+      <PersistentTabPane active={activeTab === 'perfil'}>
+        <ProfilePane />
+      </PersistentTabPane>
     </div>
   );
 }

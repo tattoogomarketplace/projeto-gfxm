@@ -24,6 +24,7 @@ import { ROLE_EXPERIENCE } from '@/lib/content/role-experience';
 import { useI18n } from '@/hooks/use-i18n';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { useRouteTab } from '@/hooks/use-route-tab';
+import { isKeepAliveHostPath } from '@/lib/utils/route-tab';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { useSmartHeader } from '@/hooks/use-smart-header';
@@ -39,6 +40,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setActiveTab = useUiStore((s) => s.setActiveTab);
+  const storeTab = useUiStore((s) => s.activeTab);
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const isOnline = useOfflineQueue((s) => s.isOnline);
@@ -88,6 +90,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const isArtistProfile =
     pathname.startsWith('/dashboard/artista/') ||
     /^\/dashboard\/artistas\/.+/.test(pathname);
+  const keepAliveHost = isKeepAliveHostPath(pathname);
   // Rotas "sem casco": renderizam o conteúdo em tela cheia, sem header, sem
   // gatilho de menu e sem FAB — exatamente como quando o layout as isolava.
   const isChromeLess =
@@ -119,7 +122,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isArtistProfile ||
     isAgenda ||
     isGaleria ||
-    isProfileSettings;
+    isProfileSettings ||
+    (keepAliveHost && (storeTab === 'chat' || storeTab === 'agendar' || storeTab === 'perfil'));
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
   const headerRef = useSmartHeader(!hideShellHeader);
@@ -238,15 +242,17 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   // e o primeiro frame do cliente são idênticos — nenhuma escrita de estado
   // pós-hidratação pode alterar a geometria do casco.
   const routeTab: AppTab = useRouteTab('portfolio');
-  const selectedTab: AppTab = isProfileSettings
-    ? 'perfil'
-    : isDedicatedChat
-      ? 'chat'
-      : isPagamentos || isAgenda
-        ? 'agendar'
-        : routeTab === 'perfil'
-          ? 'portfolio'
-          : routeTab;
+  const selectedTab: AppTab = keepAliveHost
+    ? storeTab
+    : isProfileSettings
+      ? 'perfil'
+      : isDedicatedChat
+        ? 'chat'
+        : isPagamentos || isAgenda
+          ? 'agendar'
+          : routeTab === 'perfil'
+            ? 'portfolio'
+            : routeTab;
   const headerTitle = isSettingsHub
     ? t('settings.title')
     : isGaleria
@@ -282,29 +288,20 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       //
       // `startTransition` mantém o frame atual pintado até que o próximo esteja
       // pronto — troca de aba instantânea, sem flash de estado vazio.
+      setActiveTab(tab);
+      const targetPath = dashboardPathForRole(tabRole);
+      const next = `${targetPath}?tab=${tab}`;
+      if (isKeepAliveHostPath(pathname)) {
+        if (`${pathname}${window.location.search}` !== next) {
+          window.history.replaceState(window.history.state, '', next);
+        }
+        return;
+      }
       startTransition(() => {
-        if (tab === 'perfil') {
-          router.push('/dashboard/perfil');
-          return;
-        }
-        if (tab === 'chat') {
-          setActiveTab('chat');
-          router.push('/dashboard/chat');
-          return;
-        }
-        if (tab === 'agendar') {
-          setActiveTab('agendar');
-          router.push('/dashboard/agenda');
-          return;
-        }
-        setActiveTab(tab);
-        const params = new URLSearchParams(window.location.search);
-        params.set('tab', tab);
-        const targetPath = dashboardPathForRole(tabRole);
-        router.replace(`${targetPath}?${params.toString()}`, { scroll: false });
+        router.replace(next, { scroll: false });
       });
     },
-    [isChromeLess, router, setActiveTab, tabRole]
+    [isChromeLess, pathname, router, setActiveTab, tabRole]
   );
 
   // A camada de rolagem é decidida pela rota, mas o CASCO (a caixa externa do
@@ -319,7 +316,8 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     isGaleria ||
     isArtistProfile ||
     isAgenda ||
-    isProfileSettings;
+    isProfileSettings ||
+    keepAliveHost;
 
   const headerNode = hideShellHeader ? null : (
     <header

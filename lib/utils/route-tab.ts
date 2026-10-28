@@ -31,3 +31,11 @@ export function tabFromPathname(pathname: string): AppTab | null {
   if (pathname.startsWith('/dashboard/galeria')) return 'portfolio';
   return null;
 }
+
+export function isKeepAliveHostPath(pathname: string | null | undefined): boolean {
+  return (
+    pathname === '/dashboard/cliente' ||
+    pathname === '/dashboard/tatuador' ||
+    pathname === '/dashboard/estudio'
+  );
+}

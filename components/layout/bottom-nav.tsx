@@ -11,6 +11,7 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { useRouteTab } from '@/hooks/use-route-tab';
+import { isKeepAliveHostPath } from '@/lib/utils/route-tab';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import { useBootCanvasActive } from '@/components/layout/boot-continuation';
 import { cn } from '@/lib/utils';
@@ -75,9 +76,6 @@ const DOCK_PLUMP_SPRING = { stiffness: 640, damping: 28, mass: 0.22, restDelta: 
 const TAP_LAYOUT_TRANSITION = { type: 'spring' as const, stiffness: 500, damping: 30 };
 
 function hrefForTab(tab: AppTab, homePath: string): string {
-  if (tab === 'perfil') return '/dashboard/perfil';
-  if (tab === 'chat') return '/dashboard/chat';
-  if (tab === 'agendar') return '/dashboard/agenda';
   return `${homePath}?tab=${tab}`;
 }
 
@@ -244,7 +242,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   // Aba ativa derivada da ROTA via hook SSR-safe (pathname → query → store como
   // piso). Idêntica no servidor e no 1º frame do cliente, sem store no caminho
   // crítico da geometria.
-  const activeTab = useRouteTab(storeTab);
+  const routeTab = useRouteTab(storeTab);
+  const activeTab = isKeepAliveHostPath(pathname) ? storeTab : routeTab;
 
   // Prefetch em background das abas globais. No mobile não existe "hover", então
   // o Next só pré-carrega o RSC das rotas (`/dashboard/chat`, `/dashboard/perfil`)
@@ -512,11 +511,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           forceViewportRecalibration();
         });
       }
-      startTransition(() => {
-        if (tab !== 'perfil') {
-          setActiveTab(tab);
-        }
-      });
+      setActiveTab(tab);
     },
     [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
   );
@@ -527,11 +522,18 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (!item) return;
       const href = hrefForTab(item.tab, homePath);
       handleSelect(item.tab, href, haptic);
+      if (isKeepAliveHostPath(pathname)) {
+        const next = `${homePath}?tab=${item.tab}`;
+        if (`${pathname}${window.location.search}` !== next) {
+          window.history.replaceState(window.history.state, '', next);
+        }
+        return;
+      }
       startTransition(() => {
         router.push(href, { scroll: false });
       });
     },
-    [handleSelect, homePath, router]
+    [handleSelect, homePath, pathname, router]
   );
 
   const clearPressTimer = useCallback(() => {
@@ -666,6 +668,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   hapticOnPressRef.current = true;
                   measurePill(index, false, true);
                   triggerHaptic('light');
+                  setActiveTab(item.tab);
                 }}
                 onClick={(event) => {
                   event.preventDefault();

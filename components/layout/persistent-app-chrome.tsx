@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { AiAssistantFab } from '@/components/layout/ai-assistant-fab';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
 import { useSettingsDrawerOpen, useUiStore } from '@/hooks/use-ui-store';
+import { isKeepAliveHostPath } from '@/lib/utils/route-tab';
 import { cn } from '@/lib/utils';
 
 /**
@@ -55,8 +56,10 @@ export function isPersistentChromeVisible(pathname: string): boolean {
 
 function PersistentAppChromeBase() {
   const pathname = usePathname();
-  const visible = isPersistentChromeVisible(pathname);
-  const machineVisible = isPersistentMachineTriggerVisible(pathname);
+  const storeTab = useUiStore((s) => s.activeTab);
+  const chatTab = isKeepAliveHostPath(pathname) && storeTab === 'chat';
+  const visible = isPersistentChromeVisible(pathname) && !chatTab;
+  const machineVisible = isPersistentMachineTriggerVisible(pathname) && !chatTab;
   const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
