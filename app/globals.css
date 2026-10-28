@@ -1273,10 +1273,10 @@ html:has([data-auth-shell]) body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180' fill='none'%3E%3Cg stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M45 14l16 28-16 28-16-28z'/%3E%3Cpath d='M36 42h18'/%3E%3Cpath d='M132 16l4.2 12.8h13.5l-10.9 7.9 4.2 12.8-11-8-11 8 4.2-12.8-10.9-7.9h13.5z'/%3E%3Cpath d='M32 118v22M21 129h22M24.2 121.2l15.6 15.6M39.8 121.2l-15.6 15.6'/%3E%3Ccircle cx='132' cy='132' r='10'/%3E%3Ccircle cx='132' cy='132' r='4.5'/%3E%3Cpath d='M132 112v12'/%3E%3Cpath d='M132 122c-10-7-16 1-10 9'/%3E%3Cpath d='M132 122c10-7 16 1 10 9'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60' fill='none'%3E%3Cg stroke='%23FF6600' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 4l6 10-6 10-6-10z'/%3E%3Cpath d='M11 14h8'/%3E%3Cpath d='M45 5l1.6 5h5.2l-4.2 3 1.6 5-4.2-3-4.2 3 1.6-5-4.2-3h5.2z'/%3E%3Cpath d='M15 40v10M10 45h10M11.5 41.5l7 7M18.5 41.5l-7 7'/%3E%3Ccircle cx='45' cy='45' r='5'/%3E%3Ccircle cx='45' cy='45' r='2.2'/%3E%3Cpath d='M45 36v5'/%3E%3Cpath d='M45 41c-5-3.5-8 .5-5 4.5'/%3E%3Cpath d='M45 41c5-3.5 8 .5 5 4.5'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 180px 180px;
-  opacity: 0.04;
+  background-size: 60px 60px;
+  opacity: 0.11;
   -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent);
   mask-image: linear-gradient(to bottom, black 70%, transparent);
 }
