@@ -8,7 +8,6 @@ import {
   LOGIN_PATH,
   parseMetadataRole,
 } from '@/lib/utils/auth-redirect';
-import { AppRouteSkeleton } from '@/components/ui/route-skeletons';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { isOnboardingGrace } from '@/lib/utils/session';
 import {
@@ -138,5 +137,5 @@ export default function DashboardPage() {
     };
   }, [leave, releaseToDashboard]);
 
-  return <AppRouteSkeleton />;
+  return null;
 }

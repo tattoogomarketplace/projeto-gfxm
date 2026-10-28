@@ -77,10 +77,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  try {
-    await reconcileAuthenticatedPerfil();
-  } catch {
+  void reconcileAuthenticatedPerfil().catch(() => {
     // Upsert concorrente com o webhook é idempotente; o casco nunca bloqueia.
-  }
+  });
   return <DashboardShell>{children}</DashboardShell>;
 }

@@ -85,8 +85,11 @@ function ShellChrome({
     >
       <div className="luxury-canvas relative flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white">
         {hideHeader ? null : (
-          <header className="glass-chrome z-50 shrink-0 border-b border-black/[0.04] bg-[#121212] pt-[env(safe-area-inset-top)] dark:border-white/[0.05]">
-            <div className="relative h-14 min-h-14 max-h-14 w-full shrink-0">
+          <header
+            data-app-header
+            className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)]"
+          >
+            <div className="relative isolate h-14 min-h-14 max-h-14 w-full shrink-0 contain-layout">
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
                 <BrandLogo className="h-auto w-auto px-0" size="sm" />
               </div>
@@ -104,6 +107,18 @@ function ShellChrome({
 
         <div className="scrollbar-none relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
           <div className="nav-safe-pad absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 sm:px-6">
+            {hideHeader ? null : (
+              <div
+                aria-hidden
+                data-app-header-spacer
+                className="pointer-events-none shrink-0 pt-[max(env(safe-area-inset-top),_16px)]"
+              >
+                <div className="h-14 min-h-14 max-h-14 shrink-0" />
+                <div className="hidden px-4 pb-3 md:block">
+                  <div className="h-11" />
+                </div>
+              </div>
+            )}
             {children}
           </div>
         </div>
@@ -122,24 +137,10 @@ export function BootShellSkeleton() {
   // geometria. Demais rotas sem Home (onboarding, KYC, chat, configurações)
   // seguem com o fallback sem chrome, pois são telas de tela cheia.
   if (!kind) {
-    if (pathname === '/dashboard') {
-      return (
-        <ShellChrome>
-          <AppRouteSkeleton />
-        </ShellChrome>
-      );
-    }
     return (
-      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#121212]">
-        <header className="z-50 shrink-0 border-b border-white/[0.05] bg-[#121212] pt-[env(safe-area-inset-top)]">
-          <div className="relative h-14 min-h-14 max-h-14 w-full shrink-0">
-            <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-              <BrandLogo className="h-auto w-auto px-0" size="sm" />
-            </div>
-          </div>
-        </header>
-        <AppRouteSkeleton />
-      </div>
+      <ShellChrome>
+        {pathname === '/dashboard' ? null : <AppRouteSkeleton />}
+      </ShellChrome>
     );
   }
 
