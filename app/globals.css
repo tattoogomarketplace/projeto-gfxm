@@ -702,11 +702,15 @@
   }
 
   .luxury-skeleton {
-    background-color: rgb(229 229 229 / 0.8);
+    background-color: #121212;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+    animation: luxury-skeleton-breathe 2.2s ease-in-out infinite;
+    will-change: opacity, background-color;
   }
 
   .dark .luxury-skeleton {
-    background-color: rgb(255 255 255 / 0.03);
+    background-color: #121212;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
   }
 
   .luxury-shimmer {
@@ -714,7 +718,7 @@
       105deg,
       transparent 0%,
       transparent 38%,
-      rgb(249 115 22 / 0.08) 50%,
+      rgb(18 18 18 / 0.35) 50%,
       transparent 62%,
       transparent 100%
     );
@@ -727,8 +731,7 @@
       105deg,
       transparent 0%,
       transparent 38%,
-      rgb(249 115 22 / 0.12) 50%,
-      rgb(255 255 255 / 0.04) 58%,
+      rgb(26 26 26 / 0.55) 50%,
       transparent 70%,
       transparent 100%
     );
@@ -847,6 +850,7 @@
   .screen-fade-in,
   .ai-fab-pulse,
   .luxury-shimmer,
+  .luxury-skeleton,
   .username-orb-a,
   .username-orb-b,
   .username-orb-c {
@@ -888,6 +892,18 @@
   }
   100% {
     background-position: -40% 0;
+  }
+}
+
+@keyframes luxury-skeleton-breathe {
+  0%,
+  100% {
+    background-color: #121212;
+    opacity: 0.72;
+  }
+  50% {
+    background-color: #1a1a1a;
+    opacity: 1;
   }
 }
 
