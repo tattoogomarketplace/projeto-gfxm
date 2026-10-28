@@ -346,7 +346,7 @@ export function FlashNotesCarousel() {
                       <Radio className="h-2.5 w-2.5" strokeWidth={2.5} />
                     </span>
                   </span>
-                  <span className="w-full truncate bg-transparent text-center text-[10px] font-medium tracking-tight text-[#4D7CFF] [text-shadow:0_0_8px_rgba(77,124,255,0.95),0_0_16px_rgba(13,71,161,0.85),0_0_32px_rgba(26,35,126,0.6),0_0_52px_rgba(26,35,126,0.35)]">
+                  <span className="flash-note-handle w-full truncate bg-transparent text-center text-[10px] font-medium tracking-tight">
                     {handle}
                   </span>
                 </button>

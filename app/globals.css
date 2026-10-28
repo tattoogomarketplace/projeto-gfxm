@@ -1281,3 +1281,46 @@ html:has([data-auth-shell]) body {
   mask-image: linear-gradient(to bottom, black 70%, transparent);
 }
 
+@keyframes flash-handle-magnetic-smoke {
+  0% {
+    opacity: 0.42;
+    transform: translate3d(-50%, -50%, 0) scale(0.88) rotate(-14deg);
+  }
+  50% {
+    opacity: 0.96;
+    transform: translate3d(-44%, -62%, 0) scale(1.22) rotate(16deg);
+  }
+  100% {
+    opacity: 0.42;
+    transform: translate3d(-50%, -50%, 0) scale(0.88) rotate(-14deg);
+  }
+}
+
+.flash-note-handle {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  overflow: visible;
+  color: #0A1128;
+  background: transparent;
+}
+
+.flash-note-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 145%;
+  height: 240%;
+  pointer-events: none;
+  border-radius: 100%;
+  background: #7DF9FF;
+  filter: blur(24px);
+  transform: translate3d(-50%, -50%, 0);
+  transform-origin: center;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  animation: flash-handle-magnetic-smoke 3s ease-in-out infinite;
+}
+
