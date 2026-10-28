@@ -1,5 +1,5 @@
-import { PublicProfileSkeleton } from '@/components/ui/route-skeletons';
+import { ArtistVitrineChrome } from '@/components/ui/deep-route-chrome';
 
 export default function ArtistProfileLoading() {
-  return <PublicProfileSkeleton />;
+  return <ArtistVitrineChrome />;
 }

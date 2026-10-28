@@ -1,5 +1,5 @@
-import { ReviewDetailSkeleton } from '@/components/ui/destination-skeletons';
+import { ReviewDetailChrome } from '@/components/ui/deep-route-chrome';
 
 export default function ReviewDetailLoading() {
-  return <ReviewDetailSkeleton />;
+  return <ReviewDetailChrome />;
 }

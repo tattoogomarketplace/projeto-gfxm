@@ -1,5 +1,5 @@
-import { GaleriaFeedSkeleton } from '@/components/ui/destination-skeletons';
+import { GaleriaChrome } from '@/components/ui/deep-route-chrome';
 
 export default function GaleriaLoading() {
-  return <GaleriaFeedSkeleton />;
+  return <GaleriaChrome />;
 }

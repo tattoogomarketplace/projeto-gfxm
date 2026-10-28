@@ -1,42 +1,25 @@
-export const dynamic = 'force-dynamic';
+'use client';
 
-import { SessionHydrating } from '@/components/features/session-hydrating';
-import type { InspirationItem } from '@/lib/gallery-mock';
-import { getFeedPosts } from '@/lib/services/feed-posts';
-import { listSavedInspirationIds } from '@/lib/services/saved-inspiration';
-import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
-import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import GaleriaClient from './galeria-client';
+import { GaleriaChrome } from '@/components/ui/deep-route-chrome';
+import { useGalleryFeed } from '@/hooks/use-gallery-feed';
+import { useSavedInspirationIds } from '@/hooks/use-saved-inspirations';
 
-export default async function GaleriaPage() {
-  let perfil = null;
-  try {
-    perfil = await requireDashboardPerfil('cliente');
-  } catch (error) {
-    rethrowNextControlFlow(error);
-    console.error('[dashboard/galeria] sessão indisponível', error);
-    return <SessionHydrating />;
-  }
-  if (!perfil) return <SessionHydrating />;
+export default function GaleriaPage() {
+  const feedQuery = useGalleryFeed();
+  const savedQuery = useSavedInspirationIds();
+  const showChrome =
+    (feedQuery.isLoading && !feedQuery.data) ||
+    (savedQuery.isLoading && !savedQuery.data && !feedQuery.data);
 
-  let feedItems: InspirationItem[] = [];
-  let savedIds: string[] = [];
-  try {
-    feedItems = await getFeedPosts();
-  } catch (error) {
-    console.error('[dashboard/galeria] falha ao carregar feed de posts', error);
-    feedItems = [];
-  }
-  try {
-    savedIds = perfil.clerk_id ? await listSavedInspirationIds(perfil.clerk_id) : [];
-  } catch (error) {
-    console.error('[dashboard/galeria] falha ao listar ids salvos', error);
-    savedIds = [];
-  }
+  if (showChrome) return <GaleriaChrome />;
 
   return (
     <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]">
-      <GaleriaClient feedItems={feedItems} savedIds={savedIds} />
+      <GaleriaClient
+        feedItems={feedQuery.data ?? []}
+        savedIds={savedQuery.data ?? []}
+      />
     </div>
   );
 }

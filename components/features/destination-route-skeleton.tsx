@@ -4,23 +4,25 @@ import type { ReactNode } from 'react';
 import { PerfilSegmentSkeleton } from '@/app/dashboard/perfil/loading';
 import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
 import { OnboardingSkeleton } from '@/components/features/onboarding-skeleton';
+import { AgendaWorkspaceSkeleton } from '@/components/ui/destination-skeletons';
 import {
-  AgendaWorkspaceSkeleton,
-  GaleriaFeedSkeleton,
-  InspiracoesGridSkeleton,
-  ReviewDetailSkeleton,
-} from '@/components/ui/destination-skeletons';
+  ArtistVitrineChrome,
+  DestinationListChrome,
+  GaleriaChrome,
+  InspiracoesChrome,
+  MapChrome,
+  PaymentsChrome,
+  PublicProfileChrome,
+  ReviewDetailChrome,
+} from '@/components/ui/deep-route-chrome';
 import {
-  AgendaPaymentsSkeleton,
   AiChatSkeleton,
   AppRouteSkeleton,
   ArtistHubSkeleton,
   ArtistVerificationSkeleton,
   AuthFormSkeleton,
   ChatInboxSkeleton,
-  GalleryGridSkeleton,
   KycPendingSkeleton,
-  PublicProfileSkeleton,
   StudioDashboardSkeleton,
   UsernameOnboardingSkeleton,
 } from '@/components/ui/route-skeletons';
@@ -71,11 +73,11 @@ export function resolveDestinationSkeleton(pathname: string): ReactNode {
   if (isAt(pathname, '/dashboard/estudio')) return <StudioDashboardSkeleton />;
   if (isAt(pathname, '/dashboard/cliente')) return <DashboardHomeSkeleton />;
   if (isAt(pathname, '/dashboard/agenda')) return <AgendaWorkspaceSkeleton />;
-  if (isAt(pathname, '/dashboard/pagamentos')) return <AgendaPaymentsSkeleton />;
+  if (isAt(pathname, '/dashboard/pagamentos')) return <PaymentsChrome />;
   if (isAt(pathname, '/dashboard/chat')) return <ChatInboxSkeleton />;
-  if (isAt(pathname, '/dashboard/galeria')) return <GaleriaFeedSkeleton />;
+  if (isAt(pathname, '/dashboard/galeria')) return <GaleriaChrome />;
   if (isAt(pathname, '/dashboard/inspiracoes') || isAt(pathname, '/dashboard/salvos')) {
-    return <InspiracoesGridSkeleton />;
+    return <InspiracoesChrome />;
   }
   if (isAt(pathname, '/dashboard/perfil')) return <PerfilSegmentSkeleton />;
   if (isAt(pathname, '/dashboard/onboarding/username')) return <UsernameOnboardingSkeleton />;
@@ -83,12 +85,12 @@ export function resolveDestinationSkeleton(pathname: string): ReactNode {
   if (isAt(pathname, '/dashboard/ai')) return <AiChatSkeleton />;
   if (isAt(pathname, '/dashboard/kyc-pendente')) return <KycPendingSkeleton />;
   if (isAt(pathname, '/dashboard/seja-tatuador')) return <ArtistVerificationSkeleton />;
-  if (isAt(pathname, '/dashboard/artista') || isAt(pathname, '/profile')) {
-    return <PublicProfileSkeleton />;
-  }
-  if (/^\/dashboard\/artistas\/.+/.test(pathname)) return <PublicProfileSkeleton />;
-  if (pathname === '/dashboard/artistas') return <GalleryGridSkeleton />;
-  if (/^\/dashboard\/avaliacoes\/.+/.test(pathname)) return <ReviewDetailSkeleton />;
-  if (pathname === '/dashboard/avaliacoes') return <GalleryGridSkeleton />;
+  if (isAt(pathname, '/dashboard/mapa')) return <MapChrome />;
+  if (isAt(pathname, '/dashboard/artista')) return <ArtistVitrineChrome />;
+  if (isAt(pathname, '/profile')) return <PublicProfileChrome />;
+  if (/^\/dashboard\/artistas\/.+/.test(pathname)) return <ArtistVitrineChrome />;
+  if (pathname === '/dashboard/artistas') return <DestinationListChrome />;
+  if (/^\/dashboard\/avaliacoes\/.+/.test(pathname)) return <ReviewDetailChrome />;
+  if (pathname === '/dashboard/avaliacoes') return <DestinationListChrome />;
   return <AppRouteSkeleton />;
 }

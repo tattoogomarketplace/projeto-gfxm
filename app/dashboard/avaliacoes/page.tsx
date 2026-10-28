@@ -1,17 +1,11 @@
-import { SessionHydrating } from '@/components/features/session-hydrating';
-import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
-import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
-import AvaliacoesClient from './avaliacoes-client';
+'use client';
 
-export default async function AvaliacoesPage() {
-  let perfil = null;
-  try {
-    perfil = await requireDashboardPerfil('cliente');
-  } catch (error) {
-    rethrowNextControlFlow(error);
-    console.error('[dashboard/avaliacoes] sessão indisponível', error);
-    return <SessionHydrating />;
-  }
-  if (!perfil) return <SessionHydrating />;
+import AvaliacoesClient from './avaliacoes-client';
+import { DestinationListChrome } from '@/components/ui/deep-route-chrome';
+import { useFeaturedReviews } from '@/hooks/use-featured-reviews';
+
+export default function AvaliacoesPage() {
+  const query = useFeaturedReviews();
+  if (query.isLoading && !query.data) return <DestinationListChrome />;
   return <AvaliacoesClient />;
 }

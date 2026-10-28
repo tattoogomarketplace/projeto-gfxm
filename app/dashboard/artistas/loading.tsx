@@ -1,5 +1,5 @@
-import { GalleryGridSkeleton } from '@/components/ui/route-skeletons';
+import { DestinationListChrome } from '@/components/ui/deep-route-chrome';
 
 export default function ArtistasLoading() {
-  return <GalleryGridSkeleton />;
+  return <DestinationListChrome />;
 }

@@ -1,20 +1,16 @@
-import { SessionHydrating } from '@/components/features/session-hydrating';
+'use client';
+
 import { AgendaPaymentsWorkspace } from '@/components/features/agenda-payments-workspace';
-import { requireDashboardPerfil } from '@/lib/utils/dashboard-gate';
-import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
+import { PaymentsChrome } from '@/components/ui/deep-route-chrome';
+import { usePerfilEnsure } from '@/hooks/use-perfil-ensure';
 import { parseAppRole } from '@/lib/utils/auth-redirect';
 
-export default async function PagamentosPage() {
-  let perfil = null;
-  try {
-    perfil = await requireDashboardPerfil();
-  } catch (error) {
-    rethrowNextControlFlow(error);
-    console.error('[dashboard/pagamentos] sessão indisponível', error);
-    return <SessionHydrating />;
-  }
-  if (!perfil) return <SessionHydrating />;
-  const role = parseAppRole(perfil.role) ?? 'cliente';
+export default function PagamentosPage() {
+  const ensure = usePerfilEnsure();
+  const role = parseAppRole(ensure.data?.perfil?.role) ?? 'cliente';
+
+  if (ensure.isLoading && !ensure.data) return <PaymentsChrome />;
+
   return (
     <div className="relative flex min-w-0 w-full flex-1 flex-col pt-5">
       <AgendaPaymentsWorkspace role={role} initialView="payments" />

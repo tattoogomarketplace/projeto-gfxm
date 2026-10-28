@@ -1,5 +1,5 @@
-import { InspiracoesGridSkeleton } from '@/components/ui/destination-skeletons';
+import { InspiracoesChrome } from '@/components/ui/deep-route-chrome';
 
 export default function InspiracoesLoading() {
-  return <InspiracoesGridSkeleton />;
+  return <InspiracoesChrome />;
 }

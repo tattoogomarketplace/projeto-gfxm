@@ -1,11 +1,5 @@
-import { PublicProfileSkeleton } from '@/components/ui/route-skeletons';
+import { ArtistVitrineChrome } from '@/components/ui/deep-route-chrome';
 
-/**
- * Route-level fallback of `/dashboard/artista/[id]`.
- *
- * Reserves the artist vitrine geometry (header, highlights rail, portfolio grid)
- * with the premium Dark Luxury shimmer.
- */
 export default function ArtistVitrineLoading() {
-  return <PublicProfileSkeleton />;
+  return <ArtistVitrineChrome />;
 }
