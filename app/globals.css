@@ -1288,7 +1288,7 @@ html:has([data-auth-shell]) body {
   }
   50% {
     opacity: 0.96;
-    transform: translate3d(-44%, -62%, 0) scale(1.22) rotate(16deg);
+    transform: translate3d(-48%, -52%, 0) scale(1.08) rotate(16deg);
   }
   100% {
     opacity: 0.42;
@@ -1301,7 +1301,7 @@ html:has([data-auth-shell]) body {
   z-index: 0;
   isolation: isolate;
   overflow: visible;
-  color: #0A1128;
+  color: #3B82F6;
   background: transparent;
 }
 
@@ -1311,12 +1311,12 @@ html:has([data-auth-shell]) body {
   left: 50%;
   top: 50%;
   z-index: -1;
-  width: 145%;
-  height: 240%;
+  width: 118%;
+  height: 130%;
   pointer-events: none;
   border-radius: 100%;
   background: #7DF9FF;
-  filter: blur(24px);
+  filter: blur(12px);
   transform: translate3d(-50%, -50%, 0);
   transform-origin: center;
   will-change: transform, opacity;
