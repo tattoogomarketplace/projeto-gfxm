@@ -4,6 +4,12 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
     turbopack: {},
+    experimental: {
+      staleTimes: {
+        dynamic: 300,
+        static: 180,
+      },
+    },
     allowedDevOrigins: ['*.monkeycode-ai.live', '**.monkeycode-ai.live'],
     images: {
       minimumCacheTTL: 86400,

@@ -20,11 +20,13 @@ import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
 import { SearchBar } from '@/components/ui/search-bar';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
+import { useChatConversations } from '@/hooks/use-chat-conversations';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
 import { useSettingsDrawerOpen, useUiStore } from '@/hooks/use-ui-store';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
+import { bearerHeaders } from '@/lib/query/auth-headers';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import type { ChatArtworkRef, ChatConversationDto, ChatPeer, ChatTab } from '@/lib/types/chat';
@@ -37,44 +39,13 @@ type ContextPayload = {
   artwork?: ChatArtworkRef | null;
 };
 
-async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
-  const clerkToken = await getToken().catch(() => null);
-  const stored = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
-  const token = clerkToken || stored;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-type CategoryConversations = Record<ChatTab, ChatConversationDto[]>;
-
-const EMPTY_CATEGORY_DATA: CategoryConversations = { DIRECT: [], BUDGET: [] };
-
-let conversationCache: {
-  actorId: string | null;
-  byCategory: CategoryConversations;
-} | null = null;
-const categoryInflight: Partial<Record<ChatTab, Promise<void>>> = {};
-
 export type ChatWorkspaceProps = {
   actorId?: string | null;
   initialDirect?: ChatConversationDto[];
   initialBudget?: ChatConversationDto[];
 };
 
-function seedFromServer(props: ChatWorkspaceProps) {
-  if (props.initialDirect === undefined && props.initialBudget === undefined) {
-    return;
-  }
-  conversationCache = {
-    actorId: props.actorId ?? conversationCache?.actorId ?? null,
-    byCategory: {
-      DIRECT: props.initialDirect ?? conversationCache?.byCategory.DIRECT ?? [],
-      BUDGET: props.initialBudget ?? conversationCache?.byCategory.BUDGET ?? [],
-    },
-  };
-}
-
 export const ChatWorkspace = memo(function ChatWorkspace(props: ChatWorkspaceProps) {
-  seedFromServer(props);
   return (
     <Suspense fallback={<ChatInboxSkeleton />}>
       <ChatWorkspaceInner {...props} />
@@ -106,26 +77,19 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
   const settingsDrawerOpen = useSettingsDrawerOpen();
   const toggleSettingsDrawer = useUiStore((s) => s.toggleSettingsDrawer);
 
-  const serverHydrated = initialDirect !== undefined || initialBudget !== undefined;
-
-  const [actorId, setActorId] = useState<string | null>(
-    () => conversationCache?.actorId ?? actorIdProp ?? null
+  const directQuery = useChatConversations('DIRECT', initialDirect);
+  const budgetQuery = useChatConversations('BUDGET', initialBudget);
+  const conversationsByCategory = useMemo(
+    () => ({
+      DIRECT: directQuery.data?.conversas ?? initialDirect ?? [],
+      BUDGET: budgetQuery.data?.conversas ?? initialBudget ?? [],
+    }),
+    [budgetQuery.data?.conversas, directQuery.data?.conversas, initialBudget, initialDirect]
   );
+  const actorId =
+    directQuery.data?.actorId ?? budgetQuery.data?.actorId ?? actorIdProp ?? null;
+
   const [activeCategory, setActiveCategory] = useState<ChatTab>('DIRECT');
-  const [conversationsByCategory, setConversationsByCategory] = useState<CategoryConversations>(
-    () =>
-      conversationCache?.byCategory ?? {
-        DIRECT: initialDirect ?? [],
-        BUDGET: initialBudget ?? [],
-      }
-  );
-  const [loadedCategories, setLoadedCategories] = useState<Record<ChatTab, boolean>>(() =>
-    conversationCache || serverHydrated
-      ? { DIRECT: true, BUDGET: true }
-      : { DIRECT: false, BUDGET: false }
-  );
-
-  const loadingList = !loadedCategories.DIRECT || !loadedCategories.BUDGET;
   const [selectedPeer, setSelectedPeer] = useState<ChatPeer | null>(null);
   const [artwork, setArtwork] = useState<ChatArtworkRef | null>(null);
   const mobileThreadOpen = Boolean(artistIdParam);
@@ -136,52 +100,9 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
   const selectedId = selectedPeer?.id ?? artistIdParam ?? pendingChatPeer;
   const artworkId = artwork?.id ?? artworkIdParam ?? pendingChatArtwork ?? undefined;
 
-  const loadCategory = useCallback(async (category: ChatTab) => {
-    const inflight = categoryInflight[category];
-    if (inflight) {
-      await inflight;
-    } else {
-      const request = (async () => {
-        try {
-          const headers = await authHeaders(getTokenRef.current);
-          const res = await fetch(`/api/chat/conversas?categoria=${category}`, {
-            headers,
-            cache: 'no-store',
-          });
-          if (!res.ok) return;
-          const json = (await res.json().catch(() => ({}))) as {
-            actorId?: string;
-            conversas?: ChatConversationDto[];
-          };
-          const previous = conversationCache?.byCategory ?? EMPTY_CATEGORY_DATA;
-          conversationCache = {
-            actorId: json.actorId ?? conversationCache?.actorId ?? null,
-            byCategory: { ...previous, [category]: json.conversas ?? [] },
-          };
-        } catch {
-          return;
-        }
-      })();
-      categoryInflight[category] = request;
-      try {
-        await request;
-      } finally {
-        if (categoryInflight[category] === request) delete categoryInflight[category];
-      }
-    }
-
-    if (conversationCache) {
-      setActorId(conversationCache.actorId);
-      setConversationsByCategory(conversationCache.byCategory);
-    }
-    setLoadedCategories((current) =>
-      current[category] ? current : { ...current, [category]: true }
-    );
-  }, []);
-
   const loadContext = useCallback(async (artistId: string, nextArtworkId?: string | null) => {
     try {
-      const headers = await authHeaders(getTokenRef.current);
+      const headers = await bearerHeaders(getTokenRef.current);
       const params = new URLSearchParams({ artistId });
       if (nextArtworkId) params.set('artworkId', nextArtworkId);
       const res = await fetch(`/api/chat/contexto?${params.toString()}`, {
@@ -190,7 +111,6 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
       });
       if (!res.ok) return;
       const json = (await res.json().catch(() => ({}))) as ContextPayload;
-      if (json.actorId) setActorId(json.actorId);
       if (json.peer) setSelectedPeer(json.peer);
       setArtwork(json.artwork ?? null);
     } catch {
@@ -201,13 +121,6 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
   useEffect(() => {
     getTokenRef.current = getToken;
   }, [getToken]);
-
-  useEffect(() => {
-    const run = async () => {
-      await Promise.all([loadCategory('DIRECT'), loadCategory('BUDGET')]);
-    };
-    void run();
-  }, [loadCategory]);
 
   useEffect(() => {
     const targetArtist = artistIdParam || pendingChatPeer;
@@ -269,13 +182,9 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
     router.replace('/dashboard/chat', { scroll: false });
   }, [router, triggerHaptic]);
 
-  const handleCategoryChange = useCallback(
-    (category: ChatTab) => {
-      setActiveCategory(category);
-      void loadCategory(category);
-    },
-    [loadCategory]
-  );
+  const handleCategoryChange = useCallback((category: ChatTab) => {
+    setActiveCategory(category);
+  }, []);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<ChatTab, number> = { DIRECT: 0, BUDGET: 0 };
@@ -331,8 +240,9 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
 
   const renderPane = (category: ChatTab) => {
     const items = orderedFor(category);
-    const showSpinner = loadingList && items.length === 0;
-    const empty = !loadingList && items.length === 0;
+    const categoryLoading = category === 'DIRECT' ? directQuery.isLoading : budgetQuery.isLoading;
+    const showSpinner = categoryLoading && items.length === 0;
+    const empty = !categoryLoading && items.length === 0;
     const isBudget = category === 'BUDGET';
 
     return (

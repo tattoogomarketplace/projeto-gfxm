@@ -7,14 +7,17 @@ import { toast } from '@/lib/toast';
 import { agendamentoService, AgendamentoClientError } from '@/lib/services/agendamento-service';
 import { t } from '@/lib/i18n/store';
 import { apiErrorMessage } from '@/lib/error-handler';
+import { queryKeys } from '@/lib/query/keys';
+import { TAB_SWR } from '@/lib/query/swr';
 
 export const useAgendamentos = () => {
   const { getToken } = useAuth();
   const tokenFn = useCallback(() => getToken({ skipCache: true }), [getToken]);
 
   return useQuery({
-    queryKey: ['agendamentos'],
+    queryKey: queryKeys.agendamentos,
     queryFn: () => agendamentoService.getAgendamentos(tokenFn),
+    ...TAB_SWR,
   });
 };
 
@@ -24,7 +27,8 @@ export const useCriarAgendamento = () => {
   return useMutation({
     mutationFn: agendamentoService.criarAgendamento,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendamentos });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agendaSessions });
       toast.success(t('toast.scheduleBooked'), {
         description: t('toast.scheduleBookedHint'),
       });

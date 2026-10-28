@@ -8,6 +8,7 @@ import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { ClientIdentityHub } from '@/components/settings/client-identity-hub';
 import { type ProfileRole } from '@/components/features/public-profile';
 import { useAuthStore } from '@/hooks/use-auth-store';
+import { usePerfilEnsure } from '@/hooks/use-perfil-ensure';
 import {
   isOnboardingComplete,
   nextRequiredOnboardingStep,
@@ -61,10 +62,19 @@ export function ProfileView() {
       )
     : '';
 
-  const [email, setEmail] = useState(cachedUser?.email || clerkEmail);
-  const [nome, setNome] = useState(cachedUser?.fullName || clerkNome);
-  const [identity, setIdentity] = useState<PerfilIdentity | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const perfilQuery = usePerfilEnsure(Boolean(isLoaded && isSignedIn && user));
+  const payload = perfilQuery.data;
+  const email = cachedUser?.email || clerkEmail;
+  const nome = cachedUser?.fullName || clerkNome;
+
+  const parsedRole = parseAppRole(payload?.perfil?.role);
+  const identity: PerfilIdentity | null = payload?.perfil
+    ? {
+        role: parsedRole ?? 'cliente',
+        username: (payload.perfil.username as string | null) ?? null,
+      }
+    : null;
 
   const role: ProfileRole = identity?.role ?? cachedRole ?? 'cliente';
   const username = identity?.username ?? null;
@@ -74,65 +84,37 @@ export function ProfileView() {
   }, [router]);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn || !user) return;
+    if (!isLoaded || !isSignedIn || !user) return;
+    const metadata = (user?.unsafeMetadata ?? user?.publicMetadata ?? {}) as Record<string, unknown>;
+    const fullName = resolveFullName(
+      {
+        full_name: metadata?.full_name as string | undefined,
+        nome: metadata?.nome as string | undefined,
+        name: user?.fullName || undefined,
+      },
+      user?.fullName || ''
+    );
+    const emailAddress = user?.primaryEmailAddress?.emailAddress ?? '';
+    setUser({
+      id: user.id,
+      email: emailAddress,
+      fullName,
+    });
+  }, [isLoaded, isSignedIn, user, setUser]);
 
-    let cancelled = false;
-
-    const hydrate = async () => {
-      const metadata = (user?.unsafeMetadata ?? user?.publicMetadata ?? {}) as Record<string, unknown>;
-      const fullName = resolveFullName(
-        {
-          full_name: metadata?.full_name as string | undefined,
-          nome: metadata?.nome as string | undefined,
-          name: user?.fullName || undefined,
-        },
-        user?.fullName || ''
-      );
-      const emailAddress = user?.primaryEmailAddress?.emailAddress ?? '';
-      if (!cancelled) {
-        setEmail(emailAddress);
-        setNome(fullName);
-        setUser({
-          id: user.id,
-          email: emailAddress,
-          fullName,
-        });
-      }
-
-      try {
-        const response = await fetch('/api/perfil/ensure', { cache: 'no-store' });
-        if (cancelled) return;
-        if (response.status === 401) {
-          throw new Error('session-initializing');
-        }
-        const payload = await response.json().catch(() => ({}));
-        if (!payload?.perfil || payload?.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
-          router.push(ONBOARDING_PATH);
-          return;
-        }
-        // Gatekeeper persistente do @username: espelha o guardião do servidor,
-        // cobrindo a navegação cliente para o perfil sem piscar conteúdo.
-        if (nextRequiredOnboardingStep(payload.perfil) === USERNAME_SETUP_PATH) {
-          router.push(USERNAME_SETUP_PATH);
-          return;
-        }
-        const parsedRole = parseAppRole(payload?.perfil?.role);
-        if (parsedRole) setRole(parsedRole);
-        setIdentity({
-          role: parsedRole ?? 'cliente',
-          username: (payload?.perfil?.username as string | null) ?? null,
-        });
-      } catch {
-        if (cancelled) return;
-      }
-    };
-
-    void hydrate();
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoaded, isSignedIn, user, setUser, setRole, router]);
+  useEffect(() => {
+    if (!payload) return;
+    if (!payload.perfil || payload.needsOnboarding || !isOnboardingComplete(payload.perfil)) {
+      router.push(ONBOARDING_PATH);
+      return;
+    }
+    if (nextRequiredOnboardingStep(payload.perfil) === USERNAME_SETUP_PATH) {
+      router.push(USERNAME_SETUP_PATH);
+      return;
+    }
+    const nextRole = parseAppRole(payload.perfil.role);
+    if (nextRole) setRole(nextRole);
+  }, [payload, router, setRole]);
 
   const handleLogout = async () => {
     if (loggingOut) return;

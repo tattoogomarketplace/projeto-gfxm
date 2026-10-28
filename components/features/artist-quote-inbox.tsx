@@ -123,6 +123,7 @@ export function ArtistQuoteInbox() {
           setQuotes((current) => current.filter((item) => item.id !== quoteId));
           setSelected(null);
           void queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
+          void queryClient.invalidateQueries({ queryKey: ['agenda', 'sessions'] });
           router.refresh();
         }}
       />

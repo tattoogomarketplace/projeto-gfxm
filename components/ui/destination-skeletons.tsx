@@ -1,3 +1,4 @@
+import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
@@ -11,24 +12,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function AgendaWorkspaceSkeleton() {
   return (
     <div
-      aria-hidden
-      className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]"
+      aria-busy="true"
+      className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] text-white [-webkit-overflow-scrolling:touch]"
     >
       <div className="mx-auto w-full max-w-2xl">
-      <div className="sticky top-0 z-40 bg-zinc-950/85 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="px-4 pt-3">
-          <div className="min-h-13 w-full rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
-            <div className="grid grid-cols-2 gap-1">
-              <div className="h-11 rounded-xl bg-orange-500/80" />
-              <div className="h-11 rounded-xl bg-transparent" />
+        <header className="sticky top-0 z-40 bg-zinc-950/85 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+          <div className="px-4 pt-3">
+            <div className="grid h-11 w-full grid-cols-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
+              <div className="rounded-xl bg-orange-500/80" />
+              <div />
             </div>
           </div>
+        </header>
+        <div className="relative min-h-[24rem] w-full">
+          <InstagramSpinnerOverlay />
         </div>
-      </div>
-      <div className="flex flex-col gap-5 px-4 pt-5">
-        <div className="h-72 rounded-3xl border border-zinc-800 bg-zinc-900" />
-        <div className="h-72 rounded-3xl border border-zinc-800 bg-zinc-900" />
-      </div>
       </div>
     </div>
   );

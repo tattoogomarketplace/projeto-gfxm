@@ -1,14 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarDays, ChevronRight, Send, ShieldAlert } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { useChatHistory } from '@/hooks/use-chat-history';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
+import { queryKeys } from '@/lib/query/keys';
+import { bearerHeaders } from '@/lib/query/auth-headers';
 import type { ChatArtworkRef, ChatMessageDto } from '@/lib/types/chat';
 import type { MessageKey, TranslateVars } from '@/lib/i18n/types';
 import { validateChatMessage } from '@/lib/utils/chat-moderation';
@@ -50,16 +54,6 @@ function bookingDraft(t: Translate, artwork?: ChatArtworkRef | null): string {
   return t('chat.bookingDraft');
 }
 
-async function authHeaders(getToken: () => Promise<string | null>): Promise<HeadersInit> {
-  const clerkToken = await getToken().catch(() => null);
-  const stored = typeof window !== 'undefined' ? localStorage.getItem('tattoogo_token') : null;
-  const token = clerkToken || stored;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 export function ChatThread({
   actorId,
   destinatarioId,
@@ -75,14 +69,16 @@ export function ChatThread({
   const { t } = useI18n();
   const peerFallback = peerRole === 'cliente' ? t('chat.clientFallback') : t('chat.artistFallback');
   const { styleLabel, bodyPartLabel, healingLabel } = portfolioLabelResolver(t);
-  const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(t, artwork) : ''));
-  const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const { triggerHaptic } = useHapticFeedback();
   const enqueue = useOfflineQueue((s) => s.enqueue);
+  const historyQuery = useChatHistory(destinatarioId);
+  const loading = historyQuery.isLoading;
+  const historyKey = queryKeys.chatHistorico(destinatarioId ?? '');
 
   const mapRows = useCallback(
     (rows: ChatMessageDto[]): ThreadMessage[] =>
@@ -97,45 +93,10 @@ export function ChatThread({
     [actorId]
   );
 
-  const loadHistory = useCallback(async () => {
-    if (!destinatarioId) {
-      setMessages([]);
-      return;
-    }
-    try {
-      const headers = await authHeaders(getToken);
-      const res = await fetch(
-        `/api/chat/historico?interlocutor_id=${encodeURIComponent(destinatarioId)}`,
-        { headers, cache: 'no-store' }
-      );
-      if (!res.ok) return;
-      const json = (await res.json().catch(() => ({}))) as { data?: ChatMessageDto[] };
-      setMessages(mapRows(json.data ?? []));
-    } catch {
-      return;
-    }
-  }, [destinatarioId, getToken, mapRows]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!cancelled) setLoading(Boolean(destinatarioId));
-      await loadHistory();
-      if (!cancelled) setLoading(false);
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadHistory, destinatarioId]);
-
-  useEffect(() => {
-    if (!destinatarioId) return;
-    const timer = window.setInterval(() => {
-      void loadHistory();
-    }, 4000);
-    return () => window.clearInterval(timer);
-  }, [destinatarioId, loadHistory]);
+  const messages = useMemo(
+    () => mapRows(historyQuery.data ?? []),
+    [historyQuery.data, mapRows]
+  );
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -164,7 +125,19 @@ export function ChatThread({
       text,
       createdAt: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, optimistic]);
+    queryClient.setQueryData<ChatMessageDto[]>(historyKey, (prev) => [
+      ...(prev ?? []),
+      {
+        id: optimistic.id,
+        remetente_id: actorId ?? '',
+        destinatario_id: destinatarioId,
+        mensagem: text,
+        bloqueada: false,
+        status: 'enviado',
+        categoria: 'DIRECT',
+        created_at: optimistic.createdAt,
+      },
+    ]);
     setInput('');
     triggerHaptic('light');
 
@@ -176,7 +149,7 @@ export function ChatThread({
 
     setSending(true);
     try {
-      const headers = await authHeaders(getToken);
+      const headers = await bearerHeaders(getToken, { 'Content-Type': 'application/json' });
       const res = await fetch('/api/chat/enviar', {
         method: 'POST',
         headers,
@@ -188,15 +161,16 @@ export function ChatThread({
         mensagem?: ChatMessageDto;
       };
       if (!res.ok || !json.sucesso) {
-        setMessages((prev) => prev.filter((item) => item.id !== optimistic.id));
+        queryClient.setQueryData<ChatMessageDto[]>(historyKey, (prev) =>
+          (prev ?? []).filter((item) => item.id !== optimistic.id)
+        );
         toast.error(json.erro ? formatAppError({ message: json.erro }, 'api') : t('toast.chatSendFailed'));
         return;
       }
       if (json.mensagem) {
-        const confirmed = mapRows([json.mensagem]);
-        setMessages((prev) => [
-          ...prev.filter((item) => item.id !== optimistic.id),
-          ...confirmed,
+        queryClient.setQueryData<ChatMessageDto[]>(historyKey, (prev) => [
+          ...(prev ?? []).filter((item) => item.id !== optimistic.id),
+          json.mensagem!,
         ]);
       }
     } catch {
