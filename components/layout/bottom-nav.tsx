@@ -3,7 +3,7 @@
 import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
+import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -288,9 +288,16 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const liveIndexRef = useRef(routeIndex);
   const pendingIndexRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
+  const hapticOnPressRef = useRef(false);
+  const tapAnimsRef = useRef<Array<{ stop: () => void }>>([]);
   const slotsRef = useRef<Array<{ x: number; w: number }>>([]);
   const listLeftRef = useRef(0);
   const listWidthRef = useRef(0);
+
+  const stopTapAnims = useCallback(() => {
+    tapAnimsRef.current.forEach((anim) => anim.stop());
+    tapAnimsRef.current = [];
+  }, []);
 
   const cacheDockSlots = useCallback(() => {
     const list = listRef.current;
@@ -320,10 +327,36 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     hoverIndexRaw.set(index);
   }, [hoverIndexRaw, pillWRaw, pillXRaw]);
 
-  const measurePill = useCallback((index: number, instant = false) => {
+  const tapTrack = useCallback((x: number, w: number, index: number) => {
+    stopTapAnims();
+    const fromX = pillX.get();
+    const fromW = pillW.get();
+    const fromIndex = hoverIndex.get();
+    pillXRaw.jump(fromX);
+    pillWRaw.jump(fromW);
+    hoverIndexRaw.jump(fromIndex);
+    const anims = [
+      animate(pillX, x, TAP_LAYOUT_TRANSITION),
+      animate(pillW, w, TAP_LAYOUT_TRANSITION),
+      animate(hoverIndex, index, TAP_LAYOUT_TRANSITION),
+    ];
+    tapAnimsRef.current = anims;
+    void Promise.all(anims.map((anim) => anim.then(() => undefined))).then(() => {
+      if (draggingRef.current) return;
+      pillXRaw.jump(x);
+      pillWRaw.jump(w);
+      hoverIndexRaw.jump(index);
+    });
+  }, [hoverIndex, hoverIndexRaw, pillW, pillWRaw, pillX, pillXRaw, stopTapAnims]);
+
+  const measurePill = useCallback((index: number, instant = false, tap = false) => {
     const apply = (nextX: number, nextW: number, nextIndex: number) => {
       if (instant) {
         snapTrack(nextX, nextW, nextIndex);
+        return;
+      }
+      if (tap) {
+        tapTrack(nextX, nextW, nextIndex);
         return;
       }
       springTrack(nextX, nextW, nextIndex);
@@ -343,7 +376,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       return;
     }
     apply(slot.x, slot.w, index);
-  }, [hoverIndex, hoverIndexRaw, snapTrack, springTrack]);
+  }, [hoverIndex, hoverIndexRaw, snapTrack, springTrack, tapTrack]);
 
   const followPointer = useCallback((clientX: number) => {
     if (listWidthRef.current <= 0) cacheDockSlots();
@@ -401,15 +434,16 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   useLayoutEffect(() => {
     cacheDockSlots();
     if (draggingRef.current) return;
-    const settledIndex =
-      pendingIndexRef.current !== null ? pendingIndexRef.current : routeIndex;
-    if (pendingIndexRef.current === routeIndex) {
-      pendingIndexRef.current = null;
-    }
+    const pending = pendingIndexRef.current;
+    const settledIndex = pending !== null ? pending : routeIndex;
     liveIndexRef.current = settledIndex;
     const instant = !pillMountedRef.current;
-    measurePill(settledIndex, instant);
     pillMountedRef.current = true;
+    if (!instant && pending !== null) {
+      if (pending === routeIndex) pendingIndexRef.current = null;
+      return;
+    }
+    measurePill(settledIndex, instant);
     if (!instant) return;
     let innerFrame = 0;
     const outerFrame = window.requestAnimationFrame(() => {
@@ -459,12 +493,14 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         window.clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
       }
+      tapAnimsRef.current.forEach((anim) => anim.stop());
+      tapAnimsRef.current = [];
     };
   }, []);
 
   const handleSelect = useCallback(
-    (tab: AppTab, href: string) => {
-      triggerHaptic('light');
+    (tab: AppTab, href: string, haptic = true) => {
+      if (haptic) triggerHaptic('light');
       if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
         router.prefetch(href);
       }
@@ -504,12 +540,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const engageDockDrag = useCallback(() => {
     if (draggingRef.current || !pressActiveRef.current) return;
+    stopTapAnims();
     draggingRef.current = true;
     grabScale.set(DOCK_PLUMP_SCALE);
     pillXRaw.set(pillX.get());
     pillWRaw.set(pillW.get());
     hoverIndexRaw.set(hoverIndex.get());
-  }, [grabScale, hoverIndex, hoverIndexRaw, pillW, pillWRaw, pillX, pillXRaw]);
+  }, [grabScale, hoverIndex, hoverIndexRaw, pillW, pillWRaw, pillX, pillXRaw, stopTapAnims]);
 
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
@@ -597,7 +634,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
           style={{ x: pillX, width: pillW, scale: pillScale }}
-          transition={TAP_LAYOUT_TRANSITION}
         />
         {ITEMS.map((item, index) => {
           const href = hrefForTab(item.tab, homePath);
@@ -619,18 +655,25 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   if (event.button !== 0) return;
                   pendingIndexRef.current = index;
                   liveIndexRef.current = index;
-                  measurePill(index);
+                  hapticOnPressRef.current = true;
+                  measurePill(index, false, true);
+                  triggerHaptic('light');
                 }}
                 onClick={(event) => {
                   if (suppressClickRef.current) {
                     event.preventDefault();
                     suppressClickRef.current = false;
+                    hapticOnPressRef.current = false;
                     return;
                   }
-                  pendingIndexRef.current = null;
                   liveIndexRef.current = index;
-                  measurePill(index);
-                  handleSelect(item.tab, href);
+                  const skipHaptic = hapticOnPressRef.current;
+                  hapticOnPressRef.current = false;
+                  if (pendingIndexRef.current !== index) {
+                    pendingIndexRef.current = index;
+                    measurePill(index, false, true);
+                  }
+                  handleSelect(item.tab, href, !skipHaptic);
                 }}
                 className={cn(
                   dockItemClass(routeIndex === index),
