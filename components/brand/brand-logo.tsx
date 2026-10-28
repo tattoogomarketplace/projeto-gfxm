@@ -44,7 +44,7 @@ export function BrandLogo({
         className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-14 translate-x-[8%] -translate-y-1/2 rounded-full bg-[#FF5F1F]/30 blur-xl"
       />
       <p
-        className="flex max-w-full items-center justify-center gap-1.5 select-none leading-none"
+        className="flex max-w-full items-center justify-center gap-1.5 select-none leading-none pb-[5px]"
         aria-label={BRAND_NAME}
       >
         <span className="relative inline-block leading-none">
