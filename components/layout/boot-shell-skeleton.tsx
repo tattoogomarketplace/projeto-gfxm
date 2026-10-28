@@ -3,13 +3,16 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { BrandLogo } from '@/components/brand/brand-logo';
-import { DashboardHomeSkeleton } from '@/components/features/dashboard-home-skeleton';
 import {
-  AppRouteSkeleton,
-  ArtistHubSkeleton,
-  StudioDashboardSkeleton,
-} from '@/components/ui/route-skeletons';
+  hidesAppShellHeader,
+  isAuthPath,
+  isSelfScrollingPath,
+  resolveDestinationSkeleton,
+} from '@/components/features/destination-route-skeleton';
+import { AuthBootFallback } from '@/components/layout/auth-boot-fallback';
+import { AuthFormSkeleton } from '@/components/ui/route-skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 /**
  * CASCO DE BOOT — ZERO CLS (Fase 25.6).
@@ -29,54 +32,16 @@ import { Skeleton } from '@/components/ui/skeleton';
  * esqueleto que a rota de destino usa em `loading.tsx`. Assim, o handoff
  * ClerkLoading -> rota -> conteúdo é um único frame contínuo: os cards de
  * shimmer ficam travados nas mesmas coordenadas do início ao fim.
- *
- * Rotas fora da Home autenticada (onboarding, IA, KYC, "Quero ser Tatuador",
- * chat, galeria, configurações) mantêm o fallback genérico (`AppRouteSkeleton`)
- * — nunca um `null`/canvas vazio.
  */
 
-const CLIENTE_HOME = '/dashboard/cliente';
-const TATUADOR_HOME = '/dashboard/tatuador';
-const ESTUDIO_HOME = '/dashboard/estudio';
-
-type HomeKind = 'cliente' | 'tatuador' | 'estudio';
-
-function isAtPath(pathname: string, base: string): boolean {
-  return pathname === base || pathname.startsWith(`${base}/`);
-}
-
-/**
- * Resolve qual Home autenticada o pathname atual pinta. O despachante
- * (`/dashboard`) NÃO pertence a nenhum papel — ele resolve Clerk + Prisma e
- * redireciona. Mapeá-lo para o Feed de Descoberta pintava a Home do cliente
- * para tatuadores/estúdios até o redirect; nesse caso usamos o skeleton
- * genérico do casco (`AppRouteSkeleton`).
- */
-function resolveHomeKind(pathname: string): HomeKind | null {
-  if (isAtPath(pathname, CLIENTE_HOME)) return 'cliente';
-  if (isAtPath(pathname, TATUADOR_HOME)) return 'tatuador';
-  if (isAtPath(pathname, ESTUDIO_HOME)) return 'estudio';
-  return null;
-}
-
-function HomeSkeleton({ kind }: { kind: HomeKind }) {
-  if (kind === 'tatuador') return <ArtistHubSkeleton />;
-  if (kind === 'estudio') return <StudioDashboardSkeleton />;
-  return <DashboardHomeSkeleton />;
-}
-
-/**
- * Estrutura imutável do casco (header + viewport de conteúdo). Espelha, classe
- * por classe, o `data-viewport-root` de `app/dashboard/layout.tsx` + o casco de
- * `AppShell` — a caixa física é a MESMA, então nenhuma fronteira (header,
- * padding, dock) pode deslocar os esqueletos na transição.
- */
 function ShellChrome({
   children,
   hideHeader = false,
+  selfScrolling = false,
 }: {
   children: ReactNode;
   hideHeader?: boolean;
+  selfScrolling?: boolean;
 }) {
   return (
     <div
@@ -106,7 +71,16 @@ function ShellChrome({
         )}
 
         <div className="scrollbar-none relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
-          <div className="nav-safe-pad absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-none px-4 sm:px-6">
+          <div
+            data-shell-viewport
+            className={cn(
+              'absolute inset-0 flex min-h-0 min-w-0 flex-col',
+              selfScrolling ? '' : 'nav-safe-pad',
+              selfScrolling
+                ? 'overflow-hidden'
+                : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'
+            )}
+          >
             {hideHeader ? null : (
               <div
                 aria-hidden
@@ -129,24 +103,21 @@ function ShellChrome({
 
 export function BootShellSkeleton() {
   const pathname = usePathname();
-  const kind = resolveHomeKind(pathname);
 
-  // O despachante `/dashboard` pertence ao casco autenticado, mas ainda não
-  // conhece o papel. Pintamos o skeleton genérico DENTRO do mesmo chrome
-  // (header + dock) para que a troca para a Home do papel não desloque a
-  // geometria. Demais rotas sem Home (onboarding, KYC, chat, configurações)
-  // seguem com o fallback sem chrome, pois são telas de tela cheia.
-  if (!kind) {
-    return (
-      <ShellChrome>
-        {pathname === '/dashboard' ? null : <AppRouteSkeleton />}
-      </ShellChrome>
-    );
+  if (pathname === '/') {
+    return <AuthBootFallback />;
   }
 
+  if (isAuthPath(pathname)) {
+    return <AuthFormSkeleton />;
+  }
+
+  const hideHeader = hidesAppShellHeader(pathname);
+  const selfScrolling = isSelfScrollingPath(pathname);
+
   return (
-    <ShellChrome>
-      <HomeSkeleton kind={kind} />
+    <ShellChrome hideHeader={hideHeader} selfScrolling={selfScrolling}>
+      {resolveDestinationSkeleton(pathname)}
     </ShellChrome>
   );
 }
