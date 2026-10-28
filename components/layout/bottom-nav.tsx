@@ -72,6 +72,7 @@ const DOCK_TRACK_SPRING = { stiffness: 1400, damping: 48, mass: 0.16, restDelta:
 const DOCK_PILL_SPRING = { stiffness: 820, damping: 38, mass: 0.22, restDelta: 0.08 };
 const DOCK_PLUMP_SCALE = 1.08;
 const DOCK_PLUMP_SPRING = { stiffness: 640, damping: 28, mass: 0.22, restDelta: 0.01 };
+const TAP_LAYOUT_TRANSITION = { type: 'spring' as const, stiffness: 500, damping: 30 };
 
 function hrefForTab(tab: AppTab, homePath: string): string {
   if (tab === 'perfil') return '/dashboard/perfil';
@@ -476,9 +477,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         });
       }
       if (tab !== 'perfil') {
-        startTransition(() => {
-          setActiveTab(tab);
-        });
+        setActiveTab(tab);
       }
     },
     [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
@@ -598,6 +597,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
           style={{ x: pillX, width: pillW, scale: pillScale }}
+          transition={TAP_LAYOUT_TRANSITION}
         />
         {ITEMS.map((item, index) => {
           const href = hrefForTab(item.tab, homePath);
@@ -615,6 +615,12 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 scroll={false}
                 draggable={false}
                 onContextMenu={(event) => event.preventDefault()}
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  pendingIndexRef.current = index;
+                  liveIndexRef.current = index;
+                  measurePill(index);
+                }}
                 onClick={(event) => {
                   if (suppressClickRef.current) {
                     event.preventDefault();
@@ -628,7 +634,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 }}
                 className={cn(
                   dockItemClass(routeIndex === index),
-                  'transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
+                  'touch-manipulation transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
                 )}
                 aria-current={routeIndex === index ? 'page' : undefined}
