@@ -328,7 +328,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
       className="fixed top-0 left-0 z-50 w-full shrink-0 bg-[#121212] backdrop-blur-md pt-[max(env(safe-area-inset-top),_16px)] transition-transform duration-300 ease-in-out will-change-transform"
     >
       <h1 className="sr-only">{headerTitle}</h1>
-      <div className="relative isolate h-14 min-h-14 max-h-14 w-full shrink-0 contain-layout">
+      <div className="relative isolate h-11 min-h-11 max-h-11 w-full shrink-0 contain-layout">
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
           <BrandLogo className="pointer-events-auto h-auto w-auto px-0" size="sm" />
         </div>
@@ -418,7 +418,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               data-app-header-spacer
               className="pointer-events-none shrink-0 pt-[max(env(safe-area-inset-top),_16px)]"
             >
-              <div className="h-14 min-h-14 max-h-14 shrink-0" />
+              <div className="h-11 min-h-11 max-h-11 shrink-0" />
               {hideTabs ? null : (
                 <div className="hidden px-4 pb-3 md:block">
                   <div className="h-11" />

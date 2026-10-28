@@ -66,7 +66,7 @@ function PersistentAppChromeBase() {
         aria-hidden={!machineVisible}
         data-header-follow
         className={cn(
-          'fixed right-4 top-[calc(env(safe-area-inset-top)+0.375rem)] z-[65] overflow-hidden',
+          'fixed right-4 top-[max(env(safe-area-inset-top),_16px)] z-[65] overflow-hidden',
           !machineVisible && 'invisible pointer-events-none'
         )}
       >
