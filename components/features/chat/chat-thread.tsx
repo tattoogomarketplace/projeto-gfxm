@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { ArrowLeft, CalendarDays, ChevronRight, Send, ShieldAlert } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
@@ -317,15 +317,9 @@ export function ChatThread({
       {/* Message thread — the single scrolling surface; flex-1 fills the gap. */}
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch]"
+        className="relative min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch]"
       >
-        {loading && messages.length === 0 ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-2/3 rounded-2xl" />
-            <Skeleton className="ml-auto h-12 w-1/2 rounded-2xl" />
-            <Skeleton className="h-12 w-3/5 rounded-2xl" />
-          </div>
-        ) : null}
+        {loading && messages.length === 0 ? <InstagramSpinnerOverlay /> : null}
         {messages.map((message) => (
           <div
             key={message.id}

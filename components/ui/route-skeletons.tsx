@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import { Settings } from 'lucide-react';
 import { BrandLogo } from '@/components/brand/brand-logo';
+import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -164,93 +166,15 @@ export function StudioDashboardSkeleton({ className }: { className?: string }) {
 
 export function ProfileSkeleton({
   className,
-  showFooterAction = true,
 }: {
   className?: string;
   showFooterAction?: boolean;
 }) {
   return (
-    <div className={cn(PROFILE_SCROLL_SHELL, className)} aria-hidden aria-busy="true">
-      <header className="relative w-full overflow-hidden rounded-3xl border border-black/[0.04] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] contain-paint dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
-        <Skeleton className="h-32 w-full rounded-none" />
-        <div className="relative px-5 pb-5">
-          <div className="flex items-end gap-4">
-            <Skeleton className="-mt-12 h-20 w-20 min-h-20 min-w-20 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-2 pb-1">
-              <Skeleton className="h-6 w-40 rounded-md" />
-              <Skeleton className="h-5 w-24 rounded-full" />
-            </div>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {[0, 1, 2].map((index) => (
-              <div key={index} className="flex flex-col items-center gap-1.5">
-                <Skeleton className="h-6 w-12 rounded-md" />
-                <Skeleton className="h-3 w-16 rounded-md" />
-              </div>
-            ))}
-          </div>
-          <Skeleton className="mt-4 h-4 w-full rounded-md" />
-          <Skeleton className="mt-2 h-4 w-2/3 rounded-md" />
-          <Skeleton className="mt-4 h-11 w-full rounded-xl" />
-        </div>
-      </header>
-
-      <div className="mt-5 flex gap-3 px-1">
-        {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="flex w-[76px] shrink-0 flex-col items-center gap-2">
-            <Skeleton className="h-[68px] w-[68px] rounded-full" />
-            <Skeleton className="h-3 w-14 rounded-md" />
-          </div>
-        ))}
+    <div className={cn(PROFILE_SCROLL_SHELL, className)} aria-busy="true">
+      <div className="relative min-h-0 w-full flex-1">
+        <InstagramSpinnerOverlay />
       </div>
-
-      <div className="mt-6">
-        <Skeleton className="h-12 w-full rounded-2xl" />
-        <div className="mt-4 grid grid-cols-3 gap-[3px] sm:gap-1">
-          {[0, 1, 2, 3, 4, 5].map((index) => (
-            <Skeleton key={index} className="aspect-square w-full rounded-[10px]" />
-          ))}
-        </div>
-      </div>
-
-      {showFooterAction ? (
-        <div className="mt-auto pt-8">
-          <Skeleton className="h-11 w-full rounded-xl" />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-const CLIENT_HUB_CARD_CLASS =
-  'flex flex-col overflow-hidden rounded-3xl border border-zinc-800/80 bg-zinc-900/50';
-
-function ClientHubSectionSkeleton({ children }: { children: ReactNode }) {
-  return (
-    <section className="flex flex-col">
-      <Skeleton className="mb-2 ml-4 mt-8 h-3 w-16 rounded-md" />
-      <div className={CLIENT_HUB_CARD_CLASS}>{children}</div>
-    </section>
-  );
-}
-
-function ClientHubRowSkeleton({
-  lines = 1,
-  chevron = false,
-}: {
-  lines?: 1 | 2;
-  chevron?: boolean;
-}) {
-  return (
-    <div className="flex w-full items-center justify-between border-b border-zinc-800/50 p-4 last:border-0">
-      <span className="flex min-w-0 flex-1 items-center gap-3">
-        <Skeleton className="h-10 w-10 min-h-10 min-w-10 shrink-0 rounded-xl" />
-        <span className="flex min-w-0 flex-1 flex-col">
-          <Skeleton className="h-4 w-28 rounded-md" />
-          {lines === 2 ? <Skeleton className="mt-0.5 h-3 w-44 rounded-md" /> : null}
-        </span>
-      </span>
-      {chevron ? <Skeleton className="h-5 w-5 min-h-5 min-w-5 shrink-0 rounded-md" /> : null}
     </div>
   );
 }
@@ -259,43 +183,20 @@ export function ClientIdentitySkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100 [-webkit-overflow-scrolling:touch]',
+        'absolute inset-0 z-0 flex min-h-0 w-full flex-col overflow-hidden bg-zinc-950 pb-[var(--dock-clearance)] pt-[max(env(safe-area-inset-top),1.5rem)] text-zinc-100',
         className
       )}
-      aria-hidden
       aria-busy="true"
     >
-      <div className="mx-auto flex w-full max-w-2xl flex-col pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
-        <header className="mt-4 flex flex-col items-center text-center">
-          <Skeleton className="mx-auto h-24 w-24 min-h-24 min-w-24 rounded-full" />
-          <Skeleton className="mt-4 h-7 w-52 rounded-md" />
-          <Skeleton className="mt-1 h-4 w-24 rounded-md" />
-          <div className="mt-4 flex w-full justify-center">
-            <Skeleton className="h-8 w-56 rounded-full" />
-          </div>
-        </header>
-
-        <ClientHubSectionSkeleton>
-          <ClientHubRowSkeleton lines={2} />
-        </ClientHubSectionSkeleton>
-
-        <ClientHubSectionSkeleton>
-          <ClientHubRowSkeleton lines={2} chevron />
-        </ClientHubSectionSkeleton>
-
-        <ClientHubSectionSkeleton>
-          <ClientHubRowSkeleton lines={2} />
-          <ClientHubRowSkeleton lines={2} chevron />
-        </ClientHubSectionSkeleton>
-
-        <ClientHubSectionSkeleton>
-          <div className="flex w-full items-center border-b border-zinc-800/50 p-4 last:border-0">
-            <span className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 min-h-10 min-w-10 rounded-xl" />
-              <Skeleton className="h-4 w-28 rounded-md" />
-            </span>
-          </div>
-        </ClientHubSectionSkeleton>
+      <header className="relative shrink-0 px-[max(1.5rem,env(safe-area-inset-right))]">
+        <Settings
+          aria-hidden
+          className="absolute right-0 top-[0.5rem] h-5 w-5 text-orange-400/70"
+          strokeWidth={1.75}
+        />
+      </header>
+      <div className="relative min-h-0 w-full flex-1">
+        <InstagramSpinnerOverlay />
       </div>
     </div>
   );
@@ -331,32 +232,37 @@ export function PublicProfileSkeleton({ className }: { className?: string }) {
 
 export function ChatInboxSkeleton({ className }: { className?: string }) {
   return (
-    <Shell className={cn('relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950', className)}>
+    <div
+      className={cn(
+        'relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950 text-zinc-100',
+        className
+      )}
+      aria-busy="true"
+    >
       <div className="shrink-0">
-        <div className="sticky top-0 z-40 border-b border-zinc-900 bg-zinc-950/90 px-4 pb-2 pt-[max(env(safe-area-inset-top),_1.5rem)] backdrop-blur-xl">
+        <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-900 bg-zinc-950/90 px-4 pb-2 pt-[max(env(safe-area-inset-top),_1.5rem)] backdrop-blur-xl">
           <div className="flex min-h-11 items-center gap-2">
-            <Skeleton className="h-10 min-h-10 flex-1 rounded-full" />
-            <Skeleton className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
+            <div className="h-10 min-h-10 min-w-0 flex-1 rounded-full border border-zinc-800 bg-zinc-900" />
+            <div className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-xl" />
           </div>
           <div className="pt-3">
-            <Skeleton className="h-11 w-full rounded-2xl" />
+            <div className="grid h-11 w-full grid-cols-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
+              <div className="rounded-xl bg-orange-500/15" />
+              <div />
+            </div>
           </div>
-        </div>
+        </header>
       </div>
 
       <div className="relative grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-4 lg:p-3">
-        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800 lg:bg-zinc-950">
-          <div className="space-y-2 p-2 pb-[var(--dock-clearance)]">
-            {[0, 1, 2, 3, 4, 5].map((index) => (
-              <Skeleton key={index} className="h-16 w-full rounded-xl" />
-            ))}
-          </div>
+        <aside className="relative flex min-h-0 min-w-0 flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800 lg:bg-zinc-950">
+          <InstagramSpinnerOverlay />
         </aside>
-        <section className="hidden min-h-0 min-w-0 overflow-hidden lg:flex">
-          <Skeleton className="h-full w-full rounded-2xl" />
+        <section className="relative hidden min-h-0 min-w-0 overflow-hidden lg:flex lg:rounded-2xl lg:border lg:border-zinc-800">
+          <InstagramSpinnerOverlay />
         </section>
       </div>
-    </Shell>
+    </div>
   );
 }
 

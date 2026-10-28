@@ -6,12 +6,9 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 /**
  * Route-level fallback of `/dashboard/perfil`.
  *
- * Smart hydration: reads the cached role from the auth store so the segment
- * fallback matches the surface that will replace it. Standard users
- * (`cliente`) get the `ClientIdentitySkeleton` (Avatar + identity sections),
- * while artists/studios keep the `PublicProfile` geometry. The first render
- * (no role cached yet) stays on `ProfileSkeleton`, then every in-session
- * navigation resolves to the exact geometry — zero layout shift.
+ * Instant chrome: the profile shell (background + header) mounts on frame zero
+ * with a centered Instagram-tier spinner in the content pane. Cached role only
+ * chooses which shell geometry to paint — never a blank or skeleton grid.
  */
 export function PerfilSegmentSkeleton() {
   const role = useAuthStore((s) => s.role);

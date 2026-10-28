@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { toast } from '@/lib/toast';
 import { useRouter } from 'next/navigation';
 import { useClerk, useUser } from '@clerk/nextjs';
-import { ClientIdentitySkeleton } from '@/components/ui/route-skeletons';
+import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { ClientIdentityHub } from '@/components/settings/client-identity-hub';
 import { type ProfileRole } from '@/components/features/public-profile';
 import { useAuthStore } from '@/hooks/use-auth-store';
@@ -171,28 +171,28 @@ export function ProfileView() {
   }, [user]);
 
   const hasIdentity = Boolean(cachedUser || user || email || nome);
-  if (!isLoaded && !hasIdentity) {
-    return <ClientIdentitySkeleton />;
-  }
-
+  const awaitingIdentity = !isLoaded && !hasIdentity;
   const displayNome = nome || cachedUser?.fullName || '';
   const hasCustomAvatar = Boolean((user as { hasImage?: boolean } | null)?.hasImage);
   const avatarUrl = hasCustomAvatar ? user?.imageUrl ?? null : null;
   const publicProfileHref = username ? `/profile/${username}` : null;
 
   return (
-    <ClientIdentityHub
-      name={displayNome}
-      username={username}
-      email={email}
-      avatarUrl={avatarUrl}
-      loggingOut={loggingOut}
-      publicProfileHref={role === 'tatuador' ? publicProfileHref : null}
-      onLogout={() => {
-        void handleLogout();
-      }}
-      onAvatarFile={handleAvatarFile}
-      onAvatarRemove={handleAvatarRemove}
-    />
+    <div className="relative h-full min-h-0 w-full">
+      <ClientIdentityHub
+        name={displayNome}
+        username={username}
+        email={email}
+        avatarUrl={avatarUrl}
+        loggingOut={loggingOut}
+        publicProfileHref={role === 'tatuador' ? publicProfileHref : null}
+        onLogout={() => {
+          void handleLogout();
+        }}
+        onAvatarFile={handleAvatarFile}
+        onAvatarRemove={handleAvatarRemove}
+      />
+      {awaitingIdentity ? <InstagramSpinnerOverlay /> : null}
+    </div>
   );
 }

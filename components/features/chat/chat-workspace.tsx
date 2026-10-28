@@ -16,7 +16,7 @@ import { AtomicBookingSheet } from '@/components/features/atomic-booking-sheet';
 import { ChatCategoryTabs } from '@/components/features/chat/chat-category-tabs';
 import { ChatListCard } from '@/components/features/chat/chat-list-card';
 import { ChatThread } from '@/components/features/chat/chat-thread';
-import { Skeleton } from '@/components/ui/skeleton';
+import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { ChatInboxSkeleton } from '@/components/ui/route-skeletons';
 import { SearchBar } from '@/components/ui/search-bar';
 import { TattooMachineMenuTrigger } from '@/components/ui/tattoo-machine-menu-icon';
@@ -331,23 +331,13 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
 
   const renderPane = (category: ChatTab) => {
     const items = orderedFor(category);
-    const showSkeleton = loadingList && items.length === 0;
+    const showSpinner = loadingList && items.length === 0;
     const empty = !loadingList && items.length === 0;
     const isBudget = category === 'BUDGET';
 
     return (
-      <div className={activeCategory === category ? 'flex min-h-full flex-col' : 'hidden'}>
-        <div
-          className={cn(
-            'pointer-events-none absolute inset-x-0 top-0 space-y-2 p-2 transform-gpu transition-opacity duration-200',
-            showSkeleton ? 'opacity-100' : 'opacity-0'
-          )}
-          aria-hidden={!showSkeleton}
-        >
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
-        </div>
+      <div className={activeCategory === category ? 'relative flex min-h-full flex-col' : 'hidden'}>
+        {showSpinner ? <InstagramSpinnerOverlay /> : null}
         {empty ? (
           <div className="flex flex-col items-center justify-center mt-20 px-8 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/40 bg-orange-500/10 text-orange-400">
