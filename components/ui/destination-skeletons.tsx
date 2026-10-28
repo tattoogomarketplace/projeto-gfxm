@@ -14,6 +14,7 @@ export function AgendaWorkspaceSkeleton() {
       aria-hidden
       className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]"
     >
+      <div className="mx-auto w-full max-w-2xl">
       <div className="sticky top-0 z-40 bg-zinc-950/85 pb-2 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="px-4 pt-3">
           <div className="min-h-13 w-full rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
@@ -28,6 +29,7 @@ export function AgendaWorkspaceSkeleton() {
         <div className="h-72 rounded-3xl border border-zinc-800 bg-zinc-900" />
         <div className="h-72 rounded-3xl border border-zinc-800 bg-zinc-900" />
       </div>
+      </div>
     </div>
   );
 }
@@ -36,15 +38,16 @@ export function GaleriaFeedSkeleton() {
   return (
     <div
       aria-hidden
-      className="absolute inset-0 z-0 min-h-0 w-full max-w-none overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]"
+      className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-[#0a0a0c] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-950/20 via-[#0a0a0c] to-[#050505] pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]"
     >
-      <div className="relative z-40 bg-[#121212] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+      <div className="relative z-0 isolate mx-auto flex w-full max-w-2xl flex-col">
+      <div className="relative z-40 bg-[#121212] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="mb-4 flex w-full flex-row items-center rounded-2xl border border-white/5 bg-[#121212] p-3">
           <div className="h-7 w-7 rounded-md bg-orange-500/10" />
           <div className="h-4 w-40 rounded bg-zinc-800" />
         </div>
       </div>
-      <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)] pointer-events-none">
+      <div className="sticky top-[env(safe-area-inset-top)] z-20 flex gap-2 bg-transparent pb-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pointer-events-none">
         <div className="flex w-full items-center justify-center gap-2 overflow-x-auto no-scrollbar">
           <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
           <div className="h-11 min-w-[96px] shrink-0 rounded-full border border-white/15 bg-[#121212]/20 backdrop-blur-lg" />
@@ -69,6 +72,7 @@ export function GaleriaFeedSkeleton() {
           </div>
         ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -77,9 +81,10 @@ export function InspiracoesGridSkeleton() {
   return (
     <div
       aria-hidden
-      className="absolute inset-0 z-0 min-h-0 w-full max-w-none overflow-x-hidden overflow-y-auto overscroll-none bg-[#121212] pb-[calc(env(safe-area-inset-bottom)+5rem)] [-webkit-overflow-scrolling:touch]"
+      className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-[#121212] pb-[calc(env(safe-area-inset-bottom)+5rem)] [-webkit-overflow-scrolling:touch]"
     >
-      <div className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="mx-auto w-full max-w-2xl">
+      <div className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 border-l-2 border-l-[#F97316] bg-[#121212]/70 p-3 backdrop-blur-md">
           <div className="h-9 w-9 rounded-xl bg-orange-500/15" />
           <div className="flex flex-col gap-1.5">
@@ -88,7 +93,7 @@ export function InspiracoesGridSkeleton() {
           </div>
         </div>
       </div>
-      <div className="sticky top-0 z-20 bg-[#121212]/80 px-4 pb-3 pt-1 backdrop-blur-md">
+      <div className="sticky top-[env(safe-area-inset-top)] z-20 bg-[#121212]/80 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-3 pt-1 backdrop-blur-md">
         <div className="flex gap-2 overflow-hidden">
           <div className="h-11 w-24 shrink-0 rounded-2xl border border-white/10 bg-white/5" />
           <div className="h-11 w-28 shrink-0 rounded-2xl border border-white/10 bg-white/5" />
@@ -99,6 +104,7 @@ export function InspiracoesGridSkeleton() {
         {Array.from({ length: 9 }, (_, index) => (
           <div key={index} className="relative w-full aspect-[9/16] overflow-hidden bg-white/5" />
         ))}
+      </div>
       </div>
     </div>
   );

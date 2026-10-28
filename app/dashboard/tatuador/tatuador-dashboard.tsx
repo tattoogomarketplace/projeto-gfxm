@@ -31,7 +31,7 @@ export default function TatuadorDashboard({
        * um frame preto entre o skeleton de rota e a hidratação do hub.
        */}
       {activeTab === 'portfolio' ? (
-        <section key="portfolio" className="min-w-0 w-full">
+        <section key="portfolio" className="mx-auto min-w-0 w-full max-w-2xl">
           <ArtistStudioHub tatuadorId={user?.id} artistName={user?.fullName ?? ''} />
         </section>
       ) : activeTab === 'agendar' ? (
@@ -46,7 +46,7 @@ export default function TatuadorDashboard({
           <ChatWorkspace />
         </section>
       ) : (
-        <section key="portfolio-skeleton" className="min-w-0 w-full flex-1" aria-busy="true">
+        <section key="portfolio-skeleton" className="mx-auto min-w-0 w-full max-w-2xl flex-1" aria-busy="true">
           <ArtistHubSkeleton />
         </section>
       )}

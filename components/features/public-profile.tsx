@@ -31,7 +31,7 @@ import type { MessageKey } from '@/lib/i18n/types';
  */
 
 export const PROFILE_SCROLL_SHELL =
-  'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[var(--dock-clearance)] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white';
+  'gpu-layer mx-auto flex h-full min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[var(--dock-clearance)] pt-[max(1.25rem,env(safe-area-inset-top))] text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform transition-transform transition-opacity duration-300 ease-out dark:text-white';
 
 export type ProfileRole = 'cliente' | 'tatuador' | 'estudio';
 

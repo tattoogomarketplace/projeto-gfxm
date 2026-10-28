@@ -133,7 +133,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             type="button"
             onClick={goBack}
             aria-label={t('common.back')}
-            className="absolute left-4 top-[env(safe-area-inset-top)] z-20 inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-zinc-950/70 text-white backdrop-blur-md"
+            className="absolute left-[max(1rem,env(safe-area-inset-left))] top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 inline-flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-zinc-950/70 text-white backdrop-blur-md"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
           </button>
@@ -198,7 +198,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
       </header>
 
       <nav
-        className="sticky top-0 z-40 mt-6 border-b border-zinc-800 bg-zinc-950/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl"
+        className="sticky top-[env(safe-area-inset-top)] z-40 mt-6 border-b border-zinc-800 bg-zinc-950/85 backdrop-blur-xl"
         aria-label={t('vitrine.badge')}
       >
         <div className="grid grid-cols-3">

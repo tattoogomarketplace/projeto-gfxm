@@ -83,7 +83,7 @@ export function TatuadorKycBlock({ userId: _userId, status }: { userId: string; 
 
   return (
     <div className="fixed inset-0 z-[100] flex h-[100dvh] w-full flex-col overflow-hidden bg-background text-white">
-      <div className="relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center space-y-6 overflow-y-auto overscroll-none px-4 pb-36 pt-4 [-webkit-overflow-scrolling:touch] sm:px-6">
+      <div className="relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center space-y-6 overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(9rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.25)]">
             <ShieldAlert className="h-6 w-6" strokeWidth={1.75} />

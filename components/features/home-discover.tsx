@@ -295,7 +295,7 @@ export function HomeDiscover({
   );
 
   return (
-    <div className="min-w-0 w-full flex-1 space-y-7 pb-4">
+    <div className="mx-auto min-w-0 w-full max-w-2xl flex-1 space-y-7 pb-4">
       <HomeFlashNotesMasthead notes={flashNotes} />
 
       <section className="min-w-0 w-full space-y-3" aria-labelledby="discover-artists">

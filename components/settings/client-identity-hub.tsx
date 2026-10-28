@@ -315,11 +315,11 @@ export const ClientIdentityHub = memo(function ClientIdentityHub({
       <Link
         href="/dashboard/perfil/configuracoes"
         aria-label={t('settings.title')}
-        className="absolute right-6 top-6 z-20 text-orange-400 transition-colors hover:text-orange-300"
+        className="absolute right-[max(1.5rem,env(safe-area-inset-right))] top-[max(1.5rem,calc(env(safe-area-inset-top)+0.5rem))] z-20 text-orange-400 transition-colors hover:text-orange-300"
       >
         <Settings className="h-5 w-5" strokeWidth={1.75} />
       </Link>
-      <div className="mx-auto flex w-full max-w-2xl flex-col px-4">
+      <div className="mx-auto flex w-full max-w-2xl flex-col pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
         <header className="mt-4 flex flex-col items-center text-center">
           <AvatarUpload
             ref={avatarRef}

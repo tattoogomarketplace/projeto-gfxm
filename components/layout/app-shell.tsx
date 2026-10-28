@@ -332,7 +332,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
           <BrandLogo className="pointer-events-auto h-auto w-auto px-0" size="sm" />
         </div>
-        <div className="absolute right-4 top-1/2 z-20 flex -translate-y-1/2 items-center justify-end gap-2">
+        <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-1/2 z-20 flex -translate-y-1/2 items-center justify-end gap-2">
           {!isOnline || pending > 0 ? (
             <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
               {!isOnline ? t('common.offline') : `${pending} na fila`}
@@ -409,7 +409,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
             isSelfScrollingRoute ? '' : 'nav-safe-pad',
             isSelfScrollingRoute
               ? 'overflow-hidden'
-              : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'
+              : 'overflow-x-hidden overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]'
           )}
         >
           {hideShellHeader ? null : (

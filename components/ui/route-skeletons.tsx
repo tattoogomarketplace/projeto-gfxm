@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 const PROFILE_SCROLL_SHELL =
-  'gpu-layer flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[var(--dock-clearance)] pt-5 text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform dark:text-white';
+  'gpu-layer mx-auto flex h-full min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto overscroll-none bg-transparent pb-[var(--dock-clearance)] pt-[max(1.25rem,env(safe-area-inset-top))] text-gray-900 contain-paint transform-gpu backface-hidden will-change-transform dark:text-white';
 
 function Shell({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -16,7 +16,7 @@ function Shell({ className, children }: { className?: string; children: ReactNod
 
 export function ArtistHubSkeleton({ className }: { className?: string }) {
   return (
-    <Shell className={cn('flex min-w-0 w-full flex-1 flex-col gap-6 pt-5', className)}>
+    <Shell className={cn('mx-auto flex min-w-0 w-full max-w-2xl flex-1 flex-col gap-6 pt-5', className)}>
       <div className="flex gap-3 overflow-hidden">
         <Skeleton className="h-[4.6rem] w-[3.6rem] shrink-0 rounded-2xl" />
         {[0, 1, 2, 3, 4].map((index) => (
@@ -67,7 +67,7 @@ const DISCOVER_ASPECTS = [
 
 export function HomeDiscoverSkeleton({ className }: { className?: string }) {
   return (
-    <Shell className={cn('min-w-0 w-full flex-1 space-y-7 pb-4', className)}>
+    <Shell className={cn('mx-auto min-w-0 w-full max-w-2xl flex-1 space-y-7 pb-4', className)}>
       <div className="-mx-4 min-w-0 sm:-mx-6">
         <div className="sticky top-0 z-30 w-full border-b border-white/5 bg-[#121212]/90 pb-3 backdrop-blur-2xl">
           <div
@@ -265,7 +265,7 @@ export function ClientIdentitySkeleton({ className }: { className?: string }) {
       aria-hidden
       aria-busy="true"
     >
-      <div className="mx-auto flex w-full max-w-2xl flex-col px-4">
+      <div className="mx-auto flex w-full max-w-2xl flex-col pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
         <header className="mt-4 flex flex-col items-center text-center">
           <Skeleton className="mx-auto h-24 w-24 min-h-24 min-w-24 rounded-full" />
           <Skeleton className="mt-4 h-7 w-52 rounded-md" />
@@ -492,7 +492,7 @@ export function KycPendingSkeleton({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="mx-auto w-full max-w-lg space-y-6 pb-8">
           <section className="rounded-2xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
             <Skeleton className="h-3 w-28 rounded-full" />

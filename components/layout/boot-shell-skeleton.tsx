@@ -58,7 +58,7 @@ function ShellChrome({
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
                 <BrandLogo className="h-auto w-auto px-0" size="sm" />
               </div>
-              <div className="absolute right-4 top-1/2 z-20 flex -translate-y-1/2 items-center">
+              <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-1/2 z-20 flex -translate-y-1/2 items-center">
                 <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
               </div>
             </div>
@@ -78,7 +78,7 @@ function ShellChrome({
               selfScrolling ? '' : 'nav-safe-pad',
               selfScrolling
                 ? 'overflow-hidden'
-                : 'overflow-x-hidden overflow-y-auto overscroll-none px-4 [-webkit-overflow-scrolling:touch] sm:px-6'
+                : 'overflow-x-hidden overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]'
             )}
           >
             {hideHeader ? null : (

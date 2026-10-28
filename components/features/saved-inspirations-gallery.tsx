@@ -93,8 +93,8 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
   );
 
   return (
-    <div className="relative z-0 isolate flex w-full max-w-none flex-col overscroll-none bg-[#121212] text-white">
-      <header className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <div className="relative z-0 isolate mx-auto flex w-full max-w-2xl flex-col overscroll-none bg-[#121212] text-white">
+      <header className="pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 border-l-2 border-l-[#F97316] bg-[#121212]/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
           <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-xl border border-orange-500/35 bg-orange-500/15 text-orange-400 shadow-[0_0_18px_rgba(249,115,22,0.28)]">
             <Bookmark className="h-4 w-4" strokeWidth={1.9} fill="currentColor" aria-hidden />
@@ -110,7 +110,7 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 bg-[#121212]/80 px-4 pb-3 pt-1 backdrop-blur-md">
+      <div className="sticky top-[env(safe-area-inset-top)] z-20 bg-[#121212]/80 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-3 pt-1 backdrop-blur-md">
         <div className={FILTER_ROW_CLASS} role="listbox" aria-label={t('gallery.style')}>
           {filters.map((filter) => {
             const active = style === filter.value;

@@ -70,8 +70,8 @@ export function GaleriaInspiracoes({
   }, [items, style]);
 
   return (
-    <div className="relative z-0 isolate flex w-full max-w-none flex-col px-0 mx-0 text-white">
-      <div className="relative z-40 bg-[#121212] px-4 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))]">
+    <div className="relative z-0 isolate mx-auto flex w-full max-w-2xl flex-col px-0 text-white">
+      <div className="relative z-40 bg-[#121212] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="mb-4 flex w-full flex-row items-center rounded-2xl border border-white/5 bg-[#121212] p-3">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500/10 p-1.5 text-orange-500">
             <Compass className="h-4 w-4" strokeWidth={1.75} />
@@ -84,7 +84,7 @@ export function GaleriaInspiracoes({
         topOffsetClass="top-0"
         onRefresh={handleRefresh}
       >
-        <div className="sticky top-0 z-20 flex gap-2 bg-transparent px-4 pb-2 pt-[max(env(safe-area-inset-top),0.5rem)]">
+        <div className="sticky top-[env(safe-area-inset-top)] z-20 flex gap-2 bg-transparent pb-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
           <PortfolioFilterBar
             style={style}
             bodyPart={bodyPart}

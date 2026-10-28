@@ -145,7 +145,7 @@ export default function KycPendentePage() {
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-white">
-      <div className="flex-1 overflow-y-auto min-h-0 px-4 py-6 [-webkit-overflow-scrolling:touch] sm:px-6">
+      <div className="flex-1 overflow-y-auto min-h-0 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <div className="mx-auto w-full max-w-lg space-y-6 pb-8">
           <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8">
             <div className="relative">
