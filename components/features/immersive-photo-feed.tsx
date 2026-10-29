@@ -142,6 +142,14 @@ export function ImmersivePhotoFeed({
   );
 
   useEffect(() => {
+    // ENTRY LOCK: a thread imersiva é dona do estado do header enquanto estiver
+    // montada. Qualquer classe de header oculto herdada do feed de origem
+    // (ex.: scroll para baixo no Início) é limpa no primeiro frame, antes de o
+    // usuário interagir com a galeria em tela cheia.
+    document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
+      node.classList.remove(HEADER_HIDDEN_CLASS);
+    });
+    setStoreHeaderHidden(false);
     return () => {
       document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
         node.classList.remove(HEADER_HIDDEN_CLASS);
@@ -585,13 +593,15 @@ export function ImmersivePhotoFeed({
             data-immersive-header
             aria-hidden={isHeaderCollapsed}
             className={cn(
-              'pointer-events-none absolute inset-x-0 top-0 z-30 flex h-11 items-center justify-center',
+              'pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col items-center',
               'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
               'transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
               isHeaderCollapsed ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             )}
           >
-            <BrandLogo className="pointer-events-none h-auto w-auto px-0" size="sm" />
+            <div className="pointer-events-none flex h-11 w-full shrink-0 items-center justify-center">
+              <BrandLogo className="pointer-events-none h-auto w-auto px-0" size="sm" />
+            </div>
           </header>
           <div
             ref={scrollerRef}
