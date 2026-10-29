@@ -764,10 +764,22 @@ export function GalleryInspirationGrid({
     return [...hydratedItems.slice(start), ...hydratedItems.slice(0, start)];
   }, [hydratedItems, immersiveStartId]);
 
-  const openInspiration = (item: InspirationItem) => {
-    triggerHaptic('light');
-    setImmersiveStartId(item.id);
-  };
+  const openLockUntil = useRef(0);
+
+  const openInspiration = useCallback(
+    (item: InspirationItem) => {
+      cancelLongPress();
+      const now = Date.now();
+      if (now < openLockUntil.current) {
+        setImmersiveStartId(item.id);
+        return;
+      }
+      openLockUntil.current = now + 350;
+      triggerHaptic('light');
+      setImmersiveStartId(item.id);
+    },
+    [cancelLongPress, triggerHaptic]
+  );
 
   const visitArtistProfile = (item: InspirationItem) => {
     triggerHaptic('light');
@@ -776,11 +788,23 @@ export function GalleryInspirationGrid({
 
   const handleInspirationClick = (
     item: InspirationItem,
-    event?: { preventDefault: () => void; stopPropagation: () => void }
+    event?: { preventDefault: () => void; stopPropagation: () => void; target?: EventTarget | null }
   ) => {
+    const target = event?.target ?? null;
+    if (target instanceof Element && target.closest('[data-gallery-action]')) return;
     if (consumeLongPressClick(event)) return;
     openInspiration(item);
   };
+
+  const handleGridPhotoPointerUp =
+    (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
+      cancelLongPress();
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-gallery-action]')) return;
+      if (Date.now() < suppressClickUntil.current) return;
+      openInspiration(item);
+    };
 
   const toggleLiked = (id: string) => {
     setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -846,6 +870,7 @@ export function GalleryInspirationGrid({
         return;
       }
       lastFeedTap.current = { id: item.id, at: now };
+      openInspiration(item);
     };
 
   const dismissPreview = useCallback(() => setPreview(null), []);
@@ -1038,10 +1063,7 @@ export function GalleryInspirationGrid({
                   </div>
                 </div>
 
-                <div
-                  onPointerUp={handleFeedImagePointerUp(item)}
-                  className="relative isolate w-full aspect-[9/16] overflow-hidden bg-white/5 contain-paint"
-                >
+                <div className="relative isolate w-full aspect-[9/16] overflow-hidden bg-white/5 contain-paint">
                     <FeedPinchZoom>
                     <div className="relative h-full w-full [backface-visibility:hidden]">
                       <OptimizedImage
@@ -1052,6 +1074,13 @@ export function GalleryInspirationGrid({
                       />
                     </div>
                     </FeedPinchZoom>
+                    <button
+                      type="button"
+                      onPointerUp={handleFeedImagePointerUp(item)}
+                      onClick={(event) => handleInspirationClick(item, event)}
+                      className="absolute inset-0 z-[3] touch-manipulation cursor-pointer bg-transparent"
+                      aria-label={artistName}
+                    />
                     <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10"></div>
                     <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center text-green-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                       <AnimatePresence>
@@ -1225,7 +1254,7 @@ export function GalleryInspirationGrid({
               onPointerLeave={cancelLongPress}
               onContextMenu={(event) => event.preventDefault()}
               className={cn(
-                'group relative select-none overflow-hidden',
+                'group relative select-none overflow-hidden touch-manipulation',
                 isCarousel
                   ? 'h-[15.5rem] w-[11.5rem] shrink-0 snap-start rounded-xl border border-zinc-800/50 bg-zinc-900/40'
                   : GRID_TILE_CLASS
@@ -1244,7 +1273,8 @@ export function GalleryInspirationGrid({
                   <button
                     type="button"
                     onClick={(event) => handleInspirationClick(item, event)}
-                    className="absolute inset-0 z-[1]"
+                    onPointerUp={handleGridPhotoPointerUp(item)}
+                    className="absolute inset-0 z-[1] touch-manipulation cursor-pointer"
                     aria-label={artistName}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
@@ -1271,7 +1301,8 @@ export function GalleryInspirationGrid({
                   <button
                     type="button"
                     onClick={(event) => handleInspirationClick(item, event)}
-                    className="absolute inset-0 z-[1]"
+                    onPointerUp={handleGridPhotoPointerUp(item)}
+                    className="absolute inset-0 z-[1] touch-manipulation cursor-pointer"
                     aria-label={artistName}
                   />
                   {showLike ? (
