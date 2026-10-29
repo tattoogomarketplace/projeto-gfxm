@@ -32,9 +32,7 @@ const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
 const SNAP_BACKDROP_EASE = 'background-color 320ms ease-out';
 const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
 const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
-const HEADER_DELTA_PX = 15;
 const HEADER_VELOCITY_PX_MS = 0.5;
-const HEADER_TOP_LOCK_PX = 24;
 const HEADER_DRAG_DEAD_ZONE_PX = 10;
 const HEADER_FALLBACK_HEIGHT_PX = 44;
 const HEADER_TRANSITION = 'transform 200ms ease-out, opacity 200ms ease-out';
@@ -103,13 +101,11 @@ export function ImmersivePhotoFeed({
   const [, startSaveTransition] = useTransition();
   const isUIVisibleRef = useRef(true);
   const headerCollapsedRef = useRef(false);
-  const lastScrollTopRef = useRef(0);
-  const lastScrollAtRef = useRef(0);
   const headerSettleTimer = useRef<number | null>(null);
   const headerMotorRef = useRef({
-    pointerId: -1,
-    startY: 0,
-    startX: 0,
+    touchId: -1,
+    originX: 0,
+    originY: 0,
     lastY: 0,
     lastAt: 0,
     velocity: 0,
@@ -117,6 +113,7 @@ export function ImmersivePhotoFeed({
     baseTranslate: 0,
     height: 0,
     active: false,
+    axisLocked: false,
   });
   const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
 
@@ -138,7 +135,7 @@ export function ImmersivePhotoFeed({
     (offsetPx: number, animate: boolean) => {
       const node = headerRef.current;
       if (!node) return;
-      const height = resolveHeaderHeight();
+      const height = headerMotorRef.current.height || resolveHeaderHeight();
       const clamped = Math.min(height, Math.max(0, offsetPx));
       const progress = Math.min(1, clamped / height);
       node.style.transition = animate ? HEADER_TRANSITION : 'none';
@@ -187,12 +184,6 @@ export function ImmersivePhotoFeed({
   }, [setStoreHeaderHidden]);
 
   useEffect(() => {
-    const node = scrollerRef.current;
-    lastScrollTopRef.current = node ? node.scrollTop : 0;
-    lastScrollAtRef.current = performance.now();
-  }, []);
-
-  useEffect(() => {
     applyHeaderCollapse(!isUIVisible);
   }, [applyHeaderCollapse, isUIVisible]);
 
@@ -229,7 +220,8 @@ export function ImmersivePhotoFeed({
 
   const settleHeaderDrag = useCallback(() => {
     const motor = headerMotorRef.current;
-    motor.pointerId = -1;
+    motor.touchId = -1;
+    motor.axisLocked = false;
     if (!motor.active) return;
     motor.active = false;
     const height = motor.height || resolveHeaderHeight();
@@ -249,22 +241,39 @@ export function ImmersivePhotoFeed({
   }, [applyHeaderCollapse, paintHeaderCollapsed, resolveHeaderHeight]);
 
   useEffect(() => {
-    // PRIMEIRO FRAME: crava a posição absoluta (topo + safe-area) sem animação.
-    // Sem isso a logotype herdava o offset da rota de origem e parecia colada
-    // sobre a foto. O estado de Ghost UI depois assume pelo mesmo canal.
-    paintHeaderCollapsed(headerCollapsedRef.current, false);
-  }, [paintHeaderCollapsed]);
+    // PRIMEIRO FRAME: mede a geometria real (safe-area + faixa de 44px) e crava
+    // a posição absoluta no topo sem animação. A altura medida aqui alimenta o
+    // motor de toque, evitando o clamp com um valor desatualizado no 1º gesto.
+    const node = headerRef.current;
+    if (node) {
+      headerMotorRef.current.height = resolveHeaderHeight();
+      node.style.transition = 'none';
+      node.style.transform = 'translate3d(0, 0, 0)';
+      node.style.opacity = headerCollapsedRef.current ? '0' : '1';
+      if (headerCollapsedRef.current) paintHeaderCollapsed(true, false);
+    }
+    const onResize = () => {
+      if (headerMotorRef.current.active) return;
+      headerMotorRef.current.height = resolveHeaderHeight();
+      paintHeaderCollapsed(headerCollapsedRef.current, false);
+    };
+    window.addEventListener('resize', onResize, { passive: true });
+    return () => window.removeEventListener('resize', onResize);
+  }, [paintHeaderCollapsed, resolveHeaderHeight]);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
     const motor = headerMotorRef.current;
 
+    // O motor do header só responde ao Ghost UI (UI visível) e nunca durante o
+    // swipe-to-dismiss, para não disputar o eixo do portal.
     const canDriveHeader = () => isUIVisibleRef.current && !dragRef.current.dismissing;
 
     const onTouchStart = (event: TouchEvent) => {
       if (event.touches.length !== 1 || !canDriveHeader()) {
-        motor.pointerId = -1;
+        motor.touchId = -1;
+        motor.axisLocked = false;
         return;
       }
       const touch = event.touches[0];
@@ -272,9 +281,9 @@ export function ImmersivePhotoFeed({
         window.clearTimeout(headerSettleTimer.current);
         headerSettleTimer.current = null;
       }
-      motor.pointerId = touch.identifier;
-      motor.startY = touch.clientY;
-      motor.startX = touch.clientX;
+      motor.touchId = touch.identifier;
+      motor.originX = touch.clientX;
+      motor.originY = touch.clientY;
       motor.lastY = touch.clientY;
       motor.lastAt = event.timeStamp;
       motor.velocity = 0;
@@ -282,37 +291,49 @@ export function ImmersivePhotoFeed({
       motor.translate = headerCollapsedRef.current ? -motor.height : 0;
       motor.baseTranslate = motor.translate;
       motor.active = false;
+      motor.axisLocked = false;
     };
 
     const onTouchMove = (event: TouchEvent) => {
-      if (motor.pointerId < 0) return;
-      const touch = Array.from(event.touches).find((item) => item.identifier === motor.pointerId);
+      if (motor.touchId < 0) return;
+      const touch = Array.from(event.touches).find((item) => item.identifier === motor.touchId);
       if (!touch) return;
-      const deltaY = touch.clientY - motor.startY;
-      const deltaX = touch.clientX - motor.startX;
+      const deltaY = touch.clientY - motor.originY;
+      const deltaX = touch.clientX - motor.originX;
 
       if (!motor.active) {
-        if (Math.abs(deltaY) < HEADER_DRAG_DEAD_ZONE_PX) return;
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          motor.pointerId = -1;
+        const absY = Math.abs(deltaY);
+        const absX = Math.abs(deltaX);
+        // Dead zone: espera o gesto sair do ruído antes de assumir o eixo.
+        if (absY < HEADER_DRAG_DEAD_ZONE_PX && absX < HEADER_DRAG_DEAD_ZONE_PX) return;
+        // Gesto horizontal nunca pertence ao header (deixa o scroller nativo).
+        if (absX > absY) {
+          motor.touchId = -1;
+          motor.axisLocked = false;
           return;
         }
-        motor.startY += Math.sign(deltaY) * HEADER_DRAG_DEAD_ZONE_PX;
+        // Reancora a origem para o header partir exatamente de onde o dedo
+        // saiu da dead zone, sem o salto de 10px do primeiro frame.
+        motor.originY = touch.clientY;
+        motor.axisLocked = true;
         motor.active = true;
+        motor.translate = motor.baseTranslate;
         if (headerRef.current) headerRef.current.style.transition = 'none';
+        applyHeaderDrag(motor.baseTranslate);
+        return;
       }
 
       const dt = Math.max(1, event.timeStamp - motor.lastAt);
       motor.velocity = (touch.clientY - motor.lastY) / dt;
       motor.lastY = touch.clientY;
       motor.lastAt = event.timeStamp;
-      applyHeaderDrag(motor.baseTranslate + (touch.clientY - motor.startY));
+      applyHeaderDrag(motor.baseTranslate + (touch.clientY - motor.originY));
     };
 
     const onTouchEnd = (event: TouchEvent) => {
-      if (motor.pointerId < 0) return;
+      if (motor.touchId < 0) return;
       const stillTouching = Array.from(event.touches).some(
-        (item) => item.identifier === motor.pointerId
+        (item) => item.identifier === motor.touchId
       );
       if (stillTouching) return;
       settleHeaderDrag();
@@ -388,27 +409,8 @@ export function ImmersivePhotoFeed({
       const next = Math.round(node.scrollTop / height);
       const clamped = Math.max(0, Math.min(feedItems.length - 1, next));
       setActiveIndex((current) => (current === clamped ? current : clamped));
-
-      const now = performance.now();
-      const top = node.scrollTop;
-      const delta = top - lastScrollTopRef.current;
-      const elapsed = Math.max(1, now - lastScrollAtRef.current);
-      const velocity = Math.abs(delta) / elapsed;
-      lastScrollTopRef.current = top;
-      lastScrollAtRef.current = now;
-
-      if (headerMotorRef.current.active) return;
-
-      if (top <= HEADER_TOP_LOCK_PX) {
-        applyHeaderCollapse(false);
-        return;
-      }
-      const decisive = Math.abs(delta) >= HEADER_DELTA_PX && velocity >= HEADER_VELOCITY_PX_MS;
-      if (!decisive) return;
-      if (delta > 0) applyHeaderCollapse(true);
-      else applyHeaderCollapse(false);
     });
-  }, [applyHeaderCollapse, feedItems.length]);
+  }, [feedItems.length]);
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
