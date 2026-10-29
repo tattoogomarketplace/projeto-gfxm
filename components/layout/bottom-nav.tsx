@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
@@ -67,7 +67,6 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 const PILL_CLASS =
   'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/20 bg-white/[0.02] px-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),_0_20px_40px_rgba(0,0,0,0.4)] backdrop-blur-[40px] select-none touch-none';
 
-const NAV_THROTTLE_MS = 400;
 const DRAG_THRESHOLD_PX = 6;
 const DRAG_HOLD_MS = 150;
 const DOCK_TRACK_SPRING = { stiffness: 1400, damping: 48, mass: 0.16, restDelta: 0.08 };
@@ -226,6 +225,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
+  const [isPending, startTransition] = useTransition();
   // Fase 25.2: enquanto qualquer canvas de boot estiver ativo (splash, hidratação
   // do Clerk ou fallback de rota unificado), a dock se oculta. A revelação
   // pós-splash nunca expõe ícones de navegação sobre o canvas escuro. Como a dock
@@ -290,7 +290,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const suppressClickRef = useRef(false);
   const hapticOnPressRef = useRef(false);
   const tapAnimsRef = useRef<Array<{ stop: () => void }>>([]);
-  const navLockUntilRef = useRef(0);
   const slotsRef = useRef<Array<{ x: number; w: number }>>([]);
   const listLeftRef = useRef(0);
   const listWidthRef = useRef(0);
@@ -520,11 +519,9 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
 
   const commitTab = useCallback(
     (index: number, haptic = true) => {
-      const now = Date.now();
-      if (now < navLockUntilRef.current) return;
+      if (isPending) return;
       const item = ITEMS[index];
       if (!item) return;
-      navLockUntilRef.current = now + NAV_THROTTLE_MS;
       const href = hrefForTab(item.tab, homePath);
       handleSelect(item.tab, href, haptic);
       if (isKeepAliveHostPath(pathname)) {
@@ -538,7 +535,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         router.push(href, { scroll: false });
       });
     },
-    [handleSelect, homePath, pathname, router]
+    [handleSelect, homePath, isPending, pathname, router, startTransition]
   );
 
   const clearPressTimer = useCallback(() => {
@@ -560,6 +557,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const onDockPointerDown = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
       if (event.button !== 0) return;
+      if (isPending) return;
       cacheDockSlots();
       clearPressTimer();
       pressActiveRef.current = true;
@@ -578,8 +576,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         followPointer(lastClientXRef.current);
       }, DRAG_HOLD_MS);
     },
-    [cacheDockSlots, clearPressTimer, engageDockDrag, followPointer]
-  );
+      [cacheDockSlots, clearPressTimer, engageDockDrag, followPointer, isPending]
+    );
 
   const onDockPointerMove = useCallback(
     (event: React.PointerEvent<HTMLUListElement>) => {
@@ -668,14 +666,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 onContextMenu={(event) => event.preventDefault()}
                 onPointerDown={(event) => {
                   if (event.button !== 0) return;
+                  if (isPending && routeIndex !== index) return;
                   pendingIndexRef.current = index;
                   liveIndexRef.current = index;
                   hapticOnPressRef.current = true;
                   measurePill(index, false, true);
                   triggerHaptic('light');
-                  if (Date.now() >= navLockUntilRef.current) {
-                    setActiveTab(item.tab);
-                  }
+                  setActiveTab(item.tab);
                 }}
                 onClick={(event) => {
                   event.preventDefault();
@@ -696,7 +693,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 className={cn(
                   dockItemClass(routeIndex === index),
                   'touch-manipulation [touch-action:manipulation] transform-gpu will-change-transform transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
+                  isPending && routeIndex !== index && 'pointer-events-none'
                 )}
                 aria-current={routeIndex === index ? 'page' : undefined}
                 aria-label={t(item.labelKey)}
