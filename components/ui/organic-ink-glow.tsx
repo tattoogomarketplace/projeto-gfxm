@@ -1,6 +1,10 @@
+import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
 export function OrganicInkGlow({ className }: { className?: string }) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const filterId = `ink-dispersion-${uid}`;
+
   return (
     <>
       <svg
@@ -11,7 +15,7 @@ export function OrganicInkGlow({ className }: { className?: string }) {
         height={0}
       >
         <defs>
-          <filter id="ink-dispersion" colorInterpolationFilters="sRGB">
+          <filter id={filterId} colorInterpolationFilters="sRGB">
             <feTurbulence
               type="fractalNoise"
               baseFrequency="0.015"
@@ -28,7 +32,11 @@ export function OrganicInkGlow({ className }: { className?: string }) {
           </filter>
         </defs>
       </svg>
-      <span aria-hidden className={cn('organic-ink-blob', className)} />
+      <span
+        aria-hidden
+        className={cn('organic-ink-blob', className)}
+        style={{ ['--ink-filter' as string]: `url(#${filterId})` }}
+      />
     </>
   );
 }

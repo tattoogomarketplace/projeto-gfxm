@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { OrganicInkGlow } from '@/components/ui/organic-ink-glow';
 
 export function InstagramSpinner({
   className,
@@ -8,32 +9,41 @@ export function InstagramSpinner({
   size?: number;
 }) {
   return (
-    <svg
-      className={cn('animate-spin text-zinc-400 [animation-duration:0.75s]', className)}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
+    <span
+      className={cn(
+        'relative inline-flex items-center justify-center overflow-visible text-zinc-400',
+        className
+      )}
+      style={{ width: size, height: size }}
     >
-      <circle
-        cx="12"
-        cy="12"
-        r="9.25"
-        stroke="currentColor"
-        strokeOpacity="0.16"
-        strokeWidth="1.5"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="9.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeDasharray="16 42"
-      />
-    </svg>
+      <OrganicInkGlow />
+      <svg
+        className="relative z-[1] animate-spin [animation-duration:0.75s]"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="9.25"
+          stroke="currentColor"
+          strokeOpacity="0.16"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="9.25"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="16 42"
+        />
+      </svg>
+    </span>
   );
 }
 

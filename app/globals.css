@@ -1179,18 +1179,21 @@
   margin: 0;
   pointer-events: none;
   border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--ptr-accent, #ff5f1f) 72%, transparent) 0%,
-    color-mix(in srgb, var(--ptr-accent, #ff5f1f) 28%, transparent) 42%,
-    transparent 72%
+  background-image: radial-gradient(
+    circle at 48% 40%,
+    color-mix(in srgb, currentColor 16%, #050403) 0%,
+    color-mix(in srgb, currentColor 38%, #120806) 22%,
+    color-mix(in srgb, currentColor 70%, transparent) 48%,
+    color-mix(in srgb, currentColor 88%, white) 62%,
+    color-mix(in srgb, currentColor 28%, transparent) 74%,
+    transparent 86%
   );
-  filter: url(#ink-dispersion) blur(10px);
+  filter: var(--ink-filter, url(#ink-dispersion)) blur(10px);
   transform: translate3d(-50%, -50%, 0);
   transform-origin: center;
   will-change: transform, opacity, filter;
   backface-visibility: hidden;
-  animation: ink-pulse 2.4s ease-in-out infinite;
+  animation: ink-pulse 3s ease-in-out infinite;
 }
 
 @keyframes ink-pulse {
