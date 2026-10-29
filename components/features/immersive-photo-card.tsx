@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, FileText, Send, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -21,6 +21,8 @@ const GRIP_CURVE = [
 
 const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
+const TAP_MAX_MS = 200;
+const TAP_MAX_PX = 10;
 
 export type ImmersivePhotoCardProps = {
   imageUrl?: string | null;
@@ -69,6 +71,7 @@ export function ImmersivePhotoCard({
   const [burstNonce, setBurstNonce] = useState(0);
   const lastTapAt = useRef(0);
   const burstTimer = useRef<number | null>(null);
+  const pointerStart = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
   const handle = username.replace(/^@+/, '');
 
   useEffect(
@@ -116,7 +119,7 @@ export function ImmersivePhotoCard({
     onUIVisibleChange?.(isUIVisible);
   }, [isUIVisible, onUIVisibleChange]);
 
-  const handlePhotoClick = useCallback(() => {
+  const commitIntentionalTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapAt.current <= DOUBLE_TAP_MS) {
       lastTapAt.current = 0;
@@ -126,6 +129,44 @@ export function ImmersivePhotoCard({
     lastTapAt.current = now;
     toggleUI();
   }, [toggleLike, toggleUI]);
+
+  const handlePointerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    pointerStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+      t: Date.now(),
+      id: event.pointerId,
+    };
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (event: PointerEvent<HTMLButtonElement>) => {
+      const start = pointerStart.current;
+      pointerStart.current = null;
+      if (!start || start.id !== event.pointerId) return;
+      const deltaX = event.clientX - start.x;
+      const deltaY = event.clientY - start.y;
+      const deltaTime = Date.now() - start.t;
+      if (deltaTime >= TAP_MAX_MS) return;
+      if (Math.abs(deltaX) >= TAP_MAX_PX || Math.abs(deltaY) >= TAP_MAX_PX) return;
+      commitIntentionalTap();
+    },
+    [commitIntentionalTap]
+  );
+
+  const handlePointerCancel = useCallback(() => {
+    pointerStart.current = null;
+  }, []);
+
+  const handlePhotoKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      commitIntentionalTap();
+    },
+    [commitIntentionalTap]
+  );
 
   const isolateAction = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -160,7 +201,10 @@ export function ImmersivePhotoCard({
     <article className="relative isolate h-[100dvh] w-screen overflow-hidden bg-black text-white">
       <button
         type="button"
-        onClick={handlePhotoClick}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+        onKeyDown={handlePhotoKeyDown}
         className="absolute inset-0 z-0 h-full min-h-0 w-full cursor-pointer border-0 bg-transparent p-0"
         aria-label={isUIVisible ? 'Ocultar interface' : 'Mostrar interface'}
         aria-pressed={isUIVisible}
