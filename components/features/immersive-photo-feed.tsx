@@ -32,7 +32,6 @@ const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
 const SNAP_BACKDROP_EASE = 'background-color 320ms ease-out';
 const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
 const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
-const HEADER_VELOCITY_PX_MS = 0.5;
 const HEADER_DRAG_DEAD_ZONE_PX = 10;
 const HEADER_FALLBACK_HEIGHT_PX = 44;
 const HEADER_TRANSITION = 'transform 200ms ease-out, opacity 200ms ease-out';
@@ -136,11 +135,12 @@ export function ImmersivePhotoFeed({
       const node = headerRef.current;
       if (!node) return;
       const height = headerMotorRef.current.height || resolveHeaderHeight();
-      const clamped = Math.min(height, Math.max(0, offsetPx));
-      const progress = Math.min(1, clamped / height);
+      const travel = Math.max(0, offsetPx);
+      const progress = Math.min(1, height > 0 ? travel / height : 0);
       node.style.transition = animate ? HEADER_TRANSITION : 'none';
-      node.style.transform = `translate3d(0, ${-clamped}px, 0)`;
-      node.style.opacity = `${1 - progress}`;
+      node.style.translate = 'none';
+      node.style.transform = `translate3d(0, ${-travel}px, 0)`;
+      node.style.opacity = `${Math.max(0, 1 - progress)}`;
     },
     [resolveHeaderHeight]
   );
@@ -152,29 +152,49 @@ export function ImmersivePhotoFeed({
     [paintHeader, resolveHeaderHeight]
   );
 
+  const syncHeaderToScroller = useCallback(
+    (animate = false) => {
+      if (!isUIVisibleRef.current) {
+        paintHeaderCollapsed(true, animate);
+        return;
+      }
+      const node = scrollerRef.current;
+      if (!node) {
+        paintHeader(Math.max(0, -headerMotorRef.current.translate), animate);
+        return;
+      }
+      const pageHeight = Math.max(node.clientHeight, 1);
+      const remainder = node.scrollTop - Math.floor(node.scrollTop / pageHeight) * pageHeight;
+      if (remainder > 0.5) {
+        paintHeader(remainder, animate);
+        return;
+      }
+      paintHeader(Math.max(0, -headerMotorRef.current.translate), animate);
+    },
+    [paintHeader, paintHeaderCollapsed]
+  );
+
   const applyHeaderCollapse = useCallback(
     (hidden: boolean) => {
       if (headerCollapsedRef.current === hidden) return;
       headerCollapsedRef.current = hidden;
       setIsHeaderCollapsed(hidden);
       document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
-        node.classList.toggle(HEADER_HIDDEN_CLASS, hidden);
+        node.classList.add(HEADER_HIDDEN_CLASS);
       });
-      setStoreHeaderHidden(hidden);
-      if (!headerMotorRef.current.active) paintHeaderCollapsed(hidden, true);
+      setStoreHeaderHidden(true);
+      if (headerMotorRef.current.active) return;
+      if (hidden) paintHeaderCollapsed(true, true);
+      else syncHeaderToScroller(true);
     },
-    [paintHeaderCollapsed, setStoreHeaderHidden]
+    [paintHeaderCollapsed, setStoreHeaderHidden, syncHeaderToScroller]
   );
 
   useEffect(() => {
-    // ENTRY LOCK: a thread imersiva é dona do estado do header enquanto estiver
-    // montada. Qualquer classe de header oculto herdada do feed de origem
-    // (ex.: scroll para baixo no Início) é limpa no primeiro frame, antes de o
-    // usuário interagir com a galeria em tela cheia.
     document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
-      node.classList.remove(HEADER_HIDDEN_CLASS);
+      node.classList.add(HEADER_HIDDEN_CLASS);
     });
-    setStoreHeaderHidden(false);
+    setStoreHeaderHidden(true);
     return () => {
       document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
         node.classList.remove(HEADER_HIDDEN_CLASS);
@@ -209,36 +229,35 @@ export function ImmersivePhotoFeed({
   const applyHeaderDrag = useCallback(
     (translateY: number) => {
       const motor = headerMotorRef.current;
-      const height = motor.height || resolveHeaderHeight();
-      const clamped = Math.min(0, Math.max(-height, translateY));
-      motor.translate = clamped;
-      motor.height = height;
-      paintHeader(-clamped, false);
+      motor.height = motor.height || resolveHeaderHeight();
+      motor.translate = Math.min(0, translateY);
+      const scroller = scrollerRef.current;
+      if (scroller && scroller.scrollTop > 0) {
+        syncHeaderToScroller(false);
+        return;
+      }
+      paintHeader(-motor.translate, false);
     },
-    [paintHeader, resolveHeaderHeight]
+    [paintHeader, resolveHeaderHeight, syncHeaderToScroller]
   );
 
   const settleHeaderDrag = useCallback(() => {
     const motor = headerMotorRef.current;
     motor.touchId = -1;
     motor.axisLocked = false;
-    if (!motor.active) return;
+    if (!motor.active) {
+      syncHeaderToScroller(true);
+      return;
+    }
     motor.active = false;
-    const height = motor.height || resolveHeaderHeight();
-    const progress = Math.min(1, Math.abs(motor.translate) / height);
-    const decisive = Math.abs(motor.velocity) >= HEADER_VELOCITY_PX_MS;
-    const hidden = decisive ? motor.velocity < 0 : progress >= 0.5;
-
     if (headerSettleTimer.current !== null) window.clearTimeout(headerSettleTimer.current);
-    paintHeaderCollapsed(hidden, true);
-    applyHeaderCollapse(hidden);
-
+    syncHeaderToScroller(true);
     headerSettleTimer.current = window.setTimeout(() => {
       headerSettleTimer.current = null;
       if (headerMotorRef.current.active) return;
-      paintHeaderCollapsed(headerCollapsedRef.current, false);
+      syncHeaderToScroller(false);
     }, SNAP_MS);
-  }, [applyHeaderCollapse, paintHeaderCollapsed, resolveHeaderHeight]);
+  }, [syncHeaderToScroller]);
 
   useEffect(() => {
     // PRIMEIRO FRAME: mede a geometria real (safe-area + faixa de 44px) e crava
@@ -247,10 +266,12 @@ export function ImmersivePhotoFeed({
     const node = headerRef.current;
     if (node) {
       headerMotorRef.current.height = resolveHeaderHeight();
+      headerMotorRef.current.translate = 0;
       node.style.transition = 'none';
+      node.style.translate = 'none';
       node.style.transform = 'translate3d(0, 0, 0)';
-      node.style.opacity = headerCollapsedRef.current ? '0' : '1';
-      if (headerCollapsedRef.current) paintHeaderCollapsed(true, false);
+      node.style.opacity = '1';
+      syncHeaderToScroller(false);
     }
     const onResize = () => {
       if (headerMotorRef.current.active) return;
@@ -259,7 +280,7 @@ export function ImmersivePhotoFeed({
     };
     window.addEventListener('resize', onResize, { passive: true });
     return () => window.removeEventListener('resize', onResize);
-  }, [paintHeaderCollapsed, resolveHeaderHeight]);
+  }, [paintHeaderCollapsed, resolveHeaderHeight, syncHeaderToScroller]);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -405,12 +426,13 @@ export function ImmersivePhotoFeed({
     if (!node || frameRef.current) return;
     frameRef.current = window.requestAnimationFrame(() => {
       frameRef.current = 0;
+      syncHeaderToScroller(false);
       const height = Math.max(node.clientHeight, 1);
       const next = Math.round(node.scrollTop / height);
       const clamped = Math.max(0, Math.min(feedItems.length - 1, next));
       setActiveIndex((current) => (current === clamped ? current : clamped));
     });
-  }, [feedItems.length]);
+  }, [feedItems.length, syncHeaderToScroller]);
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
@@ -618,8 +640,9 @@ export function ImmersivePhotoFeed({
             aria-hidden={isHeaderCollapsed}
             className={cn(
               'pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col items-center',
-              'pt-[env(safe-area-inset-top)] transform-gpu will-change-[transform,opacity]'
+              'pt-[env(safe-area-inset-top)] will-change-[transform,opacity]'
             )}
+            style={{ transform: 'translate3d(0,0,0)', opacity: 1, translate: 'none' }}
           >
             <div className="pointer-events-none flex h-11 w-full shrink-0 items-center justify-center">
               <BrandLogo className="pointer-events-none h-auto w-auto px-0" size="sm" />
