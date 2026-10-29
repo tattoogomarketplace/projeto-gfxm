@@ -455,7 +455,13 @@ export function ImmersivePhotoFeed({
               isUIVisible ? 'overflow-y-scroll touch-pan-y' : 'overflow-hidden touch-none',
               className
             )}
-            style={{ scrollSnapType: 'y mandatory', scrollBehavior: 'auto' }}
+            style={{
+              scrollSnapType: 'y mandatory',
+              scrollBehavior: 'auto',
+              overscrollBehaviorY: 'contain',
+              WebkitOverflowScrolling: 'touch',
+              willChange: 'scroll-position',
+            }}
           >
             {feedItems.map((item, index) => {
               const mounted = Math.abs(index - activeIndex) <= WINDOW_RADIUS;
