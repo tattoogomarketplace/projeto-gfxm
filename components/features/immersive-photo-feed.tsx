@@ -37,7 +37,7 @@ const HEADER_VELOCITY_PX_MS = 0.5;
 const HEADER_TOP_LOCK_PX = 24;
 const HEADER_DRAG_DEAD_ZONE_PX = 10;
 const HEADER_FALLBACK_HEIGHT_PX = 44;
-const HEADER_TRANSITION = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease-out';
+const HEADER_TRANSITION = 'transform 200ms ease-out, opacity 200ms ease-out';
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
 
@@ -167,6 +167,18 @@ export function ImmersivePhotoFeed({
   useEffect(() => {
     applyHeaderCollapse(!isUIVisible);
   }, [applyHeaderCollapse, isUIVisible]);
+
+  useEffect(() => {
+    // Estado de UI mandante: ao alternar o Ghost UI, qualquer resíduo inline
+    // de um arrasto anterior é limpo para que a classe
+    // `-translate-y-full`/`opacity-0` conduza a transição sem conflito.
+    if (headerMotorRef.current.active) return;
+    if (headerSettleTimer.current !== null) {
+      window.clearTimeout(headerSettleTimer.current);
+      headerSettleTimer.current = null;
+    }
+    resetHeaderInline();
+  }, [isUIVisible, resetHeaderInline]);
 
   const handleUIVisibleChange = useCallback((visible: boolean) => {
     isUIVisibleRef.current = visible;
@@ -595,7 +607,7 @@ export function ImmersivePhotoFeed({
             className={cn(
               'pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col items-center',
               'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
-              'transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+              'transition-all duration-200 ease-out',
               isHeaderCollapsed ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             )}
           >
