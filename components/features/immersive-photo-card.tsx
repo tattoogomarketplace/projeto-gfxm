@@ -36,6 +36,7 @@ export type ImmersivePhotoCardProps = {
   onQuote?: () => void;
   onShare?: () => void;
   onClose?: () => void;
+  onUIVisibleChange?: (visible: boolean) => void;
 };
 
 function formatViews(count: number): string {
@@ -58,6 +59,7 @@ export function ImmersivePhotoCard({
   onQuote,
   onShare,
   onClose,
+  onUIVisibleChange,
 }: ImmersivePhotoCardProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [isUIVisible, setIsUIVisible] = useState(true);
@@ -109,6 +111,10 @@ export function ImmersivePhotoCard({
     triggerHaptic('light');
     setIsUIVisible((current) => !current);
   }, [triggerHaptic]);
+
+  useEffect(() => {
+    onUIVisibleChange?.(isUIVisible);
+  }, [isUIVisible, onUIVisibleChange]);
 
   const handlePhotoClick = useCallback(() => {
     const now = Date.now();

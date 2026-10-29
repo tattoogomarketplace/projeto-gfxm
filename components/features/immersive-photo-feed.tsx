@@ -83,10 +83,17 @@ export function ImmersivePhotoFeed({
     dismissing: false,
   });
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isUIVisible, setIsUIVisible] = useState(true);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [budgetItem, setBudgetItem] = useState<ImmersivePhotoFeedItem | null>(null);
   const [, startSaveTransition] = useTransition();
+  const isUIVisibleRef = useRef(true);
+
+  const handleUIVisibleChange = useCallback((visible: boolean) => {
+    isUIVisibleRef.current = visible;
+    setIsUIVisible(visible);
+  }, []);
 
   const overlayScreenHeight = useCallback(() => {
     if (typeof window === 'undefined') return 1;
@@ -105,12 +112,13 @@ export function ImmersivePhotoFeed({
   const lockScroller = useCallback((locked: boolean) => {
     const scroller = scrollerRef.current;
     const shell = shellRef.current;
+    const freeze = locked || !isUIVisibleRef.current;
     if (scroller) {
-      scroller.style.overflowY = locked ? 'hidden' : '';
-      scroller.style.touchAction = locked ? 'none' : '';
+      scroller.style.overflowY = freeze ? 'hidden' : '';
+      scroller.style.touchAction = freeze ? 'none' : '';
     }
     if (shell) {
-      shell.style.touchAction = locked ? 'none' : '';
+      shell.style.touchAction = freeze ? 'none' : '';
     }
   }, []);
 
@@ -134,6 +142,10 @@ export function ImmersivePhotoFeed({
       if (timer.current !== null) window.clearTimeout(timer.current);
     };
   }, []);
+
+  useEffect(() => {
+    lockScroller(!isUIVisible);
+  }, [isUIVisible, lockScroller]);
 
   const feedItems = useMemo<readonly ImmersivePhotoFeedItem[]>(
     () => (items && items.length > 0 ? items : PLACEHOLDER_INSPIRATIONS),
@@ -196,6 +208,7 @@ export function ImmersivePhotoFeed({
   const onPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (dragRef.current.dismissing) return;
+    if (isUIVisibleRef.current) return;
     const scroller = scrollerRef.current;
     if (!scroller) return;
     if (isOverlayChrome(event.target, scroller)) return;
@@ -218,9 +231,10 @@ export function ImmersivePhotoFeed({
       const shell = shellRef.current;
       if (!scroller || !shell) return;
 
+      if (isUIVisibleRef.current) return;
+
       const deltaY = event.clientY - drag.startY;
       const deltaX = event.clientX - drag.startX;
-      const atTop = scroller.scrollTop <= 0;
 
       if (!drag.active) {
         if (deltaY < -DRAG_ACTIVATE_PX || Math.abs(deltaX) > Math.max(deltaY, DRAG_ACTIVATE_PX)) {
@@ -231,10 +245,6 @@ export function ImmersivePhotoFeed({
         if (deltaY < DRAG_ACTIVATE_PX) return;
         if (Math.abs(deltaX) > deltaY) {
           drag.pointerId = -1;
-          lockScroller(false);
-          return;
-        }
-        if (!atTop) {
           lockScroller(false);
           return;
         }
@@ -365,9 +375,10 @@ export function ImmersivePhotoFeed({
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
             className={cn(
-              'flex h-[100dvh] w-full flex-col overflow-y-scroll snap-y snap-mandatory scrollbar-none',
+              'flex h-[100dvh] w-full flex-col snap-y snap-mandatory scrollbar-none',
               'overscroll-y-contain [-webkit-overflow-scrolling:touch]',
-              'transform-gpu touch-pan-y',
+              'transform-gpu',
+              isUIVisible ? 'overflow-y-scroll touch-pan-y' : 'overflow-hidden touch-none',
               className
             )}
           >
@@ -394,6 +405,7 @@ export function ImmersivePhotoFeed({
                       onQuote={() => openBudget(item)}
                       onShare={() => shareInspiration(item)}
                       onClose={onClose}
+                      onUIVisibleChange={index === activeIndex ? handleUIVisibleChange : undefined}
                     />
                   ) : null}
                 </div>
