@@ -25,9 +25,11 @@ function inspirationShareUrl(item: ImmersivePhotoFeedItem): string {
 export function ImmersivePhotoFeed({
   items,
   className,
+  onClose,
 }: {
   items?: readonly ImmersivePhotoFeedItem[];
   className?: string;
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +132,7 @@ export function ImmersivePhotoFeed({
                   onSave={() => persistToggleSave(item.id, item.saved)}
                   onQuote={() => openBudget(item)}
                   onShare={() => shareInspiration(item)}
+                  onClose={onClose}
                 />
               ) : null}
             </div>

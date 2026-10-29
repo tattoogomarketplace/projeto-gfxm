@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, FileText, Send } from 'lucide-react';
+import { Bookmark, Eye, FileText, Send, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -35,6 +35,7 @@ export type ImmersivePhotoCardProps = {
   onSave?: () => void;
   onQuote?: () => void;
   onShare?: () => void;
+  onClose?: () => void;
 };
 
 function formatViews(count: number): string {
@@ -56,6 +57,7 @@ export function ImmersivePhotoCard({
   onSave,
   onQuote,
   onShare,
+  onClose,
 }: ImmersivePhotoCardProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [isUIVisible, setIsUIVisible] = useState(true);
@@ -190,6 +192,26 @@ export function ImmersivePhotoCard({
           isUIVisible ? 'opacity-100' : 'opacity-0'
         )}
       >
+        {onClose ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              isolateAction(event);
+              triggerHaptic('light');
+              onClose();
+            }}
+            aria-label="Fechar"
+            className={cn(
+              'absolute left-[max(0.5rem,env(safe-area-inset-left,0px))] z-20 flex min-h-11 min-w-11 items-center justify-center bg-transparent p-0 text-white',
+              'drop-shadow-[0_1px_8px_rgba(0,0,0,0.75)] transform-gpu will-change-transform',
+              isUIVisible ? 'pointer-events-auto' : 'pointer-events-none'
+            )}
+            style={{ top: 'max(0.5rem, env(safe-area-inset-top, 0px))' }}
+          >
+            <X className="h-6 w-6 text-white" strokeWidth={1.75} />
+          </button>
+        ) : null}
+
         <div
           className={cn(
             'absolute inset-y-0 right-0 flex w-[5.5rem] items-center justify-end',
