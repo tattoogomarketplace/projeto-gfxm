@@ -62,6 +62,7 @@ const ASPECTS = ['aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/1
 const GRID_CLASS = 'grid grid-cols-3 gap-[1px]';
 const GRID_TILE_CLASS = 'relative w-full aspect-[9/16] overflow-hidden bg-white/5';
 const FEED_LIST_CLASS = 'flex flex-col gap-8 w-full max-w-lg mx-auto';
+const TOUCH_SLOP_PX = 10;
 
 const HUD_CURATORSHIP_CLASS =
   'relative z-[1] p-4 rounded-2xl flex flex-col gap-4 overflow-visible border-t border-x border-b-0 border-white/10 shadow-2xl';
@@ -691,6 +692,8 @@ export function GalleryInspirationGrid({
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
   const gridPointerOrigin = useRef<{ x: number; y: number } | null>(null);
+  const feedPointerOrigin = useRef<{ x: number; y: number } | null>(null);
+  const feedIsScrolling = useRef(false);
   const suppressClickUntil = useRef(0);
   const lastFeedTap = useRef<{ id: string; at: number } | null>(null);
   const burstTimer = useRef<number | null>(null);
@@ -796,6 +799,13 @@ export function GalleryInspirationGrid({
     item: InspirationItem,
     event?: { preventDefault: () => void; stopPropagation: () => void; target?: EventTarget | null }
   ) => {
+    if (feedIsScrolling.current) {
+      event?.preventDefault();
+      event?.stopPropagation();
+      feedPointerOrigin.current = null;
+      feedIsScrolling.current = false;
+      return;
+    }
     if (guardRefreshRecoveryClick(event)) return;
     const target = event?.target ?? null;
     if (target instanceof Element && target.closest('[data-gallery-action]')) return;
@@ -810,6 +820,32 @@ export function GalleryInspirationGrid({
 
   const handleGridPhotoPointerCancel = () => {
     gridPointerOrigin.current = null;
+  };
+
+  const handleFeedPhotoPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    feedIsScrolling.current = false;
+    feedPointerOrigin.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const handleFeedPhotoPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const origin = feedPointerOrigin.current;
+    if (!origin || feedIsScrolling.current) return;
+    const deltaX = Math.abs(event.clientX - origin.x);
+    const deltaY = Math.abs(event.clientY - origin.y);
+    if (deltaX > TOUCH_SLOP_PX || deltaY > TOUCH_SLOP_PX) {
+      feedIsScrolling.current = true;
+    }
+  };
+
+  const abortFeedPhotoOpen = (
+    event: { preventDefault: () => void; stopPropagation: () => void },
+    resetScroll = false
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    feedPointerOrigin.current = null;
+    if (resetScroll) feedIsScrolling.current = false;
   };
 
   const handleGridPhotoPointerUp =
@@ -894,6 +930,21 @@ export function GalleryInspirationGrid({
   const handleFeedImagePointerUp =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
       cancelLongPress();
+      if (feedIsScrolling.current) {
+        abortFeedPhotoOpen(event);
+        return;
+      }
+      const origin = feedPointerOrigin.current;
+      feedPointerOrigin.current = null;
+      if (origin) {
+        const deltaX = Math.abs(event.clientX - origin.x);
+        const deltaY = Math.abs(event.clientY - origin.y);
+        if (deltaX > TOUCH_SLOP_PX || deltaY > TOUCH_SLOP_PX) {
+          feedIsScrolling.current = true;
+          abortFeedPhotoOpen(event);
+          return;
+        }
+      }
       if (guardRefreshRecoveryClick(event)) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       if (Date.now() < suppressClickUntil.current) return;
@@ -908,6 +959,10 @@ export function GalleryInspirationGrid({
       lastFeedTap.current = { id: item.id, at: now };
       openInspiration(item);
     };
+
+  const handleFeedPhotoPointerCancel = (event: ReactPointerEvent<HTMLElement>) => {
+    abortFeedPhotoOpen(event, true);
+  };
 
   const dismissPreview = useCallback(() => setPreview(null), []);
 
@@ -1112,7 +1167,10 @@ export function GalleryInspirationGrid({
                     </FeedPinchZoom>
                     <button
                       type="button"
+                      onPointerDown={handleFeedPhotoPointerDown}
+                      onPointerMove={handleFeedPhotoPointerMove}
                       onPointerUp={handleFeedImagePointerUp(item)}
+                      onPointerCancel={handleFeedPhotoPointerCancel}
                       onClick={(event) => handleInspirationClick(item, event)}
                       className="absolute inset-0 z-[3] touch-manipulation cursor-pointer bg-transparent"
                       aria-label={artistName}
