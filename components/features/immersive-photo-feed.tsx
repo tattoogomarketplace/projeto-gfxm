@@ -87,6 +87,7 @@ export function ImmersivePhotoFeed({
     offset: 0,
     raw: 0,
     velocity: 0,
+    dir: 1,
     active: false,
     dismissing: false,
   });
@@ -149,7 +150,7 @@ export function ImmersivePhotoFeed({
     const node = shellRef.current;
     const backdrop = backdropRef.current;
     const screenHeight = overlayScreenHeight();
-    const opacity = Math.max(0, 1 - (deltaY / screenHeight));
+    const opacity = Math.max(0, 1 - (Math.abs(deltaY) / screenHeight));
     if (node) node.style.transform = `translate3d(0, ${deltaY}px, 0)`;
     if (backdrop) backdrop.style.backgroundColor = `rgba(0,0,0,${opacity})`;
   }, [overlayScreenHeight]);
@@ -282,6 +283,7 @@ export function ImmersivePhotoFeed({
     dragRef.current.offset = 0;
     dragRef.current.raw = 0;
     dragRef.current.velocity = 0;
+    dragRef.current.dir = 1;
     dragRef.current.active = false;
   }, []);
 
@@ -299,13 +301,8 @@ export function ImmersivePhotoFeed({
       const deltaX = event.clientX - drag.startX;
 
       if (!drag.active) {
-        if (deltaY < -DRAG_ACTIVATE_PX || Math.abs(deltaX) > Math.max(deltaY, DRAG_ACTIVATE_PX)) {
-          drag.pointerId = -1;
-          lockScroller(false);
-          return;
-        }
-        if (deltaY < DRAG_ACTIVATE_PX) return;
-        if (Math.abs(deltaX) > deltaY) {
+        if (Math.abs(deltaY) < DRAG_ACTIVATE_PX) return;
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
           drag.pointerId = -1;
           lockScroller(false);
           return;
@@ -326,11 +323,12 @@ export function ImmersivePhotoFeed({
       drag.velocity = (event.clientY - drag.lastY) / dt;
       drag.lastY = event.clientY;
       drag.lastAt = event.timeStamp;
-      const raw = Math.max(0, deltaY);
+      const raw = Math.abs(deltaY);
       const offset = raw * RUBBER;
+      drag.dir = deltaY < 0 ? -1 : 1;
       drag.raw = raw;
       drag.offset = offset;
-      applyDragTransform(offset);
+      applyDragTransform(offset * drag.dir);
     },
     [applyDragTransform, lockScroller]
   );
@@ -359,7 +357,7 @@ export function ImmersivePhotoFeed({
 
       const shouldDismiss =
         Boolean(onClose) &&
-        (drag.raw >= DISMISS_DISTANCE_PX || drag.velocity >= DISMISS_VELOCITY_PX_MS);
+        (drag.raw >= DISMISS_DISTANCE_PX || Math.abs(drag.velocity) >= DISMISS_VELOCITY_PX_MS);
 
       if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
 
@@ -370,7 +368,7 @@ export function ImmersivePhotoFeed({
         if (shell) {
           shell.style.transition = DISMISS_EASE;
           if (backdropRef.current) backdropRef.current.style.transition = DISMISS_BACKDROP_EASE;
-          applyDragTransform(viewportH);
+          applyDragTransform(viewportH * drag.dir);
         }
         settleTimer.current = window.setTimeout(finishDismiss, shell ? DISMISS_MS : 0);
         return;
