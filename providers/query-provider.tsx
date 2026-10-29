@@ -28,7 +28,12 @@ function makeQueryClient() {
         retry: 1,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
-        refetchOnMount: true,
+        refetchOnMount: 'always',
+        networkMode: 'offlineFirst',
+      },
+      mutations: {
+        networkMode: 'offlineFirst',
+        retry: 0,
       },
     },
   });
@@ -46,7 +51,11 @@ function restorePersistedCache(client: QueryClient) {
     }
     hydrate(client, parsed.state);
   } catch {
-    window.localStorage.removeItem(QUERY_CACHE_KEY);
+    try {
+      window.localStorage.removeItem(QUERY_CACHE_KEY);
+    } catch {
+      return;
+    }
   }
 }
 
@@ -56,6 +65,7 @@ function persistCache(client: QueryClient) {
     const state = dehydrate(client, {
       shouldDehydrateQuery: (query) =>
         query.state.status === 'success' && query.state.data !== undefined,
+      shouldDehydrateMutation: () => false,
     });
     const payload: PersistedCache = { timestamp: Date.now(), state };
     window.localStorage.setItem(QUERY_CACHE_KEY, JSON.stringify(payload));
@@ -66,15 +76,23 @@ function persistCache(client: QueryClient) {
 
 let browserQueryClient: QueryClient | undefined;
 
-function getQueryClient() {
-  if (typeof window === 'undefined') {
-    return makeQueryClient();
-  }
+function getBrowserQueryClient() {
   if (!browserQueryClient) {
     browserQueryClient = makeQueryClient();
     restorePersistedCache(browserQueryClient);
   }
   return browserQueryClient;
+}
+
+if (typeof window !== 'undefined') {
+  getBrowserQueryClient();
+}
+
+function getQueryClient() {
+  if (typeof window === 'undefined') {
+    return makeQueryClient();
+  }
+  return getBrowserQueryClient();
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -88,9 +106,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
     schedulePersist();
     const unsubscribe = queryClient.getQueryCache().subscribe(schedulePersist);
+    const flush = () => {
+      window.clearTimeout(timer);
+      persistCache(queryClient);
+    };
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
     return () => {
       window.clearTimeout(timer);
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
       unsubscribe();
+      persistCache(queryClient);
     };
   }, [queryClient]);
 

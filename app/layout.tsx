@@ -4,7 +4,6 @@ import "./globals.css";
 import Providers from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { I18nProvider } from "@/providers/i18n-provider";
-import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { LocalizedClerkProvider } from "@/providers/clerk-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { Eruda } from "@/components/Eruda";
@@ -16,7 +15,6 @@ import { BottomNav, BottomNavFallback } from "@/components/layout/bottom-nav";
 import { PersistentAppChrome } from "@/components/layout/persistent-app-chrome";
 import { SplashGate } from "@/components/ui/splash-gate";
 import { PullToRefreshHost } from "@/components/ui/pull-to-refresh";
-import { BootShellSkeleton } from "@/components/layout/boot-shell-skeleton";
 import { BRAND_NAME } from "@/lib/i18n/brands";
 import { caveat } from "@/app/fonts";
 
@@ -149,50 +147,14 @@ export default function RootLayout({
               <SingleSessionEnforcer />
               <SessionTaskGuard />
               <main className="app-scroll relative z-0 mb-0 flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-none">
-                {/* Fase 25.6 — Zero CLS no handoff de autenticação:
-                    o `<ClerkLoading>` NÃO retorna `null` (Fase 25.5) e agora
-                    também NÃO pinta um esqueleto genérico. Ele renderiza o
-                    `BootShellSkeleton`, que replica classe por classe o casco
-                    real (`data-viewport-root` + header + viewport de conteúdo
-                    com `px-4 sm:px-6` e `nav-safe-pad`) e injeta o MESMO
-                    esqueleto que a rota de destino usa em `loading.tsx`
-                    (Feed de Descoberta na Home / Início, hub no painel do
-                    tatuador, overview no do estúdio). Sem header, padding ou
-                    geometria divergentes, os cards de shimmer ficam travados
-                    nas mesmas coordenadas do boot até o conteúdo hidratar —
-                    nenhuma "esticada"/layout shift.
-
-                    Rotas fora da Home autenticada caem no fallback genérico
-                    (`AppRouteSkeleton`), nunca num canvas vazio. Como
-                    `<ClerkLoaded>` só renderiza os filhos quando o Clerk
-                    resolve, os dois nunca se sobrepõem. */}
-                <ClerkLoading>
-                  <BootShellSkeleton />
-                </ClerkLoading>
-                <ClerkLoaded>
-                  <PullToRefreshHost className="flex h-full min-h-screen min-h-0 w-full flex-1 flex-col overflow-hidden">
-                    {children}
-                  </PullToRefreshHost>
-                </ClerkLoaded>
+                <PullToRefreshHost className="flex h-full min-h-screen min-h-0 w-full flex-1 flex-col overflow-hidden">
+                  {children}
+                </PullToRefreshHost>
               </main>
-              {/* Chrome persistente do casco (gatilho de configurações + FAB
-                  do Atelier IA). Montado UMA vez no root layout, fora do
-                  `<ClerkLoading>`/`<ClerkLoaded>` e de qualquer fronteira de
-                  rota: os ícones atravessam o handoff de hidratação sem
-                  desmontar, eliminando o flicker de 1 frame. */}
               <PersistentAppChrome />
               <Suspense fallback={<BottomNavFallback />}>
                 <BottomNav />
               </Suspense>
-              {/* BLINDAGEM DE BOOT (Fase 25.3): camada opaca de tela cheia no
-                  nível raiz do <body>, FORA do stacking context do <main>
-                  (relative z-0). Ela só pinta enquanto existir um
-                  `BootContinuation` montado. AUDITORIA: o único produtor desse
-                  canvas era o `<ClerkLoading>` acima e foi removido, então
-                  navegações internas (e o próprio boot) nunca mais ativam esta
-                  camada — ela permanece inerte e os skeletons de `loading.tsx`
-                  são a única UI de carregamento. A splash inicial (`SplashGate`,
-                  z-[9999]) segue intacta. */}
               <BootCanvasOverlay />
               </I18nProvider>
             </ThemeProvider>
