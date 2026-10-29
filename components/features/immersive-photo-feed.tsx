@@ -120,13 +120,40 @@ export function ImmersivePhotoFeed({
   });
   const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
 
-  const resetHeaderInline = useCallback(() => {
+  const resolveHeaderHeight = useCallback(() => {
     const node = headerRef.current;
-    if (!node) return;
-    node.style.transform = '';
-    node.style.opacity = '';
-    node.style.transition = HEADER_TRANSITION;
+    const measured = node ? node.getBoundingClientRect().height : 0;
+    return Math.max(measured || HEADER_FALLBACK_HEIGHT_PX, 1);
   }, []);
+
+  // CANAL ÚNICO DE ANIMAÇÃO (offset 0 = visível, offset = altura = oculto).
+  //
+  // O Tailwind v4 compila `translate-y-*` para a propriedade CSS `translate`,
+  // enquanto o motor de toque escreve `transform`. Como as duas propriedades
+  // se COMPÕEM, o header colapsado recebia `translate: -100%` + `transform:
+  // -height` (~-200%) e parecia travado sobre a foto, ignorando o dedo. Aqui
+  // todas as escritas passam por `transform`/`opacity` inline, então estado de
+  // Ghost UI, scroll e delta de toque compartilham o mesmo eixo e nunca somam.
+  const paintHeader = useCallback(
+    (offsetPx: number, animate: boolean) => {
+      const node = headerRef.current;
+      if (!node) return;
+      const height = resolveHeaderHeight();
+      const clamped = Math.min(height, Math.max(0, offsetPx));
+      const progress = Math.min(1, clamped / height);
+      node.style.transition = animate ? HEADER_TRANSITION : 'none';
+      node.style.transform = `translate3d(0, ${-clamped}px, 0)`;
+      node.style.opacity = `${1 - progress}`;
+    },
+    [resolveHeaderHeight]
+  );
+
+  const paintHeaderCollapsed = useCallback(
+    (hidden: boolean, animate: boolean) => {
+      paintHeader(hidden ? resolveHeaderHeight() : 0, animate);
+    },
+    [paintHeader, resolveHeaderHeight]
+  );
 
   const applyHeaderCollapse = useCallback(
     (hidden: boolean) => {
@@ -137,8 +164,9 @@ export function ImmersivePhotoFeed({
         node.classList.toggle(HEADER_HIDDEN_CLASS, hidden);
       });
       setStoreHeaderHidden(hidden);
+      if (!headerMotorRef.current.active) paintHeaderCollapsed(hidden, true);
     },
-    [setStoreHeaderHidden]
+    [paintHeaderCollapsed, setStoreHeaderHidden]
   );
 
   useEffect(() => {
@@ -168,18 +196,6 @@ export function ImmersivePhotoFeed({
     applyHeaderCollapse(!isUIVisible);
   }, [applyHeaderCollapse, isUIVisible]);
 
-  useEffect(() => {
-    // Estado de UI mandante: ao alternar o Ghost UI, qualquer resíduo inline
-    // de um arrasto anterior é limpo para que a classe
-    // `-translate-y-full`/`opacity-0` conduza a transição sem conflito.
-    if (headerMotorRef.current.active) return;
-    if (headerSettleTimer.current !== null) {
-      window.clearTimeout(headerSettleTimer.current);
-      headerSettleTimer.current = null;
-    }
-    resetHeaderInline();
-  }, [isUIVisible, resetHeaderInline]);
-
   const handleUIVisibleChange = useCallback((visible: boolean) => {
     isUIVisibleRef.current = visible;
     setIsUIVisible(visible);
@@ -199,51 +215,45 @@ export function ImmersivePhotoFeed({
     if (backdrop) backdrop.style.backgroundColor = `rgba(0,0,0,${opacity})`;
   }, [overlayScreenHeight]);
 
-  const resolveHeaderHeight = useCallback(() => {
-    const node = headerRef.current;
-    const measured = node ? node.getBoundingClientRect().height : 0;
-    return Math.max(measured || HEADER_FALLBACK_HEIGHT_PX, 1);
-  }, []);
-
   const applyHeaderDrag = useCallback(
     (translateY: number) => {
-      const node = headerRef.current;
       const motor = headerMotorRef.current;
-      if (!node) return;
       const height = motor.height || resolveHeaderHeight();
       const clamped = Math.min(0, Math.max(-height, translateY));
       motor.translate = clamped;
       motor.height = height;
-      const progress = Math.min(1, Math.abs(clamped) / height);
-      node.style.transform = `translate3d(0, ${clamped}px, 0)`;
-      node.style.opacity = `${1 - progress}`;
+      paintHeader(-clamped, false);
     },
-    [resolveHeaderHeight]
+    [paintHeader, resolveHeaderHeight]
   );
 
   const settleHeaderDrag = useCallback(() => {
     const motor = headerMotorRef.current;
-    const node = headerRef.current;
     motor.pointerId = -1;
-    if (!node || !motor.active) return;
+    if (!motor.active) return;
     motor.active = false;
     const height = motor.height || resolveHeaderHeight();
     const progress = Math.min(1, Math.abs(motor.translate) / height);
     const decisive = Math.abs(motor.velocity) >= HEADER_VELOCITY_PX_MS;
     const hidden = decisive ? motor.velocity < 0 : progress >= 0.5;
-    const target = hidden ? -height : 0;
 
     if (headerSettleTimer.current !== null) window.clearTimeout(headerSettleTimer.current);
-    node.style.transition = HEADER_TRANSITION;
-    node.style.transform = `translate3d(0, ${target}px, 0)`;
-    node.style.opacity = hidden ? '0' : '1';
+    paintHeaderCollapsed(hidden, true);
     applyHeaderCollapse(hidden);
 
     headerSettleTimer.current = window.setTimeout(() => {
       headerSettleTimer.current = null;
-      resetHeaderInline();
+      if (headerMotorRef.current.active) return;
+      paintHeaderCollapsed(headerCollapsedRef.current, false);
     }, SNAP_MS);
-  }, [applyHeaderCollapse, resetHeaderInline, resolveHeaderHeight]);
+  }, [applyHeaderCollapse, paintHeaderCollapsed, resolveHeaderHeight]);
+
+  useEffect(() => {
+    // PRIMEIRO FRAME: crava a posição absoluta (topo + safe-area) sem animação.
+    // Sem isso a logotype herdava o offset da rota de origem e parecia colada
+    // sobre a foto. O estado de Ghost UI depois assume pelo mesmo canal.
+    paintHeaderCollapsed(headerCollapsedRef.current, false);
+  }, [paintHeaderCollapsed]);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -606,9 +616,7 @@ export function ImmersivePhotoFeed({
             aria-hidden={isHeaderCollapsed}
             className={cn(
               'pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col items-center',
-              'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
-              'transition-all duration-200 ease-out',
-              isHeaderCollapsed ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+              'pt-[env(safe-area-inset-top)] transform-gpu will-change-[transform,opacity]'
             )}
           >
             <div className="pointer-events-none flex h-11 w-full shrink-0 items-center justify-center">
