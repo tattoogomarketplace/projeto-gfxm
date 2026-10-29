@@ -3,12 +3,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Compass, Images } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { GalleryInspirationGrid } from '@/components/features/gallery-inspiration-grid';
 import { PortfolioFilterBar } from '@/components/features/portfolio-filter-bar';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useI18n } from '@/hooks/use-i18n';
 import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
 import { hydrateGridItems } from '@/lib/grid-hydration';
+import { queryKeys } from '@/lib/query/keys';
 import type { GaleriaHealingFilter } from '@/lib/types/galeria';
 
 type GaleriaInspiracoesProps = {
@@ -49,20 +51,17 @@ export function GaleriaInspiracoes({
   savedIds = [],
 }: GaleriaInspiracoesProps) {
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const [style, setStyle] = useState<string>('');
   const [bodyPart, setBodyPart] = useState<string>('');
   const [healed, setHealed] = useState<GaleriaHealingFilter>('all');
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
-      new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 1200);
-      }),
-      fetch('/api/galeria', { cache: 'no-store' })
-        .then(() => undefined)
-        .catch(() => undefined),
+      queryClient.refetchQueries({ queryKey: queryKeys.galleryFeed }),
+      queryClient.refetchQueries({ queryKey: queryKeys.savedInspirationIds }),
     ]);
-  }, []);
+  }, [queryClient]);
 
   const inspirations = useMemo<InspirationItem[]>(() => {
     const source = hydrateGridItems(items, PLACEHOLDER_INSPIRATIONS);

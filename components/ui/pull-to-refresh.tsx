@@ -6,11 +6,11 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useTransition,
   type ReactNode,
   type CSSProperties,
 } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
@@ -103,9 +103,8 @@ export function PullToRefresh({
   disabled = false,
   topOffsetClass,
 }: PullToRefreshProps) {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const { triggerHaptic } = useHapticFeedback();
-  const [isPending, startTransition] = useTransition();
   const [phase, setPhase] = useState<Phase>('idle');
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -127,7 +126,6 @@ export function PullToRefresh({
   const rafRef = useRef(0);
   const pendingPullRef = useRef(0);
   const refreshStartedAtRef = useRef(0);
-  const sawPendingRef = useRef(false);
   const finishingRef = useRef(false);
   const maxTimerRef = useRef(0);
   const minTimerRef = useRef(0);
@@ -135,12 +133,12 @@ export function PullToRefresh({
   const finishingTimerRef = useRef(0);
   const colorRafRef = useRef(0);
   const onRefreshRef = useRef(onRefresh);
-  const routerRef = useRef(router);
+  const queryClientRef = useRef(queryClient);
 
   useEffect(() => {
     onRefreshRef.current = onRefresh;
-    routerRef.current = router;
-  }, [onRefresh, router]);
+    queryClientRef.current = queryClient;
+  }, [onRefresh, queryClient]);
 
   const setPhaseSafe = useCallback((next: Phase) => {
     phaseRef.current = next;
@@ -314,7 +312,6 @@ export function PullToRefresh({
     pullingRef.current = false;
     pullRef.current = REST_PULL_PX;
     pendingPullRef.current = REST_PULL_PX;
-    sawPendingRef.current = false;
     finishingRef.current = false;
     refreshStartedAtRef.current = performance.now();
     applyFrame(REST_PULL_PX, true);
@@ -337,9 +334,7 @@ export function PullToRefresh({
       .then(() => {
         const handler = onRefreshRef.current;
         if (handler) return handler();
-        startTransition(() => {
-          routerRef.current.refresh();
-        });
+        return queryClientRef.current.refetchQueries({ type: 'active' });
       })
       .catch(() => undefined);
 
@@ -348,18 +343,7 @@ export function PullToRefresh({
         finishRefresh();
       }
     });
-  }, [applyFrame, finishRefresh, setPhaseSafe, startColorTicker, startTransition, triggerHaptic]);
-
-  useEffect(() => {
-    if (phase !== 'refreshing' || onRefresh) return;
-    if (isPending) {
-      sawPendingRef.current = true;
-      return;
-    }
-    if (!sawPendingRef.current) return;
-    if (performance.now() - refreshStartedAtRef.current < MDT_MS) return;
-    finishRefresh();
-  }, [finishRefresh, isPending, onRefresh, phase]);
+  }, [applyFrame, finishRefresh, setPhaseSafe, startColorTicker, triggerHaptic]);
 
   useLayoutEffect(() => {
     applyFrame(pullRef.current, false);
