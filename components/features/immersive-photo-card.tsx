@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, FileText, Send, X } from 'lucide-react';
+import { Bookmark, Eye, FileText, Heart, Send, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -23,6 +23,11 @@ const DOUBLE_TAP_MS = 320;
 const LIKE_BURST_MS = 800;
 const TAP_MAX_MS = 200;
 const TAP_MAX_PX = 10;
+const TITANIUM_SHADOW =
+  'drop-shadow(0px 1px 1.5px rgba(0,0,0,0.9)) drop-shadow(0px 4px 10px rgba(0,0,0,0.5))';
+const ACTION_BTN =
+  'flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 transform-gpu will-change-transform';
+const ACTION_ICON = 'h-6 w-6';
 
 export type ImmersivePhotoCardProps = {
   imageUrl?: string | null;
@@ -73,6 +78,7 @@ export function ImmersivePhotoCard({
   const burstTimer = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
   const handle = username.replace(/^@+/, '');
+  const holoId = `titanium-holo-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   useEffect(
     () => () => {
@@ -262,10 +268,19 @@ export function ImmersivePhotoCard({
           </button>
         ) : null}
 
+        <svg aria-hidden focusable="false" className="absolute h-0 w-0 overflow-hidden" width={0} height={0}>
+          <defs>
+            <linearGradient id={holoId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="50%" stopColor="#E2E8F0" />
+              <stop offset="100%" stopColor="#A5F3FC" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         <div
           className={cn(
             'absolute inset-y-0 right-0 flex w-[5.5rem] items-center justify-end',
-            'bg-gradient-to-l from-black/60 to-transparent',
             'pr-[max(0.75rem,env(safe-area-inset-right,0px))]',
             isUIVisible && 'pointer-events-auto'
           )}
@@ -279,8 +294,8 @@ export function ImmersivePhotoCard({
               }}
               aria-label={isLiked ? 'Descurtir' : 'Curtir'}
               aria-pressed={isLiked}
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 text-white transform-gpu will-change-transform"
-              style={{ transform: GRIP_CURVE[0] }}
+              className={ACTION_BTN}
+              style={{ transform: GRIP_CURVE[0], filter: TITANIUM_SHADOW }}
             >
               <motion.span
                 key={likePulse}
@@ -289,7 +304,12 @@ export function ImmersivePhotoCard({
                 transition={{ type: 'spring', stiffness: 420, damping: 12 }}
                 className="inline-flex transform-gpu will-change-transform"
               >
-                <TattooMachineLikeGlyph liked={isLiked} className="h-6 w-6 text-white" />
+                <Heart
+                  className={ACTION_ICON}
+                  stroke={`url(#${holoId})`}
+                  strokeWidth={2}
+                  fill="none"
+                />
               </motion.span>
             </button>
 
@@ -302,13 +322,14 @@ export function ImmersivePhotoCard({
               }}
               aria-label={isSaved ? 'Remover dos salvos' : 'Salvar'}
               aria-pressed={isSaved}
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 text-white transform-gpu will-change-transform"
-              style={{ transform: GRIP_CURVE[1] }}
+              className={ACTION_BTN}
+              style={{ transform: GRIP_CURVE[1], filter: TITANIUM_SHADOW }}
             >
               <Bookmark
-                className="h-6 w-6 text-white"
-                strokeWidth={1.75}
-                fill={isSaved ? 'currentColor' : 'none'}
+                className={ACTION_ICON}
+                stroke={`url(#${holoId})`}
+                strokeWidth={2}
+                fill="none"
               />
             </button>
 
@@ -320,10 +341,15 @@ export function ImmersivePhotoCard({
                 onQuote?.();
               }}
               aria-label="Orçamento"
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 text-white transform-gpu will-change-transform"
-              style={{ transform: GRIP_CURVE[2] }}
+              className={ACTION_BTN}
+              style={{ transform: GRIP_CURVE[2], filter: TITANIUM_SHADOW }}
             >
-              <FileText className="h-6 w-6 text-white" strokeWidth={1.75} />
+              <FileText
+                className={ACTION_ICON}
+                stroke={`url(#${holoId})`}
+                strokeWidth={2}
+                fill="none"
+              />
             </button>
 
             <button
@@ -334,21 +360,37 @@ export function ImmersivePhotoCard({
                 void handleShare();
               }}
               aria-label="Compartilhar"
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 text-white transform-gpu will-change-transform"
-              style={{ transform: GRIP_CURVE[3] }}
+              className={ACTION_BTN}
+              style={{ transform: GRIP_CURVE[3], filter: TITANIUM_SHADOW }}
             >
-              <Send className="h-6 w-6 text-white" strokeWidth={1.75} />
+              <Send
+                className={ACTION_ICON}
+                stroke={`url(#${holoId})`}
+                strokeWidth={2}
+                fill="none"
+              />
             </button>
 
             <button
               type="button"
               onClick={isolateAction}
               aria-label={`${viewsCount.toLocaleString('pt-BR')} visualizações`}
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 text-white transform-gpu will-change-transform"
-              style={{ transform: GRIP_CURVE[4] }}
+              className={ACTION_BTN}
+              style={{ transform: GRIP_CURVE[4], filter: TITANIUM_SHADOW }}
             >
-              <Eye className="h-6 w-6 text-white" strokeWidth={1.75} />
-              <span className="text-[10px] font-medium tabular-nums tracking-tight text-white">
+              <Eye
+                className={ACTION_ICON}
+                stroke={`url(#${holoId})`}
+                strokeWidth={2}
+                fill="none"
+              />
+              <span
+                className="text-[10px] font-medium tabular-nums tracking-tight"
+                style={{
+                  color: '#E2E8F0',
+                  filter: TITANIUM_SHADOW,
+                }}
+              >
                 {formatViews(viewsCount)}
               </span>
             </button>
