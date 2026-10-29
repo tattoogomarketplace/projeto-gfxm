@@ -1381,7 +1381,7 @@ export function GalleryInspirationGrid({
               role="dialog"
               aria-modal="true"
               aria-label={t('home.inspirationGallery')}
-              className="fixed inset-0 z-[200] h-[100dvh] w-full overflow-hidden bg-black transform-gpu [backface-visibility:hidden] [transform:translateZ(0)]"
+              className="fixed inset-0 z-[200] h-[100dvh] w-full overflow-hidden bg-transparent transform-gpu [backface-visibility:hidden] [transform:translateZ(0)]"
             >
               <ImmersivePhotoFeed items={immersiveFeedItems} onClose={closeImmersiveFeed} />
             </div>,

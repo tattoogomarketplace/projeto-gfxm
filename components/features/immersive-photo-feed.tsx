@@ -24,11 +24,12 @@ const DISMISS_VELOCITY_PX_MS = 0.7;
 const DRAG_ACTIVATE_PX = 10;
 const DISMISS_MS = 380;
 const SNAP_MS = 320;
-const FADE_DISTANCE_PX = 520;
 const RUBBER = 0.72;
 const FULL_BLEED_RATIO = 0.85;
-const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease-out';
-const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1), opacity 380ms ease-out';
+const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
+const SNAP_BACKDROP_EASE = 'background-color 320ms ease-out';
+const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
+const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
 
 export type ImmersivePhotoFeedItem = InspirationItem & {
   liked?: boolean;
@@ -66,6 +67,7 @@ export function ImmersivePhotoFeed({
   const { triggerHaptic } = useHapticFeedback();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const settleTimer = useRef<number | null>(null);
   const dragRef = useRef({
@@ -86,12 +88,19 @@ export function ImmersivePhotoFeed({
   const [budgetItem, setBudgetItem] = useState<ImmersivePhotoFeedItem | null>(null);
   const [, startSaveTransition] = useTransition();
 
-  const applyDragTransform = useCallback((offset: number) => {
-    const node = shellRef.current;
-    if (!node) return;
-    node.style.transform = `translate3d(0, ${offset}px, 0)`;
-    node.style.opacity = String(Math.max(0, 1 - offset / FADE_DISTANCE_PX));
+  const overlayScreenHeight = useCallback(() => {
+    if (typeof window === 'undefined') return 1;
+    return Math.max(window.innerHeight || 0, 1);
   }, []);
+
+  const applyDragTransform = useCallback((deltaY: number) => {
+    const node = shellRef.current;
+    const backdrop = backdropRef.current;
+    const screenHeight = overlayScreenHeight();
+    const opacity = Math.max(0, 1 - (deltaY / screenHeight));
+    if (node) node.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+    if (backdrop) backdrop.style.backgroundColor = `rgba(0,0,0,${opacity})`;
+  }, [overlayScreenHeight]);
 
   const lockScroller = useCallback((locked: boolean) => {
     const scroller = scrollerRef.current;
@@ -217,6 +226,7 @@ export function ImmersivePhotoFeed({
         if (!atTop) return;
         drag.active = true;
         shell.style.transition = 'none';
+        if (backdropRef.current) backdropRef.current.style.transition = 'none';
         lockScroller(true);
         try {
           scroller.setPointerCapture(event.pointerId);
@@ -267,9 +277,9 @@ export function ImmersivePhotoFeed({
 
       if (shouldDismiss && shell) {
         drag.dismissing = true;
-        const viewportH =
-          typeof window === 'undefined' ? FADE_DISTANCE_PX : window.innerHeight || FADE_DISTANCE_PX;
+        const viewportH = overlayScreenHeight();
         shell.style.transition = DISMISS_EASE;
+        if (backdropRef.current) backdropRef.current.style.transition = DISMISS_BACKDROP_EASE;
         applyDragTransform(viewportH);
         settleTimer.current = window.setTimeout(finishDismiss, DISMISS_MS);
         return;
@@ -277,23 +287,30 @@ export function ImmersivePhotoFeed({
 
       if (shell) {
         shell.style.transition = SNAP_EASE;
+        if (backdropRef.current) backdropRef.current.style.transition = SNAP_BACKDROP_EASE;
         applyDragTransform(0);
       }
       settleTimer.current = window.setTimeout(() => {
         if (dragRef.current.dismissing || !shell) return;
         shell.style.transition = 'none';
+        if (backdropRef.current) backdropRef.current.style.transition = 'none';
         applyDragTransform(0);
       }, SNAP_MS);
     },
-    [applyDragTransform, finishDismiss, lockScroller, onClose, suppressNextClick]
+    [applyDragTransform, finishDismiss, lockScroller, onClose, overlayScreenHeight, suppressNextClick]
   );
 
   return (
     <>
-      <div className="relative h-[100dvh] w-full overflow-hidden">
+      <div className="fixed inset-0 z-[100] h-[100dvh] w-full overflow-hidden">
+        <div
+          ref={backdropRef}
+          className="absolute inset-0 transform-gpu will-change-[background-color]"
+          style={{ backgroundColor: 'rgba(0,0,0,1)' }}
+        />
         <div
           ref={shellRef}
-          className="h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
+          className="relative h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
         >
           <div
             ref={scrollerRef}
