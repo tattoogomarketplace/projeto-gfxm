@@ -19,7 +19,7 @@ import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mo
 import { cn } from '@/lib/utils';
 
 const WINDOW_RADIUS = 1;
-const DISMISS_DISTANCE_PX = 120;
+const DISMISS_DISTANCE_PX = 100;
 const DISMISS_VELOCITY_PX_MS = 0.7;
 const DRAG_ACTIVATE_PX = 10;
 const DISMISS_MS = 380;
@@ -104,9 +104,14 @@ export function ImmersivePhotoFeed({
 
   const lockScroller = useCallback((locked: boolean) => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
-    scroller.style.overflowY = locked ? 'hidden' : '';
-    scroller.style.touchAction = locked ? 'none' : '';
+    const shell = shellRef.current;
+    if (scroller) {
+      scroller.style.overflowY = locked ? 'hidden' : '';
+      scroller.style.touchAction = locked ? 'none' : '';
+    }
+    if (shell) {
+      shell.style.touchAction = locked ? 'none' : '';
+    }
   }, []);
 
   const suppressNextClick = useCallback(() => {
@@ -218,12 +223,21 @@ export function ImmersivePhotoFeed({
       const atTop = scroller.scrollTop <= 0;
 
       if (!drag.active) {
+        if (deltaY < -DRAG_ACTIVATE_PX || Math.abs(deltaX) > Math.max(deltaY, DRAG_ACTIVATE_PX)) {
+          drag.pointerId = -1;
+          lockScroller(false);
+          return;
+        }
         if (deltaY < DRAG_ACTIVATE_PX) return;
         if (Math.abs(deltaX) > deltaY) {
           drag.pointerId = -1;
+          lockScroller(false);
           return;
         }
-        if (!atTop) return;
+        if (!atTop) {
+          lockScroller(false);
+          return;
+        }
         drag.active = true;
         shell.style.transition = 'none';
         if (backdropRef.current) backdropRef.current.style.transition = 'none';
@@ -264,10 +278,12 @@ export function ImmersivePhotoFeed({
       }
       drag.pointerId = -1;
 
-      if (!drag.active || drag.dismissing) return;
+      if (!drag.active || drag.dismissing) {
+        lockScroller(false);
+        return;
+      }
       drag.active = false;
       suppressNextClick();
-      lockScroller(false);
 
       const shouldDismiss =
         Boolean(onClose) &&
@@ -277,6 +293,7 @@ export function ImmersivePhotoFeed({
 
       if (shouldDismiss) {
         drag.dismissing = true;
+        lockScroller(true);
         const viewportH = overlayScreenHeight();
         if (shell) {
           shell.style.transition = DISMISS_EASE;
@@ -287,6 +304,7 @@ export function ImmersivePhotoFeed({
         return;
       }
 
+      lockScroller(false);
       if (shell) {
         shell.style.transition = SNAP_EASE;
         if (backdropRef.current) backdropRef.current.style.transition = SNAP_BACKDROP_EASE;
@@ -313,11 +331,17 @@ export function ImmersivePhotoFeed({
     const handleRelease = (event: PointerEvent) => {
       releaseSwipe(event.pointerId);
     };
+    const blockNativeOverscroll = (event: TouchEvent) => {
+      if (!dragRef.current.active) return;
+      if (event.cancelable) event.preventDefault();
+    };
     window.addEventListener('pointerup', handleRelease);
     window.addEventListener('pointercancel', handleRelease);
+    document.addEventListener('touchmove', blockNativeOverscroll, { passive: false });
     return () => {
       window.removeEventListener('pointerup', handleRelease);
       window.removeEventListener('pointercancel', handleRelease);
+      document.removeEventListener('touchmove', blockNativeOverscroll);
     };
   }, [releaseSwipe]);
 
@@ -340,7 +364,6 @@ export function ImmersivePhotoFeed({
             onPointerMove={onPointerMove}
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
-            onLostPointerCapture={onPointerEnd}
             className={cn(
               'flex h-[100dvh] w-full flex-col overflow-y-scroll snap-y snap-mandatory scrollbar-none',
               'overscroll-y-contain [-webkit-overflow-scrolling:touch]',
