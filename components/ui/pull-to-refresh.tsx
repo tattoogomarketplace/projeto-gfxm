@@ -12,6 +12,11 @@ import {
 import { usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { BRAND_WORDMARK } from '@/lib/i18n/brands';
+import {
+  armRefreshRecoveryLock,
+  guardRefreshRecoveryClick,
+  releaseRefreshRecoveryLock,
+} from '@/lib/refresh-recovery-lock';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 
@@ -259,6 +264,7 @@ export function PullToRefresh({
   }, [applyFrame, stopColorTicker]);
 
   const retract = useCallback(() => {
+    releaseRefreshRecoveryLock();
     stopColorTicker();
     finishingRef.current = false;
     pullingRef.current = false;
@@ -277,6 +283,7 @@ export function PullToRefresh({
     if (finishingRef.current) return;
     if (phaseRef.current !== 'refreshing') return;
     finishingRef.current = true;
+    releaseRefreshRecoveryLock();
     stopColorTicker();
     if (maxTimerRef.current) {
       window.clearTimeout(maxTimerRef.current);
@@ -308,6 +315,7 @@ export function PullToRefresh({
   }, [applyFrame, retract, setPhaseSafe, stopColorTicker]);
 
   const runRefresh = useCallback(() => {
+    armRefreshRecoveryLock();
     setPhaseSafe('refreshing');
     pullingRef.current = false;
     pullRef.current = REST_PULL_PX;
@@ -397,6 +405,7 @@ export function PullToRefresh({
         if (dy <= AXIS_LOCK_PX) return;
         axisLockedRef.current = 'y';
         pullingRef.current = true;
+        armRefreshRecoveryLock();
         setPhaseSafe('pulling');
         triggerHaptic('light');
       }
@@ -430,16 +439,23 @@ export function PullToRefresh({
       retract();
     };
 
+    const swallowGhostClick = (event: Event) => {
+      if (!guardRefreshRecoveryClick(event as MouseEvent)) return;
+      event.stopImmediatePropagation();
+    };
+
     root.addEventListener('touchstart', onStart, { passive: true });
     root.addEventListener('touchmove', onMove, { passive: false });
     root.addEventListener('touchend', onEnd, { passive: true });
     root.addEventListener('touchcancel', onEnd, { passive: true });
+    root.addEventListener('click', swallowGhostClick, true);
 
     return () => {
       root.removeEventListener('touchstart', onStart);
       root.removeEventListener('touchmove', onMove);
       root.removeEventListener('touchend', onEnd);
       root.removeEventListener('touchcancel', onEnd);
+      root.removeEventListener('click', swallowGhostClick, true);
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     };
   }, [disabled, retract, runRefresh, schedulePull, setPhaseSafe, triggerHaptic]);

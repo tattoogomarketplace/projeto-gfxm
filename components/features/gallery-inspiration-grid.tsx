@@ -51,6 +51,10 @@ import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mo
 import { hydrateGridItems, isEagerGridIndex } from '@/lib/grid-hydration';
 import { portfolioLabelResolver } from '@/lib/portfolio-metadata';
 import { artistProfileHref } from '@/lib/artist-profile';
+import {
+  guardRefreshRecoveryClick,
+  isRefreshRecoveryLocked,
+} from '@/lib/refresh-recovery-lock';
 import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]'] as const;
@@ -769,6 +773,7 @@ export function GalleryInspirationGrid({
 
   const openInspiration = useCallback(
     (item: InspirationItem) => {
+      if (isRefreshRecoveryLocked()) return;
       cancelLongPress();
       const now = Date.now();
       if (now < openLockUntil.current) {
@@ -791,6 +796,7 @@ export function GalleryInspirationGrid({
     item: InspirationItem,
     event?: { preventDefault: () => void; stopPropagation: () => void; target?: EventTarget | null }
   ) => {
+    if (guardRefreshRecoveryClick(event)) return;
     const target = event?.target ?? null;
     if (target instanceof Element && target.closest('[data-gallery-action]')) return;
     if (consumeLongPressClick(event)) return;
@@ -809,6 +815,10 @@ export function GalleryInspirationGrid({
   const handleGridPhotoPointerUp =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
       cancelLongPress();
+      if (guardRefreshRecoveryClick(event)) {
+        gridPointerOrigin.current = null;
+        return;
+      }
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       const target = event.target;
       if (target instanceof Element && target.closest('[data-gallery-action]')) {
@@ -884,6 +894,7 @@ export function GalleryInspirationGrid({
   const handleFeedImagePointerUp =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
       cancelLongPress();
+      if (guardRefreshRecoveryClick(event)) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       if (Date.now() < suppressClickUntil.current) return;
 
