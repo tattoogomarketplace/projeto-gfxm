@@ -686,6 +686,7 @@ export function GalleryInspirationGrid({
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
+  const gridPointerOrigin = useRef<{ x: number; y: number } | null>(null);
   const suppressClickUntil = useRef(0);
   const lastFeedTap = useRef<{ id: string; at: number } | null>(null);
   const burstTimer = useRef<number | null>(null);
@@ -796,13 +797,37 @@ export function GalleryInspirationGrid({
     openInspiration(item);
   };
 
+  const handleGridPhotoPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    gridPointerOrigin.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const handleGridPhotoPointerCancel = () => {
+    gridPointerOrigin.current = null;
+  };
+
   const handleGridPhotoPointerUp =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
       cancelLongPress();
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       const target = event.target;
-      if (target instanceof Element && target.closest('[data-gallery-action]')) return;
-      if (Date.now() < suppressClickUntil.current) return;
+      if (target instanceof Element && target.closest('[data-gallery-action]')) {
+        gridPointerOrigin.current = null;
+        return;
+      }
+      if (Date.now() < suppressClickUntil.current) {
+        gridPointerOrigin.current = null;
+        return;
+      }
+
+      const origin = gridPointerOrigin.current;
+      gridPointerOrigin.current = null;
+      if (!origin) return;
+
+      const deltaX = Math.abs(event.clientX - origin.x);
+      const deltaY = Math.abs(event.clientY - origin.y);
+      if (deltaX > 10 || deltaY > 10) return;
+
       openInspiration(item);
     };
 
@@ -1272,8 +1297,9 @@ export function GalleryInspirationGrid({
                 <>
                   <button
                     type="button"
-                    onClick={(event) => handleInspirationClick(item, event)}
+                    onPointerDown={handleGridPhotoPointerDown}
                     onPointerUp={handleGridPhotoPointerUp(item)}
+                    onPointerCancel={handleGridPhotoPointerCancel}
                     className="absolute inset-0 z-[1] touch-manipulation cursor-pointer"
                     aria-label={artistName}
                   />
@@ -1300,8 +1326,9 @@ export function GalleryInspirationGrid({
                 <>
                   <button
                     type="button"
-                    onClick={(event) => handleInspirationClick(item, event)}
+                    onPointerDown={handleGridPhotoPointerDown}
                     onPointerUp={handleGridPhotoPointerUp(item)}
+                    onPointerCancel={handleGridPhotoPointerCancel}
                     className="absolute inset-0 z-[1] touch-manipulation cursor-pointer"
                     aria-label={artistName}
                   />
