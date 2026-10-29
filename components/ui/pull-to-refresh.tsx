@@ -19,6 +19,7 @@ import {
 } from '@/lib/refresh-recovery-lock';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
+import { OrganicInkGlow } from '@/components/ui/organic-ink-glow';
 
 const THRESHOLD_PX = 60;
 const MAX_PULL_PX = 112;
@@ -507,6 +508,7 @@ export function PullToRefresh({
           active && 'drop-shadow-[0_0_12px_var(--ptr-accent)]'
         )}
       >
+        <OrganicInkGlow />
         <svg
           className={cn(
             'pointer-events-none absolute inset-0 h-full w-full transform-gpu',
