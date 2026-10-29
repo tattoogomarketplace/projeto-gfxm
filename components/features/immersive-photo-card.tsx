@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bookmark, Eye, FileText, Heart, ImageIcon, Send, Video, X } from 'lucide-react';
+import { AtomicRefreshButton } from '@/components/features/atomic-refresh-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -237,6 +238,16 @@ export function ImmersivePhotoCard({
         />
       </button>
 
+      <svg aria-hidden focusable="false" className="absolute h-0 w-0 overflow-hidden" width={0} height={0}>
+        <defs>
+          <linearGradient id={holoId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="50%" stopColor="#E2E8F0" />
+            <stop offset="100%" stopColor="#A5F3FC" />
+          </linearGradient>
+        </defs>
+      </svg>
+
       <AnimatePresence>
         {burstNonce > 0 ? (
           <motion.div
@@ -280,16 +291,6 @@ export function ImmersivePhotoCard({
             <X className="h-6 w-6 text-white" strokeWidth={1.75} />
           </button>
         ) : null}
-
-        <svg aria-hidden focusable="false" className="absolute h-0 w-0 overflow-hidden" width={0} height={0}>
-          <defs>
-            <linearGradient id={holoId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="50%" stopColor="#E2E8F0" />
-              <stop offset="100%" stopColor="#A5F3FC" />
-            </linearGradient>
-          </defs>
-        </svg>
 
         <div
           className={cn(
@@ -428,62 +429,70 @@ export function ImmersivePhotoCard({
       <AnimatePresence>
         {!isUIVisible ? (
           <motion.div
-            key="media-switcher"
+            key="ghost-chrome"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.92 }}
             transition={SWITCHER_SPRING}
-            className={cn(
-              'absolute inset-x-0 bottom-0 z-30 flex justify-center transform-gpu will-change-transform',
-              'pb-[max(1rem,env(safe-area-inset-bottom,0px))]'
-            )}
+            className="pointer-events-none absolute inset-0 z-30 transform-gpu will-change-transform"
           >
+            <AtomicRefreshButton holoId={holoId} />
             <div
-              role="group"
-              aria-label="Alternar tipo de mídia"
               className={cn(
-                'pointer-events-auto relative flex items-center gap-0.5 rounded-full px-1 py-1',
-                'border border-white/15 bg-black/45 backdrop-blur-md transform-gpu',
-                'shadow-[0_1px_1.5px_rgba(0,0,0,0.9),0_4px_14px_rgba(0,0,0,0.55)]'
+                'pointer-events-none absolute inset-x-0 bottom-0 z-30 flex items-end justify-center',
+                'px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]',
+                'pb-[max(1rem,env(safe-area-inset-bottom,0px))]'
               )}
-              style={{ filter: TITANIUM_SHADOW }}
             >
-              {MEDIA_MODES.map(({ id, label, Icon }) => {
-                const active = mediaMode === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      if (active) return;
-                      triggerHaptic('light');
-                      setMediaMode(id);
-                    }}
-                    aria-label={label}
-                    aria-pressed={active}
-                    className={cn(
-                      'relative flex min-h-11 min-w-11 items-center justify-center rounded-full px-4',
-                      'transform-gpu transition-colors duration-200 ease-out',
-                      active ? 'text-white' : 'text-white/60'
-                    )}
-                  >
-                    {active ? (
-                      <motion.span
-                        layoutId={`media-switcher-pill-${holoId}`}
-                        transition={SWITCHER_SPRING}
-                        aria-hidden
-                        className="absolute inset-0 rounded-full border border-white/25 bg-white/10 transform-gpu"
+              <div
+                role="group"
+                aria-label="Alternar tipo de mídia"
+                data-no-dismiss
+                className={cn(
+                  'pointer-events-auto relative flex items-center gap-0.5 rounded-full px-1 py-1',
+                  'border border-white/15 bg-black/45 backdrop-blur-md transform-gpu',
+                  'shadow-[0_1px_1.5px_rgba(0,0,0,0.9),0_4px_14px_rgba(0,0,0,0.55)]'
+                )}
+                style={{ filter: TITANIUM_SHADOW }}
+              >
+                {MEDIA_MODES.map(({ id, label, Icon }) => {
+                  const active = mediaMode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      data-no-dismiss
+                      onClick={() => {
+                        if (active) return;
+                        triggerHaptic('light');
+                        setMediaMode(id);
+                      }}
+                      aria-label={label}
+                      aria-pressed={active}
+                      className={cn(
+                        'relative flex min-h-11 min-w-11 items-center justify-center rounded-full px-4',
+                        'transform-gpu transition-colors duration-200 ease-out',
+                        active ? 'text-white' : 'text-white/60'
+                      )}
+                    >
+                      {active ? (
+                        <motion.span
+                          layoutId={`media-switcher-pill-${holoId}`}
+                          transition={SWITCHER_SPRING}
+                          aria-hidden
+                          className="absolute inset-0 rounded-full border border-white/25 bg-white/10 transform-gpu"
+                        />
+                      ) : null}
+                      <Icon
+                        className="relative z-10 h-4 w-4"
+                        stroke={`url(#${holoId})`}
+                        strokeWidth={2}
+                        fill="none"
                       />
-                    ) : null}
-                    <Icon
-                      className="relative z-10 h-4 w-4"
-                      stroke={`url(#${holoId})`}
-                      strokeWidth={2}
-                      fill="none"
-                    />
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         ) : null}
