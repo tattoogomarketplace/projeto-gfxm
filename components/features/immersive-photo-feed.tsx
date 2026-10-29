@@ -375,7 +375,7 @@ export function ImmersivePhotoFeed({
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
             className={cn(
-              'flex h-[100dvh] w-full flex-col snap-y snap-mandatory scrollbar-none',
+              'flex h-[100dvh] w-full flex-col gap-0 space-y-0 p-0 m-0 snap-y snap-mandatory scrollbar-none',
               'overscroll-y-contain [-webkit-overflow-scrolling:touch]',
               'transform-gpu',
               isUIVisible ? 'overflow-y-scroll touch-pan-y' : 'overflow-hidden touch-none',
@@ -388,7 +388,8 @@ export function ImmersivePhotoFeed({
               return (
                 <div
                   key={item.id}
-                  className="h-[100dvh] w-full flex-shrink-0 snap-start snap-always overflow-hidden transform-gpu [contain:layout_size_style]"
+                  className="h-[100dvh] w-full flex-shrink-0 snap-start snap-always overflow-hidden transform-gpu"
+                  style={{ contain: 'layout paint size' }}
                 >
                   {mounted ? (
                     <ImmersivePhotoCard

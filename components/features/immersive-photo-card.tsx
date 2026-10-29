@@ -204,7 +204,10 @@ export function ImmersivePhotoCard({
   }, [onSave]);
 
   return (
-    <article className="relative isolate h-[100dvh] w-screen overflow-hidden bg-black text-white">
+    <article
+      className="relative isolate m-0 h-[100dvh] w-full overflow-hidden bg-black p-0 text-white"
+      style={{ contain: 'layout paint size' }}
+    >
       <button
         type="button"
         onPointerDown={handlePointerDown}
