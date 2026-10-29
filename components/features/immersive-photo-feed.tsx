@@ -35,6 +35,8 @@ const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
 const HEADER_DELTA_PX = 15;
 const HEADER_VELOCITY_PX_MS = 0.5;
 const HEADER_TOP_LOCK_PX = 24;
+const HEADER_DRAG_DEAD_ZONE_PX = 10;
+const HEADER_FALLBACK_HEIGHT_PX = 44;
 const HEADER_TRANSITION = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease-out';
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
@@ -76,6 +78,7 @@ export function ImmersivePhotoFeed({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const frameRef = useRef(0);
   const settleTimer = useRef<number | null>(null);
   const dragRef = useRef({
@@ -102,7 +105,28 @@ export function ImmersivePhotoFeed({
   const headerCollapsedRef = useRef(false);
   const lastScrollTopRef = useRef(0);
   const lastScrollAtRef = useRef(0);
+  const headerSettleTimer = useRef<number | null>(null);
+  const headerMotorRef = useRef({
+    pointerId: -1,
+    startY: 0,
+    startX: 0,
+    lastY: 0,
+    lastAt: 0,
+    velocity: 0,
+    translate: 0,
+    baseTranslate: 0,
+    height: 0,
+    active: false,
+  });
   const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
+
+  const resetHeaderInline = useCallback(() => {
+    const node = headerRef.current;
+    if (!node) return;
+    node.style.transform = '';
+    node.style.opacity = '';
+    node.style.transition = HEADER_TRANSITION;
+  }, []);
 
   const applyHeaderCollapse = useCallback(
     (hidden: boolean) => {
@@ -154,6 +178,133 @@ export function ImmersivePhotoFeed({
     if (node) node.style.transform = `translate3d(0, ${deltaY}px, 0)`;
     if (backdrop) backdrop.style.backgroundColor = `rgba(0,0,0,${opacity})`;
   }, [overlayScreenHeight]);
+
+  const resolveHeaderHeight = useCallback(() => {
+    const node = headerRef.current;
+    const measured = node ? node.getBoundingClientRect().height : 0;
+    return Math.max(measured || HEADER_FALLBACK_HEIGHT_PX, 1);
+  }, []);
+
+  const applyHeaderDrag = useCallback(
+    (translateY: number) => {
+      const node = headerRef.current;
+      const motor = headerMotorRef.current;
+      if (!node) return;
+      const height = motor.height || resolveHeaderHeight();
+      const clamped = Math.min(0, Math.max(-height, translateY));
+      motor.translate = clamped;
+      motor.height = height;
+      const progress = Math.min(1, Math.abs(clamped) / height);
+      node.style.transform = `translate3d(0, ${clamped}px, 0)`;
+      node.style.opacity = `${1 - progress}`;
+    },
+    [resolveHeaderHeight]
+  );
+
+  const settleHeaderDrag = useCallback(() => {
+    const motor = headerMotorRef.current;
+    const node = headerRef.current;
+    motor.pointerId = -1;
+    if (!node || !motor.active) return;
+    motor.active = false;
+    const height = motor.height || resolveHeaderHeight();
+    const progress = Math.min(1, Math.abs(motor.translate) / height);
+    const decisive = Math.abs(motor.velocity) >= HEADER_VELOCITY_PX_MS;
+    const hidden = decisive ? motor.velocity < 0 : progress >= 0.5;
+    const target = hidden ? -height : 0;
+
+    if (headerSettleTimer.current !== null) window.clearTimeout(headerSettleTimer.current);
+    node.style.transition = HEADER_TRANSITION;
+    node.style.transform = `translate3d(0, ${target}px, 0)`;
+    node.style.opacity = hidden ? '0' : '1';
+    applyHeaderCollapse(hidden);
+
+    headerSettleTimer.current = window.setTimeout(() => {
+      headerSettleTimer.current = null;
+      resetHeaderInline();
+    }, SNAP_MS);
+  }, [applyHeaderCollapse, resetHeaderInline, resolveHeaderHeight]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const motor = headerMotorRef.current;
+
+    const canDriveHeader = () => isUIVisibleRef.current && !dragRef.current.dismissing;
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || !canDriveHeader()) {
+        motor.pointerId = -1;
+        return;
+      }
+      const touch = event.touches[0];
+      if (headerSettleTimer.current !== null) {
+        window.clearTimeout(headerSettleTimer.current);
+        headerSettleTimer.current = null;
+      }
+      motor.pointerId = touch.identifier;
+      motor.startY = touch.clientY;
+      motor.startX = touch.clientX;
+      motor.lastY = touch.clientY;
+      motor.lastAt = event.timeStamp;
+      motor.velocity = 0;
+      motor.height = resolveHeaderHeight();
+      motor.translate = headerCollapsedRef.current ? -motor.height : 0;
+      motor.baseTranslate = motor.translate;
+      motor.active = false;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (motor.pointerId < 0) return;
+      const touch = Array.from(event.touches).find((item) => item.identifier === motor.pointerId);
+      if (!touch) return;
+      const deltaY = touch.clientY - motor.startY;
+      const deltaX = touch.clientX - motor.startX;
+
+      if (!motor.active) {
+        if (Math.abs(deltaY) < HEADER_DRAG_DEAD_ZONE_PX) return;
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          motor.pointerId = -1;
+          return;
+        }
+        motor.startY += Math.sign(deltaY) * HEADER_DRAG_DEAD_ZONE_PX;
+        motor.active = true;
+        if (headerRef.current) headerRef.current.style.transition = 'none';
+      }
+
+      const dt = Math.max(1, event.timeStamp - motor.lastAt);
+      motor.velocity = (touch.clientY - motor.lastY) / dt;
+      motor.lastY = touch.clientY;
+      motor.lastAt = event.timeStamp;
+      applyHeaderDrag(motor.baseTranslate + (touch.clientY - motor.startY));
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (motor.pointerId < 0) return;
+      const stillTouching = Array.from(event.touches).some(
+        (item) => item.identifier === motor.pointerId
+      );
+      if (stillTouching) return;
+      settleHeaderDrag();
+    };
+
+    scroller.addEventListener('touchstart', onTouchStart, { passive: true });
+    scroller.addEventListener('touchmove', onTouchMove, { passive: true });
+    scroller.addEventListener('touchend', onTouchEnd, { passive: true });
+    scroller.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    return () => {
+      scroller.removeEventListener('touchstart', onTouchStart);
+      scroller.removeEventListener('touchmove', onTouchMove);
+      scroller.removeEventListener('touchend', onTouchEnd);
+      scroller.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [applyHeaderDrag, resolveHeaderHeight, settleHeaderDrag]);
+
+  useEffect(() => {
+    return () => {
+      if (headerSettleTimer.current !== null) window.clearTimeout(headerSettleTimer.current);
+    };
+  }, []);
 
   const lockScroller = useCallback((locked: boolean) => {
     const scroller = scrollerRef.current;
@@ -215,6 +366,8 @@ export function ImmersivePhotoFeed({
       const velocity = Math.abs(delta) / elapsed;
       lastScrollTopRef.current = top;
       lastScrollAtRef.current = now;
+
+      if (headerMotorRef.current.active) return;
 
       if (top <= HEADER_TOP_LOCK_PX) {
         applyHeaderCollapse(false);
@@ -428,14 +581,15 @@ export function ImmersivePhotoFeed({
           className="relative h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
         >
           <header
+            ref={headerRef}
             data-immersive-header
             aria-hidden={isHeaderCollapsed}
             className={cn(
               'pointer-events-none absolute inset-x-0 top-0 z-30 flex h-11 items-center justify-center',
               'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
+              'transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
               isHeaderCollapsed ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             )}
-            style={{ transition: HEADER_TRANSITION }}
           >
             <BrandLogo className="pointer-events-none h-auto w-auto px-0" size="sm" />
           </header>
