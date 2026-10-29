@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, Heart, ReceiptText, Send } from 'lucide-react';
+import { Bookmark, Eye, Heart, ReceiptText, Send, X } from 'lucide-react';
 import {
   TransformComponent,
   TransformWrapper,
@@ -28,6 +28,7 @@ import {
   GalleryHapticPreview,
   type GalleryPreviewItem,
 } from '@/components/features/gallery-haptic-preview';
+import { ImmersivePhotoFeed } from '@/components/features/immersive-photo-feed';
 import { TattooLikeButton, TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -680,6 +681,8 @@ export function GalleryInspirationGrid({
   const [isViewsModalOpen, setIsViewsModalOpen] = useState(false);
   const [viewsSheetPostId, setViewsSheetPostId] = useState<string | null>(null);
   const [viewsSheetCount, setViewsSheetCount] = useState(0);
+  const [immersiveStartId, setImmersiveStartId] = useState<string | null>(null);
+  const immersiveMounted = useSyncExternalStore(clientMountedSubscribe, () => true, () => false);
 
   const pressTimer = useRef<number | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -695,6 +698,10 @@ export function GalleryInspirationGrid({
     pressOrigin.current = null;
   }, []);
 
+  const closeImmersiveFeed = useCallback(() => {
+    setImmersiveStartId(null);
+  }, []);
+
   useEffect(
     () => () => {
       cancelLongPress();
@@ -702,6 +709,15 @@ export function GalleryInspirationGrid({
     },
     [cancelLongPress]
   );
+
+  useEffect(() => {
+    if (!immersiveStartId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeImmersiveFeed();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [closeImmersiveFeed, immersiveStartId]);
 
   const startLongPress =
     (item: InspirationItem) => (event: ReactPointerEvent<HTMLElement>) => {
@@ -741,9 +757,16 @@ export function GalleryInspirationGrid({
     return false;
   }, []);
 
+  const immersiveFeedItems = useMemo(() => {
+    if (!immersiveStartId) return hydratedItems;
+    const start = hydratedItems.findIndex((entry) => entry.id === immersiveStartId);
+    if (start <= 0) return hydratedItems;
+    return [...hydratedItems.slice(start), ...hydratedItems.slice(0, start)];
+  }, [hydratedItems, immersiveStartId]);
+
   const openInspiration = (item: InspirationItem) => {
     triggerHaptic('light');
-    setPreview(item);
+    setImmersiveStartId(item.id);
   };
 
   const visitArtistProfile = (item: InspirationItem) => {
@@ -1293,6 +1316,29 @@ export function GalleryInspirationGrid({
         onExploreStyles={explorePreviewStyles}
         showLike={showLike}
       />
+
+      {immersiveMounted && immersiveStartId
+        ? createPortal(
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('home.inspirationGallery')}
+              className="fixed inset-0 z-[200] h-[100dvh] w-full overflow-hidden bg-black transform-gpu [backface-visibility:hidden] [transform:translateZ(0)]"
+            >
+              <ImmersivePhotoFeed items={immersiveFeedItems} />
+              <button
+                type="button"
+                onClick={closeImmersiveFeed}
+                className="absolute left-3 z-[1] flex h-11 w-11 min-h-11 min-w-11 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95"
+                style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
+                aria-label={t('common.close')}
+              >
+                <X className="h-5 w-5" strokeWidth={1.9} />
+              </button>
+            </div>,
+            document.body
+          )
+        : null}
 
       <FeedSaveToast open={isSaveToastOpen} />
 
