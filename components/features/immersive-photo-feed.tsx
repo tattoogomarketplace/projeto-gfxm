@@ -249,22 +249,22 @@ export function ImmersivePhotoFeed({
     [applyDragTransform, lockScroller]
   );
 
-  const onPointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+  const releaseSwipe = useCallback(
+    (pointerId: number) => {
       const drag = dragRef.current;
-      if (drag.pointerId !== event.pointerId) return;
+      if (drag.pointerId !== pointerId) return;
       const scroller = scrollerRef.current;
       const shell = shellRef.current;
       if (scroller) {
         try {
-          scroller.releasePointerCapture(event.pointerId);
+          scroller.releasePointerCapture(pointerId);
         } catch {
           void 0;
         }
       }
       drag.pointerId = -1;
 
-      if (!drag.active) return;
+      if (!drag.active || drag.dismissing) return;
       drag.active = false;
       suppressNextClick();
       lockScroller(false);
@@ -275,13 +275,15 @@ export function ImmersivePhotoFeed({
 
       if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
 
-      if (shouldDismiss && shell) {
+      if (shouldDismiss) {
         drag.dismissing = true;
         const viewportH = overlayScreenHeight();
-        shell.style.transition = DISMISS_EASE;
-        if (backdropRef.current) backdropRef.current.style.transition = DISMISS_BACKDROP_EASE;
-        applyDragTransform(viewportH);
-        settleTimer.current = window.setTimeout(finishDismiss, DISMISS_MS);
+        if (shell) {
+          shell.style.transition = DISMISS_EASE;
+          if (backdropRef.current) backdropRef.current.style.transition = DISMISS_BACKDROP_EASE;
+          applyDragTransform(viewportH);
+        }
+        settleTimer.current = window.setTimeout(finishDismiss, shell ? DISMISS_MS : 0);
         return;
       }
 
@@ -299,6 +301,25 @@ export function ImmersivePhotoFeed({
     },
     [applyDragTransform, finishDismiss, lockScroller, onClose, overlayScreenHeight, suppressNextClick]
   );
+
+  const onPointerEnd = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      releaseSwipe(event.pointerId);
+    },
+    [releaseSwipe]
+  );
+
+  useEffect(() => {
+    const handleRelease = (event: PointerEvent) => {
+      releaseSwipe(event.pointerId);
+    };
+    window.addEventListener('pointerup', handleRelease);
+    window.addEventListener('pointercancel', handleRelease);
+    return () => {
+      window.removeEventListener('pointerup', handleRelease);
+      window.removeEventListener('pointercancel', handleRelease);
+    };
+  }, [releaseSwipe]);
 
   return (
     <>
@@ -319,6 +340,7 @@ export function ImmersivePhotoFeed({
             onPointerMove={onPointerMove}
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
+            onLostPointerCapture={onPointerEnd}
             className={cn(
               'flex h-[100dvh] w-full flex-col overflow-y-scroll snap-y snap-mandatory scrollbar-none',
               'overscroll-y-contain [-webkit-overflow-scrolling:touch]',
