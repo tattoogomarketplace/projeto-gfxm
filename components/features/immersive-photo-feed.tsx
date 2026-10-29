@@ -381,6 +381,7 @@ export function ImmersivePhotoFeed({
               isUIVisible ? 'overflow-y-scroll touch-pan-y' : 'overflow-hidden touch-none',
               className
             )}
+            style={{ scrollSnapType: 'y mandatory', scrollBehavior: 'auto' }}
           >
             {feedItems.map((item, index) => {
               const mounted = Math.abs(index - activeIndex) <= WINDOW_RADIUS;
@@ -389,7 +390,7 @@ export function ImmersivePhotoFeed({
                 <div
                   key={item.id}
                   className="h-[100dvh] w-full flex-shrink-0 snap-start snap-always overflow-hidden transform-gpu"
-                  style={{ contain: 'layout paint size' }}
+                  style={{ contain: 'layout paint size', scrollSnapStop: 'always' }}
                 >
                   {mounted ? (
                     <ImmersivePhotoCard
