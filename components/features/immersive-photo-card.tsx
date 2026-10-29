@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, FileText, Heart, Send, X } from 'lucide-react';
+import { Bookmark, Eye, FileText, Heart, ImageIcon, Send, Video, X } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -28,6 +28,15 @@ const TITANIUM_SHADOW =
 const ACTION_BTN =
   'flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 transform-gpu will-change-transform';
 const ACTION_ICON = 'h-6 w-6';
+
+type MediaMode = 'photo' | 'video';
+
+const MEDIA_MODES: readonly { id: MediaMode; label: string; Icon: typeof ImageIcon }[] = [
+  { id: 'photo', label: 'Foto', Icon: ImageIcon },
+  { id: 'video', label: 'Vídeo', Icon: Video },
+] as const;
+
+const SWITCHER_SPRING = { type: 'spring', stiffness: 420, damping: 34, mass: 0.7 } as const;
 
 export type ImmersivePhotoCardProps = {
   imageUrl?: string | null;
@@ -74,6 +83,7 @@ export function ImmersivePhotoCard({
   const [isSaved, setIsSaved] = useState(saved);
   const [likePulse, setLikePulse] = useState(0);
   const [burstNonce, setBurstNonce] = useState(0);
+  const [mediaMode, setMediaMode] = useState<MediaMode>('photo');
   const lastTapAt = useRef(0);
   const burstTimer = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
@@ -414,6 +424,70 @@ export function ImmersivePhotoCard({
           ) : null}
         </div>
       </div>
+
+      <AnimatePresence>
+        {!isUIVisible ? (
+          <motion.div
+            key="media-switcher"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={SWITCHER_SPRING}
+            className={cn(
+              'absolute inset-x-0 bottom-0 z-30 flex justify-center transform-gpu will-change-transform',
+              'pb-[max(1rem,env(safe-area-inset-bottom,0px))]'
+            )}
+          >
+            <div
+              role="group"
+              aria-label="Alternar tipo de mídia"
+              className={cn(
+                'pointer-events-auto relative flex items-center gap-0.5 rounded-full px-1 py-1',
+                'border border-white/15 bg-black/45 backdrop-blur-md transform-gpu',
+                'shadow-[0_1px_1.5px_rgba(0,0,0,0.9),0_4px_14px_rgba(0,0,0,0.55)]'
+              )}
+              style={{ filter: TITANIUM_SHADOW }}
+            >
+              {MEDIA_MODES.map(({ id, label, Icon }) => {
+                const active = mediaMode === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      if (active) return;
+                      triggerHaptic('light');
+                      setMediaMode(id);
+                    }}
+                    aria-label={label}
+                    aria-pressed={active}
+                    className={cn(
+                      'relative flex min-h-11 min-w-11 items-center justify-center rounded-full px-4',
+                      'transform-gpu transition-colors duration-200 ease-out',
+                      active ? 'text-white' : 'text-white/60'
+                    )}
+                  >
+                    {active ? (
+                      <motion.span
+                        layoutId={`media-switcher-pill-${holoId}`}
+                        transition={SWITCHER_SPRING}
+                        aria-hidden
+                        className="absolute inset-0 rounded-full border border-white/25 bg-white/10 transform-gpu"
+                      />
+                    ) : null}
+                    <Icon
+                      className="relative z-10 h-4 w-4"
+                      stroke={`url(#${holoId})`}
+                      strokeWidth={2}
+                      fill="none"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </article>
   );
 }
