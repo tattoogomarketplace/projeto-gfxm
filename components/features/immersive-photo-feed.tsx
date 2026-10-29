@@ -11,9 +11,11 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { toggleSave } from '@/actions/saved-actions';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
 import { ImmersivePhotoCard } from '@/components/features/immersive-photo-card';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useUiStore } from '@/hooks/use-ui-store';
 import { artistProfileHref } from '@/lib/artist-profile';
 import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
 import { cn } from '@/lib/utils';
@@ -30,6 +32,12 @@ const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
 const SNAP_BACKDROP_EASE = 'background-color 320ms ease-out';
 const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
 const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
+const HEADER_DELTA_PX = 15;
+const HEADER_VELOCITY_PX_MS = 0.5;
+const HEADER_TOP_LOCK_PX = 24;
+const HEADER_TRANSITION = 'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease-out';
+const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
+const HEADER_HIDDEN_CLASS = 'is-header-hidden';
 
 export type ImmersivePhotoFeedItem = InspirationItem & {
   liked?: boolean;
@@ -84,11 +92,48 @@ export function ImmersivePhotoFeed({
   });
   const [activeIndex, setActiveIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [budgetItem, setBudgetItem] = useState<ImmersivePhotoFeedItem | null>(null);
   const [, startSaveTransition] = useTransition();
   const isUIVisibleRef = useRef(true);
+  const headerCollapsedRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
+  const lastScrollAtRef = useRef(0);
+  const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
+
+  const applyHeaderCollapse = useCallback(
+    (hidden: boolean) => {
+      if (headerCollapsedRef.current === hidden) return;
+      headerCollapsedRef.current = hidden;
+      setIsHeaderCollapsed(hidden);
+      document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
+        node.classList.toggle(HEADER_HIDDEN_CLASS, hidden);
+      });
+      setStoreHeaderHidden(hidden);
+    },
+    [setStoreHeaderHidden]
+  );
+
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll<HTMLElement>(HEADER_NODES_SELECTOR).forEach((node) => {
+        node.classList.remove(HEADER_HIDDEN_CLASS);
+      });
+      setStoreHeaderHidden(false);
+    };
+  }, [setStoreHeaderHidden]);
+
+  useEffect(() => {
+    const node = scrollerRef.current;
+    lastScrollTopRef.current = node ? node.scrollTop : 0;
+    lastScrollAtRef.current = performance.now();
+  }, []);
+
+  useEffect(() => {
+    applyHeaderCollapse(!isUIVisible);
+  }, [applyHeaderCollapse, isUIVisible]);
 
   const handleUIVisibleChange = useCallback((visible: boolean) => {
     isUIVisibleRef.current = visible;
@@ -161,8 +206,25 @@ export function ImmersivePhotoFeed({
       const next = Math.round(node.scrollTop / height);
       const clamped = Math.max(0, Math.min(feedItems.length - 1, next));
       setActiveIndex((current) => (current === clamped ? current : clamped));
+
+      const now = performance.now();
+      const top = node.scrollTop;
+      const delta = top - lastScrollTopRef.current;
+      const elapsed = Math.max(1, now - lastScrollAtRef.current);
+      const velocity = Math.abs(delta) / elapsed;
+      lastScrollTopRef.current = top;
+      lastScrollAtRef.current = now;
+
+      if (top <= HEADER_TOP_LOCK_PX) {
+        applyHeaderCollapse(false);
+        return;
+      }
+      const decisive = Math.abs(delta) >= HEADER_DELTA_PX && velocity >= HEADER_VELOCITY_PX_MS;
+      if (!decisive) return;
+      if (delta > 0) applyHeaderCollapse(true);
+      else applyHeaderCollapse(false);
     });
-  }, [feedItems.length]);
+  }, [applyHeaderCollapse, feedItems.length]);
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
@@ -367,6 +429,18 @@ export function ImmersivePhotoFeed({
           ref={shellRef}
           className="relative h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
         >
+          <header
+            data-immersive-header
+            aria-hidden={isHeaderCollapsed}
+            className={cn(
+              'pointer-events-none absolute inset-x-0 top-0 z-30 flex h-11 items-center justify-center',
+              'pt-[env(safe-area-inset-top)] transform-gpu will-change-transform',
+              isHeaderCollapsed ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+            )}
+            style={{ transition: HEADER_TRANSITION }}
+          >
+            <BrandLogo className="pointer-events-none h-auto w-auto px-0" size="sm" />
+          </header>
           <div
             ref={scrollerRef}
             onScroll={onScroll}
