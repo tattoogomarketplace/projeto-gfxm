@@ -8,7 +8,7 @@ import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useAuthStore } from '@/hooks/use-auth-store';
 import { useI18n } from '@/hooks/use-i18n';
-import { useUiStore, type AppTab } from '@/hooks/use-ui-store';
+import { type AppTab } from '@/hooks/use-ui-store';
 import { dashboardPathForRole } from '@/lib/utils/auth-redirect';
 import { useRouteTab } from '@/hooks/use-route-tab';
 import { isKeepAliveHostPath } from '@/lib/utils/route-tab';
@@ -221,8 +221,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const role = useAuthStore((s) => s.role);
-  const storeTab = useUiStore((s) => s.activeTab);
-  const setActiveTab = useUiStore((s) => s.setActiveTab);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
   const [isPending, startTransition] = useTransition();
@@ -240,11 +238,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     Boolean(searchParams.get('artistId') || searchParams.get('tatuadorId'));
   const conceal = hidden || bootCanvasActive || shouldHideNav(pathname, chatThreadActive);
   const homePath = dashboardPathForRole(role);
-  // Aba ativa derivada da ROTA via hook SSR-safe (pathname → query → store como
-  // piso). Idêntica no servidor e no 1º frame do cliente, sem store no caminho
-  // crítico da geometria.
-  const routeTab = useRouteTab(storeTab);
-  const activeTab = isKeepAliveHostPath(pathname) ? storeTab : routeTab;
+  // Active tab is derived exclusively from the live router URL (pathname, then
+  // ?tab=). Visual highlight never reads the UI store, so the green pill cannot
+  // lead the actual route.
+  const activeTab = useRouteTab();
 
   // Prefetch em background das abas globais. No mobile não existe "hover", então
   // o Next só pré-carrega o RSC das rotas (`/dashboard/chat`, `/dashboard/perfil`)
@@ -286,7 +283,6 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const originXRef = useRef(0);
   const lastClientXRef = useRef(0);
   const liveIndexRef = useRef(routeIndex);
-  const pendingIndexRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
   const hapticOnPressRef = useRef(false);
   const tapAnimsRef = useRef<Array<{ stop: () => void }>>([]);
@@ -434,26 +430,20 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   useLayoutEffect(() => {
     cacheDockSlots();
     if (draggingRef.current) return;
-    const pending = pendingIndexRef.current;
-    const settledIndex = pending !== null ? pending : routeIndex;
-    liveIndexRef.current = settledIndex;
+    liveIndexRef.current = routeIndex;
     const instant = !pillMountedRef.current;
     pillMountedRef.current = true;
-    if (!instant && pending !== null) {
-      if (pending === routeIndex) pendingIndexRef.current = null;
-      return;
-    }
-    measurePill(settledIndex, instant);
+    measurePill(routeIndex, instant);
     if (!instant) return;
     let innerFrame = 0;
     const outerFrame = window.requestAnimationFrame(() => {
       cacheDockSlots();
       if (draggingRef.current) return;
-      measurePill(pendingIndexRef.current ?? routeIndex, true);
+      measurePill(routeIndex, true);
       innerFrame = window.requestAnimationFrame(() => {
         cacheDockSlots();
         if (draggingRef.current) return;
-        measurePill(pendingIndexRef.current ?? routeIndex, true);
+        measurePill(routeIndex, true);
       });
     });
     return () => {
@@ -499,7 +489,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   }, []);
 
   const handleSelect = useCallback(
-    (tab: AppTab, href: string, haptic = true) => {
+    (href: string, haptic = true) => {
       if (haptic) triggerHaptic('light');
       if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
         router.prefetch(href);
@@ -512,9 +502,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
           forceViewportRecalibration();
         });
       }
-      setActiveTab(tab);
     },
-    [chatThreadActive, pathname, router, setActiveTab, triggerHaptic]
+    [chatThreadActive, pathname, router, triggerHaptic]
   );
 
   const commitTab = useCallback(
@@ -522,20 +511,18 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (isPending) return;
       const item = ITEMS[index];
       if (!item) return;
+      if (index === routeIndex) return;
       const href = hrefForTab(item.tab, homePath);
-      handleSelect(item.tab, href, haptic);
-      if (isKeepAliveHostPath(pathname)) {
-        const next = `${homePath}?tab=${item.tab}`;
-        if (`${pathname}${window.location.search}` !== next) {
-          window.history.replaceState(window.history.state, '', next);
-        }
-        return;
-      }
+      handleSelect(href, haptic);
       startTransition(() => {
+        if (isKeepAliveHostPath(pathname)) {
+          router.replace(href, { scroll: false });
+          return;
+        }
         router.push(href, { scroll: false });
       });
     },
-    [handleSelect, homePath, isPending, pathname, router, startTransition]
+    [handleSelect, homePath, isPending, pathname, routeIndex, router, startTransition]
   );
 
   const clearPressTimer = useCallback(() => {
@@ -611,16 +598,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       if (!wasDragging) {
         suppressClickRef.current = true;
         hapticOnPressRef.current = false;
-        pendingIndexRef.current = nextIndex;
         commitTab(nextIndex, false);
         return;
       }
-      pendingIndexRef.current = nextIndex;
-      measurePill(nextIndex);
       if (didMove && nextIndex !== routeIndex) {
         commitTab(nextIndex);
-      } else if (!didMove) {
-        pendingIndexRef.current = null;
+      } else {
+        measurePill(routeIndex);
       }
     },
     [clearPressTimer, commitTab, grabScale, measurePill, routeIndex]
@@ -666,16 +650,17 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                 onContextMenu={(event) => event.preventDefault()}
                 onPointerDown={(event) => {
                   if (event.button !== 0) return;
-                  if (isPending && routeIndex !== index) return;
-                  pendingIndexRef.current = index;
-                  liveIndexRef.current = index;
+                  if (isPending) {
+                    event.preventDefault();
+                    return;
+                  }
+                  if (routeIndex === index) return;
                   hapticOnPressRef.current = true;
-                  measurePill(index, false, true);
                   triggerHaptic('light');
-                  setActiveTab(item.tab);
                 }}
                 onClick={(event) => {
                   event.preventDefault();
+                  if (isPending) return;
                   if (suppressClickRef.current) {
                     suppressClickRef.current = false;
                     hapticOnPressRef.current = false;
@@ -684,17 +669,13 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
                   liveIndexRef.current = index;
                   const skipHaptic = hapticOnPressRef.current;
                   hapticOnPressRef.current = false;
-                  if (pendingIndexRef.current !== index) {
-                    pendingIndexRef.current = index;
-                    measurePill(index, false, true);
-                  }
                   commitTab(index, !skipHaptic);
                 }}
                 className={cn(
                   dockItemClass(routeIndex === index),
                   'touch-manipulation [touch-action:manipulation] transform-gpu will-change-transform transition-[padding,gap] duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/70',
-                  isPending && routeIndex !== index && 'pointer-events-none'
+                  isPending && 'pointer-events-none'
                 )}
                 aria-current={routeIndex === index ? 'page' : undefined}
                 aria-label={t(item.labelKey)}
