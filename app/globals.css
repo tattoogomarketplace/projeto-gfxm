@@ -295,13 +295,16 @@
   [data-header-follow] {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    will-change: transform;
-    transition: transform 300ms ease-out;
+    will-change: transform, translate;
+    transition: transform 300ms ease-out, translate 300ms ease-out;
+  }
+
+  [data-header-follow] {
     transform: translateY(0);
   }
 
   [data-app-header].is-header-hidden {
-    transform: translateY(-100%);
+    translate: 0 -100%;
     pointer-events: none;
   }
 
