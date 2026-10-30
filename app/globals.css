@@ -319,6 +319,7 @@
     left: 0;
     width: 100%;
     z-index: 50;
+    overflow: visible;
     background-color: #000000;
     border: 0;
     box-shadow: none;

@@ -325,12 +325,11 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
     <header
       ref={headerRef}
       data-app-header
-      className="fixed top-0 left-0 z-50 w-full shrink-0 overflow-hidden bg-black pt-[env(safe-area-inset-top)] translate-y-0 transition-transform duration-300 ease-out will-change-transform [&.is-header-hidden]:-translate-y-full"
+      className="fixed top-0 left-0 z-50 w-full shrink-0 overflow-visible bg-black pt-[env(safe-area-inset-top)] translate-y-0 transition-transform duration-300 ease-out will-change-transform [&.is-header-hidden]:-translate-y-full"
     >
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black backdrop-blur-md" />
       <h1 className="sr-only">{headerTitle}</h1>
-      <div className="relative flex h-11 min-h-11 max-h-11 w-full shrink-0 items-center justify-center">
-        <BrandLogo className="pointer-events-auto h-auto w-auto px-0" size="sm" />
+      <div className="relative flex h-11 min-h-11 max-h-11 w-full shrink-0 items-center justify-center overflow-visible">
+        <BrandLogo className="pointer-events-auto h-auto w-auto overflow-visible px-0" size="sm" />
         <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-0 flex h-11 items-center justify-end gap-2">
           {!isOnline || pending > 0 ? (
             <span className="rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 dark:bg-white/10 dark:text-zinc-300">
@@ -412,20 +411,6 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
               : 'overflow-x-hidden overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]'
           )}
         >
-          {hideShellHeader ? null : (
-            <div
-              aria-hidden
-              data-app-header-spacer
-              className="pointer-events-none shrink-0 pt-[env(safe-area-inset-top)]"
-            >
-              <div className="h-11 min-h-11 max-h-11 shrink-0" />
-              {hideTabs ? null : (
-                <div className="hidden px-4 pb-3 md:block">
-                  <div className="h-11" />
-                </div>
-              )}
-            </div>
-          )}
           {children}
         </div>
       </div>

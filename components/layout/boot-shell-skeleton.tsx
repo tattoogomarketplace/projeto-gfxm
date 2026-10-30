@@ -52,11 +52,11 @@ function ShellChrome({
         {hideHeader ? null : (
           <header
             data-app-header
-            className="fixed top-0 left-0 z-50 w-full shrink-0 bg-black backdrop-blur-md pt-[env(safe-area-inset-top)]"
+            className="fixed top-0 left-0 z-50 w-full shrink-0 overflow-visible bg-black pt-[env(safe-area-inset-top)]"
           >
-            <div className="relative isolate h-11 min-h-11 max-h-11 w-full shrink-0 contain-layout">
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                <BrandLogo className="h-auto w-auto px-0" size="sm" />
+            <div className="relative isolate h-11 min-h-11 max-h-11 w-full shrink-0 overflow-visible contain-layout">
+              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 overflow-visible">
+                <BrandLogo className="h-auto w-auto overflow-visible px-0" size="sm" />
               </div>
               <div className="absolute right-[max(1rem,env(safe-area-inset-right))] top-1/2 z-20 flex -translate-y-1/2 items-center">
                 <span aria-hidden className="h-11 w-11 min-h-11 min-w-11 shrink-0" />
@@ -82,18 +82,6 @@ function ShellChrome({
                 : 'overflow-x-hidden overflow-y-auto overscroll-none pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]'
             )}
           >
-            {hideHeader ? null : (
-              <div
-                aria-hidden
-                data-app-header-spacer
-                className="pointer-events-none shrink-0 pt-[env(safe-area-inset-top)]"
-              >
-                <div className="h-11 min-h-11 max-h-11 shrink-0" />
-                <div className="hidden px-4 pb-3 md:block">
-                  <div className="h-11" />
-                </div>
-              </div>
-            )}
             {children}
           </div>
         </div>
