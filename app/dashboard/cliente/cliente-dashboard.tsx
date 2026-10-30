@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { HomeDiscover } from '@/components/features/home-discover';
 import { ImmersiveAgenda } from '@/components/features/immersive-agenda';
+import { AppReadySignal } from '@/components/layout/app-ready';
 import { PersistentTabPane } from '@/components/layout/persistent-tab-pane';
 import { ProfileView } from '@/components/features/profile-view';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -61,6 +62,7 @@ export default function ClienteDashboard({
 
   return (
     <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 dark:text-white">
+      <AppReadySignal />
       <PersistentTabPane active={activeTab === 'portfolio'}>
         <HomePane feedItems={feedItems} savedItems={savedItems} flashNotes={flashNotes} />
       </PersistentTabPane>

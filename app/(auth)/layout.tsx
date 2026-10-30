@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { AppReadySignal } from '@/components/layout/app-ready';
 import { AuthBrandHeader } from '@/components/layout/auth-brand-header';
 import { AUTH_SHELL_CLASS } from '@/lib/clerk/appearance';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ export default function AuthLayout({
           : 'calc(env(safe-area-inset-bottom, 0px) + 5rem)',
       }}
     >
+      <AppReadySignal />
       <div
         className={cn(
           'flex w-full max-w-md flex-col items-center',

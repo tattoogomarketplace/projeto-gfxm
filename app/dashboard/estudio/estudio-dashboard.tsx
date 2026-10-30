@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StudioIncomingRequests } from '@/components/features/studio-incoming-requests';
 import { ImmersiveAgenda } from '@/components/features/immersive-agenda';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
+import { AppReadySignal } from '@/components/layout/app-ready';
 import { PersistentTabPane } from '@/components/layout/persistent-tab-pane';
 import { ProfileView } from '@/components/features/profile-view';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -89,6 +90,7 @@ export default function EstudioDashboard({
 
   return (
     <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 dark:text-white">
+      <AppReadySignal />
       <PersistentTabPane active={activeTab === 'portfolio'}>
         <HomePane />
       </PersistentTabPane>

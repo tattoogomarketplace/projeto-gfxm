@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useAppReady } from '@/components/layout/app-ready';
 import { SplashScreen } from '@/components/ui/splash-screen';
 
 /**
@@ -10,15 +11,13 @@ import { SplashScreen } from '@/components/ui/splash-screen';
  * cobrindo o carregamento do Clerk e da aplicação subjacente desde o primeiro
  * paint (SSR) até o fim da transição de saída.
  *
- * HANDOFF UNIFICADO (Fase 25.2):
+ * HANDOFF TEATRO (Step 3):
  *
- * O underlay revelado pela splash é SEMPRE o mesmo canvas (`BootContinuation`):
- * a camada de autenticação (`<ClerkLoading>`), os fallbacks de rota e a
- * hidratação de sessão renderizam exatamente o mesmo fundo do splash. Por isso
- * a saída segue estritamente o relógio de marca (2.2s) — não há mais
- * necessidade de esperar o Clerk. Qualquer que seja a fronteira ativa quando a
- * splash desmontar, a pintura é idêntica: UMA única transição, sem revelar
- * skeleton de rota nem a dock.
+ * A splash NÃO desmonta no relógio de marca. O mínimo de 2.2s garante a
+ * assinatura; a saída só começa quando `isAppReady` confirma que o casco /
+ * destino crítico já pintou (useEffect + rAF no App Shell ou na landing/auth).
+ * Sem isso o overlay some sobre o despachante `/dashboard` (return null) e o
+ * utilizador vê ~4s de ecrã preto antes do feed.
  *
  * A splash executa estritamente uma única vez por sessão (Initial App Boot).
  * sessionStorage (`hasSeenSplash`) persiste o skip entre full reloads.
@@ -27,6 +26,7 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 const SPLASH_VISIBLE_MS = 2200;
 const SPLASH_FADE_MS = 500;
 const SPLASH_FADE_BUFFER_MS = 60;
+const SPLASH_MAX_WAIT_MS = 12000;
 
 const SPLASH_SEEN_KEY = 'hasSeenSplash';
 const SPLASH_SEEN_CLASS = 'splash-seen';
@@ -63,24 +63,30 @@ export function SplashGate() {
     getSplashSeenSnapshot,
     () => false
   );
+  const isAppReady = useAppReady();
 
   const [phase, setPhase] = useState<'boot' | 'fading' | 'done'>('boot');
   const [minElapsed, setMinElapsed] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     const minTimer = window.setTimeout(() => setMinElapsed(true), SPLASH_VISIBLE_MS);
     return () => window.clearTimeout(minTimer);
   }, []);
 
-  // Saída dirigida por relógio (não por efeito síncrono): o mínimo de marca
-  // dispara o fade e o desmonte. `setState` só ocorre dentro dos callbacks de
-  // timeout, nunca no corpo do efeito.
+  useEffect(() => {
+    const maxTimer = window.setTimeout(() => setTimedOut(true), SPLASH_MAX_WAIT_MS);
+    return () => window.clearTimeout(maxTimer);
+  }, []);
+
+  const canHandoff = minElapsed && (isAppReady || timedOut);
+
   useEffect(() => {
     if (hasSeenSplash) {
       persistSplashSeen();
       return;
     }
-    if (!minElapsed) return;
+    if (!canHandoff) return;
 
     writeSplashFlag();
 
@@ -94,7 +100,7 @@ export function SplashGate() {
       window.clearTimeout(fadeTimer);
       window.clearTimeout(unmountTimer);
     };
-  }, [hasSeenSplash, minElapsed]);
+  }, [hasSeenSplash, canHandoff]);
 
   if (hasSeenSplash || phase === 'done') return null;
 

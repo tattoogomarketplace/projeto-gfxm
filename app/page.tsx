@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
+import { AppReadySignal } from '@/components/layout/app-ready';
 import { AuthBootFallback } from '@/components/layout/auth-boot-fallback';
 import { TermsModal } from '@/components/shared/terms-modal';
 import { useI18n } from '@/hooks/use-i18n';
@@ -108,6 +109,7 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-black">
+      <AppReadySignal />
       <main className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-gray-900 select-none dark:text-white">
       <TermsModal
         isOpen={showTerms}

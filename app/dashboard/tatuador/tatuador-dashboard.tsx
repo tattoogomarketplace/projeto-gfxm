@@ -6,6 +6,7 @@ import { useKeepAliveTab } from '@/hooks/use-keep-alive-tab';
 import { ChatWorkspace } from '@/components/features/chat/chat-workspace';
 import { ImmersiveAgenda } from '@/components/features/immersive-agenda';
 import { ArtistStudioHub } from '@/components/features/artist-hub/artist-studio-hub';
+import { AppReadySignal } from '@/components/layout/app-ready';
 import { PersistentTabPane } from '@/components/layout/persistent-tab-pane';
 import { ProfileView } from '@/components/features/profile-view';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -53,6 +54,7 @@ export default function TatuadorDashboard({
 
   return (
     <div className="relative flex min-h-0 min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 dark:text-white">
+      <AppReadySignal />
       <PersistentTabPane active={activeTab === 'portfolio'}>
         <HomePane tatuadorId={user?.id} artistName={user?.fullName ?? ''} />
       </PersistentTabPane>

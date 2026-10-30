@@ -28,6 +28,7 @@ import { isKeepAliveHostPath } from '@/lib/utils/route-tab';
 import { forceViewportRecalibration, resetViewportScale } from '@/lib/utils/viewport-scale';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { useSmartHeader } from '@/hooks/use-smart-header';
+import { useMarkAppReadyOnPaint } from '@/components/layout/app-ready';
 import { cn } from '@/lib/utils';
 
 interface AppShellProps {
@@ -127,6 +128,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
   const hideTabs = hideShellChrome;
   const showMachineTrigger = !hideShellChrome;
   const headerRef = useSmartHeader(!hideShellHeader);
+  useMarkAppReadyOnPaint(pathname !== '/dashboard');
 
   // Estável entre renders (só muda com o locale): evita recriar o array de
   // opções a cada render e mantém a referência limpa para o SegmentedControl
