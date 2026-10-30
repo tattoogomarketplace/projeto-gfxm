@@ -117,6 +117,13 @@ enum TransactionType {
   @@map("transaction_type")
 }
 
+enum MediaType {
+  PHOTO
+  VIDEO
+
+  @@map("media_type")
+}
+
 model Perfil {
   id                             String            @id @db.Uuid
   clerk_id                       String?           @unique
@@ -501,18 +508,20 @@ model Review {
 }
 
 model Post {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   imageUrl     String
   authorName   String
   authorAvatar String
   style        String
-  viewsCount   Int      @default(0) @map("views_count")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  mediaType    MediaType @default(PHOTO) @map("media_type")
+  viewsCount   Int       @default(0) @map("views_count")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   savedInspirations SavedInspiration[]
   views             PostView[]
 
   @@index([createdAt], map: "posts_created_at_idx")
+  @@index([mediaType], map: "posts_media_type_idx")
   @@map("posts")
 }
 

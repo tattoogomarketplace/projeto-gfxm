@@ -1,5 +1,7 @@
+import { MediaType } from '@prisma/client';
 import { ensureMocksExist } from '@/lib/db/seed-mocks';
 import type { InspirationItem } from '@/lib/gallery-mock';
+import type { MediaFilter } from '@/lib/media-filter';
 import { prisma } from '@/lib/prisma';
 
 type FeedPostRow = {
@@ -10,6 +12,12 @@ type FeedPostRow = {
   style: string;
   viewsCount: number;
 };
+
+function mediaTypeWhere(filter: MediaFilter): { mediaType: MediaType } | undefined {
+  if (filter === 'photo') return { mediaType: MediaType.PHOTO };
+  if (filter === 'video') return { mediaType: MediaType.VIDEO };
+  return undefined;
+}
 
 function artistInitial(nome: string): string {
   const letter = nome.trim().charAt(0);
@@ -32,7 +40,7 @@ export function mapPostToInspiration(post: FeedPostRow): InspirationItem {
   };
 }
 
-export async function getFeedPosts(): Promise<InspirationItem[]> {
+export async function getFeedPosts(filter: MediaFilter = 'photo'): Promise<InspirationItem[]> {
   try {
     await ensureMocksExist();
   } catch (error) {
@@ -41,7 +49,9 @@ export async function getFeedPosts(): Promise<InspirationItem[]> {
     });
   }
 
+  const mediaWhere = mediaTypeWhere(filter);
   const rows = await prisma.post.findMany({
+    where: mediaWhere,
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,

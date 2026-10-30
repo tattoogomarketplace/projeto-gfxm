@@ -7,6 +7,7 @@ import { AtomicRefreshButton } from '@/components/features/atomic-refresh-button
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { DEFAULT_MEDIA_FILTER, type MediaFilter } from '@/lib/media-filter';
 import { cn } from '@/lib/utils';
 
 const PLACEHOLDER_IMAGE =
@@ -30,9 +31,7 @@ const ACTION_BTN =
   'flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 transform-gpu will-change-transform';
 const ACTION_ICON = 'h-6 w-6';
 
-type MediaType = 'photo' | 'all' | 'video';
-
-const MEDIA_TYPES: readonly { id: MediaType; label: string; Icon: typeof ImageIcon }[] = [
+const MEDIA_TYPES: readonly { id: MediaFilter; label: string; Icon: typeof ImageIcon }[] = [
   { id: 'photo', label: 'Foto', Icon: ImageIcon },
   { id: 'all', label: 'Tudo', Icon: Layers },
   { id: 'video', label: 'Vídeo', Icon: Video },
@@ -56,6 +55,8 @@ export type ImmersivePhotoCardProps = {
   onClose?: () => void;
   onUIVisibleChange?: (visible: boolean) => void;
   isGestureLocked?: () => boolean;
+  mediaType?: MediaFilter;
+  onMediaTypeChange?: (next: MediaFilter) => void;
 };
 
 function formatViews(count: number): string {
@@ -80,6 +81,8 @@ export function ImmersivePhotoCard({
   onClose,
   onUIVisibleChange,
   isGestureLocked,
+  mediaType = DEFAULT_MEDIA_FILTER,
+  onMediaTypeChange,
 }: ImmersivePhotoCardProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [isUIVisible, setIsUIVisible] = useState(true);
@@ -87,7 +90,6 @@ export function ImmersivePhotoCard({
   const [isSaved, setIsSaved] = useState(saved);
   const [likePulse, setLikePulse] = useState(0);
   const [burstNonce, setBurstNonce] = useState(0);
-  const [mediaType, setMediaType] = useState<MediaType>('photo');
   const lastTapAt = useRef(0);
   const burstTimer = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
@@ -469,7 +471,7 @@ export function ImmersivePhotoCard({
                       data-no-dismiss
                       onClick={() => {
                         if (active) return;
-                        setMediaType(id);
+                        onMediaTypeChange?.(id);
                       }}
                       aria-label={label}
                       aria-pressed={active}

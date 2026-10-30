@@ -13,10 +13,12 @@ import { useRouter } from 'next/navigation';
 import { toggleSave } from '@/actions/saved-actions';
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
 import { ImmersivePhotoCard } from '@/components/features/immersive-photo-card';
+import { useGalleryFeed } from '@/hooks/use-gallery-feed';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useUiStore } from '@/hooks/use-ui-store';
 import { artistProfileHref } from '@/lib/artist-profile';
 import { PLACEHOLDER_INSPIRATIONS, type InspirationItem } from '@/lib/gallery-mock';
+import { DEFAULT_MEDIA_FILTER, type MediaFilter } from '@/lib/media-filter';
 import { cn } from '@/lib/utils';
 
 const WINDOW_RADIUS = 1;
@@ -56,6 +58,8 @@ export function ImmersivePhotoFeed({
 }) {
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
+  const [mediaType, setMediaType] = useState<MediaFilter>(DEFAULT_MEDIA_FILTER);
+  const [filterActive, setFilterActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const [viewportH, setViewportH] = useState(() =>
@@ -130,10 +134,14 @@ export function ImmersivePhotoFeed({
     onClose?.();
   }, [onClose, triggerHaptic]);
 
-  const feedItems = useMemo<readonly ImmersivePhotoFeedItem[]>(
-    () => (items && items.length > 0 ? items : PLACEHOLDER_INSPIRATIONS),
-    [items]
-  );
+  const feedQuery = useGalleryFeed(mediaType);
+  const queriedItems = feedQuery.data;
+  const feedItems = useMemo<readonly ImmersivePhotoFeedItem[]>(() => {
+    if (filterActive && queriedItems) return queriedItems;
+    if (items && items.length > 0) return items;
+    if (queriedItems && queriedItems.length > 0) return queriedItems;
+    return PLACEHOLDER_INSPIRATIONS;
+  }, [filterActive, items, queriedItems]);
 
   const totalItems = feedItems.length;
   const maxPageIndex = Math.max(totalItems - 1, 0);
@@ -146,6 +154,15 @@ export function ImmersivePhotoFeed({
     setCurrentIndex(bounded);
     return bounded;
   }, [totalItems]);
+
+  const handleMediaTypeChange = useCallback((next: MediaFilter) => {
+    if (next === mediaType) return;
+    setMediaType(next);
+    setFilterActive(true);
+    commitPageIndex(0);
+    const height = viewportHRef.current || overlayScreenHeight();
+    trackY.set(restTrackY(0, height));
+  }, [commitPageIndex, mediaType, overlayScreenHeight, restTrackY, trackY]);
 
   useEffect(() => {
     pageIndexRef.current = pageIndex;
@@ -362,6 +379,8 @@ export function ImmersivePhotoFeed({
                         onClose={onClose}
                         onUIVisibleChange={index === pageIndex ? handleUIVisibleChange : undefined}
                         isGestureLocked={isGestureLocked}
+                        mediaType={mediaType}
+                        onMediaTypeChange={handleMediaTypeChange}
                       />
                     ) : null}
                   </div>

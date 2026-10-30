@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { InstagramSpinner } from '@/components/ui/instagram-spinner';
 import { OrganicInkGlow } from '@/components/ui/organic-ink-glow';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
-import { queryKeys } from '@/lib/query/keys';
 import { cn } from '@/lib/utils';
 
 const TITANIUM_SHADOW =
@@ -49,7 +48,7 @@ export function AtomicRefreshButton({
       setSyncing(true);
       try {
         await Promise.all([
-          queryClient.refetchQueries({ queryKey: queryKeys.galleryFeed }),
+          queryClient.refetchQueries({ queryKey: ['gallery', 'feed'] }),
           wait(MIN_SYNC_MS),
         ]);
       } catch {

@@ -1,13 +1,15 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { InspirationItem } from '@/lib/gallery-mock';
+import { DEFAULT_MEDIA_FILTER, type MediaFilter } from '@/lib/media-filter';
 import { QueryHttpError } from '@/lib/query/http-error';
 import { queryKeys } from '@/lib/query/keys';
 import { TAB_SWR } from '@/lib/query/swr';
 
-async function fetchGalleryFeed(): Promise<InspirationItem[]> {
-  const res = await fetch('/api/feed', { cache: 'no-store' });
+async function fetchGalleryFeed(media: MediaFilter): Promise<InspirationItem[]> {
+  const params = new URLSearchParams({ media });
+  const res = await fetch(`/api/feed?${params.toString()}`, { cache: 'no-store' });
   const payload = (await res.json().catch(() => ({}))) as {
     sucesso?: boolean;
     erro?: string;
@@ -19,10 +21,11 @@ async function fetchGalleryFeed(): Promise<InspirationItem[]> {
   return Array.isArray(payload.items) ? payload.items : [];
 }
 
-export function useGalleryFeed() {
+export function useGalleryFeed(media: MediaFilter = DEFAULT_MEDIA_FILTER) {
   return useQuery({
-    queryKey: queryKeys.galleryFeed,
-    queryFn: fetchGalleryFeed,
+    queryKey: queryKeys.galleryFeed(media),
+    queryFn: () => fetchGalleryFeed(media),
+    placeholderData: keepPreviousData,
     ...TAB_SWR,
   });
 }

@@ -9,7 +9,7 @@ export const queryKeys = {
   reviewDetail: (id: string) => ['reviews', 'detail', id] as const,
   nearbyArtists: (lat: number, lng: number, radius: number) =>
     ['artists', 'nearby', lat, lng, radius] as const,
-  galleryFeed: ['gallery', 'feed'] as const,
+  galleryFeed: (media: string = 'photo') => ['gallery', 'feed', media] as const,
   savedInspirationIds: ['inspirations', 'saved-ids'] as const,
   savedInspirations: ['inspirations', 'saved'] as const,
 };

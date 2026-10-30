@@ -58,7 +58,7 @@ export function GaleriaInspiracoes({
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
-      queryClient.refetchQueries({ queryKey: queryKeys.galleryFeed }),
+      queryClient.refetchQueries({ queryKey: ['gallery', 'feed'] }),
       queryClient.refetchQueries({ queryKey: queryKeys.savedInspirationIds }),
     ]);
   }, [queryClient]);
