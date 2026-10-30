@@ -7,9 +7,8 @@ import {
   useRef,
   useState,
   useTransition,
-  type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { motion, type PanInfo } from 'framer-motion';
+import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toggleSave } from '@/actions/saved-actions';
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
@@ -22,22 +21,16 @@ import { cn } from '@/lib/utils';
 
 const WINDOW_RADIUS = 1;
 const DISMISS_DISTANCE_PX = 100;
-const DISMISS_VELOCITY_PX_MS = 0.7;
-const DRAG_ACTIVATE_PX = 10;
-const DISMISS_MS = 380;
-const SNAP_MS = 320;
-const RUBBER = 0.72;
-const FULL_BLEED_RATIO = 0.85;
-const SNAP_EASE = 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)';
-const SNAP_BACKDROP_EASE = 'background-color 320ms ease-out';
-const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
-const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
+const DISMISS_VELOCITY_PX_S = 700;
+const DISMISS_SCALE_MIN = 0.95;
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
 const TRACK_SPRING = { type: 'spring', stiffness: 620, damping: 46, mass: 0.55 } as const;
 const PAGE_VELOCITY_PX_S = 400;
 const PAGE_OFFSET_RATIO = 0.2;
 const PAGE_DRAG_ELASTIC = 0.18;
+const DISMISS_DRAG_ELASTIC = 0.22;
+const DISMISS_EASE = [0.32, 0.72, 0, 1] as const;
 
 export type ImmersivePhotoFeedItem = InspirationItem & {
   liked?: boolean;
@@ -48,18 +41,6 @@ function inspirationShareUrl(item: ImmersivePhotoFeedItem): string {
   const href = artistProfileHref({ id: item.artistId, username: item.artistUsername });
   if (typeof window === 'undefined') return href;
   return `${window.location.origin}${href}`;
-}
-
-function isOverlayChrome(target: EventTarget | null, scroller: HTMLDivElement): boolean {
-  if (!(target instanceof Element)) return false;
-  if (target.closest('a, input, textarea, [data-no-dismiss]')) return true;
-  const button = target.closest('button');
-  if (!button) return false;
-  const rect = button.getBoundingClientRect();
-  const host = scroller.getBoundingClientRect();
-  const fullBleed =
-    rect.width >= host.width * FULL_BLEED_RATIO && rect.height >= host.height * FULL_BLEED_RATIO;
-  return !fullBleed;
 }
 
 export function ImmersivePhotoFeed({
@@ -73,23 +54,6 @@ export function ImmersivePhotoFeed({
 }) {
   const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const shellRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const settleTimer = useRef<number | null>(null);
-  const dragRef = useRef({
-    pointerId: -1,
-    startY: 0,
-    startX: 0,
-    lastY: 0,
-    lastAt: 0,
-    offset: 0,
-    raw: 0,
-    velocity: 0,
-    dir: 1,
-    active: false,
-    dismissing: false,
-  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
@@ -97,6 +61,8 @@ export function ImmersivePhotoFeed({
   const [budgetItem, setBudgetItem] = useState<ImmersivePhotoFeedItem | null>(null);
   const [, startSaveTransition] = useTransition();
   const isUIVisibleRef = useRef(true);
+  const dismissingRef = useRef(false);
+  const dismissProgress = useMotionValue(0);
   const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
 
   useEffect(() => {
@@ -115,58 +81,20 @@ export function ImmersivePhotoFeed({
   const handleUIVisibleChange = useCallback((visible: boolean) => {
     isUIVisibleRef.current = visible;
     setIsUIVisible(visible);
-  }, []);
+    if (visible && !dismissingRef.current) {
+      dismissProgress.set(0);
+    }
+  }, [dismissProgress]);
 
   const overlayScreenHeight = useCallback(() => {
     if (typeof window === 'undefined') return 1;
     return Math.max(window.innerHeight || 0, 1);
   }, []);
 
-  const applyDragTransform = useCallback((deltaY: number) => {
-    const node = shellRef.current;
-    const backdrop = backdropRef.current;
-    const screenHeight = overlayScreenHeight();
-    const opacity = Math.max(0, 1 - (Math.abs(deltaY) / screenHeight));
-    if (node) node.style.transform = `translate3d(0, ${deltaY}px, 0)`;
-    if (backdrop) backdrop.style.backgroundColor = `rgba(0,0,0,${opacity})`;
-  }, [overlayScreenHeight]);
-
-  const lockScroller = useCallback((locked: boolean) => {
-    const scroller = scrollerRef.current;
-    const shell = shellRef.current;
-    const freeze = locked || !isUIVisibleRef.current;
-    if (scroller) {
-      scroller.style.touchAction = freeze ? 'none' : '';
-    }
-    if (shell) {
-      shell.style.touchAction = freeze ? 'none' : '';
-    }
-  }, []);
-
-  const suppressNextClick = useCallback(() => {
-    const suppress = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-    document.addEventListener('click', suppress, true);
-    window.setTimeout(() => document.removeEventListener('click', suppress, true), 450);
-  }, []);
-
   const finishDismiss = useCallback(() => {
     triggerHaptic('medium');
     onClose?.();
   }, [onClose, triggerHaptic]);
-
-  useEffect(() => {
-    const timer = settleTimer;
-    return () => {
-      if (timer.current !== null) window.clearTimeout(timer.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    lockScroller(!isUIVisible);
-  }, [isUIVisible, lockScroller]);
 
   const feedItems = useMemo<readonly ImmersivePhotoFeedItem[]>(
     () => (items && items.length > 0 ? items : PLACEHOLDER_INSPIRATIONS),
@@ -178,6 +106,7 @@ export function ImmersivePhotoFeed({
 
   const handlePageDragEnd = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (!isUIVisibleRef.current || dismissingRef.current) return;
       const viewportH = overlayScreenHeight();
       const offsetY = info.offset.y;
       const velocityY = info.velocity.y;
@@ -192,6 +121,38 @@ export function ImmersivePhotoFeed({
     },
     [maxPageIndex, overlayScreenHeight]
   );
+
+  const handleDismissDrag = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (isUIVisibleRef.current || dismissingRef.current) return;
+      const viewportH = overlayScreenHeight();
+      dismissProgress.set(Math.min(1, Math.abs(info.offset.y) / viewportH));
+    },
+    [dismissProgress, overlayScreenHeight]
+  );
+
+  const handleDismissDragEnd = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (isUIVisibleRef.current || dismissingRef.current) return;
+      const shouldDismiss =
+        Boolean(onClose) &&
+        (Math.abs(info.offset.y) >= DISMISS_DISTANCE_PX ||
+          Math.abs(info.velocity.y) >= DISMISS_VELOCITY_PX_S);
+      if (!shouldDismiss) {
+        void animate(dismissProgress, 0, TRACK_SPRING);
+        return;
+      }
+      dismissingRef.current = true;
+      void animate(dismissProgress, 1, {
+        duration: 0.22,
+        ease: DISMISS_EASE,
+      }).then(finishDismiss);
+    },
+    [dismissProgress, finishDismiss, onClose]
+  );
+
+  const dismissScale = useTransform(dismissProgress, [0, 1], [1, DISMISS_SCALE_MIN]);
+  const backdropOpacity = useTransform(dismissProgress, [0, 1], [1, 0]);
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
@@ -234,171 +195,26 @@ export function ImmersivePhotoFeed({
     [router]
   );
 
-  const onPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (dragRef.current.dismissing) return;
-    if (isUIVisibleRef.current) return;
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-    if (isOverlayChrome(event.target, scroller)) return;
-    dragRef.current.pointerId = event.pointerId;
-    dragRef.current.startY = event.clientY;
-    dragRef.current.startX = event.clientX;
-    dragRef.current.lastY = event.clientY;
-    dragRef.current.lastAt = event.timeStamp;
-    dragRef.current.offset = 0;
-    dragRef.current.raw = 0;
-    dragRef.current.velocity = 0;
-    dragRef.current.dir = 1;
-    dragRef.current.active = false;
-  }, []);
-
-  const onPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const drag = dragRef.current;
-      if (drag.pointerId !== event.pointerId || drag.dismissing) return;
-      const scroller = scrollerRef.current;
-      const shell = shellRef.current;
-      if (!scroller || !shell) return;
-
-      if (isUIVisibleRef.current) return;
-
-      const deltaY = event.clientY - drag.startY;
-      const deltaX = event.clientX - drag.startX;
-
-      if (!drag.active) {
-        if (Math.abs(deltaY) < DRAG_ACTIVATE_PX) return;
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          drag.pointerId = -1;
-          lockScroller(false);
-          return;
-        }
-        drag.active = true;
-        shell.style.transition = 'none';
-        if (backdropRef.current) backdropRef.current.style.transition = 'none';
-        lockScroller(true);
-        try {
-          scroller.setPointerCapture(event.pointerId);
-        } catch {
-          void 0;
-        }
-      }
-
-      event.preventDefault();
-      const dt = Math.max(1, event.timeStamp - drag.lastAt);
-      drag.velocity = (event.clientY - drag.lastY) / dt;
-      drag.lastY = event.clientY;
-      drag.lastAt = event.timeStamp;
-      const raw = Math.abs(deltaY);
-      const offset = raw * RUBBER;
-      drag.dir = deltaY < 0 ? -1 : 1;
-      drag.raw = raw;
-      drag.offset = offset;
-      applyDragTransform(offset * drag.dir);
-    },
-    [applyDragTransform, lockScroller]
-  );
-
-  const releaseSwipe = useCallback(
-    (pointerId: number) => {
-      const drag = dragRef.current;
-      if (drag.pointerId !== pointerId) return;
-      const scroller = scrollerRef.current;
-      const shell = shellRef.current;
-      if (scroller) {
-        try {
-          scroller.releasePointerCapture(pointerId);
-        } catch {
-          void 0;
-        }
-      }
-      drag.pointerId = -1;
-
-      if (!drag.active || drag.dismissing) {
-        lockScroller(false);
-        return;
-      }
-      drag.active = false;
-      suppressNextClick();
-
-      const shouldDismiss =
-        Boolean(onClose) &&
-        (drag.raw >= DISMISS_DISTANCE_PX || Math.abs(drag.velocity) >= DISMISS_VELOCITY_PX_MS);
-
-      if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
-
-      if (shouldDismiss) {
-        drag.dismissing = true;
-        lockScroller(true);
-        const viewportH = overlayScreenHeight();
-        if (shell) {
-          shell.style.transition = DISMISS_EASE;
-          if (backdropRef.current) backdropRef.current.style.transition = DISMISS_BACKDROP_EASE;
-          applyDragTransform(viewportH * drag.dir);
-        }
-        settleTimer.current = window.setTimeout(finishDismiss, shell ? DISMISS_MS : 0);
-        return;
-      }
-
-      lockScroller(false);
-      if (shell) {
-        shell.style.transition = SNAP_EASE;
-        if (backdropRef.current) backdropRef.current.style.transition = SNAP_BACKDROP_EASE;
-        applyDragTransform(0);
-      }
-      settleTimer.current = window.setTimeout(() => {
-        if (dragRef.current.dismissing || !shell) return;
-        shell.style.transition = 'none';
-        if (backdropRef.current) backdropRef.current.style.transition = 'none';
-        applyDragTransform(0);
-      }, SNAP_MS);
-    },
-    [applyDragTransform, finishDismiss, lockScroller, onClose, overlayScreenHeight, suppressNextClick]
-  );
-
-  const onPointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      releaseSwipe(event.pointerId);
-    },
-    [releaseSwipe]
-  );
-
-  useEffect(() => {
-    const handleRelease = (event: PointerEvent) => {
-      releaseSwipe(event.pointerId);
-    };
-    const blockNativeOverscroll = (event: TouchEvent) => {
-      if (!dragRef.current.active) return;
-      if (event.cancelable) event.preventDefault();
-    };
-    window.addEventListener('pointerup', handleRelease);
-    window.addEventListener('pointercancel', handleRelease);
-    document.addEventListener('touchmove', blockNativeOverscroll, { passive: false });
-    return () => {
-      window.removeEventListener('pointerup', handleRelease);
-      window.removeEventListener('pointercancel', handleRelease);
-      document.removeEventListener('touchmove', blockNativeOverscroll);
-    };
-  }, [releaseSwipe]);
-
   return (
     <>
       <div className="fixed inset-0 z-[100] h-[100dvh] w-full overflow-hidden">
-        <div
-          ref={backdropRef}
-          className="absolute inset-0 transform-gpu will-change-[background-color]"
-          style={{ backgroundColor: 'rgba(0,0,0,1)' }}
+        <motion.div
+          className="absolute inset-0 transform-gpu will-change-[opacity]"
+          style={{ backgroundColor: '#000', opacity: backdropOpacity }}
         />
-        <div
-          ref={shellRef}
-          className="relative h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
+        <motion.div
+          className="relative h-[100dvh] w-full transform-gpu will-change-transform [backface-visibility:hidden]"
+          style={{ scale: dismissScale }}
+          drag={!isUIVisible ? 'y' : false}
+          dragDirectionLock
+          dragListener={!isUIVisible}
+          dragElastic={DISMISS_DRAG_ELASTIC}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragMomentum={false}
+          onDrag={handleDismissDrag}
+          onDragEnd={handleDismissDragEnd}
         >
           <div
-            ref={scrollerRef}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerEnd}
-            onPointerCancel={onPointerEnd}
             className={cn(
               'relative h-[100dvh] w-full overflow-hidden p-0 m-0 touch-none scrollbar-none',
               'overscroll-none transform-gpu',
@@ -410,9 +226,9 @@ export function ImmersivePhotoFeed({
               initial={false}
               animate={{ y: `${-pageIndex * 100}dvh` }}
               transition={TRACK_SPRING}
-              drag="y"
+              drag={isUIVisible ? 'y' : false}
               dragDirectionLock
-              dragListener
+              dragListener={isUIVisible}
               dragElastic={PAGE_DRAG_ELASTIC}
               dragConstraints={{ top: 0, bottom: 0 }}
               dragMomentum={false}
@@ -450,7 +266,7 @@ export function ImmersivePhotoFeed({
               })}
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <BudgetEstimatorSheet
