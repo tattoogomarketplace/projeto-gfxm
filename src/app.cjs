@@ -16,7 +16,16 @@ const app = express();
 applySecurity(app);
 app.get("/", (req, res) => res.status(200).send("TattooGo Backend Online"));
 app.use(pinoHttp({ logger }));
-app.use(express.json({ limit: "10mb" }));
+app.use(
+  express.json({
+    limit: "10mb",
+    // Preserva os bytes originais para a verificação HMAC dos webhooks de
+    // pagamento. O JSON parseado nunca é usado como fonte da assinatura.
+    verify: (req, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(hpp());
 app.use(sanitizeRequest);
 app.use(express.static(path.join(__dirname, "..", "public")));
