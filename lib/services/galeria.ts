@@ -196,8 +196,6 @@ export async function listGaleriaInspiracoes(filters: GaleriaFilters): Promise<G
           ? {
               id: row.tatuador.studio.id,
               name: studioName || '',
-              cidade: row.tatuador.studio.cidade,
-              estado: row.tatuador.studio.estado,
             }
           : null,
       },

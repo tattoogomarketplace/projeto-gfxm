@@ -4,34 +4,41 @@ export const maxDuration = 30;
 
 import { NextResponse } from 'next/server';
 import { ReceitaWsError, validateCnpj } from '@/lib/services/receitaws';
+import { requireApiUserId, NO_STORE_HEADERS } from '@/lib/security/api-guard';
 import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ cnpj: string }> }
 ) {
+  const session = await requireApiUserId(request);
+  if (session.response) return session.response;
+
   const { cnpj } = await params;
   const cleanCnpj = onlyCnpjDigits(cnpj);
 
   if (!isValidCnpj(cleanCnpj)) {
     return NextResponse.json(
       { sucesso: false, erro: 'CNPJ inválido. Informe 14 dígitos válidos.' },
-      { status: 400 }
+      { status: 400, headers: NO_STORE_HEADERS }
     );
   }
 
   try {
     const empresa = await validateCnpj(cleanCnpj);
-    return NextResponse.json({
-      sucesso: true,
-      nome: empresa.razaoSocial,
-      fantasia: empresa.nomeFantasia,
-    });
+    return NextResponse.json(
+      {
+        sucesso: true,
+        nome: empresa.razaoSocial,
+        fantasia: empresa.nomeFantasia,
+      },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (error) {
     if (error instanceof ReceitaWsError) {
       return NextResponse.json(
         { sucesso: false, erro: error.message },
-        { status: error.status }
+        { status: error.status, headers: NO_STORE_HEADERS }
       );
     }
     console.error('[cnpj] falha inesperada', {
@@ -39,7 +46,7 @@ export async function GET(
     });
     return NextResponse.json(
       { sucesso: false, erro: 'Falha ao consultar o CNPJ.' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

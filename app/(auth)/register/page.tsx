@@ -493,6 +493,9 @@ export default function RegisterPage() {
           erro?: string;
         };
         if (cancelled) return;
+        if (res.status === 401) {
+          return;
+        }
         if (!res.ok || !payload.sucesso) {
           toast.error(formatAppError({ message: payload.erro, response: { status: res.status, data: payload } }, 'signup'));
           return;

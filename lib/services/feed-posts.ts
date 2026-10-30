@@ -53,6 +53,7 @@ export async function getFeedPosts(filter: MediaFilter = 'photo'): Promise<Inspi
   const rows = await prisma.post.findMany({
     where: mediaWhere,
     orderBy: { createdAt: 'desc' },
+    take: 60,
     select: {
       id: true,
       imageUrl: true,
