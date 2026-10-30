@@ -9,6 +9,7 @@ import {
   useTransition,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toggleSave } from '@/actions/saved-actions';
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
@@ -33,6 +34,7 @@ const DISMISS_EASE = 'transform 380ms cubic-bezier(0.32, 0.72, 0, 1)';
 const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
+const TRACK_SPRING = { type: 'spring', stiffness: 620, damping: 46, mass: 0.55 } as const;
 
 export type ImmersivePhotoFeedItem = InspirationItem & {
   liked?: boolean;
@@ -71,7 +73,6 @@ export function ImmersivePhotoFeed({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef(0);
   const settleTimer = useRef<number | null>(null);
   const dragRef = useRef({
     pointerId: -1,
@@ -86,7 +87,7 @@ export function ImmersivePhotoFeed({
     active: false,
     dismissing: false,
   });
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -132,7 +133,6 @@ export function ImmersivePhotoFeed({
     const shell = shellRef.current;
     const freeze = locked || !isUIVisibleRef.current;
     if (scroller) {
-      scroller.style.overflowY = freeze ? 'hidden' : '';
       scroller.style.touchAction = freeze ? 'none' : '';
     }
     if (shell) {
@@ -170,17 +170,7 @@ export function ImmersivePhotoFeed({
     [items]
   );
 
-  const onScroll = useCallback(() => {
-    const node = scrollerRef.current;
-    if (!node || frameRef.current) return;
-    frameRef.current = window.requestAnimationFrame(() => {
-      frameRef.current = 0;
-      const height = Math.max(node.clientHeight, 1);
-      const next = Math.round(node.scrollTop / height);
-      const clamped = Math.max(0, Math.min(feedItems.length - 1, next));
-      setActiveIndex((current) => (current === clamped ? current : clamped));
-    });
-  }, [feedItems.length]);
+  const pageIndex = Math.max(0, Math.min(Math.max(feedItems.length - 1, 0), currentIndex));
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
@@ -384,56 +374,53 @@ export function ImmersivePhotoFeed({
         >
           <div
             ref={scrollerRef}
-            onScroll={onScroll}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
             className={cn(
-              'flex h-[100dvh] w-full flex-col gap-0 space-y-0 p-0 m-0 snap-y snap-mandatory scrollbar-none',
-              'overscroll-y-contain [-webkit-overflow-scrolling:touch]',
-              'transform-gpu',
-              isUIVisible ? 'overflow-y-scroll touch-pan-y' : 'overflow-hidden touch-none',
+              'relative h-[100dvh] w-full overflow-hidden p-0 m-0 touch-none scrollbar-none',
+              'overscroll-none transform-gpu',
               className
             )}
-            style={{
-              scrollSnapType: 'y mandatory',
-              scrollBehavior: 'auto',
-              overscrollBehaviorY: 'contain',
-              WebkitOverflowScrolling: 'touch',
-              willChange: 'scroll-position',
-            }}
           >
-            {feedItems.map((item, index) => {
-              const mounted = Math.abs(index - activeIndex) <= WINDOW_RADIUS;
-              const handle = item.artistUsername || item.artistName;
-              return (
-                <div
-                  key={item.id}
-                  className="h-[100dvh] w-full flex-shrink-0 snap-start snap-always overflow-hidden transform-gpu"
-                  style={{ contain: 'layout paint size', scrollSnapStop: 'always' }}
-                >
-                  {mounted ? (
-                    <ImmersivePhotoCard
-                      imageUrl={item.imageUrl}
-                      username={handle}
-                      artistName={item.artistName}
-                      caption={item.description || item.style}
-                      viewsCount={item.viewsCount ?? 0}
-                      liked={Boolean(liked[item.id] ?? item.liked)}
-                      saved={Boolean(saved[item.id] ?? item.saved)}
-                      shareUrl={inspirationShareUrl(item)}
-                      onLike={() => toggleLiked(item.id, item.liked)}
-                      onSave={() => persistToggleSave(item.id, item.saved)}
-                      onQuote={() => openBudget(item)}
-                      onShare={() => shareInspiration(item)}
-                      onClose={onClose}
-                      onUIVisibleChange={index === activeIndex ? handleUIVisibleChange : undefined}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
+            <motion.div
+              className="flex w-full flex-col gap-0 space-y-0 will-change-transform"
+              initial={false}
+              animate={{ y: `${-pageIndex * 100}dvh` }}
+              transition={TRACK_SPRING}
+            >
+              {feedItems.map((item, index) => {
+                const mounted = Math.abs(index - pageIndex) <= WINDOW_RADIUS;
+                const handle = item.artistUsername || item.artistName;
+                return (
+                  <div
+                    key={item.id}
+                    className="h-[100dvh] w-full flex-shrink-0 overflow-hidden transform-gpu"
+                    style={{ contain: 'layout paint size' }}
+                  >
+                    {mounted ? (
+                      <ImmersivePhotoCard
+                        imageUrl={item.imageUrl}
+                        username={handle}
+                        artistName={item.artistName}
+                        caption={item.description || item.style}
+                        viewsCount={item.viewsCount ?? 0}
+                        liked={Boolean(liked[item.id] ?? item.liked)}
+                        saved={Boolean(saved[item.id] ?? item.saved)}
+                        shareUrl={inspirationShareUrl(item)}
+                        onLike={() => toggleLiked(item.id, item.liked)}
+                        onSave={() => persistToggleSave(item.id, item.saved)}
+                        onQuote={() => openBudget(item)}
+                        onShare={() => shareInspiration(item)}
+                        onClose={onClose}
+                        onUIVisibleChange={index === pageIndex ? handleUIVisibleChange : undefined}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </motion.div>
           </div>
         </div>
       </div>
