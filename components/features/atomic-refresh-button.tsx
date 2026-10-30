@@ -75,8 +75,8 @@ export function AtomicRefreshButton({
         className={cn(
           'pointer-events-auto absolute z-30 flex h-11 min-h-11 w-11 min-w-11 items-center justify-center overflow-visible rounded-full',
           'bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] right-[max(1rem,env(safe-area-inset-right,0px))]',
-          'border border-white/15 bg-black/45 backdrop-blur-md transform-gpu will-change-transform',
-          'shadow-[0_1px_1.5px_rgba(0,0,0,0.9),0_4px_14px_rgba(0,0,0,0.55)]',
+          'border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu will-change-transform',
+          'shadow-[0_1px_1px_rgba(255,255,255,0.08)_inset,0_8px_24px_rgba(0,0,0,0.28)]',
           'disabled:opacity-100',
           className
         )}

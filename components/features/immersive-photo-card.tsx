@@ -455,8 +455,8 @@ export function ImmersivePhotoCard({
                 data-no-dismiss
                 className={cn(
                   'pointer-events-auto relative flex items-center gap-0.5 rounded-full px-1 py-1',
-                  'border border-white/15 bg-black/45 backdrop-blur-md transform-gpu',
-                  'shadow-[0_1px_1.5px_rgba(0,0,0,0.9),0_4px_14px_rgba(0,0,0,0.55)]'
+                  'border border-white/10 bg-white/5 backdrop-blur-xl transform-gpu',
+                  'shadow-[0_1px_1px_rgba(255,255,255,0.08)_inset,0_8px_24px_rgba(0,0,0,0.28)]'
                 )}
                 style={{ filter: TITANIUM_SHADOW }}
               >
