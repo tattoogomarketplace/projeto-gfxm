@@ -9,7 +9,7 @@ import {
   useTransition,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { motion } from 'framer-motion';
+import { motion, type PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toggleSave } from '@/actions/saved-actions';
 import { BudgetEstimatorSheet } from '@/components/features/budget-estimator-sheet';
@@ -35,6 +35,9 @@ const DISMISS_BACKDROP_EASE = 'background-color 380ms ease-out';
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
 const TRACK_SPRING = { type: 'spring', stiffness: 620, damping: 46, mass: 0.55 } as const;
+const PAGE_VELOCITY_PX_S = 400;
+const PAGE_OFFSET_RATIO = 0.2;
+const PAGE_DRAG_ELASTIC = 0.18;
 
 export type ImmersivePhotoFeedItem = InspirationItem & {
   liked?: boolean;
@@ -87,7 +90,7 @@ export function ImmersivePhotoFeed({
     active: false,
     dismissing: false,
   });
-  const [currentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
@@ -171,6 +174,24 @@ export function ImmersivePhotoFeed({
   );
 
   const pageIndex = Math.max(0, Math.min(Math.max(feedItems.length - 1, 0), currentIndex));
+  const maxPageIndex = Math.max(feedItems.length - 1, 0);
+
+  const handlePageDragEnd = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const viewportH = overlayScreenHeight();
+      const offsetY = info.offset.y;
+      const velocityY = info.velocity.y;
+      const offsetPass = Math.abs(offsetY) >= viewportH * PAGE_OFFSET_RATIO;
+      const velocityPass = Math.abs(velocityY) >= PAGE_VELOCITY_PX_S;
+      if (!offsetPass && !velocityPass) return;
+      const goingNext = offsetPass ? offsetY < 0 : velocityY < 0;
+      setCurrentIndex((current) => {
+        if (goingNext) return Math.min(current + 1, maxPageIndex);
+        return Math.max(current - 1, 0);
+      });
+    },
+    [maxPageIndex, overlayScreenHeight]
+  );
 
   const toggleLiked = useCallback((id: string, fallback = false) => {
     setLiked((prev) => ({ ...prev, [id]: !(prev[id] ?? fallback) }));
@@ -389,6 +410,13 @@ export function ImmersivePhotoFeed({
               initial={false}
               animate={{ y: `${-pageIndex * 100}dvh` }}
               transition={TRACK_SPRING}
+              drag="y"
+              dragDirectionLock
+              dragListener
+              dragElastic={PAGE_DRAG_ELASTIC}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragMomentum={false}
+              onDragEnd={handlePageDragEnd}
             >
               {feedItems.map((item, index) => {
                 const mounted = Math.abs(index - pageIndex) <= WINDOW_RADIUS;
