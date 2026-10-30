@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from '@/lib/toast';
 import { Sparkles } from 'lucide-react';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { RoleSelector, type RegisterRole } from '@/components/features/role-selector';
 import { getRoleExperience } from '@/lib/content/role-experience';
 import { TattooMachineLoader } from '@/components/ui/tattoo-machine-loader';
@@ -41,6 +42,8 @@ export default function DashboardOnboardingPage() {
   const [selectedRole, setSelectedRole] = useState<RegisterRole | null>(null);
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const submitting = useRef(false);
 
   const metadata = useMemo(
@@ -63,6 +66,11 @@ export default function DashboardOnboardingPage() {
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error(t('errors.clerk.requiresVerification'));
+      return;
+    }
+
     markOnboardingGrace();
     const submitRole = lockedRole ?? role;
     submitting.current = true;
@@ -78,10 +86,11 @@ export default function DashboardOnboardingPage() {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ role: submitRole }),
+        body: JSON.stringify({ role: submitRole, turnstileToken }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
         erro?: unknown;
+        codigo?: string;
         needsOnboarding?: boolean;
         perfil?: {
           role?: string | null;
@@ -92,9 +101,16 @@ export default function DashboardOnboardingPage() {
         };
       };
       if (!response.ok) {
-        const errorMessage = messageFromOnboardingError(response.status, t);
+        const turnstileBlocked = payload.codigo === 'TURNSTILE_REQUIRED';
+        const errorMessage = turnstileBlocked
+          ? t('errors.clerk.requiresVerification')
+          : messageFromOnboardingError(response.status, t);
         setSubmitError(errorMessage);
         toast.error(errorMessage);
+        if (turnstileBlocked) {
+          setTurnstileToken('');
+          setTurnstileNonce((nonce) => nonce + 1);
+        }
         return;
       }
 
@@ -215,10 +231,18 @@ export default function DashboardOnboardingPage() {
       </div>
 
       <div className="mx-auto w-full max-w-md shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
+        <TurnstileGuard
+          key={turnstileNonce}
+          action="onboarding"
+          onSuccess={setTurnstileToken}
+          onExpire={() => setTurnstileToken('')}
+          onError={() => setTurnstileToken('')}
+          className="mb-3"
+        />
         <button
           type="button"
           onClick={handleAdvance}
-          disabled={saving}
+          disabled={saving || !turnstileToken}
           className="mx-auto flex h-14 min-h-14 w-full items-center justify-center rounded-2xl bg-orange-500 text-base font-bold text-black shadow-[0_0_25px_rgba(249,115,22,0.55)] transition-all duration-300 hover:bg-orange-600 hover:shadow-[0_0_35px_rgba(249,115,22,0.8)] active:scale-95 disabled:opacity-50"
         >
           {saving ? <TattooMachineLoader compact label={t(content.activating)} /> : t(content.cta)}

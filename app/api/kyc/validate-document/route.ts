@@ -26,7 +26,7 @@ const MIN_AUTO_APPROVE_SCORE = 60;
 
 /**
  * Sanitização impiedosa do payload: aceita `fileKey` cru do bucket OU
- * `publicUrl` do R2, mais `contentType` e `turnstileToken` opcionais. Qualquer
+ * `publicUrl` do R2, mais `contentType` e `turnstileToken` obrigatório. Qualquer
  * outro formato é rejeitado com HTTP 400 antes de tocar em segurança ou banco.
  */
 type ValidateDocumentPayload = z.infer<typeof kycValidateDocumentSchema>;

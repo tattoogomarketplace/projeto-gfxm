@@ -20,6 +20,7 @@ import {
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
 import { isOnboardingComplete } from '@/lib/utils/auth-redirect';
+import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
 import { invalidPayloadBody, onboardingPayloadSchema } from '@/lib/security/validation';
 
 /**
@@ -59,6 +60,21 @@ export async function POST(request: Request) {
   const parsed = onboardingPayloadSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
+  const turnstile = await verifyTurnstileToken(
+    parsed.data.turnstileToken,
+    resolveClientIp(request)
+  );
+  if (turnstile.configured && !turnstile.success) {
+    return NextResponse.json(
+      {
+        sucesso: false,
+        erro: 'Falha na verificação anti-bot. Recarregue a página e tente novamente.',
+        codigo: 'TURNSTILE_REQUIRED',
+      },
+      { status: 403 }
+    );
   }
 
   const requestedRole = parsed.data.role ?? null;

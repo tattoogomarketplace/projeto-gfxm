@@ -20,6 +20,7 @@ import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthScreen } from '@/components/layout/auth-screen';
 import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { clerkErrorMessage } from '@/lib/error-handler';
+import { assertTurnstileGate, isTurnstileGateError } from '@/lib/security/assert-turnstile-gate';
 
 type LoginFormValues = {
   email: string;
@@ -117,6 +118,8 @@ export default function LoginPage() {
         throw new Error('clerk not ready');
       }
 
+      await assertTurnstileGate(turnstileToken);
+
       const result = await signIn.create({
         identifier: data.email.trim().toLowerCase(),
         password: data.password,
@@ -157,7 +160,11 @@ export default function LoginPage() {
       toast.success(t('auth.codeSent'));
     } catch (err) {
       console.error('CLERK ERROR:', err);
-      toast.error(clerkErrorMessage(err));
+      toast.error(
+        isTurnstileGateError(err)
+          ? t('errors.clerk.requiresVerification')
+          : clerkErrorMessage(err)
+      );
       setTurnstileToken('');
       setTurnstileNonce((nonce) => nonce + 1);
     } finally {

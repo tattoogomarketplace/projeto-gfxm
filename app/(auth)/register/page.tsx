@@ -29,6 +29,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticated';
 import { AuthScreen } from '@/components/layout/auth-screen';
 import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { assertTurnstileGate, isTurnstileGateError } from '@/lib/security/assert-turnstile-gate';
 import { persistStudioPublicMetadata } from '@/app/actions/auth-actions';
 import { markOnboardingGrace } from '@/lib/utils/session';
 import { TermsViewerModal } from '@/components/shared/terms-viewer-modal';
@@ -346,6 +347,7 @@ export default function RegisterPage() {
     setStudioMeta(isStudio && officialName ? { cnpj: cnpjDigits, razaoSocial: officialName } : null);
     try {
       setLoadingText(t('auth.preparingProfile'));
+      await assertTurnstileGate(turnstileToken);
       await wipeStaleSession();
       await signUp.create({
         emailAddress: emailNorm,
@@ -371,9 +373,11 @@ export default function RegisterPage() {
       setEmailForVerification(emailNorm);
       setIsVerifying(true);
       toast.success(t('auth.codeSent'));
-     } catch (err) {
+      } catch (err) {
        console.error(err);
-        const clerkMsg = formatAppError(err, 'signup');
+        const clerkMsg = isTurnstileGateError(err)
+          ? t('errors.clerk.requiresVerification')
+          : formatAppError(err, 'signup');
        toast.error(clerkMsg);
        setTurnstileToken('');
        setTurnstileNonce((nonce) => nonce + 1);

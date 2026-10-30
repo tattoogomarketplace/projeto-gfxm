@@ -101,7 +101,7 @@ export const appRoleSchema = z.enum(['cliente', 'tatuador', 'estudio']);
 /** Locale suportado pela plataforma. */
 export const localeSchema = z.enum(LOCALES);
 
-/** Token do Cloudflare Turnstile (opcional nos fluxos; formato estrito). */
+/** Token do Cloudflare Turnstile (obrigatório nos fluxos críticos; formato estrito). */
 export const turnstileTokenSchema = z.string().trim().min(1).max(2048);
 
 export const emailSchema = z
@@ -415,7 +415,7 @@ export const kycValidateDocumentSchema = z
     fileKey: storageKeySchema.optional(),
     publicUrl: storageUrlSchema.optional(),
     contentType: z.string().trim().max(120).optional(),
-    turnstileToken: turnstileTokenSchema.optional(),
+    turnstileToken: turnstileTokenSchema,
   })
   .strict()
   .refine((data) => Boolean(data.fileKey || data.publicUrl), {
@@ -436,6 +436,7 @@ export const kycVerifySchema = z
 export const onboardingPayloadSchema = z
   .object({
     role: appRoleSchema.optional(),
+    turnstileToken: turnstileTokenSchema,
   })
   .strict();
 
