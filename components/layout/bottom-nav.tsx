@@ -65,7 +65,7 @@ function isShellBypassedRoute(pathname: string, chatThreadActive: boolean): bool
 }
 
 const PILL_CLASS =
-  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/20 bg-white/[0.02] px-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),_0_20px_40px_rgba(0,0,0,0.4)] backdrop-blur-[40px] select-none touch-none';
+  'bottom-nav-dock fixed inset-x-0 z-50 mx-auto flex h-12 w-[94%] max-w-sm items-center overflow-hidden rounded-full border border-white/10 border-t border-t-white/10 bg-black/40 px-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_20px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl select-none touch-none';
 
 const DRAG_THRESHOLD_PX = 6;
 const DRAG_HOLD_MS = 150;
@@ -117,11 +117,17 @@ function DockGlyph({
   return (
     <>
       {active && staticPill ? (
-        <span className="absolute inset-0 z-0 rounded-full bg-[#90EE90]/15" />
+        <span className="absolute inset-0 z-0 rounded-full bg-white/10" />
+      ) : null}
+      {active ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0.5 left-1/2 z-0 h-1.5 w-4 -translate-x-1/2 rounded-full bg-white/20 blur-md"
+        />
       ) : null}
       <span
         className={cn(
-          'relative z-10 flex shrink-0 items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+          'relative z-10 flex shrink-0 items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
           active && 'scale-105'
         )}
       >
@@ -129,8 +135,8 @@ function DockGlyph({
           icon={item.icon}
           className={
             active
-              ? 'text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
-              : 'text-zinc-500'
+              ? 'text-white drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
+              : 'text-white/40'
           }
         />
       </span>
@@ -143,7 +149,7 @@ function DockGlyph({
       >
         <span
           className={cn(
-            'min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90]',
+            'min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-white',
             active && 'drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]'
           )}
         >
@@ -179,9 +185,9 @@ function DockGlyphLive({
     return 1 + near * 0.05 + near * (plump - 1);
   });
   const iconColor = useTransform(proximity, (near) => {
-    const r = Math.round(113 + (144 - 113) * near);
-    const g = Math.round(113 + (238 - 113) * near);
-    const b = Math.round(122 + (144 - 122) * near);
+    const r = Math.round(163 + (255 - 163) * near);
+    const g = Math.round(163 + (255 - 163) * near);
+    const b = Math.round(163 + (255 - 163) * near);
     return `rgb(${r} ${g} ${b})`;
   });
   const iconFilter = useTransform(proximity, (near) =>
@@ -208,7 +214,7 @@ function DockGlyphLive({
         style={{ gridTemplateColumns: labelColumns, opacity: labelProgress }}
         aria-hidden={!active}
       >
-        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-[#90EE90] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]">
+        <span className="min-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold leading-none tracking-tight text-white drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.8)]">
           {label}
         </span>
       </motion.span>
@@ -239,7 +245,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const conceal = hidden || bootCanvasActive || shouldHideNav(pathname, chatThreadActive);
   const homePath = dashboardPathForRole(role);
   // Active tab is derived exclusively from the live router URL (pathname, then
-  // ?tab=). Visual highlight never reads the UI store, so the green pill cannot
+  // ?tab=). Visual highlight never reads the UI store, so the titanium pill cannot
   // lead the actual route.
   const activeTab = useRouteTab();
 
@@ -629,9 +635,11 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-[#90EE90]/15 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
+          className="pointer-events-none absolute inset-y-0 z-0 h-full rounded-full bg-white/10 transform-gpu will-change-transform [backface-visibility:hidden] [transform:translateZ(0)]"
           style={{ x: pillX, width: pillW, scale: pillScale }}
-        />
+        >
+          <span className="absolute bottom-0.5 left-1/2 h-1.5 w-4 -translate-x-1/2 rounded-full bg-white/20 blur-md" />
+        </motion.div>
         {ITEMS.map((item, index) => {
           const href = hrefForTab(item.tab, homePath);
           return (
