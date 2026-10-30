@@ -48,8 +48,7 @@ function resolveRole(data: ClerkUserCreatedData): AppRole | null {
 }
 
 export async function POST(request: NextRequest) {
-  const signingSecret =
-    process.env.CLERK_WEBHOOK_SIGNING_SECRET || process.env.CLERK_WEBHOOK_SECRET;
+  const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
   if (!signingSecret) {
     console.error('[clerk-webhook] CLERK_WEBHOOK_SIGNING_SECRET ausente.');

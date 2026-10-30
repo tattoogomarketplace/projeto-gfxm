@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require("./src/config/env.cjs");
+
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {

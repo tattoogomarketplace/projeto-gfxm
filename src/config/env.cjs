@@ -2,13 +2,31 @@ const path = require("path");
 
 require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
 
-const requiredEnvVars = ["DATABASE_URL"];
+function isBlank(value) {
+  return typeof value !== "string" || value.trim() === "";
+}
 
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
+const requiredEnvVars = [
+  "DATABASE_URL",
+  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "CLERK_SECRET_KEY",
+  "CLERK_WEBHOOK_SIGNING_SECRET",
+  "TURNSTILE_SECRET_KEY",
+  "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET_NAME",
+  "R2_PUBLIC_URL",
+];
+
+const missingEnvVars = requiredEnvVars.filter((envVar) => isBlank(process.env[envVar]));
+
+if (missingEnvVars.length > 0) {
+  for (const envVar of missingEnvVars) {
     console.error(`[FATAL] Variável de ambiente obrigatória não encontrada: ${envVar}`);
-    process.exit(1);
   }
+  process.exit(1);
 }
 
 function collectAllowedOrigins() {
