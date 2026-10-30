@@ -25,10 +25,12 @@ const DISMISS_VELOCITY_PX_S = 700;
 const DISMISS_SCALE_MIN = 0.95;
 const HEADER_NODES_SELECTOR = '[data-app-header], [data-header-follow]';
 const HEADER_HIDDEN_CLASS = 'is-header-hidden';
-const TRACK_SPRING = { type: 'spring', stiffness: 620, damping: 46, mass: 0.55 } as const;
+const TRACK_SPRING = { type: 'spring', stiffness: 300, damping: 30 } as const;
 const PAGE_VELOCITY_PX_S = 400;
 const PAGE_OFFSET_RATIO = 0.2;
 const PAGE_DRAG_ELASTIC = 0.18;
+const GESTURE_TAP_LOCK_MS = 220;
+const GESTURE_DRAG_PX = 8;
 const DISMISS_DRAG_ELASTIC = 0.22;
 const DISMISS_EASE = [0.32, 0.72, 0, 1] as const;
 
@@ -56,12 +58,26 @@ export function ImmersivePhotoFeed({
   const { triggerHaptic } = useHapticFeedback();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
+  const [viewportH, setViewportH] = useState(() =>
+    typeof window === 'undefined'
+      ? 1
+      : Math.max(window.visualViewport?.height || 0, window.innerHeight || 0, 1)
+  );
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [budgetItem, setBudgetItem] = useState<ImmersivePhotoFeedItem | null>(null);
   const [, startSaveTransition] = useTransition();
   const isUIVisibleRef = useRef(true);
   const dismissingRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const dragLockUntilRef = useRef(0);
+  const viewportHRef = useRef(
+    typeof window === 'undefined'
+      ? 1
+      : Math.max(window.visualViewport?.height || 0, window.innerHeight || 0, 1)
+  );
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const trackY = useMotionValue(0);
   const dismissProgress = useMotionValue(0);
   const setStoreHeaderHidden = useUiStore((state) => state.setHeaderHidden);
 
@@ -78,18 +94,36 @@ export function ImmersivePhotoFeed({
     };
   }, [setStoreHeaderHidden]);
 
+  const overlayScreenHeight = useCallback(() => {
+    if (typeof window === 'undefined') return 1;
+    return Math.max(window.visualViewport?.height || 0, window.innerHeight || 0, 1);
+  }, []);
+
+  const restTrackY = useCallback((index: number, height: number) => -index * height, []);
+
+  const lockGesture = useCallback(() => {
+    isDraggingRef.current = true;
+    dragLockUntilRef.current = Number.POSITIVE_INFINITY;
+  }, []);
+
+  const unlockGesture = useCallback((didDrag = true) => {
+    isDraggingRef.current = false;
+    dragLockUntilRef.current = didDrag ? Date.now() + GESTURE_TAP_LOCK_MS : 0;
+  }, []);
+
+  const isGestureLocked = useCallback(
+    () => isDraggingRef.current || Date.now() < dragLockUntilRef.current,
+    []
+  );
+
   const handleUIVisibleChange = useCallback((visible: boolean) => {
+    if (isDraggingRef.current || Date.now() < dragLockUntilRef.current) return;
     isUIVisibleRef.current = visible;
     setIsUIVisible(visible);
     if (visible && !dismissingRef.current) {
       dismissProgress.set(0);
     }
   }, [dismissProgress]);
-
-  const overlayScreenHeight = useCallback(() => {
-    if (typeof window === 'undefined') return 1;
-    return Math.max(window.innerHeight || 0, 1);
-  }, []);
 
   const finishDismiss = useCallback(() => {
     triggerHaptic('medium');
@@ -101,38 +135,101 @@ export function ImmersivePhotoFeed({
     [items]
   );
 
-  const pageIndex = Math.max(0, Math.min(Math.max(feedItems.length - 1, 0), currentIndex));
-  const maxPageIndex = Math.max(feedItems.length - 1, 0);
+  const totalItems = feedItems.length;
+  const maxPageIndex = Math.max(totalItems - 1, 0);
+  const pageIndex = Math.max(0, Math.min(currentIndex, maxPageIndex));
+  const pageIndexRef = useRef(pageIndex);
+
+  const commitPageIndex = useCallback((next: number) => {
+    const bounded = Math.max(0, Math.min(next, Math.max(totalItems - 1, 0)));
+    pageIndexRef.current = bounded;
+    setCurrentIndex(bounded);
+    return bounded;
+  }, [totalItems]);
+
+  useEffect(() => {
+    pageIndexRef.current = pageIndex;
+  }, [pageIndex]);
+
+  useEffect(() => {
+    const node = scrollerRef.current;
+    const syncViewport = () => {
+      const next = Math.max(node?.clientHeight || 0, overlayScreenHeight());
+      viewportHRef.current = next;
+      setViewportH((current) => (current === next ? current : next));
+      if (!isDraggingRef.current) {
+        trackY.set(restTrackY(pageIndexRef.current, next));
+      }
+    };
+    syncViewport();
+    if (!node || typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', syncViewport);
+      window.visualViewport?.addEventListener('resize', syncViewport);
+      return () => {
+        window.removeEventListener('resize', syncViewport);
+        window.visualViewport?.removeEventListener('resize', syncViewport);
+      };
+    }
+    const observer = new ResizeObserver(syncViewport);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [overlayScreenHeight, restTrackY, trackY]);
+
+  const pageDragConstraints = useMemo(() => {
+    const rest = restTrackY(pageIndex, viewportH);
+    return {
+      top: Math.max(rest - viewportH, restTrackY(maxPageIndex, viewportH)),
+      bottom: Math.min(rest + viewportH, 0),
+    };
+  }, [maxPageIndex, pageIndex, restTrackY, viewportH]);
+
+  const handlePageDrag = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (!isUIVisibleRef.current || dismissingRef.current) return;
+      if (Math.abs(info.offset.y) >= GESTURE_DRAG_PX) lockGesture();
+    },
+    [lockGesture]
+  );
 
   const handlePageDragEnd = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      if (!isUIVisibleRef.current || dismissingRef.current) return;
-      const viewportH = overlayScreenHeight();
+      const didDrag = Math.abs(info.offset.y) >= GESTURE_DRAG_PX;
+      unlockGesture(didDrag);
+      const height = viewportHRef.current || overlayScreenHeight();
+      const index = pageIndexRef.current;
+      if (!isUIVisibleRef.current || dismissingRef.current) {
+        void animate(trackY, restTrackY(index, height), TRACK_SPRING);
+        return;
+      }
       const offsetY = info.offset.y;
       const velocityY = info.velocity.y;
-      const offsetPass = Math.abs(offsetY) >= viewportH * PAGE_OFFSET_RATIO;
+      const offsetPass = Math.abs(offsetY) >= height * PAGE_OFFSET_RATIO;
       const velocityPass = Math.abs(velocityY) >= PAGE_VELOCITY_PX_S;
-      if (!offsetPass && !velocityPass) return;
-      const goingNext = offsetPass ? offsetY < 0 : velocityY < 0;
-      setCurrentIndex((current) => {
-        if (goingNext) return Math.min(current + 1, maxPageIndex);
-        return Math.max(current - 1, 0);
-      });
+      let next = index;
+      if (offsetPass || velocityPass) {
+        const goingNext = offsetPass ? offsetY < 0 : velocityY < 0;
+        next = goingNext ? index + 1 : index - 1;
+      }
+      const bounded = commitPageIndex(next);
+      void animate(trackY, restTrackY(bounded, height), TRACK_SPRING);
     },
-    [maxPageIndex, overlayScreenHeight]
+    [commitPageIndex, overlayScreenHeight, restTrackY, trackY, unlockGesture]
   );
 
   const handleDismissDrag = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       if (isUIVisibleRef.current || dismissingRef.current) return;
-      const viewportH = overlayScreenHeight();
-      dismissProgress.set(Math.min(1, Math.abs(info.offset.y) / viewportH));
+      if (Math.abs(info.offset.y) >= GESTURE_DRAG_PX) lockGesture();
+      const height = overlayScreenHeight();
+      dismissProgress.set(Math.min(1, Math.abs(info.offset.y) / height));
     },
-    [dismissProgress, overlayScreenHeight]
+    [dismissProgress, lockGesture, overlayScreenHeight]
   );
 
   const handleDismissDragEnd = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const didDrag = Math.abs(info.offset.y) >= GESTURE_DRAG_PX;
+      unlockGesture(didDrag);
       if (isUIVisibleRef.current || dismissingRef.current) return;
       const shouldDismiss =
         Boolean(onClose) &&
@@ -148,7 +245,7 @@ export function ImmersivePhotoFeed({
         ease: DISMISS_EASE,
       }).then(finishDismiss);
     },
-    [dismissProgress, finishDismiss, onClose]
+    [dismissProgress, finishDismiss, onClose, unlockGesture]
   );
 
   const dismissScale = useTransform(dismissProgress, [0, 1], [1, DISMISS_SCALE_MIN]);
@@ -215,23 +312,28 @@ export function ImmersivePhotoFeed({
           onDragEnd={handleDismissDragEnd}
         >
           <div
+            ref={scrollerRef}
             className={cn(
               'relative h-[100dvh] w-full overflow-hidden p-0 m-0 touch-none scrollbar-none',
               'overscroll-none transform-gpu',
               className
             )}
+            onClickCapture={(event) => {
+              if (!isGestureLocked()) return;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
           >
             <motion.div
-              className="flex w-full flex-col gap-0 space-y-0 will-change-transform"
-              initial={false}
-              animate={{ y: `${-pageIndex * 100}dvh` }}
-              transition={TRACK_SPRING}
+              className="flex w-full flex-col gap-0 space-y-0 transform-gpu will-change-transform [backface-visibility:hidden]"
+              style={{ y: trackY }}
               drag={isUIVisible ? 'y' : false}
               dragDirectionLock
               dragListener={isUIVisible}
               dragElastic={PAGE_DRAG_ELASTIC}
-              dragConstraints={{ top: 0, bottom: 0 }}
+              dragConstraints={pageDragConstraints}
               dragMomentum={false}
+              onDrag={handlePageDrag}
               onDragEnd={handlePageDragEnd}
             >
               {feedItems.map((item, index) => {
@@ -259,6 +361,7 @@ export function ImmersivePhotoFeed({
                         onShare={() => shareInspiration(item)}
                         onClose={onClose}
                         onUIVisibleChange={index === pageIndex ? handleUIVisibleChange : undefined}
+                        isGestureLocked={isGestureLocked}
                       />
                     ) : null}
                   </div>

@@ -54,6 +54,7 @@ export type ImmersivePhotoCardProps = {
   onShare?: () => void;
   onClose?: () => void;
   onUIVisibleChange?: (visible: boolean) => void;
+  isGestureLocked?: () => boolean;
 };
 
 function formatViews(count: number): string {
@@ -77,6 +78,7 @@ export function ImmersivePhotoCard({
   onShare,
   onClose,
   onUIVisibleChange,
+  isGestureLocked,
 }: ImmersivePhotoCardProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [isUIVisible, setIsUIVisible] = useState(true);
@@ -137,6 +139,7 @@ export function ImmersivePhotoCard({
   }, [isUIVisible, onUIVisibleChange]);
 
   const commitIntentionalTap = useCallback(() => {
+    if (isGestureLocked?.()) return;
     const now = Date.now();
     if (now - lastTapAt.current <= DOUBLE_TAP_MS) {
       lastTapAt.current = 0;
@@ -145,7 +148,7 @@ export function ImmersivePhotoCard({
     }
     lastTapAt.current = now;
     toggleUI();
-  }, [toggleLike, toggleUI]);
+  }, [isGestureLocked, toggleLike, toggleUI]);
 
   const handlePointerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -162,6 +165,7 @@ export function ImmersivePhotoCard({
       const start = pointerStart.current;
       pointerStart.current = null;
       if (!start || start.id !== event.pointerId) return;
+      if (isGestureLocked?.()) return;
       const deltaX = event.clientX - start.x;
       const deltaY = event.clientY - start.y;
       const deltaTime = Date.now() - start.t;
@@ -169,7 +173,7 @@ export function ImmersivePhotoCard({
       if (Math.abs(deltaX) >= TAP_MAX_PX || Math.abs(deltaY) >= TAP_MAX_PX) return;
       commitIntentionalTap();
     },
-    [commitIntentionalTap]
+    [commitIntentionalTap, isGestureLocked]
   );
 
   const handlePointerCancel = useCallback(() => {
