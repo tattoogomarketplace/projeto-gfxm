@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bookmark, Eye, FileText, Heart, ImageIcon, Send, Video, X } from 'lucide-react';
+import { Bookmark, Eye, FileText, Heart, ImageIcon, Layers, Send, Video, X } from 'lucide-react';
 import { AtomicRefreshButton } from '@/components/features/atomic-refresh-button';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { TattooMachineLikeGlyph } from '@/components/ui/tattoo-like-button';
@@ -30,10 +30,11 @@ const ACTION_BTN =
   'flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 bg-transparent p-0 transform-gpu will-change-transform';
 const ACTION_ICON = 'h-6 w-6';
 
-type MediaMode = 'photo' | 'video';
+type MediaType = 'photo' | 'all' | 'video';
 
-const MEDIA_MODES: readonly { id: MediaMode; label: string; Icon: typeof ImageIcon }[] = [
+const MEDIA_TYPES: readonly { id: MediaType; label: string; Icon: typeof ImageIcon }[] = [
   { id: 'photo', label: 'Foto', Icon: ImageIcon },
+  { id: 'all', label: 'Tudo', Icon: Layers },
   { id: 'video', label: 'Vídeo', Icon: Video },
 ] as const;
 
@@ -86,7 +87,7 @@ export function ImmersivePhotoCard({
   const [isSaved, setIsSaved] = useState(saved);
   const [likePulse, setLikePulse] = useState(0);
   const [burstNonce, setBurstNonce] = useState(0);
-  const [mediaMode, setMediaMode] = useState<MediaMode>('photo');
+  const [mediaType, setMediaType] = useState<MediaType>('photo');
   const lastTapAt = useRef(0);
   const burstTimer = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
@@ -443,9 +444,9 @@ export function ImmersivePhotoCard({
             <AtomicRefreshButton holoId={holoId} />
             <div
               className={cn(
-                'pointer-events-none absolute inset-x-0 bottom-0 z-30 flex items-end justify-center',
-                'px-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))]',
-                'pb-[max(1rem,env(safe-area-inset-bottom,0px))]'
+                'pointer-events-none absolute z-30 flex items-end justify-start',
+                'left-[max(1rem,env(safe-area-inset-left,0px))]',
+                'bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))]'
               )}
             >
               <div
@@ -459,8 +460,8 @@ export function ImmersivePhotoCard({
                 )}
                 style={{ filter: TITANIUM_SHADOW }}
               >
-                {MEDIA_MODES.map(({ id, label, Icon }) => {
-                  const active = mediaMode === id;
+                {MEDIA_TYPES.map(({ id, label, Icon }) => {
+                  const active = mediaType === id;
                   return (
                     <button
                       key={id}
@@ -468,20 +469,19 @@ export function ImmersivePhotoCard({
                       data-no-dismiss
                       onClick={() => {
                         if (active) return;
-                        triggerHaptic('light');
-                        setMediaMode(id);
+                        setMediaType(id);
                       }}
                       aria-label={label}
                       aria-pressed={active}
                       className={cn(
-                        'relative flex min-h-11 min-w-11 items-center justify-center rounded-full px-4',
+                        'relative flex min-h-11 min-w-11 items-center justify-center rounded-full px-3',
                         'transform-gpu transition-colors duration-200 ease-out',
                         active ? 'text-white' : 'text-white/60'
                       )}
                     >
                       {active ? (
-                        <motion.span
-                          layoutId={`media-switcher-pill-${holoId}`}
+                        <motion.div
+                          layoutId="active-media-pill"
                           transition={SWITCHER_SPRING}
                           aria-hidden
                           className="absolute inset-0 rounded-full border border-white/25 bg-white/10 transform-gpu"
