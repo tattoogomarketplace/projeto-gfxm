@@ -296,7 +296,7 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     will-change: transform;
-    transition: transform 300ms ease-in-out;
+    transition: transform 300ms ease-out;
     transform: translateY(0);
   }
 

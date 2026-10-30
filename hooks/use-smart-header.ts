@@ -4,8 +4,10 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUiStore } from '@/hooks/use-ui-store';
 
-const DELTA_PX = 15;
 const HIDE_AFTER_Y = 50;
+const DOWN_DELTA_PX = 6;
+const REVEAL_VELOCITY_PX_MS = 0.8;
+const MAX_FRAME_MS = 64;
 const HIDDEN_CLASS = 'is-header-hidden';
 
 function readScrollTop(): number {
@@ -32,7 +34,10 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
   const setHeaderHidden = useUiStore((s) => s.setHeaderHidden);
   const headerRef = useRef<HTMLElement | null>(null);
   const lastYRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const downAccumRef = useRef(0);
   const tickingRef = useRef(false);
+  const frameRef = useRef(0);
   const hiddenRef = useRef(false);
 
   useEffect(() => {
@@ -59,22 +64,39 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
     }
 
     lastYRef.current = readScrollTop();
+    lastTimeRef.current = performance.now();
+    downAccumRef.current = 0;
     applyHidden(false);
 
     const onScroll = () => {
       if (tickingRef.current) return;
       tickingRef.current = true;
-      window.requestAnimationFrame(() => {
+      frameRef.current = window.requestAnimationFrame(() => {
         tickingRef.current = false;
-        const y = window.scrollY || readScrollTop();
+        const now = performance.now();
+        const y = readScrollTop();
         const delta = y - lastYRef.current;
+        const dt = Math.max(1, Math.min(now - lastTimeRef.current, MAX_FRAME_MS));
         lastYRef.current = y;
+        lastTimeRef.current = now;
+
         if (y <= HIDE_AFTER_Y) {
+          downAccumRef.current = 0;
           applyHidden(false);
           return;
         }
-        if (delta > DELTA_PX) applyHidden(true);
-        else if (delta < -DELTA_PX) applyHidden(false);
+
+        if (delta > 0) {
+          downAccumRef.current += delta;
+          if (downAccumRef.current >= DOWN_DELTA_PX) applyHidden(true);
+          return;
+        }
+
+        if (delta < 0) {
+          downAccumRef.current = 0;
+          const velocity = -delta / dt;
+          if (velocity >= REVEAL_VELOCITY_PX_MS) applyHidden(false);
+        }
       });
     };
 
@@ -84,6 +106,11 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
     return () => {
       window.removeEventListener('scroll', onScroll);
       scroller?.removeEventListener('scroll', onScroll);
+      if (frameRef.current) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = 0;
+      }
+      tickingRef.current = false;
     };
   }, [enabled, setHeaderHidden]);
 
