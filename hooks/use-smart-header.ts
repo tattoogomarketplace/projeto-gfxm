@@ -9,13 +9,45 @@ const DOWN_DELTA_PX = 6;
 const REVEAL_VELOCITY_PX_MS = 0.8;
 const MAX_FRAME_MS = 64;
 const HIDDEN_CLASS = 'is-header-hidden';
+const SHELL_VIEWPORT_SELECTOR = '[data-shell-viewport]';
+const MAIN_SCROLL_ID = 'main-scroll-container';
 
-function readScrollTop(): number {
-  const scroller = document.querySelector<HTMLElement>('[data-shell-viewport]');
-  if (scroller && scroller.scrollHeight > scroller.clientHeight + 1) {
-    return scroller.scrollTop;
+function isVerticallyScrollable(el: HTMLElement): boolean {
+  const style = window.getComputedStyle(el);
+  const overflowY = style.overflowY;
+  return (
+    (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+    el.scrollHeight > el.clientHeight + 1
+  );
+}
+
+function resolveShellViewport(): HTMLElement | null {
+  return (
+    document.getElementById(MAIN_SCROLL_ID) ??
+    document.querySelector<HTMLElement>(SHELL_VIEWPORT_SELECTOR)
+  );
+}
+
+function resolveActiveScroller(root: HTMLElement | null): HTMLElement | null {
+  if (!root) return null;
+  if (isVerticallyScrollable(root)) return root;
+  const nested = root.querySelectorAll<HTMLElement>('*');
+  for (const node of nested) {
+    if (!isVerticallyScrollable(node)) continue;
+    const hidden = node.closest('[aria-hidden="true"], [inert]');
+    if (hidden && hidden !== root) continue;
+    return node;
   }
-  return window.scrollY || document.documentElement.scrollTop || 0;
+  return root;
+}
+
+function readScrollTop(scroller: EventTarget | null): number {
+  if (!scroller) return 0;
+  if (scroller === window || scroller === document || scroller === document.documentElement) {
+    return window.scrollY || document.documentElement.scrollTop || 0;
+  }
+  if (scroller instanceof HTMLElement) return scroller.scrollTop;
+  return 0;
 }
 
 function applyHiddenClass(el: HTMLElement | null, hidden: boolean) {
@@ -35,6 +67,7 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
   const headerRef = useRef<HTMLElement | null>(null);
   const lastYRef = useRef(0);
   const lastTimeRef = useRef(0);
+  const lastSourceRef = useRef<EventTarget | null>(null);
   const downAccumRef = useRef(0);
   const tickingRef = useRef(false);
   const frameRef = useRef(0);
@@ -63,22 +96,45 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
       return;
     }
 
-    lastYRef.current = readScrollTop();
+    const viewport = resolveShellViewport();
+    if (!viewport) return;
+
+    const initial = resolveActiveScroller(viewport);
+    lastSourceRef.current = initial;
+    lastYRef.current = readScrollTop(initial);
     lastTimeRef.current = performance.now();
     downAccumRef.current = 0;
     applyHidden(false);
 
-    const onScroll = () => {
+    const onScroll = (event: Event) => {
+      const source = event.target;
+      if (!(source instanceof HTMLElement)) return;
+      if (source !== viewport && !isVerticallyScrollable(source)) return;
       if (tickingRef.current) return;
       tickingRef.current = true;
       frameRef.current = window.requestAnimationFrame(() => {
         tickingRef.current = false;
         const now = performance.now();
-        const y = readScrollTop();
+        const y = readScrollTop(source);
+        if (source !== lastSourceRef.current) {
+          lastSourceRef.current = source;
+          lastYRef.current = y;
+          lastTimeRef.current = now;
+          downAccumRef.current = 0;
+          if (y <= 0) applyHidden(false);
+          return;
+        }
         const delta = y - lastYRef.current;
         const dt = Math.max(1, Math.min(now - lastTimeRef.current, MAX_FRAME_MS));
         lastYRef.current = y;
         lastTimeRef.current = now;
+        if (delta === 0) return;
+
+        if (y <= 0) {
+          downAccumRef.current = 0;
+          applyHidden(false);
+          return;
+        }
 
         if (y <= HIDE_AFTER_Y) {
           downAccumRef.current = 0;
@@ -92,27 +148,24 @@ export function useSmartHeader(enabled: boolean): RefObject<HTMLElement | null> 
           return;
         }
 
-        if (delta < 0) {
-          downAccumRef.current = 0;
-          const velocity = -delta / dt;
-          if (velocity >= REVEAL_VELOCITY_PX_MS) applyHidden(false);
-        }
+        downAccumRef.current = 0;
+        const velocity = -delta / dt;
+        if (velocity >= REVEAL_VELOCITY_PX_MS) applyHidden(false);
       });
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    const scroller = document.querySelector('[data-shell-viewport]');
-    scroller?.addEventListener('scroll', onScroll, { passive: true });
+    const scrollOpts: AddEventListenerOptions = { passive: true, capture: true };
+    viewport.addEventListener('scroll', onScroll, scrollOpts);
+
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      scroller?.removeEventListener('scroll', onScroll);
+      viewport.removeEventListener('scroll', onScroll, scrollOpts);
       if (frameRef.current) {
         window.cancelAnimationFrame(frameRef.current);
         frameRef.current = 0;
       }
       tickingRef.current = false;
     };
-  }, [enabled, setHeaderHidden]);
+  }, [enabled, pathname, setHeaderHidden]);
 
   return headerRef;
 }

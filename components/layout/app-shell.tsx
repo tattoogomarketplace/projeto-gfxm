@@ -395,6 +395,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
          * geometria do pai.
          */}
         <div
+          id="main-scroll-container"
           data-shell-viewport
           className={cn(
             'absolute inset-0 flex min-h-0 min-w-0 flex-col',

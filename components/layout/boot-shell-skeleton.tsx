@@ -72,6 +72,7 @@ function ShellChrome({
 
         <div className="scrollbar-none relative flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
           <div
+            id="main-scroll-container"
             data-shell-viewport
             className={cn(
               'absolute inset-0 flex min-h-0 min-w-0 flex-col',
