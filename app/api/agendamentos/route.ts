@@ -9,6 +9,8 @@ import {
   AgendamentoQueryError,
   listAgendamentosForActor,
 } from '@/lib/services/agendamento-query';
+import { authorizeBookingCreation } from '@/lib/services/booking-authorization';
+import { agendamentoCreateSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 function errorResponse(error: unknown, fallback: string) {
   if (error instanceof BookingError || error instanceof AgendamentoQueryError) {
@@ -55,6 +57,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
+    }
+
+    const parsed = agendamentoCreateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
       return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
@@ -68,33 +82,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ sucesso: false, erro: 'Perfil não encontrado.' }, { status: 404 });
     }
 
-    let body: {
-      tatuador_id?: unknown;
-      data_hora?: unknown;
-      valor_total?: unknown;
-      extras?: unknown;
-    } = {};
-    try {
-      body = (await request.json()) as typeof body;
-    } catch {
-      return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
-    }
-
-    const tatuadorId = typeof body.tatuador_id === 'string' ? body.tatuador_id.trim() : '';
-    const dataHora = typeof body.data_hora === 'string' ? body.data_hora : '';
-    if (!tatuadorId || !dataHora) {
-      return NextResponse.json(
-        { sucesso: false, erro: 'tatuador_id, data_hora e valor_total sao obrigatorios.' },
-        { status: 400 }
-      );
-    }
+    const authorized = await authorizeBookingCreation({
+      actor,
+      tatuadorId: parsed.data.tatuador_id,
+      clienteId: parsed.data.cliente_id,
+    });
 
     const result = await criarAgendamentoAtomico({
-      clienteId: actor.id,
-      tatuadorId,
-      dataHora,
-      valorTotal: body.valor_total,
-      extras: Array.isArray(body.extras) ? body.extras : [],
+      clienteId: authorized.clienteId,
+      tatuadorId: authorized.tatuadorId,
+      actorId: authorized.actorId,
+      dataHora: parsed.data.data_hora,
+      valorTotal: parsed.data.valor_total,
+      extras: parsed.data.extras ?? [],
     });
 
     return NextResponse.json(result, { status: 201 });

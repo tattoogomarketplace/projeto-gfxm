@@ -8,37 +8,32 @@ import {
   enviarMensagem,
   requireChatActor,
 } from '@/lib/services/chat';
+import { chatEnviarSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireChatActor(request);
-
-    let body: {
-      destinatario_id?: unknown;
-      mensagem?: unknown;
-      artworkId?: unknown;
-      artwork_id?: unknown;
-      categoria?: unknown;
-    } = {};
+    let rawBody: unknown;
     try {
-      body = (await request.json()) as typeof body;
+      rawBody = await request.json();
     } catch {
       throw new ChatError(400, 'Payload inválido.');
     }
 
-    const destinatarioId =
-      typeof body.destinatario_id === 'string' ? body.destinatario_id : '';
-    const mensagem = typeof body.mensagem === 'string' ? body.mensagem : '';
-    const artworkRaw = body.artworkId ?? body.artwork_id;
-    const artworkId = typeof artworkRaw === 'string' ? artworkRaw : undefined;
+    const parsed = chatEnviarSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+
+    const actor = await requireChatActor(request);
+    const artworkId = parsed.data.artworkId ?? parsed.data.artwork_id;
 
     const mensagemCriada = await enviarMensagem({
       actorId: actor.id,
       actorRole: actor.role,
-      destinatarioId,
-      mensagem,
+      destinatarioId: parsed.data.destinatario_id,
+      mensagem: parsed.data.mensagem,
       artworkId,
-      categoria: body.categoria,
+      categoria: parsed.data.categoria,
     });
 
     return NextResponse.json({

@@ -7,6 +7,7 @@ import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { fetchR2Object } from '@/lib/storage/r2';
 import { inspectDocumentBuffer } from '@/lib/ai/document-forensics';
 import { analyzeKycDocument } from '@/lib/ai/kyc-validator';
+import { invalidPayloadBody, recoveryDocumentSchema } from '@/lib/security/validation';
 
 /**
  * RECUPERAÇÃO DE ACESSO — ANÁLISE DE DOCUMENTO DE IDENTIDADE
@@ -71,6 +72,24 @@ function isNotFoundError(error: unknown): boolean {
 
 export async function POST(request: Request) {
   try {
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, valid: false, erro: 'Payload inválido.' },
+        { status: 400 }
+      );
+    }
+
+    const parsed = recoveryDocumentSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { ...invalidPayloadBody(parsed.error), success: false, valid: false },
+        { status: 400 }
+      );
+    }
+
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
       return NextResponse.json(
@@ -79,16 +98,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let body: RecoveryDocumentBody = {};
-    try {
-      body = (await request.json()) as RecoveryDocumentBody;
-    } catch {
-      return NextResponse.json(
-        { success: false, valid: false, erro: 'Payload inválido.' },
-        { status: 400 }
-      );
-    }
-
+    const body: RecoveryDocumentBody = parsed.data;
     const fileKey = resolveFileKey(body);
     if (!fileKey) {
       return NextResponse.json(

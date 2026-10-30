@@ -39,10 +39,76 @@ function normalizeSlot(date) {
   return slot;
 }
 
-async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, extras }) {
+async function isStudioLinkedToArtist(estudioId, tatuadorId, studioId) {
+  if (studioId === estudioId) return true;
+  const vinculo = await prisma.estudioTatuador.findFirst({
+    where: {
+      estudio_id: estudioId,
+      tatuador_id: tatuadorId,
+      status_vinculo: "ativo",
+      deleted_at: null,
+    },
+    select: { tatuador_id: true },
+  });
+  return Boolean(vinculo);
+}
+
+async function authorizeBookingCreation({ user, tatuadorId, clienteId: payloadClienteId }) {
+  let clienteId = typeof payloadClienteId === "string" ? payloadClienteId.trim() : "";
+  if (!clienteId) {
+    if (user.role === "tatuador" || user.role === "estudio") {
+      throw httpError(400, "Informe o cliente_id para criar o agendamento.");
+    }
+    clienteId = user.id;
+  }
+
+  if (clienteId === tatuadorId) {
+    throw httpError(400, "Não é permitido autoagendamento.");
+  }
+
+  const [cliente, tatuador] = await Promise.all([
+    prisma.perfil.findFirst({
+      where: { id: clienteId, deleted_at: null, statusConta: "ATIVO" },
+      select: { id: true },
+    }),
+    prisma.perfil.findFirst({
+      where: { id: tatuadorId, deleted_at: null },
+      select: { id: true, role: true, statusConta: true, studio_id: true },
+    }),
+  ]);
+
+  if (!cliente) {
+    throw httpError(400, "Cliente inválido ou inativo.");
+  }
+
+  if (!tatuador || tatuador.role !== "tatuador" || tatuador.statusConta !== "ATIVO") {
+    throw httpError(403, "Tatuador indisponivel para agendamento.");
+  }
+
+  const actorIsCliente = user.id === clienteId;
+  const actorIsTatuador = user.id === tatuadorId;
+  const actorIsStudio =
+    user.role === "estudio" &&
+    (await isStudioLinkedToArtist(user.id, tatuadorId, tatuador.studio_id));
+
+  if (!actorIsCliente && !actorIsTatuador && !actorIsStudio) {
+    throw httpError(403, "Você não tem permissão para criar este agendamento.");
+  }
+
+  return { clienteId, tatuadorId, actorId: user.id };
+}
+
+async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, extras, clienteId: payloadClienteId }) {
   if (!tatuadorId || !dataHora || !valorTotal) {
     throw httpError(400, "tatuador_id, data_hora e valor_total sao obrigatorios.");
   }
+
+  const authorized = await authorizeBookingCreation({
+    user,
+    tatuadorId,
+    clienteId: payloadClienteId,
+  });
+  const clienteId = authorized.clienteId;
 
   const slot = normalizeSlot(new Date(dataHora));
   if (Number.isNaN(slot.getTime()) || slot.getTime() <= Date.now()) {
@@ -61,7 +127,7 @@ async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, ex
   const { extrasLegais, bloqueios } = sanitizarExtras(extras);
   if (bloqueios.length) {
     await logCompliance({
-      userId: user.id,
+      userId: authorized.actorId,
       termoDetectado: bloqueios.map((item) => item.original).join(" | "),
       acaoTomada: "renomeacao_legal_taxa_conforto_sessao_sem_dor",
     });
@@ -94,6 +160,18 @@ async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, ex
       `;
       if (!tatuadorRows?.[0]) {
         throw httpError(403, "Tatuador indisponivel para agendamento.");
+      }
+
+      const clienteRows = await tx.$queryRaw`
+        SELECT id
+        FROM perfis
+        WHERE id = ${clienteId}::uuid
+          AND deleted_at IS NULL
+          AND status_conta::text = 'ATIVO'
+        FOR UPDATE
+      `;
+      if (!clienteRows?.[0]) {
+        throw httpError(400, "Cliente inválido ou inativo.");
       }
 
       const scheduleRows = await tx.$queryRaw`
@@ -136,7 +214,7 @@ async function criarAgendamentoOnce({ user, tatuadorId, dataHora, valorTotal, ex
 
       return tx.agendamento.create({
         data: {
-          cliente_id: user.id,
+          cliente_id: clienteId,
           tatuador_id: tatuadorId,
           data_hora: slot,
           status: "aguardando_sinal",

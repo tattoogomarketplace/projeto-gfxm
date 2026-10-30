@@ -10,6 +10,7 @@ import {
   loadTatuadorActor,
   saveArtistSchedule,
 } from '@/lib/services/artist-schedule';
+import { artistScheduleSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 async function resolveTatuador(request: Request) {
   const { userId } = await resolvePerfilSession(request);
@@ -49,19 +50,20 @@ export async function GET(request: Request) {
 }
 
 async function upsertSchedule(request: Request) {
-  const actor = await resolveTatuador(request);
-  let body: { schedule?: unknown; scheduleJson?: unknown } = {};
+  let rawBody: unknown;
   try {
-    body = (await request.json()) as { schedule?: unknown; scheduleJson?: unknown };
+    rawBody = await request.json();
   } catch {
     throw new ArtistScheduleError(400, 'Payload inválido.');
   }
 
-  const raw = body.schedule ?? body.scheduleJson;
-  if (raw === undefined) {
-    throw new ArtistScheduleError(400, 'Informe o expediente em schedule.');
+  const parsed = artistScheduleSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
   }
 
+  const actor = await resolveTatuador(request);
+  const raw = parsed.data.schedule ?? parsed.data.scheduleJson;
   const result = await saveArtistSchedule(actor.id, raw);
   return NextResponse.json({
     sucesso: true,

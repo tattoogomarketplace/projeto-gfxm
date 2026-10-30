@@ -3,13 +3,10 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { ReceitaWsError, validateCnpj } from '@/lib/services/receitaws';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
-import { cnpjSchema, invalidPayloadBody } from '@/lib/security/validation';
-
-const payloadSchema = z.object({ cnpj: cnpjSchema });
+import { invalidPayloadBody, studioCnpjPayloadSchema } from '@/lib/security/validation';
 
 /**
  * Valida um CNPJ junto à ReceitaWS e devolve os dados cadastrais normalizados.
@@ -25,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
   }
 
-  const parsed = payloadSchema.safeParse(rawBody);
+  const parsed = studioCnpjPayloadSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
   }

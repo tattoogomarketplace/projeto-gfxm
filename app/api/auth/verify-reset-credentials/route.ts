@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
+import { invalidPayloadBody, resetCredentialsSchema } from '@/lib/security/validation';
 
 const CPF_NOT_REGISTERED_MESSAGE = 'Este CPF não está cadastrado em nenhuma conta ativa.';
 
@@ -26,21 +27,23 @@ function mismatchResponse(status: 400 | 404) {
 }
 
 export async function POST(request: Request) {
-  let body: { email?: unknown; cpf?: unknown } = {};
+  let rawBody: unknown;
   try {
-    body = (await request.json()) as { email?: unknown; cpf?: unknown };
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Payload inválido.' }, { status: 400 });
   }
 
-  const email = String(body.email || '')
-    .trim()
-    .toLowerCase();
-  const cpf = onlyCpfDigits(typeof body.cpf === 'string' ? body.cpf : '');
-
-  if (!email || !email.includes('@') || !email.includes('.')) {
-    return NextResponse.json({ ok: false, error: 'Dados inválidos.' }, { status: 400 });
+  const parsed = resetCredentialsSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: invalidPayloadBody(parsed.error).erro },
+      { status: 400 }
+    );
   }
+
+  const email = parsed.data.email;
+  const cpf = onlyCpfDigits(parsed.data.cpf);
 
   if (!isValidCpf(cpf)) {
     return mismatchResponse(400);

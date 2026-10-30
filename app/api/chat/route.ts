@@ -3,6 +3,7 @@ import { BRAND_NAME } from '@/lib/i18n/brands';
 import { normalizeLocale } from '@/lib/i18n/store';
 import type { Locale } from '@/lib/i18n/types';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
+import { assistantChatSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -87,6 +88,18 @@ function extractReply(payload: GeminiApiResponse): string {
 }
 
 export async function POST(req: Request) {
+  let rawBody: unknown;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = assistantChatSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(req);
   if (!userId) {
     return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
@@ -100,13 +113,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { message?: unknown; messages?: IncomingMessage[]; locale?: unknown } = {};
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ erro: 'Payload inválido.' }, { status: 400 });
-  }
-
+  const body = parsed.data;
   const locale = normalizeLocale(body.locale);
   const history = Array.isArray(body.messages) ? body.messages : [];
   const latest =

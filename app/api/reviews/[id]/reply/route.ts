@@ -4,6 +4,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { loadReviewActor, replyToReview, ReviewError } from '@/lib/services/reviews';
+import { invalidPayloadBody, reviewReplySchema } from '@/lib/security/validation';
 
 function errorResponse(error: unknown) {
   if (error instanceof ReviewError) {
@@ -23,6 +24,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      throw new ReviewError(400, 'Payload inválido.');
+    }
+
+    const parsed = reviewReplySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+
     const { userId } = await resolvePerfilSession(request);
     if (!userId) {
       throw new ReviewError(401, 'Não autenticado.');
@@ -30,22 +43,8 @@ export async function POST(
 
     const actor = await loadReviewActor(userId);
     const { id } = await params;
-
-    let body: unknown = {};
-    try {
-      body = await request.json();
-    } catch {
-      throw new ReviewError(400, 'Payload inválido.');
-    }
-
-    const reply =
-      typeof body === 'object' && body && 'reply' in body
-        ? (body as { reply?: unknown }).reply
-        : typeof body === 'object' && body && 'artistReply' in body
-          ? (body as { artistReply?: unknown }).artistReply
-          : '';
-
-    const item = await replyToReview(actor, id, typeof reply === 'string' ? reply : '');
+    const reply = parsed.data.reply ?? parsed.data.artistReply ?? '';
+    const item = await replyToReview(actor, id, reply);
     return NextResponse.json({ sucesso: true, item });
   } catch (error) {
     return errorResponse(error);

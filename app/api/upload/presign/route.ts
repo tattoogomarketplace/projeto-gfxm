@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { buildPublicUrl, generatePresignedUrl } from '@/lib/storage/r2';
+import { invalidPayloadBody, presignUploadSchema } from '@/lib/security/validation';
 
 /**
  * Tipos permitidos para upload. Restringir o Content-Type evita que um atacante
@@ -41,27 +42,25 @@ function resolveExtension(fileName: string, contentType: string): string {
  * `presignedUrl` e depois persiste a `publicUrl` retornada.
  */
 export async function POST(request: Request) {
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ erro: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const parsed = presignUploadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
   const { userId } = await resolvePerfilSession(request);
   if (!userId) {
     return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  let body: { fileName?: unknown; contentType?: unknown } = {};
-  try {
-    body = (await request.json()) as { fileName?: unknown; contentType?: unknown };
-  } catch {
-    return NextResponse.json({ erro: 'Payload inválido.' }, { status: 400 });
-  }
-
-  const fileName = typeof body.fileName === 'string' ? body.fileName.trim() : '';
-  const contentType = typeof body.contentType === 'string' ? body.contentType.trim() : '';
-
-  if (!fileName || !contentType) {
-    return NextResponse.json(
-      { erro: 'fileName e contentType são obrigatórios.' },
-      { status: 400 }
-    );
-  }
+  const fileName = parsed.data.fileName;
+  const contentType = parsed.data.contentType;
 
   const extension = resolveExtension(fileName, contentType);
   if (!extension) {

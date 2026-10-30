@@ -32,6 +32,7 @@ type BookingInput = {
   dataHora: string;
   valorTotal: unknown;
   extras?: ExtraInput[];
+  actorId?: string;
 };
 
 type SanitizedExtra = {
@@ -146,7 +147,7 @@ async function criarAgendamentoAtomicoOnce(input: BookingInput) {
   const { extrasLegais, bloqueios } = sanitizarExtras(input.extras);
   if (bloqueios.length) {
     await logCompliance(
-      input.clienteId,
+      input.actorId || input.clienteId,
       bloqueios.map((item) => item.original).join(' | '),
       'renomeacao_legal_taxa_conforto_sessao_sem_dor'
     );
@@ -192,6 +193,18 @@ async function criarAgendamentoAtomicoOnce(input: BookingInput) {
       `;
       if (!tatuadorRows[0]) {
         throw new BookingError(403, 'Tatuador indisponivel para agendamento.');
+      }
+
+      const clienteRows = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM perfis
+        WHERE id = ${input.clienteId}::uuid
+          AND deleted_at IS NULL
+          AND status_conta::text = 'ATIVO'
+        FOR UPDATE
+      `;
+      if (!clienteRows[0]) {
+        throw new BookingError(400, 'Cliente inválido ou inativo.');
       }
 
       const scheduleRow = await lockArtistSchedule(tx, input.tatuadorId);

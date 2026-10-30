@@ -2,24 +2,13 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { normalizeLocale } from '@/lib/i18n/store';
 import { LOCALES, type Locale } from '@/lib/i18n/types';
 import { describeRequestAuth, resolvePerfilSession } from '@/lib/services/perfil-session';
-import { invalidPayloadBody, localeSchema } from '@/lib/security/validation';
+import { invalidPayloadBody, languagePayloadSchema } from '@/lib/security/validation';
 
 const ALLOWED_LANGUAGES: readonly Locale[] = LOCALES;
-
-/** Aceita `language` OU `locale`; exige ao menos um locale suportado. */
-const payloadSchema = z
-  .object({
-    language: localeSchema.optional(),
-    locale: localeSchema.optional(),
-  })
-  .refine((data) => Boolean(data.language ?? data.locale), {
-    message: 'Idioma inválido.',
-  });
 
 async function syncLanguage(request: Request) {
   // Sanitização impiedosa PRIMEIRO: idioma malformado nunca toca em sessão/banco.
@@ -30,7 +19,7 @@ async function syncLanguage(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
   }
 
-  const parsed = payloadSchema.safeParse(rawBody);
+  const parsed = languagePayloadSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
       { ...invalidPayloadBody(parsed.error), allowed: ALLOWED_LANGUAGES },

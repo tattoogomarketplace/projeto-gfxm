@@ -18,6 +18,7 @@ import {
   resolvePerfilSession,
 } from '@/lib/services/perfil-session';
 import { isOnboardingComplete, parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
+import { ensurePayloadSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 const ENSURE_STEP_TIMEOUT_MS = 4000;
 
@@ -260,18 +261,23 @@ export async function POST(request: Request) {
       session.user?.emailAddresses?.[0]?.emailAddress ||
       null;
 
+    let rawBody: unknown = {};
+    try {
+      rawBody = await request.json();
+    } catch {
+      rawBody = {};
+    }
+
+    const parsed = ensurePayloadSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+
     if (!userId) {
       return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
     }
 
-    let body: { role?: string } = {};
-    try {
-      body = (await request.json()) as { role?: string };
-    } catch {
-      body = {};
-    }
-
-    const requestedRole = parseAppRole(body.role);
+    const requestedRole = parseAppRole(parsed.data.role);
 
     let existing: LocalPerfil | null = null;
     try {

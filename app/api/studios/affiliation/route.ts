@@ -2,10 +2,13 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
-import { invalidPayloadBody, uuidSchema } from '@/lib/security/validation';
+import {
+  affiliationDecisionSchema,
+  affiliationRequestSchema,
+  invalidPayloadBody,
+} from '@/lib/security/validation';
 import {
   AffiliationError,
   decideAffiliation,
@@ -14,13 +17,6 @@ import {
   listForTatuador,
   requestAffiliation,
 } from '@/lib/services/studio-affiliation';
-
-const requestSchema = z.object({ estudio_id: uuidSchema });
-
-const decisionSchema = z.object({
-  convite_id: uuidSchema,
-  action: z.enum(['accept', 'reject', 'cancel']),
-});
 
 async function loadActor(clerkId: string) {
   return prisma.perfil.findUnique({
@@ -68,7 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
   }
 
-  const parsed = requestSchema.safeParse(rawBody);
+  const parsed = affiliationRequestSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
   }
@@ -117,7 +113,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
   }
 
-  const parsed = decisionSchema.safeParse(rawBody);
+  const parsed = affiliationDecisionSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
   }

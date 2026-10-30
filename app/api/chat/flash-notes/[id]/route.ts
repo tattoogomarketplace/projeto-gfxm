@@ -4,29 +4,28 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { chatErrorResponse, requireChatActor } from '@/lib/services/chat';
 import { deleteFlashNote, updateFlashNote } from '@/lib/services/flash-notes';
+import { flashNoteUpdateSchema, invalidPayloadBody } from '@/lib/security/validation';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const actor = await requireChatActor(request);
-    const { id } = await params;
-    let body: {
-      content?: unknown;
-      backgroundId?: unknown;
-      fontClass?: unknown;
-      alignClass?: unknown;
-      price?: unknown;
-      discountPercentage?: unknown;
-      imageUrl?: unknown;
-    } = {};
+    let rawBody: unknown;
     try {
-      body = (await request.json()) as typeof body;
+      rawBody = await request.json();
     } catch {
       return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
     }
 
+    const parsed = flashNoteUpdateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+
+    const actor = await requireChatActor(request);
+    const { id } = await params;
+    const body = parsed.data;
     const note = await updateFlashNote({
       actorId: actor.id,
       noteId: id,

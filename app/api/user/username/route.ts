@@ -2,21 +2,15 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { describeRequestAuth, resolvePerfilSession } from '@/lib/services/perfil-session';
 import { changeUsername } from '@/lib/services/username-change';
-import { invalidPayloadBody } from '@/lib/security/validation';
+import { invalidPayloadBody, usernamePayloadSchema } from '@/lib/security/validation';
 import {
   isUsernameForbiddenForRole,
   normalizeUsername,
   validateUsername,
 } from '@/lib/username';
-
-/** Payload de identidade: `username` é sempre string (nunca array/objeto). */
-const payloadSchema = z.object({
-  username: z.string().trim().min(1, 'Username inválido.').max(64, 'Username inválido.'),
-});
 
 /**
  * Identidade universal (@username).
@@ -109,15 +103,6 @@ export async function GET(request: Request) {
 }
 
 async function claimUsername(request: Request) {
-  const { userId } = await resolvePerfilSession(request);
-  if (!userId) {
-    console.error('[user/username] 401 - sessão não resolvida', {
-      ...describeRequestAuth(request),
-      method: request.method,
-    });
-    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
-  }
-
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -125,9 +110,18 @@ async function claimUsername(request: Request) {
     return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
   }
 
-  const parsed = payloadSchema.safeParse(rawBody);
+  const parsed = usernamePayloadSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+  }
+
+  const { userId } = await resolvePerfilSession(request);
+  if (!userId) {
+    console.error('[user/username] 401 - sessão não resolvida', {
+      ...describeRequestAuth(request),
+      method: request.method,
+    });
+    return NextResponse.json({ sucesso: false, erro: 'Não autenticado.' }, { status: 401 });
   }
 
   try {

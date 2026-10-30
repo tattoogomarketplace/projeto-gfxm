@@ -10,6 +10,7 @@ import {
   loadTatuadorActor,
   updateArtistPortfolio,
 } from '@/lib/services/artist-portfolio';
+import { invalidPayloadBody, portfolioUpdateSchema } from '@/lib/security/validation';
 
 async function resolveTatuador(request: Request) {
   const { userId } = await resolvePerfilSession(request);
@@ -38,15 +39,19 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const actor = await resolveTatuador(request);
-    const { id } = await params;
-    let body: unknown = {};
+    let rawBody: unknown;
     try {
-      body = await request.json();
+      rawBody = await request.json();
     } catch {
       throw new ArtistPortfolioError(400, 'Payload inválido.');
     }
-    const item = await updateArtistPortfolio(actor.id, id, body);
+    const parsed = portfolioUpdateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
+    }
+    const actor = await resolveTatuador(request);
+    const { id } = await params;
+    const item = await updateArtistPortfolio(actor.id, id, parsed.data);
     return NextResponse.json({ sucesso: true, item });
   } catch (error) {
     return errorResponse(error);

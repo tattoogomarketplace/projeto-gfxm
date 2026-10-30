@@ -10,12 +10,7 @@ import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
 import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { fetchR2Object } from '@/lib/storage/r2';
-import {
-  invalidPayloadBody,
-  storageKeySchema,
-  storageUrlSchema,
-  turnstileTokenSchema,
-} from '@/lib/security/validation';
+import { invalidPayloadBody, kycValidateDocumentSchema } from '@/lib/security/validation';
 
 /** Limite defensivo: o inlineData do Gemini aceita ~20MB; mantemos folga. */
 const MAX_OBJECT_BYTES = 10 * 1024 * 1024;
@@ -34,18 +29,7 @@ const MIN_AUTO_APPROVE_SCORE = 60;
  * `publicUrl` do R2, mais `contentType` e `turnstileToken` opcionais. Qualquer
  * outro formato é rejeitado com HTTP 400 antes de tocar em segurança ou banco.
  */
-const payloadSchema = z
-  .object({
-    fileKey: storageKeySchema.optional(),
-    publicUrl: storageUrlSchema.optional(),
-    contentType: z.string().trim().max(120).optional(),
-    turnstileToken: turnstileTokenSchema.optional(),
-  })
-  .refine((data) => Boolean(data.fileKey || data.publicUrl), {
-    message: 'Informe um fileKey ou publicUrl válido do R2.',
-  });
-
-type ValidateDocumentPayload = z.infer<typeof payloadSchema>;
+type ValidateDocumentPayload = z.infer<typeof kycValidateDocumentSchema>;
 
 function sanitizeFileKey(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -99,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ sucesso: false, erro: 'Payload inválido.' }, { status: 400 });
     }
 
-    const parsed = payloadSchema.safeParse(rawBody);
+    const parsed = kycValidateDocumentSchema.safeParse(rawBody);
     if (!parsed.success) {
       return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
     }

@@ -179,105 +179,194 @@ export const optionalTrimmedString = (max: number, message = 'Campo inválido.')
     .nullable()
     .transform((value) => (value ? value : undefined));
 
-export const usernamePayloadSchema = z.object({
-  username: z.string().trim().min(1, 'Username inválido.').max(64, 'Username inválido.'),
-});
+export const usernamePayloadSchema = z
+  .object({
+    username: z.string().trim().min(1, 'Username inválido.').max(64, 'Username inválido.'),
+  })
+  .strict();
 
-export const resetCredentialsSchema = z.object({
-  email: emailSchema,
-  cpf: cpfSchema,
-});
+export const resetCredentialsSchema = z
+  .object({
+    email: emailSchema,
+    cpf: cpfSchema,
+  })
+  .strict();
 
-export const presignUploadSchema = z.object({
-  fileName: z
-    .string()
-    .trim()
-    .min(1, 'fileName e contentType são obrigatórios.')
-    .max(255, 'Nome de arquivo inválido.')
-    .refine((value) => !value.includes('..') && !value.includes('/') && !value.includes('\\'), {
-      message: 'Nome de arquivo inválido.',
-    }),
-  contentType: z
-    .string()
-    .trim()
-    .min(1, 'fileName e contentType são obrigatórios.')
-    .max(120, 'Tipo de arquivo não permitido.'),
-});
+export const presignUploadSchema = z
+  .object({
+    fileName: z
+      .string()
+      .trim()
+      .min(1, 'fileName e contentType são obrigatórios.')
+      .max(255, 'Nome de arquivo inválido.')
+      .refine((value) => !value.includes('..') && !value.includes('/') && !value.includes('\\'), {
+        message: 'Nome de arquivo inválido.',
+      }),
+    contentType: z
+      .string()
+      .trim()
+      .min(1, 'fileName e contentType são obrigatórios.')
+      .max(120, 'Tipo de arquivo não permitido.'),
+  })
+  .strict();
 
-export const chatEnviarSchema = z.object({
-  destinatario_id: uuidSchema,
-  mensagem: chatMessageSchema,
-  artworkId: uuidSchema.optional(),
-  artwork_id: uuidSchema.optional(),
-  categoria: chatCategoriaSchema.optional(),
-});
+export const chatEnviarSchema = z
+  .object({
+    destinatario_id: uuidSchema,
+    mensagem: chatMessageSchema,
+    artworkId: uuidSchema.optional(),
+    artwork_id: uuidSchema.optional(),
+    categoria: chatCategoriaSchema.optional(),
+  })
+  .strict();
 
-export const assistantChatSchema = z.object({
-  message: z.string().trim().max(4000).optional(),
-  locale: localeSchema.optional(),
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(['user', 'assistant', 'model']).optional(),
-        content: z.string().trim().max(4000).optional(),
-      })
-    )
-    .max(40)
-    .optional(),
-});
+export const assistantChatSchema = z
+  .object({
+    message: z.string().trim().max(4000).optional(),
+    locale: localeSchema.optional(),
+    messages: z
+      .array(
+        z
+          .object({
+            role: z.enum(['user', 'assistant', 'model']).optional(),
+            content: z.string().trim().max(4000).optional(),
+          })
+          .strict()
+      )
+      .max(40)
+      .optional(),
+  })
+  .strict();
 
-export const flashNoteCreateSchema = z.object({
-  content: z.string().trim().min(1, 'Conteúdo obrigatório.').max(80, 'Conteúdo excede o limite.'),
-  expiresAt: isoDateTimeSchema.optional(),
-  expires_at: isoDateTimeSchema.optional(),
-  backgroundId: z.string().trim().max(32).optional(),
-  fontClass: z.string().trim().max(64).optional(),
-  alignClass: z.string().trim().max(64).optional(),
-  price: nonNegativeMoneySchema.optional(),
-  discountPercentage: z.coerce.number().finite().gte(0).lte(90).optional(),
-  imageUrl: storageUrlSchema.optional(),
-});
+const httpsStorageUrlSchema = storageUrlSchema.refine(
+  (value) => value.toLowerCase().startsWith('https://'),
+  'URL de arquivo inválida.'
+);
 
-export const flashNoteUpdateSchema = z.object({
-  content: z.string().trim().min(1).max(80).optional(),
-  backgroundId: z.string().trim().max(32).optional(),
-  fontClass: z.string().trim().max(64).optional(),
-  alignClass: z.string().trim().max(64).optional(),
-  price: nonNegativeMoneySchema.optional(),
-  discountPercentage: z.coerce.number().finite().gte(0).lte(90).optional(),
-  imageUrl: storageUrlSchema.optional(),
-});
+const flashNoteDiscountSchema = z
+  .union([z.number().int().gte(0).lte(99), z.null()])
+  .optional();
+
+export const flashNoteCreateSchema = z
+  .object({
+    content: z.string().trim().min(1, 'Conteúdo obrigatório.').max(80, 'Conteúdo excede o limite.'),
+    expiresAt: isoDateTimeSchema.optional(),
+    expires_at: isoDateTimeSchema.optional(),
+    backgroundId: z.string().trim().max(32).optional(),
+    fontClass: z.string().trim().max(64).optional(),
+    alignClass: z.string().trim().max(64).optional(),
+    price: nonNegativeMoneySchema.optional(),
+    discountPercentage: flashNoteDiscountSchema,
+    imageUrl: httpsStorageUrlSchema.optional(),
+  })
+  .strict();
+
+export const flashNoteUpdateSchema = z
+  .object({
+    content: z.string().trim().min(1).max(80).optional(),
+    backgroundId: z.string().trim().max(32).optional(),
+    fontClass: z.string().trim().max(64).optional(),
+    alignClass: z.string().trim().max(64).optional(),
+    price: nonNegativeMoneySchema.optional(),
+    discountPercentage: flashNoteDiscountSchema,
+    imageUrl: httpsStorageUrlSchema.optional(),
+  })
+  .strict();
 
 export const reviewReplySchema = z
   .object({
     reply: z.string().trim().min(1, 'A resposta não pode ficar vazia.').max(1000).optional(),
     artistReply: z.string().trim().min(1, 'A resposta não pode ficar vazia.').max(1000).optional(),
   })
+  .strict()
   .refine((data) => Boolean(data.reply ?? data.artistReply), {
     message: 'A resposta não pode ficar vazia.',
   });
 
-export const agendamentoCreateSchema = z.object({
-  tatuador_id: uuidSchema,
-  data_hora: isoDateTimeSchema,
-  valor_total: moneySchema,
-  extras: z
-    .array(
-      z.object({
-        descricao: z.string().trim().max(160).optional(),
-        valor: nonNegativeMoneySchema.optional(),
-      })
-    )
-    .max(20)
-    .optional(),
-});
+export const agendamentoCreateSchema = z
+  .object({
+    tatuador_id: uuidSchema,
+    data_hora: isoDateTimeSchema,
+    valor_total: moneySchema,
+    cliente_id: uuidSchema.optional(),
+    extras: z
+      .array(
+        z
+          .object({
+            descricao: z.string().trim().max(160).optional(),
+            valor: nonNegativeMoneySchema.optional(),
+          })
+          .strict()
+      )
+      .max(20)
+      .optional(),
+  })
+  .strict();
 
-export const artistScheduleSchema = z.object({
-  schedule: z.unknown().optional(),
-  scheduleJson: z.unknown().optional(),
-}).refine((data) => data.schedule !== undefined || data.scheduleJson !== undefined, {
-  message: 'Informe o expediente em schedule.',
-});
+export const agendamentoCancelSchema = z
+  .object({
+    agendamento_id: uuidSchema,
+  })
+  .strict();
+
+export const agendamentoCancelExecutarSchema = z
+  .object({
+    agendamento_id: uuidSchema,
+    otp: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, 'Código OTP obrigatório.'),
+  })
+  .strict();
+
+const WEEKDAY_ENUM = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+
+const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const workingHoursBreakSchema = z
+  .object({
+    id: z.string().trim().min(1).max(80).optional(),
+    start: z.string().trim().regex(HH_MM, 'Horário inválido.'),
+    end: z.string().trim().regex(HH_MM, 'Horário inválido.'),
+  })
+  .strict();
+
+const workingHoursDaySchema = z
+  .object({
+    day: z.enum(WEEKDAY_ENUM),
+    active: z.boolean(),
+    start: z.string().trim().regex(HH_MM, 'Horário inválido.'),
+    end: z.string().trim().regex(HH_MM, 'Horário inválido.'),
+    breaks: z.array(workingHoursBreakSchema).max(3, 'Máximo de 3 intervalos por dia.'),
+  })
+  .strict();
+
+export const workingHoursScheduleSchema = z
+  .object({
+    schemaVersion: z.number().int().positive().max(10),
+    timezone: z.string().trim().min(1).max(80),
+    days: z.array(workingHoursDaySchema).min(1).max(7),
+    updatedAt: z.string().trim().max(40).optional(),
+  })
+  .strict();
+
+export const artistScheduleSchema = z
+  .object({
+    schedule: workingHoursScheduleSchema.optional(),
+    scheduleJson: workingHoursScheduleSchema.optional(),
+  })
+  .strict()
+  .refine((data) => data.schedule !== undefined || data.scheduleJson !== undefined, {
+    message: 'Informe o expediente em schedule.',
+  });
 
 export const catalogIdSchema = z.string().trim().min(1).max(80);
 
@@ -316,9 +405,74 @@ export const recoveryDocumentSchema = z
     publicUrl: storageUrlSchema.optional(),
     contentType: z.string().trim().max(120).optional(),
   })
+  .strict()
   .refine((data) => Boolean(data.fileKey || data.publicUrl), {
     message: 'Informe um fileKey ou publicUrl válido do R2.',
   });
+
+export const kycValidateDocumentSchema = z
+  .object({
+    fileKey: storageKeySchema.optional(),
+    publicUrl: storageUrlSchema.optional(),
+    contentType: z.string().trim().max(120).optional(),
+    turnstileToken: turnstileTokenSchema.optional(),
+  })
+  .strict()
+  .refine((data) => Boolean(data.fileKey || data.publicUrl), {
+    message: 'Informe um fileKey ou publicUrl válido do R2.',
+  });
+
+export const kycVerifySchema = z
+  .object({
+    cpf: cpfOrCnpjSchema,
+    fullName: fullNameSchema,
+    selfieUrl: storageRefSchema,
+    documentFrontUrl: storageRefSchema,
+    documentBackUrl: storageRefSchema.optional(),
+    turnstileToken: turnstileTokenSchema.optional(),
+  })
+  .strict();
+
+export const onboardingPayloadSchema = z
+  .object({
+    role: appRoleSchema.optional(),
+  })
+  .strict();
+
+export const ensurePayloadSchema = z
+  .object({
+    role: appRoleSchema.optional(),
+  })
+  .strict();
+
+export const languagePayloadSchema = z
+  .object({
+    language: localeSchema.optional(),
+    locale: localeSchema.optional(),
+  })
+  .strict()
+  .refine((data) => Boolean(data.language ?? data.locale), {
+    message: 'Idioma inválido.',
+  });
+
+export const affiliationRequestSchema = z
+  .object({
+    estudio_id: uuidSchema,
+  })
+  .strict();
+
+export const affiliationDecisionSchema = z
+  .object({
+    convite_id: uuidSchema,
+    action: z.enum(['accept', 'reject', 'cancel']),
+  })
+  .strict();
+
+export const studioCnpjPayloadSchema = z
+  .object({
+    cnpj: cnpjSchema,
+  })
+  .strict();
 
 export const quoteApproveSchema = z.object({
   quoteId: uuidSchema,
@@ -356,25 +510,48 @@ export const persistStudioMetadataSchema = z.object({
   razaoSocial: z.string().trim().max(160),
 });
 
-export const portfolioPublishSchema = z.object({
-  imageUrl: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
-  url_imagem: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
-  image_url: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
-  style: z.string().trim().max(80).optional(),
-  estilo: z.string().trim().max(80).optional(),
-  bodyPart: z.string().trim().max(80).optional(),
-  body_part: z.string().trim().max(80).optional(),
-  sessionDuration: z.string().trim().max(80).optional(),
-  session_duration: z.string().trim().max(80).optional(),
-  isHealed: z.union([z.boolean(), z.string().trim().max(8)]).optional(),
-  is_healed: z.union([z.boolean(), z.string().trim().max(8)]).optional(),
-  notes: z.string().trim().max(500).optional(),
-  caption: z.string().trim().max(500).optional(),
-  descricao: z.string().trim().max(500).optional(),
-  description: z.string().trim().max(500).optional(),
-});
+const portfolioNotesField = z.string().trim().max(500).optional();
+const portfolioStyleField = z.string().trim().max(80).optional();
+const portfolioBodyPartField = z.string().trim().max(80).optional();
+const portfolioDurationField = z.string().trim().max(80).optional();
+const portfolioHealedField = z.union([z.boolean(), z.string().trim().max(8)]).optional();
 
-export const portfolioUpdateSchema = portfolioPublishSchema;
+export const portfolioPublishSchema = z
+  .object({
+    imageUrl: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
+    url_imagem: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
+    image_url: z.string().trim().max(STORAGE_REF_MAX_LENGTH).optional(),
+    style: portfolioStyleField,
+    estilo: portfolioStyleField,
+    bodyPart: portfolioBodyPartField,
+    body_part: portfolioBodyPartField,
+    sessionDuration: portfolioDurationField,
+    session_duration: portfolioDurationField,
+    isHealed: portfolioHealedField,
+    is_healed: portfolioHealedField,
+    notes: portfolioNotesField,
+    caption: portfolioNotesField,
+    descricao: portfolioNotesField,
+    description: portfolioNotesField,
+  })
+  .strict();
+
+export const portfolioUpdateSchema = z
+  .object({
+    style: portfolioStyleField,
+    estilo: portfolioStyleField,
+    bodyPart: portfolioBodyPartField,
+    body_part: portfolioBodyPartField,
+    sessionDuration: portfolioDurationField,
+    session_duration: portfolioDurationField,
+    isHealed: portfolioHealedField,
+    is_healed: portfolioHealedField,
+    notes: portfolioNotesField,
+    caption: portfolioNotesField,
+    descricao: portfolioNotesField,
+    description: portfolioNotesField,
+  })
+  .strict();
 
 /** Mensagem legível do primeiro problema encontrado pelo schema. */
 export function firstIssueMessage(error: z.ZodError): string {

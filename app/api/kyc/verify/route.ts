@@ -4,7 +4,6 @@ export const runtime = 'nodejs';
 
 import { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import {
   composeKycVerdict,
@@ -19,13 +18,7 @@ import { guardAppIntegrity } from '@/src/lib/security/attestation-validator';
 import { maskCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
 import { onlyCpfDigits } from '@/lib/utils/cpf';
 import { maskCpf } from '@/lib/utils-security';
-import {
-  cpfOrCnpjSchema,
-  fullNameSchema,
-  invalidPayloadBody,
-  storageRefSchema,
-  turnstileTokenSchema,
-} from '@/lib/security/validation';
+import { invalidPayloadBody, kycVerifySchema } from '@/lib/security/validation';
 
 /** Limite defensivo para chaves/URLs de documento. */
 const MAX_DOCUMENT_REF_LENGTH = 1024;
@@ -52,14 +45,7 @@ const STATUS_LABEL: Record<KycStatusValue, string> = {
  * por aqui: CPF/CNPJ com dígitos verificadores válidos, nome civil plausível e
  * referências de storage estritas (chave R2 ou `publicUrl`).
  */
-const payloadSchema = z.object({
-  cpf: cpfOrCnpjSchema,
-  fullName: fullNameSchema,
-  selfieUrl: storageRefSchema,
-  documentFrontUrl: storageRefSchema,
-  documentBackUrl: storageRefSchema.optional(),
-  turnstileToken: turnstileTokenSchema.optional(),
-});
+const payloadSchema = kycVerifySchema;
 
 /**
  * Sanitiza uma referência de documento. Aceita tanto a chave crua do bucket
