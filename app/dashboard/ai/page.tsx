@@ -85,7 +85,7 @@ export default function DashboardAiPage() {
 
       <div
         ref={scrollerRef}
-        className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none px-4 pt-4 pb-36 [-webkit-overflow-scrolling:touch]"
+        className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none pt-4 pb-36 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch]"
       >
         {messages.length === 0 ? (
           <section className="glass-panel relative overflow-hidden rounded-2xl p-5">
@@ -142,7 +142,7 @@ export default function DashboardAiPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="fixed bottom-0 left-1/2 z-40 w-full max-w-app -translate-x-1/2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2"
+        className="fixed bottom-0 left-1/2 z-40 w-full max-w-app -translate-x-1/2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]"
       >
         <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2">
           <input

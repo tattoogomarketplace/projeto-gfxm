@@ -283,7 +283,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
   return (
     <div className="relative flex h-full max-h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-zinc-950 text-zinc-100 transform-gpu transition-opacity duration-200">
       <div className={cn('shrink-0', mobileThreadOpen ? 'hidden lg:block' : 'block')}>
-        <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-900 bg-zinc-950/90 pt-[max(env(safe-area-inset-top),_1.5rem)] px-4 pb-2 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-900 bg-zinc-950/90 pt-[max(env(safe-area-inset-top),_1.5rem)] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-2 backdrop-blur-xl">
           <div className="flex min-h-11 items-center gap-2">
             <SearchBar onSelect={handleSearchSelect} className="min-w-0 flex-1" />
             <TattooMachineMenuTrigger
@@ -309,7 +309,7 @@ const ChatWorkspaceInner = memo(function ChatWorkspaceInner({
             mobileThreadOpen ? 'hidden lg:flex' : 'flex'
           )}
         >
-          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-[var(--dock-clearance)] [-webkit-overflow-scrolling:touch]">
+          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain pt-2 pb-[var(--dock-clearance)] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch]">
             {renderPane('DIRECT')}
             {renderPane('BUDGET')}
           </div>

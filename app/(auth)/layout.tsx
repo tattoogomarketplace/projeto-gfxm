@@ -27,6 +27,8 @@ export default function AuthLayout({
         paddingBottom: isRegister
           ? 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))'
           : 'calc(env(safe-area-inset-bottom, 0px) + 5rem)',
+        paddingLeft: 'max(1.5rem, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(1.5rem, env(safe-area-inset-right, 0px))',
       }}
     >
       <AppReadySignal />

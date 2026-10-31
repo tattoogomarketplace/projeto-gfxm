@@ -185,7 +185,7 @@ export function ChatThread({
       <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
         {onBack ? (
           <header className="glass-chrome safe-header-pad shrink-0 border-b border-black/[0.04] dark:border-white/[0.06] lg:hidden">
-            <div className="flex min-h-11 items-center gap-2 px-3 pb-3">
+            <div className="flex min-h-11 items-center gap-2 pb-3 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
               <button
                 type="button"
                 onClick={onBack}
@@ -197,7 +197,7 @@ export function ChatThread({
             </div>
           </header>
         ) : null}
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center py-10 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] text-center">
           <p className="max-w-full text-sm font-medium text-neutral-900 dark:text-white">{t('chat.selectArtist')}</p>
           <p className="mt-1 max-w-xs text-balance text-xs text-neutral-500 dark:text-zinc-500">
             {t('chat.selectArtistHint')}
@@ -216,7 +216,7 @@ export function ChatThread({
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background text-neutral-900 dark:text-white lg:rounded-2xl lg:border lg:border-black/[0.04] lg:bg-white lg:shadow-sm dark:lg:border-white/[0.05] dark:lg:bg-white/[0.03]">
       {/* Header — sticky, glassmorphism, safe-area aware. */}
       <header className="glass-chrome safe-header-pad sticky top-0 z-30 shrink-0 border-b border-black/[0.04] dark:border-white/[0.06]">
-        <div className="flex items-center gap-2 px-2 pb-3 sm:px-3">
+        <div className="flex items-center gap-2 pb-3 pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] sm:pl-[max(0.75rem,env(safe-area-inset-left))] sm:pr-[max(0.75rem,env(safe-area-inset-right))]">
           {onBack ? (
             <button
               type="button"
@@ -262,7 +262,7 @@ export function ChatThread({
       </header>
 
       {artwork ? (
-        <div className="flex shrink-0 gap-3 border-b border-black/[0.04] bg-neutral-50 px-4 py-3 dark:border-white/[0.05] dark:bg-white/[0.04]">
+        <div className="flex shrink-0 gap-3 border-b border-black/[0.04] bg-neutral-50 py-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] dark:border-white/[0.05] dark:bg-white/[0.04]">
           <div className="relative h-14 w-14 min-h-14 min-w-14 overflow-hidden rounded-xl border border-orange-500/30">
             <OptimizedImage src={artwork.imageUrl} alt={styleLabel(artwork.style)} className="h-full w-full" />
           </div>
@@ -291,7 +291,7 @@ export function ChatThread({
       {/* Message thread — the single scrolling surface; flex-1 fills the gap. */}
       <div
         ref={scrollRef}
-        className="relative min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 [-webkit-overflow-scrolling:touch]"
+        className="relative min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain py-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch]"
       >
         {loading && messages.length === 0 ? <InstagramSpinnerOverlay /> : null}
         {messages.map((message) => (
@@ -320,7 +320,7 @@ export function ChatThread({
       </div>
 
       {/* Composer — anchored to the base with safe-area padding. */}
-      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom),env(keyboard-inset-bottom,0px))] dark:border-white/[0.06]">
+      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom),env(keyboard-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] dark:border-white/[0.06]">
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}
