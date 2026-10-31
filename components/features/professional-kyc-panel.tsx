@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { CheckCircle2, FileText, Loader2, ShieldAlert, Upload, X, XCircle } from 'lucide-react';
 import { GlassContainer } from '@/components/ui/glass-container';
-import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard, useTurnstileToken } from '@/components/auth/turnstile-guard';
 import { authedFetch } from '@/lib/utils/authed-fetch';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
@@ -106,35 +106,26 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [extractedName, setExtractedName] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const turnstileWaiterRef = useRef<((token: string) => void) | null>(null);
+  const {
+    token: turnstileToken,
+    nonce: turnstileNonce,
+    onSuccess: onTurnstileSuccess,
+    onExpire: onTurnstileExpire,
+    onError: onTurnstileError,
+    waitForToken: waitForTurnstileToken,
+    reset: resetTurnstile,
+  } = useTurnstileToken();
 
-  const handleTurnstileSuccess = useCallback((token: string) => {
-    setTurnstileToken(token);
-    turnstileWaiterRef.current?.(token);
-    turnstileWaiterRef.current = null;
-  }, []);
-
-  const refreshTurnstileToken = useCallback(() => {
-    return new Promise<string>((resolve, reject) => {
-      const timeout = window.setTimeout(() => {
-        if (!turnstileWaiterRef.current) return;
-        turnstileWaiterRef.current = null;
-        reject(new Error(t('errors.clerk.requiresVerification')));
-      }, 12000);
-      turnstileWaiterRef.current = (token: string) => {
-        window.clearTimeout(timeout);
-        resolve(token);
-      };
-      setTurnstileToken('');
-      setTurnstileNonce((nonce) => nonce + 1);
-    });
-  }, [t]);
+  const refreshTurnstileToken = useCallback(async () => {
+    resetTurnstile();
+    const next = await waitForTurnstileToken(12000);
+    if (!next) throw new Error(t('errors.clerk.requiresVerification'));
+    return next;
+  }, [resetTurnstile, t, waitForTurnstileToken]);
 
   const busy = phase !== 'idle';
-  const canSubmit = Boolean(pendingFile) && !busy && Boolean(turnstileToken);
+  const canSubmit = Boolean(pendingFile) && !busy;
   const progress = PHASE_PROGRESS[phase];
   // Fase de processamento no servidor (validação por IA pode levar ~30s): é o
   // "deadzone" que precisa de feedback contínuo para não parecer travado.
@@ -194,6 +185,10 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       const contentType = resolveUploadContentType(file);
 
       try {
+        const gateToken = turnstileToken || (await waitForTurnstileToken());
+        if (!gateToken) {
+          throw new Error(t('errors.clerk.requiresVerification'));
+        }
         const tokenFn = () => getToken({ skipCache: true });
         const presignRes = await authedFetch(
           '/api/upload/presign',
@@ -205,7 +200,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
               contentType,
               contentLength: file.size,
               context: 'kyc',
-              turnstileToken,
+              turnstileToken: gateToken,
             }),
           },
           tokenFn
@@ -296,14 +291,10 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
       } finally {
         setPhase('idle');
         if (inputRef.current) inputRef.current.value = '';
-        // Token do Turnstile é de uso único: invalida o atual e renova o widget
-        // (via remontagem) para o próximo envio, mantendo o CTA desabilitado até
-        // nova validação. A remontagem também cobre o bypass de dev sem site key.
-        setTurnstileToken('');
-        setTurnstileNonce((nonce) => nonce + 1);
+        resetTurnstile();
       }
     },
-    [applyStatus, getToken, refreshTurnstileToken, triggerHaptic, t, turnstileToken]
+    [applyStatus, getToken, refreshTurnstileToken, resetTurnstile, triggerHaptic, t, turnstileToken, waitForTurnstileToken]
   );
 
   const handleSubmit = useCallback(() => {
@@ -439,9 +430,9 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           <TurnstileGuard
             key={turnstileNonce}
             action="kyc-document"
-            onSuccess={handleTurnstileSuccess}
-            onExpire={() => setTurnstileToken('')}
-            onError={() => setTurnstileToken('')}
+            onSuccess={onTurnstileSuccess}
+            onExpire={onTurnstileExpire}
+            onError={onTurnstileError}
           />
 
           <motion.button

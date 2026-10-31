@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
-import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard, useTurnstileToken } from '@/components/auth/turnstile-guard';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
@@ -114,13 +114,20 @@ export function PortfolioUpload({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [cropping, setCropping] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const {
+    token: turnstileToken,
+    nonce: turnstileNonce,
+    onSuccess: onTurnstileSuccess,
+    onExpire: onTurnstileExpire,
+    onError: onTurnstileError,
+    waitForToken: waitForTurnstileToken,
+    reset: resetTurnstile,
+  } = useTurnstileToken();
 
   const isEditing = Boolean(editingItem);
   const canPublish = isEditing
     ? Boolean(style && bodyPart && sessionDuration)
-    : Boolean(pendingFile && style && bodyPart && sessionDuration && turnstileToken);
+    : Boolean(pendingFile && style && bodyPart && sessionDuration);
 
   const studioLocation = useMemo(
     () => items.find((item) => item.location)?.location ?? null,
@@ -316,7 +323,8 @@ export function PortfolioUpload({
         return;
       }
 
-      if (!turnstileToken) {
+      const gateToken = turnstileToken || (await waitForTurnstileToken());
+      if (!gateToken) {
         toast.error(t('errors.clerk.requiresVerification'));
         return;
       }
@@ -331,7 +339,7 @@ export function PortfolioUpload({
             contentType,
             contentLength: pendingFile.size,
             context: 'portfolio',
-            turnstileToken,
+            turnstileToken: gateToken,
           }),
         },
         tokenFn
@@ -389,8 +397,7 @@ export function PortfolioUpload({
       toast.error(formatAppError(error, 'api'));
     } finally {
       setPublishing(false);
-      setTurnstileToken('');
-      setTurnstileNonce((nonce) => nonce + 1);
+      resetTurnstile();
     }
   };
 
@@ -615,10 +622,9 @@ export function PortfolioUpload({
               <TurnstileGuard
                 key={turnstileNonce}
                 action="upload-portfolio"
-                onSuccess={setTurnstileToken}
-                onExpire={() => setTurnstileToken('')}
-                onError={() => setTurnstileToken('')}
-                className="mt-6"
+                onSuccess={onTurnstileSuccess}
+                onExpire={onTurnstileExpire}
+                onError={onTurnstileError}
               />
             ) : null}
 

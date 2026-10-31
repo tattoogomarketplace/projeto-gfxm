@@ -6,9 +6,9 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from 'react';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
-import { cn } from '@/lib/utils';
 
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
 
@@ -23,9 +23,12 @@ export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ??
  */
 export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
+const TOKEN_WAIT_MS = 8000;
+
 export type TurnstileGuardHandle = {
   reset: () => void;
   getToken: () => string | undefined;
+  execute: () => void;
 };
 
 export type TurnstileGuardProps = {
@@ -37,9 +40,56 @@ export type TurnstileGuardProps = {
   className?: string;
 };
 
+export function useTurnstileToken() {
+  const [token, setToken] = useState('');
+  const [nonce, setNonce] = useState(0);
+  const tokenRef = useRef('');
+  const waiterRef = useRef<((next: string) => void) | null>(null);
+
+  const onSuccess = useCallback((next: string) => {
+    tokenRef.current = next;
+    setToken(next);
+    waiterRef.current?.(next);
+    waiterRef.current = null;
+  }, []);
+
+  const onExpire = useCallback(() => {
+    tokenRef.current = '';
+    setToken('');
+  }, []);
+
+  const onError = useCallback(() => {
+    tokenRef.current = '';
+    setToken('');
+  }, []);
+
+  const waitForToken = useCallback((timeoutMs = TOKEN_WAIT_MS) => {
+    if (tokenRef.current) return Promise.resolve(tokenRef.current);
+    return new Promise<string | null>((resolve) => {
+      const timeout = window.setTimeout(() => {
+        waiterRef.current = null;
+        resolve(null);
+      }, timeoutMs);
+      waiterRef.current = (next: string) => {
+        window.clearTimeout(timeout);
+        resolve(next);
+      };
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    tokenRef.current = '';
+    setToken('');
+    waiterRef.current = null;
+    setNonce((current) => current + 1);
+  }, []);
+
+  return { token, nonce, onSuccess, onExpire, onError, waitForToken, reset };
+}
+
 export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardProps>(
   function TurnstileGuard(
-    { onSuccess, onError, onExpire, action, theme = 'dark', className },
+    { onSuccess, onError, onExpire, action, theme = 'dark' },
     ref
   ) {
     const widgetRef = useRef<TurnstileInstance | undefined>(undefined);
@@ -60,6 +110,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       () => ({
         reset: () => widgetRef.current?.reset(),
         getToken: () => widgetRef.current?.getResponse(),
+        execute: () => widgetRef.current?.execute(),
       }),
       []
     );
@@ -80,14 +131,14 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     }, [onExpire]);
 
     if (!configured) {
-      // Sem chave pública não há widget a montar. O sentinel já foi emitido no
-      // efeito acima, então o formulário permanece utilizável; qualquer bloqueio
-      // real é decidido no servidor, nunca por uma mensagem fixa no cliente.
       return null;
     }
 
     return (
-      <div className={cn('flex justify-center', className)}>
+      <div
+        aria-hidden
+        className="pointer-events-none fixed left-0 top-0 -z-10 h-px w-px overflow-hidden opacity-0"
+      >
         <Turnstile
           ref={widgetRef}
           siteKey={TURNSTILE_SITE_KEY}
@@ -97,8 +148,9 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           options={{
             theme,
             action,
-            appearance: 'interaction-only',
-            size: 'flexible',
+            appearance: 'execute',
+            execution: 'render',
+            size: 'invisible',
             refreshExpired: 'auto',
             retry: 'auto',
           }}

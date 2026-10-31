@@ -18,7 +18,7 @@ import { useRedirectIfAuthenticated } from '@/hooks/use-redirect-if-authenticate
 import { useI18n } from '@/hooks/use-i18n';
 import { enforceSingleSession } from '@/app/actions/auth-actions';
 import { AuthScreen } from '@/components/layout/auth-screen';
-import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard, useTurnstileToken } from '@/components/auth/turnstile-guard';
 import { clerkErrorMessage } from '@/lib/error-handler';
 import { assertTurnstileGate, isTurnstileGateError } from '@/lib/security/assert-turnstile-gate';
 
@@ -41,8 +41,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [forceShow, setForceShow] = useState(false);
   const [bridging, setBridging] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const {
+    token: turnstileToken,
+    nonce: turnstileNonce,
+    onSuccess: onTurnstileSuccess,
+    onExpire: onTurnstileExpire,
+    onError: onTurnstileError,
+    waitForToken: waitForTurnstileToken,
+    reset: resetTurnstile,
+  } = useTurnstileToken();
   const nextPathRef = useRef<string | null>(null);
   const resetToastShown = useRef(false);
   const prevLocaleRef = useRef(locale);
@@ -108,17 +115,18 @@ export default function LoginPage() {
   };
 
   const onSubmit = async (data: LoginFormValues) => {
-    if (!turnstileToken) {
-      toast.error(t('errors.clerk.requiresVerification'));
-      return;
-    }
     setIsLoading(true);
     try {
+      const gateToken = turnstileToken || (await waitForTurnstileToken());
+      if (!gateToken) {
+        toast.error(t('errors.clerk.requiresVerification'));
+        return;
+      }
       if (!signIn || !setActive) {
         throw new Error('clerk not ready');
       }
 
-      await assertTurnstileGate(turnstileToken);
+      await assertTurnstileGate(gateToken);
 
       const result = await signIn.create({
         identifier: data.email.trim().toLowerCase(),
@@ -165,8 +173,7 @@ export default function LoginPage() {
           ? t('errors.clerk.requiresVerification')
           : clerkErrorMessage(err)
       );
-      setTurnstileToken('');
-      setTurnstileNonce((nonce) => nonce + 1);
+      resetTurnstile();
     } finally {
       setIsLoading(false);
     }
@@ -366,14 +373,14 @@ export default function LoginPage() {
           <TurnstileGuard
             key={turnstileNonce}
             action="login"
-            onSuccess={setTurnstileToken}
-            onExpire={() => setTurnstileToken('')}
-            onError={() => setTurnstileToken('')}
+            onSuccess={onTurnstileSuccess}
+            onExpire={onTurnstileExpire}
+            onError={onTurnstileError}
           />
 
           <button
             type="submit"
-            disabled={isLoading || !turnstileToken}
+            disabled={isLoading}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-orange-500 py-3 font-bold text-black transition-all hover:bg-orange-600 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (

@@ -30,7 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { authedFetch } from '@/lib/utils/authed-fetch';
-import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard, useTurnstileToken } from '@/components/auth/turnstile-guard';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
@@ -179,8 +179,15 @@ export function ForgotPasswordFlow({
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [phase, setPhase] = useState<UploadPhase>('idle');
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const {
+    token: turnstileToken,
+    nonce: turnstileNonce,
+    onSuccess: onTurnstileSuccess,
+    onExpire: onTurnstileExpire,
+    onError: onTurnstileError,
+    waitForToken: waitForTurnstileToken,
+    reset: resetTurnstile,
+  } = useTurnstileToken();
 
   const [otpReady, setOtpReady] = useState(false);
   const [otpError, setOtpError] = useState('');
@@ -228,8 +235,7 @@ export function ForgotPasswordFlow({
     setFile(null);
     setFileError('');
     setPhase('idle');
-    setTurnstileToken('');
-    setTurnstileNonce((nonce) => nonce + 1);
+    resetTurnstile();
     setOtpReady(false);
     setOtpError('');
     setResendSeconds(60);
@@ -239,7 +245,7 @@ export function ForgotPasswordFlow({
     setPasswordError('');
     setResetting(false);
     otpRequestedRef.current = false;
-  }, []);
+  }, [resetTurnstile]);
 
   useEffect(() => {
     return () => {
@@ -384,6 +390,10 @@ export function ForgotPasswordFlow({
       const contentType = resolveUploadContentType(selected);
       const tokenFn = () => getToken({ skipCache: true });
       try {
+        const gateToken = turnstileToken || (await waitForTurnstileToken());
+        if (!gateToken) {
+          throw new Error(t('errors.clerk.requiresVerification'));
+        }
         const presignRes = await authedFetch(
           '/api/upload/presign',
           {
@@ -394,7 +404,7 @@ export function ForgotPasswordFlow({
               contentType,
               contentLength: selected.size,
               context: 'kyc',
-              turnstileToken,
+              turnstileToken: gateToken,
             }),
           },
           tokenFn
@@ -465,18 +475,17 @@ export function ForgotPasswordFlow({
         triggerHaptic('heavy');
       } finally {
         setPhase('idle');
-        setTurnstileToken('');
-        setTurnstileNonce((nonce) => nonce + 1);
+        resetTurnstile();
       }
     },
-    [getToken, triggerHaptic, turnstileToken]
+    [getToken, resetTurnstile, t, triggerHaptic, turnstileToken, waitForTurnstileToken]
   );
 
   const handleSubmitDocument = useCallback(() => {
-    if (!file || uploading || !turnstileToken) return;
+    if (!file || uploading) return;
     triggerHaptic('medium');
     void runUpload(file);
-  }, [file, runUpload, triggerHaptic, turnstileToken, uploading]);
+  }, [file, runUpload, triggerHaptic, uploading]);
 
   const dispatchOtp = useCallback(async () => {
     if (!signIn) throw new Error('clerk-not-ready');
@@ -852,16 +861,15 @@ export function ForgotPasswordFlow({
                     <TurnstileGuard
                       key={turnstileNonce}
                       action="upload-recovery"
-                      onSuccess={setTurnstileToken}
-                      onExpire={() => setTurnstileToken('')}
-                      onError={() => setTurnstileToken('')}
-                      className="mt-4"
+                      onSuccess={onTurnstileSuccess}
+                      onExpire={onTurnstileExpire}
+                      onError={onTurnstileError}
                     />
 
                     <div className="mt-auto pt-6">
                       <PrimaryAction
                         onClick={handleSubmitDocument}
-                        disabled={!file || uploading || !turnstileToken}
+                        disabled={!file || uploading}
                         busy={uploading}
                         label="Enviar para Análise"
                         busyLabel="Analisando..."

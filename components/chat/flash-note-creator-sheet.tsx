@@ -42,7 +42,7 @@ import {
 } from '@/lib/flash-note-offer';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import { TurnstileGuard } from '@/components/auth/turnstile-guard';
+import { TurnstileGuard, useTurnstileToken } from '@/components/auth/turnstile-guard';
 import {
   FLASH_NOTE_BACKGROUNDS,
   FLASH_NOTE_MAX_LENGTH,
@@ -347,8 +347,15 @@ export function FlashNoteCreatorSheet({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const {
+    token: turnstileToken,
+    nonce: turnstileNonce,
+    onSuccess: onTurnstileSuccess,
+    onExpire: onTurnstileExpire,
+    onError: onTurnstileError,
+    waitForToken: waitForTurnstileToken,
+    reset: resetTurnstile,
+  } = useTurnstileToken();
 
   const background = useMemo(() => getFlashNoteBackground(backgroundId), [backgroundId]);
   const alignment = useMemo(() => getFlashNoteAlignById(align), [align]);
@@ -360,8 +367,7 @@ export function FlashNoteCreatorSheet({
     hasText &&
     hasImage &&
     parseTypedMoneyInput(priceInput) != null &&
-    !busy &&
-    Boolean(turnstileToken || (!pendingFile && initialImageUrl?.trim()));
+    !busy;
 
   // Mirror the store's emptiness into local state — but only flip it on the
   // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
@@ -475,7 +481,7 @@ export function FlashNoteCreatorSheet({
   );
 
   const uploadFlashImage = useCallback(
-    async (file: File): Promise<string> => {
+    async (file: File, gateToken: string): Promise<string> => {
       const contentType = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
       const presignRes = await authedFetch(
         '/api/upload/presign',
@@ -487,7 +493,7 @@ export function FlashNoteCreatorSheet({
             contentType,
             contentLength: file.size,
             context: 'flash-notes',
-            turnstileToken,
+            turnstileToken: gateToken,
           }),
         },
         getToken
@@ -516,7 +522,7 @@ export function FlashNoteCreatorSheet({
       }
       return presign.publicUrl;
     },
-    [getToken, t, turnstileToken]
+    [getToken, t]
   );
 
   const requestDelete = useCallback(() => {
@@ -551,11 +557,7 @@ export function FlashNoteCreatorSheet({
       toast.error(t('flash.imageRequired'));
       return;
     }
-    if (pendingFile && !turnstileToken) {
-      triggerHaptic('heavy');
-      toast.error(t('errors.clerk.requiresVerification'));
-      return;
-    }
+
     const price = parseTypedMoneyInput(priceInput);
     if (price == null) {
       triggerHaptic('heavy');
@@ -576,9 +578,15 @@ export function FlashNoteCreatorSheet({
       try {
         let imageUrl = initialImageUrl?.trim() || '';
         if (pendingFile) {
+          const gateToken = turnstileToken || (await waitForTurnstileToken());
+          if (!gateToken) {
+            triggerHaptic('heavy');
+            toast.error(t('errors.clerk.requiresVerification'));
+            return;
+          }
           setIsUploading(true);
           try {
-            imageUrl = await uploadFlashImage(pendingFile);
+            imageUrl = await uploadFlashImage(pendingFile, gateToken);
           } catch (error) {
             triggerHaptic('heavy');
             toast.error(error instanceof Error ? error.message : String(error));
@@ -612,8 +620,7 @@ export function FlashNoteCreatorSheet({
       } finally {
         setIsPublishing(false);
         setIsUploading(false);
-        setTurnstileToken('');
-        setTurnstileNonce((nonce) => nonce + 1);
+        resetTurnstile();
       }
     });
   }, [
@@ -633,6 +640,8 @@ export function FlashNoteCreatorSheet({
     turnstileToken,
     typeface.className,
     uploadFlashImage,
+    waitForTurnstileToken,
+    resetTurnstile,
   ]);
 
   return (
@@ -831,10 +840,9 @@ export function FlashNoteCreatorSheet({
             <TurnstileGuard
               key={turnstileNonce}
               action="upload-flash-notes"
-              onSuccess={setTurnstileToken}
-              onExpire={() => setTurnstileToken('')}
-              onError={() => setTurnstileToken('')}
-              className="px-5 pt-4"
+              onSuccess={onTurnstileSuccess}
+              onExpire={onTurnstileExpire}
+              onError={onTurnstileError}
             />
 
             {/* Glowing CTA — safe-area padded. */}
