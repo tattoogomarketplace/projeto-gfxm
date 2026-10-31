@@ -9,6 +9,7 @@ import { InstagramSpinnerOverlay } from '@/components/ui/instagram-spinner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useChatHistory } from '@/hooks/use-chat-history';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 import { useI18n } from '@/hooks/use-i18n';
 import { queryKeys } from '@/lib/query/keys';
@@ -72,6 +73,7 @@ export function ChatThread({
   const [input, setInput] = useState(() => (bookingIntent ? bookingDraft(t, artwork) : ''));
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const keyboardInset = useKeyboardInset();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const { triggerHaptic } = useHapticFeedback();
@@ -102,7 +104,7 @@ export function ChatThread({
     const node = scrollRef.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
-  }, [messages]);
+  }, [messages, keyboardInset]);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -319,8 +321,17 @@ export function ChatThread({
         ) : null}
       </div>
 
-      {/* Composer — anchored to the base with safe-area padding. */}
-      <div className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom),env(keyboard-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] dark:border-white/[0.06]">
+      {/* Composer — anchored above the iOS keyboard via visualViewport inset.
+          `marginBottom` shrinks the flex message list instead of overlaying it,
+          so the last bubble always stays visible above the composer. */}
+      <div
+        style={
+          keyboardInset > 0
+            ? { marginBottom: `${keyboardInset}px`, paddingBottom: '0.75rem' }
+            : undefined
+        }
+        className="glass-chrome sticky bottom-0 z-30 shrink-0 border-t border-black/[0.04] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom),env(keyboard-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] dark:border-white/[0.06]"
+      >
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-500">
           <ShieldAlert className="h-3 w-3 text-orange-500 dark:text-orange-400" />
           {t('chat.paymentsBlocked')}

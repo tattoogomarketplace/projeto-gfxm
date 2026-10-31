@@ -5,6 +5,7 @@ import { Send, Sparkles } from 'lucide-react';
 import { AiChatHeader } from '@/components/layout/ai-chat-header';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset';
 import { formatAppError } from '@/lib/error-handler';
 
 type ChatRole = 'user' | 'assistant';
@@ -22,12 +23,19 @@ export default function DashboardAiPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const keyboardInset = useKeyboardInset();
 
   useEffect(() => {
     const node = scrollerRef.current;
     if (!node) return;
     node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    const node = scrollerRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [keyboardInset]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -85,6 +93,9 @@ export default function DashboardAiPage() {
 
       <div
         ref={scrollerRef}
+        style={
+          keyboardInset > 0 ? { paddingBottom: `calc(9rem + ${keyboardInset}px)` } : undefined
+        }
         className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-none pt-4 pb-36 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] [-webkit-overflow-scrolling:touch]"
       >
         {messages.length === 0 ? (
@@ -142,6 +153,11 @@ export default function DashboardAiPage() {
 
       <form
         onSubmit={handleSubmit}
+        style={
+          keyboardInset > 0
+            ? { bottom: `${keyboardInset}px`, paddingBottom: '0.75rem' }
+            : undefined
+        }
         className="fixed bottom-0 left-1/2 z-40 w-full max-w-app -translate-x-1/2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]"
       >
         <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2">
