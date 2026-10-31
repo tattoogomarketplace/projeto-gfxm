@@ -63,15 +63,16 @@ type Availability =
   | 'forbidden'
   | 'error';
 
-const MESSAGE_KEY: Record<Exclude<Availability, 'idle'>, MessageKey> = {
+const MESSAGE_KEY: Record<Exclude<Availability, 'idle' | 'error'>, MessageKey> = {
   checking: 'username.checking',
   available: 'username.available',
   taken: 'username.taken',
   invalid: 'username.invalid',
   reserved: 'username.reserved',
   forbidden: 'username.forbidden',
-  error: 'username.invalid',
 };
+
+const NETWORK_ERROR_MESSAGE = 'Erro de conexão. Tente novamente.';
 
 type Tone = 'neutral' | 'pending' | 'ok' | 'bad';
 
@@ -242,14 +243,16 @@ const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
             reason?: string;
           };
           if (controller.signal.aborted || rawRef.current !== username) return;
-          const next: Availability =
-            json.allowed === false || json.reason === 'forbidden'
-              ? 'forbidden'
-              : !res.ok
-                ? 'error'
-                : json.available
-                  ? 'available'
-                  : 'taken';
+          let next: Availability;
+          if (!res.ok) {
+            next = 'error';
+          } else if (json.allowed === false || json.reason === 'forbidden') {
+            next = 'forbidden';
+          } else if (json.available === true) {
+            next = 'available';
+          } else {
+            next = 'taken';
+          }
           applyStatus(next, username);
         } catch (err) {
           if ((err as Error)?.name === 'AbortError') return;
@@ -331,8 +334,39 @@ const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
 
     const handleGlyphLocked = useCallback(() => triggerHaptic('medium'), [triggerHaptic]);
 
+    const handleClear = useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (checkTimer.current !== null) {
+          window.clearTimeout(checkTimer.current);
+          checkTimer.current = null;
+        }
+        abortRef.current?.abort();
+        rawRef.current = '';
+        const el = inputRef.current;
+        if (el) {
+          el.value = '';
+          el.focus();
+        }
+        applyStatus('idle', '');
+      },
+      [applyStatus]
+    );
+
     const tone: Tone = status === 'idle' ? 'neutral' : TONE[status];
-    const message = status === 'idle' ? null : t(MESSAGE_KEY[status], { username: checkedUsername });
+    const message =
+      status === 'idle'
+        ? null
+        : status === 'error'
+          ? NETWORK_ERROR_MESSAGE
+          : t(MESSAGE_KEY[status], { username: checkedUsername });
+    const showClear =
+      status === 'taken' ||
+      status === 'forbidden' ||
+      status === 'error' ||
+      status === 'invalid' ||
+      status === 'reserved';
 
     return (
       <>
@@ -389,10 +423,24 @@ const UsernameField = memo(forwardRef<UsernameFieldHandle, UsernameFieldProps>(
                 <Loader2 className="h-4 w-4 animate-spin text-orange-400" strokeWidth={2.6} />
               ) : status === 'available' ? (
                 <Check className="h-5 w-5 text-emerald-400" strokeWidth={3} />
-              ) : status === 'taken' || status === 'forbidden' || status === 'error' ? (
-                <X className="h-5 w-5 text-red-400" strokeWidth={3} />
-              ) : status === 'invalid' || status === 'reserved' ? (
-                <X className="h-5 w-5 text-amber-400" strokeWidth={3} />
+              ) : showClear ? (
+                <button
+                  type="button"
+                  aria-label="Limpar username"
+                  onMouseDown={handleClear}
+                  onClick={handleClear}
+                  className="relative z-10 flex h-5 w-5 pointer-events-auto items-center justify-center"
+                >
+                  <X
+                    className={cn(
+                      'h-5 w-5',
+                      status === 'invalid' || status === 'reserved'
+                        ? 'text-amber-400'
+                        : 'text-red-400'
+                    )}
+                    strokeWidth={3}
+                  />
+                </button>
               ) : null}
             </span>
           </div>
