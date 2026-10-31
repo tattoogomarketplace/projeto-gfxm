@@ -6,8 +6,14 @@ require("./src/config/env.cjs");
 const isDev = process.env.NODE_ENV === 'development';
 
 const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
-const CLERK_SCRIPT_ORIGINS =
-  'https://*.clerk.accounts.dev https://*.clerk.com https://clerk.com https://*.clerk.services';
+const CLERK_FRONTEND_API = 'https://clerk.tattoogomk.com.br';
+const CLERK_SCRIPT_ORIGINS = [
+  CLERK_FRONTEND_API,
+  'https://*.clerk.accounts.dev',
+  'https://*.clerk.com',
+  'https://clerk.com',
+  'https://*.clerk.services',
+].join(' ');
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -25,6 +31,8 @@ const contentSecurityPolicy = [
   [
     "connect-src 'self' data: blob: wss: https:",
     TURNSTILE_ORIGIN,
+    CLERK_FRONTEND_API,
+    'https://*.clerk.accounts.dev',
   ].join(' '),
   [
     "frame-src 'self'",
@@ -32,7 +40,7 @@ const contentSecurityPolicy = [
     CLERK_SCRIPT_ORIGINS,
   ].join(' '),
   `child-src 'self' blob: ${TURNSTILE_ORIGIN}`,
-  "worker-src 'self' blob:",
+  `worker-src 'self' blob: ${CLERK_FRONTEND_API}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
