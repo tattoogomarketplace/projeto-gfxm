@@ -34,6 +34,9 @@ export async function POST(request: Request) {
 
     const actor = await requireChatActor(request);
     const body = parsed.data;
+    const ownerIds = [actor.id, actor.clerk_id].filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
     const note = await createFlashNote({
       actorId: actor.id,
       actorRole: actor.role,
@@ -45,6 +48,7 @@ export async function POST(request: Request) {
       price: body.price,
       discountPercentage: body.discountPercentage,
       imageUrl: body.imageUrl,
+      ownerIds,
     });
 
     return NextResponse.json({ sucesso: true, actorId: actor.id, note }, { status: 201 });

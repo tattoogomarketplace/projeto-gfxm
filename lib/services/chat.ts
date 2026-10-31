@@ -36,6 +36,7 @@ const BUDGET_CATEGORIES: ChatCategoria[] = ['BUDGET', 'ORCAMENTO'];
 
 type ActorPerfil = {
   id: string;
+  clerk_id: string | null;
   role: string;
   deleted_at: Date | null;
   nome: string | null;
@@ -138,7 +139,7 @@ export function parseChatId(value: unknown, label: string): string {
 export async function resolveChatActor(clerkId: string): Promise<ActorPerfil> {
   const actor = await prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
-    select: { id: true, role: true, deleted_at: true, nome: true, email: true },
+    select: { id: true, clerk_id: true, role: true, deleted_at: true, nome: true, email: true },
   });
   if (!actor || actor.deleted_at) {
     throw new ChatError(404, 'Perfil não encontrado.');

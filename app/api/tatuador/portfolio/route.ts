@@ -56,8 +56,15 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(invalidPayloadBody(parsed.error), { status: 400 });
     }
-    const actor = await resolveTatuador(request);
-    const item = await publishArtistPortfolio(actor.id, parsed.data);
+    const { userId } = await resolvePerfilSession(request);
+    if (!userId) {
+      throw new ArtistPortfolioError(401, 'Não autenticado.');
+    }
+    const actor = assertTatuador(await loadTatuadorActor(userId));
+    const ownerIds = [actor.id, actor.clerk_id, userId].filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
+    const item = await publishArtistPortfolio(actor.id, parsed.data, ownerIds);
     return NextResponse.json({ sucesso: true, item }, { status: 201 });
   } catch (error) {
     return errorResponse(error);

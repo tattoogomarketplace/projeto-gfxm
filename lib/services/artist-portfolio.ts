@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { moderatePortfolioImage, refineStudioCaption } from '@/lib/ai-moderation';
+import { MediaSecurityError, verifyPersistedImage } from '@/lib/security/media-persistence';
 import {
   composeStudioCaption,
   isHttpsImageUrl,
@@ -24,6 +25,7 @@ export class ArtistPortfolioError extends Error {
 
 export type TatuadorActor = {
   id: string;
+  clerk_id: string | null;
   role: string;
   deleted_at: Date | null;
 };
@@ -49,7 +51,7 @@ type PortfolioRow = {
 export async function loadTatuadorActor(clerkId: string): Promise<TatuadorActor | null> {
   return prisma.perfil.findUnique({
     where: { clerk_id: clerkId },
-    select: { id: true, role: true, deleted_at: true },
+    select: { id: true, clerk_id: true, role: true, deleted_at: true },
   });
 }
 
@@ -208,6 +210,31 @@ async function invalidatePortfolioFeed() {
   }
 }
 
+/**
+ * Fase 2 — inspeção forense na persistência. Antes de gravar `url_imagem`,
+ * confirma que a URL pertence ao bucket oficial, que a chave está no prefixo do
+ * próprio tatuador (`portfolio`) e que os Magic Bytes correspondem a uma imagem
+ * segura. Conteúdo inválido é removido do bucket e vira HTTP 400.
+ */
+async function assertPersistedPortfolioImage(
+  ownerIds: readonly string[],
+  imageUrl: string
+): Promise<string> {
+  try {
+    const verified = await verifyPersistedImage({
+      imageUrl,
+      context: 'portfolio',
+      ownerIds,
+    });
+    return verified.imageUrl;
+  } catch (error) {
+    if (error instanceof MediaSecurityError) {
+      throw new ArtistPortfolioError(error.status, error.message);
+    }
+    throw error;
+  }
+}
+
 async function mutateOwnedItem(
   tatuadorId: string,
   itemId: string,
@@ -265,11 +292,13 @@ export async function listArtistPortfolio(tatuadorId: string): Promise<Portfolio
 
 export async function publishArtistPortfolio(
   tatuadorId: string,
-  raw: unknown
+  raw: unknown,
+  ownerIds: readonly string[] = [tatuadorId]
 ): Promise<PortfolioItemDto> {
   const payload = parsePublishPayload(raw);
+  const imageUrl = await assertPersistedPortfolioImage(ownerIds, payload.imageUrl);
 
-  const moderation = await moderatePortfolioImage(payload.imageUrl);
+  const moderation = await moderatePortfolioImage(imageUrl);
   if (!moderation.allowed) {
     throw new ArtistPortfolioError(
       422,
@@ -305,7 +334,7 @@ export async function publishArtistPortfolio(
   const created = await prisma.portfolio.create({
     data: {
       tatuador_id: tatuadorId,
-      url_imagem: payload.imageUrl,
+      url_imagem: imageUrl,
       estilo: payload.style,
       body_part: payload.bodyPart,
       session_duration: payload.sessionDuration,

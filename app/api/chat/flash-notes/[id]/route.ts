@@ -26,6 +26,9 @@ export async function PATCH(
     const actor = await requireChatActor(request);
     const { id } = await params;
     const body = parsed.data;
+    const ownerIds = [actor.id, actor.clerk_id].filter(
+      (value): value is string => typeof value === 'string' && value.trim().length > 0
+    );
     const note = await updateFlashNote({
       actorId: actor.id,
       noteId: id,
@@ -36,6 +39,7 @@ export async function PATCH(
       price: body.price,
       discountPercentage: body.discountPercentage,
       imageUrl: body.imageUrl,
+      ownerIds,
     });
 
     return NextResponse.json({ sucesso: true, actorId: actor.id, note });

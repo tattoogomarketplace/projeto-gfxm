@@ -1,4 +1,10 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 /**
@@ -110,4 +116,116 @@ export async function fetchR2Object(fileKey: string): Promise<R2ObjectPayload> {
     contentType: response.ContentType ?? null,
     contentLength: response.ContentLength ?? body.byteLength,
   };
+}
+
+export type R2PrefixPayload = {
+  body: Uint8Array;
+  contentType: string | null;
+  /** Tamanho total do objeto, quando o R2 informa via Content-Range. */
+  totalLength: number | null;
+  /** Indica que o objeto é maior que o prefixo lido (stream interrompido). */
+  truncated: boolean;
+};
+
+async function readBoundedPrefix(
+  body: unknown,
+  maxBytes: number
+): Promise<{ bytes: Uint8Array; truncated: boolean }> {
+  const iterable = body as AsyncIterable<Uint8Array> | undefined;
+  if (iterable && typeof iterable[Symbol.asyncIterator] === 'function') {
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for await (const chunk of iterable) {
+      const view = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+      const remaining = maxBytes - total;
+      if (view.byteLength >= remaining) {
+        chunks.push(view.subarray(0, remaining));
+        total = maxBytes;
+        break;
+      }
+      chunks.push(view);
+      total += view.byteLength;
+    }
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return { bytes, truncated: total >= maxBytes };
+  }
+
+  const blob = body as { transformToByteArray?: () => Promise<Uint8Array> } | undefined;
+  if (blob?.transformToByteArray) {
+    const full = await blob.transformToByteArray();
+    const bytes = full.subarray(0, maxBytes);
+    return { bytes, truncated: full.byteLength > maxBytes };
+  }
+
+  throw new Error('Corpo do objeto do R2 não é legível.');
+}
+
+function parseContentRangeTotal(value: string | null | undefined): number | null {
+  const match = value?.match(/^bytes\s+\d+-\d+\/(\d+)$/i);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/**
+ * Lê apenas os primeiros `maxBytes` de um objeto no R2, usando `Range` na API
+ * S3. Mantém a memória da função serverless limitada (padrão: 8 KB) mesmo para
+ * arquivos de até 10 MB, viabilizando a inspeção forense de Magic Bytes sem
+ * baixar o binário inteiro. O stream é interrompido assim que o limite é
+ * atingido, protegendo contra respostas que ignorem o `Range`.
+ */
+export async function fetchR2ObjectPrefix(
+  fileKey: string,
+  maxBytes: number
+): Promise<R2PrefixPayload> {
+  if (!R2_BUCKET) {
+    throw new Error('R2_BUCKET_NAME não configurado.');
+  }
+  if (!Number.isInteger(maxBytes) || maxBytes <= 0) {
+    throw new Error('Limite de leitura inválido.');
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: fileKey,
+    Range: `bytes=0-${maxBytes - 1}`,
+  });
+  const response = await r2Client.send(command);
+
+  if (!response.Body) {
+    throw new Error('Objeto do R2 sem corpo.');
+  }
+
+  const { bytes, truncated } = await readBoundedPrefix(response.Body, maxBytes);
+  return {
+    body: bytes,
+    contentType: response.ContentType ?? null,
+    totalLength: parseContentRangeTotal(response.ContentRange),
+    truncated,
+  };
+}
+
+/**
+ * Remove um objeto órfão do bucket (upload que falhou na inspeção forense).
+ * Falhas na limpeza são apenas logadas: a resposta de rejeição ao cliente não
+ * pode depender da disponibilidade do storage.
+ */
+export async function deleteR2Object(fileKey: string): Promise<void> {
+  if (!R2_BUCKET) {
+    console.warn('[r2] R2_BUCKET_NAME ausente; limpeza de objeto ignorada.');
+    return;
+  }
+  try {
+    await r2Client.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: fileKey }));
+  } catch (error) {
+    console.error('[r2] falha ao remover objeto órfão', {
+      fileKey,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }

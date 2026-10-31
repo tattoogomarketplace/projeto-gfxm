@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { ChatError } from '@/lib/services/chat';
 import {
+  MediaSecurityError,
+  resolveR2MediaKey,
+  verifyPersistedImage,
+} from '@/lib/security/media-persistence';
+import {
   FLASH_NOTE_MAX_LENGTH,
   sanitizeFlashNoteStyle,
 } from '@/lib/flash-notes-style';
@@ -156,6 +161,7 @@ export async function createFlashNote(params: {
   price?: unknown;
   discountPercentage?: unknown;
   imageUrl?: unknown;
+  ownerIds?: readonly string[];
 }): Promise<FlashNoteDto> {
   if (params.actorRole !== 'tatuador') {
     throw new ChatError(403, 'Apenas tatuadores podem publicar Flash Notes.');
@@ -175,7 +181,7 @@ export async function createFlashNote(params: {
 
   const style = sanitizeFlashNoteStyle(params);
   const pricing = requireFlashNotePricing(params.price, params.discountPercentage);
-  const imageUrl = requireFlashNoteImageUrl(params.imageUrl);
+  const imageUrl = await verifyFlashNoteImage(params.imageUrl, params.ownerIds ?? [params.actorId]);
 
   await prisma.flashNote.updateMany({
     where: { userId: params.actorId, ativa: true },
@@ -215,6 +221,7 @@ export async function updateFlashNote(params: {
   price?: unknown;
   discountPercentage?: unknown;
   imageUrl?: unknown;
+  ownerIds?: readonly string[];
 }): Promise<FlashNoteDto> {
   if (!FLASH_NOTE_ID_RE.test(params.noteId)) {
     throw new ChatError(404, 'Flash Note não encontrada.');
@@ -254,7 +261,7 @@ export async function updateFlashNote(params: {
   const imageUrl =
     params.imageUrl === undefined
       ? requireFlashNoteImageUrl(existing.imageUrl)
-      : requireFlashNoteImageUrl(params.imageUrl);
+      : await verifyFlashNoteImage(params.imageUrl, params.ownerIds ?? [params.actorId]);
 
   const mutated = await prisma.flashNote.updateMany({
     where: { id: existing.id, userId: params.actorId },
@@ -317,6 +324,38 @@ function requireFlashNoteImageUrl(value: unknown): string {
     throw new ChatError(400, 'URL da imagem excede o tamanho máximo.');
   }
   return imageUrl;
+}
+
+/**
+ * Fase 2 — valida host-binding (R2_PUBLIC_URL), context `flash-notes`,
+ * ownership da chave e Magic Bytes antes de gravar `imageUrl`. Objetos cujo
+ * conteúdo não é uma imagem segura são apagados do bucket.
+ */
+async function verifyFlashNoteImage(
+  value: unknown,
+  ownerIds: readonly string[]
+): Promise<string> {
+  const imageUrl = requireFlashNoteImageUrl(value);
+  try {
+    const verified = await verifyPersistedImage({
+      imageUrl,
+      context: 'flash-notes',
+      ownerIds,
+    });
+    return verified.imageUrl;
+  } catch (error) {
+    if (error instanceof MediaSecurityError) {
+      throw new ChatError(error.status, error.message);
+    }
+    throw error;
+  }
+}
+
+function assertExistingFlashNoteImage(
+  value: unknown,
+  ownerIds: readonly string[]
+): Promise<string> {
+  return verifyFlashNoteImage(value, ownerIds);
 }
 
 function requireFlashNotePricing(price: unknown, discountPercentage: unknown) {
