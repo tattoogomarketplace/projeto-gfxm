@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { authedFetch } from '@/lib/utils/authed-fetch';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatCpf, isValidCpf, onlyCpfDigits } from '@/lib/utils/cpf';
@@ -178,6 +179,8 @@ export function ForgotPasswordFlow({
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [phase, setPhase] = useState<UploadPhase>('idle');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
 
   const [otpReady, setOtpReady] = useState(false);
   const [otpError, setOtpError] = useState('');
@@ -225,6 +228,8 @@ export function ForgotPasswordFlow({
     setFile(null);
     setFileError('');
     setPhase('idle');
+    setTurnstileToken('');
+    setTurnstileNonce((nonce) => nonce + 1);
     setOtpReady(false);
     setOtpError('');
     setResendSeconds(60);
@@ -384,7 +389,13 @@ export function ForgotPasswordFlow({
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileName: selected.name, contentType }),
+            body: JSON.stringify({
+              fileName: selected.name,
+              contentType,
+              contentLength: selected.size,
+              context: 'kyc',
+              turnstileToken,
+            }),
           },
           tokenFn
         );
@@ -454,16 +465,18 @@ export function ForgotPasswordFlow({
         triggerHaptic('heavy');
       } finally {
         setPhase('idle');
+        setTurnstileToken('');
+        setTurnstileNonce((nonce) => nonce + 1);
       }
     },
-    [getToken, triggerHaptic]
+    [getToken, triggerHaptic, turnstileToken]
   );
 
   const handleSubmitDocument = useCallback(() => {
-    if (!file || uploading) return;
+    if (!file || uploading || !turnstileToken) return;
     triggerHaptic('medium');
     void runUpload(file);
-  }, [file, runUpload, triggerHaptic, uploading]);
+  }, [file, runUpload, triggerHaptic, turnstileToken, uploading]);
 
   const dispatchOtp = useCallback(async () => {
     if (!signIn) throw new Error('clerk-not-ready');
@@ -836,10 +849,19 @@ export function ForgotPasswordFlow({
 
                     <SecurityAnalysis active={uploading} phaseMeta={phaseMeta} />
 
+                    <TurnstileGuard
+                      key={turnstileNonce}
+                      action="upload-recovery"
+                      onSuccess={setTurnstileToken}
+                      onExpire={() => setTurnstileToken('')}
+                      onError={() => setTurnstileToken('')}
+                      className="mt-4"
+                    />
+
                     <div className="mt-auto pt-6">
                       <PrimaryAction
                         onClick={handleSubmitDocument}
-                        disabled={!file || uploading}
+                        disabled={!file || uploading || !turnstileToken}
                         busy={uploading}
                         label="Enviar para Análise"
                         busyLabel="Analisando..."

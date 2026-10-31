@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
 import { formatAppError } from '@/lib/error-handler';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
@@ -113,11 +114,13 @@ export function PortfolioUpload({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [cropping, setCropping] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
 
   const isEditing = Boolean(editingItem);
   const canPublish = isEditing
     ? Boolean(style && bodyPart && sessionDuration)
-    : Boolean(pendingFile && style && bodyPart && sessionDuration);
+    : Boolean(pendingFile && style && bodyPart && sessionDuration && turnstileToken);
 
   const studioLocation = useMemo(
     () => items.find((item) => item.location)?.location ?? null,
@@ -313,13 +316,23 @@ export function PortfolioUpload({
         return;
       }
 
+      if (!turnstileToken) {
+        toast.error(t('errors.clerk.requiresVerification'));
+        return;
+      }
       const contentType = pendingFile.type === 'image/jpg' ? 'image/jpeg' : pendingFile.type;
       const presignRes = await authedFetch(
         '/api/upload/presign',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: pendingFile.name, contentType }),
+          body: JSON.stringify({
+            fileName: pendingFile.name,
+            contentType,
+            contentLength: pendingFile.size,
+            context: 'portfolio',
+            turnstileToken,
+          }),
         },
         tokenFn
       );
@@ -376,6 +389,8 @@ export function PortfolioUpload({
       toast.error(formatAppError(error, 'api'));
     } finally {
       setPublishing(false);
+      setTurnstileToken('');
+      setTurnstileNonce((nonce) => nonce + 1);
     }
   };
 
@@ -596,8 +611,19 @@ export function PortfolioUpload({
               </label>
             </div>
 
+            {!isEditing ? (
+              <TurnstileGuard
+                key={turnstileNonce}
+                action="upload-portfolio"
+                onSuccess={setTurnstileToken}
+                onExpire={() => setTurnstileToken('')}
+                onError={() => setTurnstileToken('')}
+                className="mt-6"
+              />
+            ) : null}
+
             <NeonButton
-              className="mt-6 w-full"
+              className={isEditing ? 'mt-6 w-full' : 'mt-3 w-full'}
               disabled={!canPublish || publishing}
               onClick={() => {
                 void publish();

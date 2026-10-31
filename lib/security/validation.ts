@@ -192,6 +192,36 @@ export const resetCredentialsSchema = z
   })
   .strict();
 
+export const PRESIGN_MAX_BYTES = 10 * 1024 * 1024;
+
+export const PRESIGN_CONTEXTS = ['portfolio', 'kyc', 'flash-notes'] as const;
+
+export type PresignContext = (typeof PRESIGN_CONTEXTS)[number];
+
+export const PRESIGN_CONTENT_TYPE_EXTENSIONS = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/avif': '.avif',
+  'image/gif': '.gif',
+  'image/heic': '.heic',
+  'image/heif': '.heif',
+  'application/pdf': '.pdf',
+} as const;
+
+export const PRESIGN_ALLOWED_CONTENT_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+  'application/pdf',
+] as const;
+
 export const presignUploadSchema = z
   .object({
     fileName: z
@@ -205,8 +235,19 @@ export const presignUploadSchema = z
     contentType: z
       .string()
       .trim()
-      .min(1, 'fileName e contentType são obrigatórios.')
-      .max(120, 'Tipo de arquivo não permitido.'),
+      .toLowerCase()
+      .pipe(
+        z.enum(PRESIGN_ALLOWED_CONTENT_TYPES, {
+          message: 'Tipo de arquivo não permitido.',
+        })
+      ),
+    contentLength: z
+      .number()
+      .int()
+      .positive()
+      .max(PRESIGN_MAX_BYTES, 'Arquivo excede o limite de 10 MB.'),
+    context: z.enum(PRESIGN_CONTEXTS),
+    turnstileToken: turnstileTokenSchema,
   })
   .strict();
 

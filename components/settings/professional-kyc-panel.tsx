@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { authedFetch } from '@/lib/utils/authed-fetch';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/use-i18n';
@@ -131,7 +132,8 @@ function describeFileTypeKey(file: File): MessageKey {
 
 async function uploadDocument(
   file: File,
-  tokenFn: () => Promise<string | null>
+  tokenFn: () => Promise<string | null>,
+  turnstileToken: string
 ): Promise<{ fileKey: string; publicUrl: string }> {
   const contentType = resolveUploadContentType(file);
 
@@ -140,7 +142,13 @@ async function uploadDocument(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileName: file.name, contentType }),
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType,
+        contentLength: file.size,
+        context: 'kyc',
+        turnstileToken,
+      }),
     },
     tokenFn
   );
@@ -365,6 +373,31 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
   const [phase, setPhase] = useState<AnalysisPhase>('idle');
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [extractedName, setExtractedName] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const turnstileWaiterRef = useRef<((token: string) => void) | null>(null);
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token);
+    turnstileWaiterRef.current?.(token);
+    turnstileWaiterRef.current = null;
+  }, []);
+
+  const refreshTurnstileToken = useCallback(() => {
+    return new Promise<string>((resolve, reject) => {
+      const timeout = window.setTimeout(() => {
+        if (!turnstileWaiterRef.current) return;
+        turnstileWaiterRef.current = null;
+        reject(new Error(t('errors.clerk.requiresVerification')));
+      }, 12000);
+      turnstileWaiterRef.current = (token: string) => {
+        window.clearTimeout(timeout);
+        resolve(token);
+      };
+      setTurnstileToken('');
+      setTurnstileNonce((nonce) => nonce + 1);
+    });
+  }, [t]);
 
   const handleSelect = useCallback(
     (key: ProfessionalDocumentKey, file: File) => {
@@ -405,18 +438,22 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
   const rejected = phase === 'rejected';
 
   const handleConfirm = useCallback(async () => {
-    if (busy || !bothReady || allAnalyzing || approved) return;
+    if (busy || !bothReady || allAnalyzing || approved || !turnstileToken) return;
     setBusy(true);
     setPhase('uploading');
     setRejectionReason(null);
     try {
       const tokenFn = () => getToken({ skipCache: true });
       const submission: ProfessionalDocumentSubmission = {};
+      let uploadToken = turnstileToken;
       for (const key of ['pessoal', 'habilidade'] as ProfessionalDocumentKey[]) {
         const file = slots[key].file;
         if (!file) continue;
-        const uploaded = await uploadDocument(file, tokenFn);
+        const uploaded = await uploadDocument(file, tokenFn, uploadToken);
         submission[key] = { ...uploaded, fileName: file.name };
+        if (key === 'pessoal') {
+          uploadToken = await refreshTurnstileToken();
+        }
       }
 
       setSlots((prev) => ({
@@ -496,8 +533,10 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
       onRejected?.(message);
     } finally {
       setBusy(false);
+      setTurnstileToken('');
+      setTurnstileNonce((nonce) => nonce + 1);
     }
-  }, [allAnalyzing, approved, bothReady, busy, getToken, onApproved, onRejected, onSubmit, slots, triggerHaptic, t]);
+  }, [allAnalyzing, approved, bothReady, busy, getToken, onApproved, onRejected, onSubmit, refreshTurnstileToken, slots, triggerHaptic, t, turnstileToken]);
 
   const controlsLocked = busy || allAnalyzing || approved;
 
@@ -555,6 +594,14 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
               />
             ))}
 
+            <TurnstileGuard
+              key={turnstileNonce}
+              action="upload-kyc"
+              onSuccess={handleTurnstileSuccess}
+              onExpire={() => setTurnstileToken('')}
+              onError={() => setTurnstileToken('')}
+            />
+
             {rejected && rejectionReason ? (
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs leading-relaxed text-red-300" role="alert">
                 {rejectionReason}
@@ -564,7 +611,7 @@ export function ProfessionalKycPanel({ onSubmit, onApproved, onRejected }: Profe
             <button
               type="button"
               onClick={() => void handleConfirm()}
-              disabled={!bothReady || controlsLocked}
+              disabled={!bothReady || controlsLocked || !turnstileToken}
               className={cn(
                 'relative flex min-h-12 w-full items-center justify-center overflow-hidden rounded-xl py-3 text-sm font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/70',
                 allAnalyzing

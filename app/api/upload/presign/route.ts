@@ -5,42 +5,35 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { resolvePerfilSession } from '@/lib/services/perfil-session';
 import { buildPublicUrl, generatePresignedUrl } from '@/lib/storage/r2';
-import { invalidPayloadBody, presignUploadSchema } from '@/lib/security/validation';
+import { resolveClientIp, verifyTurnstileToken } from '@/lib/security/turnstile';
+import {
+  invalidPayloadBody,
+  PRESIGN_CONTENT_TYPE_EXTENSIONS,
+  presignUploadSchema,
+} from '@/lib/security/validation';
 
-/**
- * Tipos permitidos para upload. Restringir o Content-Type evita que um atacante
- * grave HTML/JS no bucket público e obtenha XSS armazenado no domínio do R2.
- */
-const ALLOWED_CONTENT_TYPES: Record<string, string> = {
-  'image/jpeg': '.jpg',
-  'image/jpg': '.jpg',
-  'image/png': '.png',
-  'image/webp': '.webp',
-  'image/avif': '.avif',
-  'image/gif': '.gif',
-  'image/heic': '.heic',
-  'image/heif': '.heif',
-  'application/pdf': '.pdf',
-};
+const ALLOWED_EXTENSIONS = new Set<string>(Object.values(PRESIGN_CONTENT_TYPE_EXTENSIONS));
 
-const ALLOWED_EXTENSIONS = new Set(Object.values(ALLOWED_CONTENT_TYPES));
-
-function resolveExtension(fileName: string, contentType: string): string {
+function resolveExtension(
+  fileName: string,
+  contentType: keyof typeof PRESIGN_CONTENT_TYPE_EXTENSIONS
+): string {
   const raw = fileName.split('.').pop()?.toLowerCase() ?? '';
   const candidate = raw ? `.${raw}` : '';
   if (ALLOWED_EXTENSIONS.has(candidate)) {
     return candidate;
   }
-  return ALLOWED_CONTENT_TYPES[contentType];
+  return PRESIGN_CONTENT_TYPE_EXTENSIONS[contentType];
 }
 
-/**
- * Emite uma URL pré-assinada de PUT para upload direto ao Cloudflare R2,
- * evitando o limite de payload das funções serverless da Vercel.
- *
- * O binário não passa pelo backend: o cliente faz o PUT direto na
- * `presignedUrl` e depois persiste a `publicUrl` retornada.
- */
+function sanitizeUserSegment(userId: string): string | null {
+  const cleaned = userId.trim();
+  if (!cleaned || cleaned.length > 128) return null;
+  if (cleaned.includes('..') || cleaned.includes('/') || cleaned.includes('\\')) return null;
+  if (!/^[a-zA-Z0-9_-]+$/.test(cleaned)) return null;
+  return cleaned;
+}
+
 export async function POST(request: Request) {
   let rawBody: unknown;
   try {
@@ -59,8 +52,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
   }
 
-  const fileName = parsed.data.fileName;
-  const contentType = parsed.data.contentType;
+  const userSegment = sanitizeUserSegment(userId);
+  if (!userSegment) {
+    return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
+  }
+
+  const turnstile = await verifyTurnstileToken(
+    parsed.data.turnstileToken,
+    resolveClientIp(request)
+  );
+  if (turnstile.configured && !turnstile.success) {
+    return NextResponse.json(
+      {
+        erro: 'Falha na verificação anti-bot. Recarregue a página e tente novamente.',
+        codigo: 'TURNSTILE_REQUIRED',
+      },
+      { status: 403 }
+    );
+  }
+
+  const { fileName, contentType, contentLength, context } = parsed.data;
 
   const extension = resolveExtension(fileName, contentType);
   if (!extension) {
@@ -70,11 +81,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Chave única gerada no servidor: impede sobrescrever arquivos existentes.
-  const fileKey = `${randomUUID()}${extension}`;
+  const fileKey = `${userSegment}/${context}/${randomUUID()}${extension}`;
 
   try {
-    const presignedUrl = await generatePresignedUrl(fileKey, contentType);
+    const presignedUrl = await generatePresignedUrl(fileKey, contentType, contentLength);
     return NextResponse.json({
       presignedUrl,
       fileKey,

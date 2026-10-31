@@ -40,13 +40,16 @@ export type PresignedUpload = {
  * diretamente ao R2, contornando os limites de payload das funções serverless
  * da Vercel. O binário NUNCA transita pelo backend.
  *
- * @param fileName    Chave final no bucket (já deve ser única).
- * @param contentType Content-Type a ser gravado no objeto; precisa bater com o
- *                    header enviado no PUT do cliente, senão a assinatura falha.
+ * @param fileName      Chave final no bucket (já deve ser única).
+ * @param contentType   Content-Type a ser gravado no objeto; precisa bater com o
+ *                      header enviado no PUT do cliente, senão a assinatura falha.
+ * @param contentLength Tamanho exato do objeto. Assinado na URL para o R2 recusar
+ *                      PUTs maiores do que o limite validado no presign.
  */
 export async function generatePresignedUrl(
   fileName: string,
-  contentType: string
+  contentType: string,
+  contentLength: number
 ): Promise<string> {
   if (!process.env.R2_ACCOUNT_ID) {
     throw new Error('R2_ACCOUNT_ID não configurado.');
@@ -62,6 +65,7 @@ export async function generatePresignedUrl(
     Bucket: R2_BUCKET,
     Key: fileName,
     ContentType: contentType,
+    ContentLength: contentLength,
   });
 
   // 5 minutos: janela suficiente para iniciar o upload sem expor a assinatura.

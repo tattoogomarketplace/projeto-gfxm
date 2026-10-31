@@ -109,6 +109,29 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileNonce, setTurnstileNonce] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const turnstileWaiterRef = useRef<((token: string) => void) | null>(null);
+
+  const handleTurnstileSuccess = useCallback((token: string) => {
+    setTurnstileToken(token);
+    turnstileWaiterRef.current?.(token);
+    turnstileWaiterRef.current = null;
+  }, []);
+
+  const refreshTurnstileToken = useCallback(() => {
+    return new Promise<string>((resolve, reject) => {
+      const timeout = window.setTimeout(() => {
+        if (!turnstileWaiterRef.current) return;
+        turnstileWaiterRef.current = null;
+        reject(new Error(t('errors.clerk.requiresVerification')));
+      }, 12000);
+      turnstileWaiterRef.current = (token: string) => {
+        window.clearTimeout(timeout);
+        resolve(token);
+      };
+      setTurnstileToken('');
+      setTurnstileNonce((nonce) => nonce + 1);
+    });
+  }, [t]);
 
   const busy = phase !== 'idle';
   const canSubmit = Boolean(pendingFile) && !busy && Boolean(turnstileToken);
@@ -177,7 +200,13 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileName: file.name, contentType }),
+            body: JSON.stringify({
+              fileName: file.name,
+              contentType,
+              contentLength: file.size,
+              context: 'kyc',
+              turnstileToken,
+            }),
           },
           tokenFn
         );
@@ -217,6 +246,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
 
         setPhase('validating');
         applyStatus('em_analise');
+        const persistTurnstileToken = await refreshTurnstileToken();
         const validateRes = await authedFetch(
           '/api/kyc/validate-document',
           {
@@ -226,7 +256,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
               fileKey: presign.fileKey,
               publicUrl: presign.publicUrl,
               contentType,
-              turnstileToken,
+              turnstileToken: persistTurnstileToken,
             }),
           },
           tokenFn
@@ -273,7 +303,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
         setTurnstileNonce((nonce) => nonce + 1);
       }
     },
-    [applyStatus, getToken, triggerHaptic, t, turnstileToken]
+    [applyStatus, getToken, refreshTurnstileToken, triggerHaptic, t, turnstileToken]
   );
 
   const handleSubmit = useCallback(() => {
@@ -409,7 +439,7 @@ export function ProfessionalKycPanel({ status, onStatusChange }: ProfessionalKyc
           <TurnstileGuard
             key={turnstileNonce}
             action="kyc-document"
-            onSuccess={setTurnstileToken}
+            onSuccess={handleTurnstileSuccess}
             onExpire={() => setTurnstileToken('')}
             onError={() => setTurnstileToken('')}
           />

@@ -42,6 +42,7 @@ import {
 } from '@/lib/flash-note-offer';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { TurnstileGuard } from '@/components/auth/turnstile-guard';
 import {
   FLASH_NOTE_BACKGROUNDS,
   FLASH_NOTE_MAX_LENGTH,
@@ -346,6 +347,8 @@ export function FlashNoteCreatorSheet({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
 
   const background = useMemo(() => getFlashNoteBackground(backgroundId), [backgroundId]);
   const alignment = useMemo(() => getFlashNoteAlignById(align), [align]);
@@ -354,7 +357,11 @@ export function FlashNoteCreatorSheet({
   const busy = isPending || isPublishing || isUploading;
   const hasImage = Boolean(imagePreview);
   const canPublish =
-    hasText && hasImage && parseTypedMoneyInput(priceInput) != null && !busy;
+    hasText &&
+    hasImage &&
+    parseTypedMoneyInput(priceInput) != null &&
+    !busy &&
+    Boolean(turnstileToken || (!pendingFile && initialImageUrl?.trim()));
 
   // Mirror the store's emptiness into local state — but only flip it on the
   // empty/non-empty boundary. Ordinary keystrokes therefore never schedule a
@@ -475,7 +482,13 @@ export function FlashNoteCreatorSheet({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, contentType }),
+          body: JSON.stringify({
+            fileName: file.name,
+            contentType,
+            contentLength: file.size,
+            context: 'flash-notes',
+            turnstileToken,
+          }),
         },
         getToken
       );
@@ -503,7 +516,7 @@ export function FlashNoteCreatorSheet({
       }
       return presign.publicUrl;
     },
-    [getToken, t]
+    [getToken, t, turnstileToken]
   );
 
   const requestDelete = useCallback(() => {
@@ -536,6 +549,11 @@ export function FlashNoteCreatorSheet({
     if (!imagePreview) {
       triggerHaptic('heavy');
       toast.error(t('flash.imageRequired'));
+      return;
+    }
+    if (pendingFile && !turnstileToken) {
+      triggerHaptic('heavy');
+      toast.error(t('errors.clerk.requiresVerification'));
       return;
     }
     const price = parseTypedMoneyInput(priceInput);
@@ -594,6 +612,8 @@ export function FlashNoteCreatorSheet({
       } finally {
         setIsPublishing(false);
         setIsUploading(false);
+        setTurnstileToken('');
+        setTurnstileNonce((nonce) => nonce + 1);
       }
     });
   }, [
@@ -610,6 +630,7 @@ export function FlashNoteCreatorSheet({
     store,
     t,
     triggerHaptic,
+    turnstileToken,
     typeface.className,
     uploadFlashImage,
   ]);
@@ -806,6 +827,15 @@ export function FlashNoteCreatorSheet({
               </span>
               <FlashNoteCounter store={store} maxLength={FLASH_NOTE_MAX_LENGTH} />
             </div>
+
+            <TurnstileGuard
+              key={turnstileNonce}
+              action="upload-flash-notes"
+              onSuccess={setTurnstileToken}
+              onExpire={() => setTurnstileToken('')}
+              onError={() => setTurnstileToken('')}
+              className="px-5 pt-4"
+            />
 
             {/* Glowing CTA — safe-area padded. */}
             <div className="px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5">
