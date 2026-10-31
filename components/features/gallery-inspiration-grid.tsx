@@ -59,7 +59,7 @@ import { cn } from '@/lib/utils';
 
 const ASPECTS = ['aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]', 'aspect-[9/16]'] as const;
 
-const GRID_CLASS = 'grid grid-cols-3 gap-[1px]';
+const GRID_CLASS = 'grid grid-cols-3 gap-[1px] md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6';
 const GRID_TILE_CLASS = 'relative w-full aspect-[9/16] overflow-hidden bg-white/5';
 const FEED_LIST_CLASS = 'flex flex-col gap-8 w-full max-w-lg mx-auto';
 const TOUCH_SLOP_PX = 10;

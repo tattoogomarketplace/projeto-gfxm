@@ -46,6 +46,33 @@ function shouldHideNav(pathname: string, chatThreadActive: boolean): boolean {
   );
 }
 
+function usesDesktopHeaderTabs(
+  pathname: string,
+  chatThreadActive: boolean,
+  activeTab: AppTab
+): boolean {
+  if (shouldHideNav(pathname, chatThreadActive)) return false;
+  if (pathname.startsWith('/dashboard/chat')) return false;
+  if (pathname.startsWith('/dashboard/artista/')) return false;
+  if (/^\/dashboard\/artistas\/.+/.test(pathname)) return false;
+  if (pathname.startsWith('/dashboard/agenda')) return false;
+  if (
+    pathname.startsWith('/dashboard/galeria') ||
+    pathname.startsWith('/dashboard/inspiracoes') ||
+    pathname.startsWith('/dashboard/salvos')
+  ) {
+    return false;
+  }
+  if (pathname.startsWith('/dashboard/perfil')) return false;
+  if (
+    isKeepAliveHostPath(pathname) &&
+    (activeTab === 'chat' || activeTab === 'agendar' || activeTab === 'perfil')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Sub-rotas que renderizam fora do casco padrão ("sem casco"). Ao tocar numa
  * aba global a partir delas, precisamos de um hard clean-up: desfocar campos,
@@ -616,10 +643,16 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
     [clearPressTimer, commitTab, grabScale, measurePill, routeIndex]
   );
 
+  const desktopHandoff = usesDesktopHeaderTabs(pathname, chatThreadActive, activeTab);
+
   return (
     <nav
       ref={navRef}
-      className={cn(PILL_CLASS, conceal && 'pointer-events-none invisible')}
+      className={cn(
+        PILL_CLASS,
+        conceal && 'pointer-events-none invisible',
+        desktopHandoff && 'lg:hidden'
+      )}
       aria-label={t('nav.home')}
       aria-hidden={conceal}
     >

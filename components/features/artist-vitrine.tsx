@@ -117,6 +117,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
 
   return (
     <div className="absolute inset-0 z-0 min-h-0 w-full overflow-x-hidden overflow-y-auto overscroll-none bg-zinc-950 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-white [-webkit-overflow-scrolling:touch]">
+      <div className="mx-auto w-full max-w-2xl">
       <header className="relative">
         <div className="relative h-48 w-full md:h-64">
           {artist.coverUrl ? (
@@ -241,7 +242,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
             {t('vitrine.empty')}
           </div>
         ) : (
-          <ul className="grid w-full grid-cols-3 gap-[1px] md:gap-0.5">
+          <ul className="grid w-full grid-cols-2 gap-[1px] sm:grid-cols-3 md:grid-cols-4 md:gap-0.5">
             {items.map((item, index) => (
               <PortfolioGridTile
                 key={item.id}
@@ -320,6 +321,7 @@ export function ArtistVitrine({ vitrine }: ArtistVitrineProps) {
           </div>
         </section>
       </div>
+      </div>
 
       <ReviewHapticPreview
         review={preview}
@@ -374,7 +376,7 @@ function PortfolioGridTile({
           src={item.imageUrl}
           alt={alt}
           fill
-          sizes="(max-width: 768px) 33vw, 240px"
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
           className="h-full w-full object-cover select-none transform-gpu"
           style={NATIVE_APP_IMAGE_STYLE}
           draggable={false}

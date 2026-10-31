@@ -522,7 +522,7 @@ export function PaymentsPanel({ role }: { role: AppRole }) {
   );
 
   return (
-    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6">
+    <div className="mx-auto flex min-h-0 min-w-0 w-full max-w-2xl flex-1 flex-col gap-6">
       <header className="relative min-w-0 w-full shrink-0 overflow-hidden rounded-3xl border border-black/[0.04] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:border-white/[0.05] dark:bg-white/[0.03] dark:shadow-none">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
           {BRAND_NAME}
@@ -581,7 +581,7 @@ export function PaymentsHub() {
   const paymentsLabel = isClient ? t('payments.tabClient') : t('payments.tabStudio');
 
   return (
-    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6 pt-5">
+    <div className="mx-auto flex min-h-0 min-w-0 w-full max-w-2xl flex-1 flex-col gap-6 pt-5">
       <SegmentedControl
         options={[
           { value: 'agenda', label: agendaLabel },

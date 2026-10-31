@@ -50,7 +50,7 @@ export function AgendaPaymentsWorkspace({
   const ariaLabel = isClient ? t('agenda.tabClient') : t('agenda.tabStudio');
 
   return (
-    <div className="relative flex min-w-0 w-full flex-1 flex-col bg-transparent text-gray-900 transform-gpu transition-opacity duration-200 dark:text-white">
+    <div className="relative mx-auto flex min-w-0 w-full max-w-2xl flex-1 flex-col bg-transparent text-gray-900 transform-gpu transition-opacity duration-200 dark:text-white">
       <div className="w-full shrink-0">
         <SegmentedControl
           options={options}

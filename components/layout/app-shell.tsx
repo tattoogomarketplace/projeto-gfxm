@@ -342,7 +342,7 @@ export function AppShell({ children, title = BRAND_NAME }: AppShellProps) {
         </div>
       </div>
       {hideTabs ? null : (
-        <div className="relative hidden px-4 pb-3 md:block">
+        <div className="relative hidden px-4 pb-3 lg:block">
           <SegmentedControl
             options={tabsByRole[tabRole]}
             value={selectedTab}

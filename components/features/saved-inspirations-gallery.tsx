@@ -167,7 +167,7 @@ export function SavedInspirationsGallery({ items = [] }: { items?: InspirationIt
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-[1px]">
+        <div className="grid grid-cols-3 gap-[1px] md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {visibleItems.map((item, index) => (
             <motion.article
               key={item.id}
