@@ -423,6 +423,7 @@ export async function enviarMensagem(params: {
     await assertEligibleChatPeer(
       {
         id: params.actorId,
+        clerk_id: null,
         role: params.actorRole,
         deleted_at: null,
         nome: null,

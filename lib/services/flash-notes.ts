@@ -1,10 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { ChatError } from '@/lib/services/chat';
-import {
-  MediaSecurityError,
-  resolveR2MediaKey,
-  verifyPersistedImage,
-} from '@/lib/security/media-persistence';
+import { MediaSecurityError, verifyPersistedImage } from '@/lib/security/media-persistence';
 import {
   FLASH_NOTE_MAX_LENGTH,
   sanitizeFlashNoteStyle,
@@ -349,13 +345,6 @@ async function verifyFlashNoteImage(
     }
     throw error;
   }
-}
-
-function assertExistingFlashNoteImage(
-  value: unknown,
-  ownerIds: readonly string[]
-): Promise<string> {
-  return verifyFlashNoteImage(value, ownerIds);
 }
 
 function requireFlashNotePricing(price: unknown, discountPercentage: unknown) {

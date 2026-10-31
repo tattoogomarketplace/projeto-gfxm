@@ -17,6 +17,12 @@ async function listar(req, res) {
   }
 }
 
+function collectOwnerIds(req) {
+  return [req.user?.id, req.user?.clerkId].filter(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+}
+
 async function criar(req, res) {
   try {
     const note = await flashNotesService.createFlashNote({
@@ -30,6 +36,7 @@ async function criar(req, res) {
       price: req.body?.price,
       discountPercentage: req.body?.discountPercentage,
       imageUrl: req.body?.imageUrl ?? req.body?.image_url,
+      ownerIds: collectOwnerIds(req),
     });
     return res.status(201).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {
@@ -56,6 +63,7 @@ async function atualizar(req, res) {
       price: req.body?.price,
       discountPercentage: req.body?.discountPercentage,
       imageUrl: req.body?.imageUrl ?? req.body?.image_url,
+      ownerIds: collectOwnerIds(req),
     });
     return res.status(200).json({ sucesso: true, actorId: req.user.id, note });
   } catch (err) {

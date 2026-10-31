@@ -1,5 +1,9 @@
 const { prisma } = require("./prisma.service.cjs");
 const { cacheDel } = require("./cache.service.cjs");
+const {
+  MediaSecurityError,
+  verifyPersistedImage,
+} = require("../lib/security/media-persistence.cjs");
 
 const STYLES = new Set([
   "Fine Line",
@@ -218,14 +222,34 @@ async function listMine(tatuadorId) {
   return rows.map(toPortfolioItemDto);
 }
 
-async function publishMine(tatuadorId, raw) {
+async function assertPersistedPortfolioImage(ownerIds, imageUrl) {
+  try {
+    const verified = await verifyPersistedImage({
+      imageUrl,
+      context: "portfolio",
+      ownerIds,
+    });
+    return verified.imageUrl;
+  } catch (error) {
+    if (error instanceof MediaSecurityError) {
+      throw httpError(error.status, error.message);
+    }
+    throw error;
+  }
+}
+
+async function publishMine(tatuadorId, raw, ownerIds) {
   const payload = parsePublishPayload(raw);
+  const imageUrl = await assertPersistedPortfolioImage(
+    ownerIds && ownerIds.length ? ownerIds : [tatuadorId],
+    payload.imageUrl
+  );
   const descricao = composeStudioCaption(payload);
 
   const created = await prisma.portfolio.create({
     data: {
       tatuador_id: tatuadorId,
-      url_imagem: payload.imageUrl,
+      url_imagem: imageUrl,
       estilo: payload.style,
       body_part: payload.bodyPart,
       session_duration: payload.sessionDuration,

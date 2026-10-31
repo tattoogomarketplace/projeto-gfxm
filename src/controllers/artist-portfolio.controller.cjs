@@ -14,10 +14,20 @@ async function getMine(req, res) {
   }
 }
 
+function collectOwnerIds(req, tatuadorId) {
+  return [tatuadorId, req.user?.clerkId, req.user?.id].filter(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+}
+
 async function publishMine(req, res) {
   try {
     const tatuadorId = artistPortfolioService.assertTatuadorRole(req.user, req.perfil);
-    const item = await artistPortfolioService.publishMine(tatuadorId, req.body);
+    const item = await artistPortfolioService.publishMine(
+      tatuadorId,
+      req.body,
+      collectOwnerIds(req, tatuadorId)
+    );
     return res.status(201).json({ sucesso: true, item });
   } catch (err) {
     if (err.status) {

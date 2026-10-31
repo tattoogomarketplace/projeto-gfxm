@@ -1,4 +1,8 @@
 const { prisma } = require("./prisma.service.cjs");
+const {
+  MediaSecurityError,
+  verifyPersistedImage,
+} = require("../lib/security/media-persistence.cjs");
 
 const FLASH_NOTE_MAX_LENGTH = 80;
 const FLASH_NOTE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -123,6 +127,23 @@ function requireImageUrl(value) {
   return imageUrl;
 }
 
+async function verifyFlashNoteImage(value, ownerIds) {
+  const imageUrl = requireImageUrl(value);
+  try {
+    const verified = await verifyPersistedImage({
+      imageUrl,
+      context: "flash-notes",
+      ownerIds,
+    });
+    return verified.imageUrl;
+  } catch (error) {
+    if (error instanceof MediaSecurityError) {
+      throw httpError(error.status, error.message);
+    }
+    throw error;
+  }
+}
+
 function requirePricing(price, discountPercentage) {
   if (normalizePrice(price) == null) {
     throw httpError(400, "Informe um valor valido para a Flash Note.");
@@ -207,7 +228,7 @@ async function listActiveFlashNotes(userId) {
   return rows.map(toFlashNoteDto);
 }
 
-async function createFlashNote({ actorId, actorRole, content, expiresAt, backgroundId, fontClass, alignClass, price, discountPercentage, imageUrl }) {
+async function createFlashNote({ actorId, actorRole, content, expiresAt, backgroundId, fontClass, alignClass, price, discountPercentage, imageUrl, ownerIds }) {
   if (actorRole !== "tatuador") {
     throw httpError(403, "Apenas tatuadores podem publicar Flash Notes.");
   }
@@ -226,7 +247,7 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
 
   const style = sanitizeStyle({ backgroundId, fontClass, alignClass });
   const pricing = requirePricing(price, discountPercentage);
-  const mediaUrl = requireImageUrl(imageUrl);
+  const mediaUrl = await verifyFlashNoteImage(imageUrl, ownerIds && ownerIds.length ? ownerIds : [actorId]);
 
   await prisma.flashNote.updateMany({
     where: { userId: actorId, ativa: true },
@@ -256,7 +277,7 @@ async function createFlashNote({ actorId, actorRole, content, expiresAt, backgro
   return toFlashNoteDto(created);
 }
 
-async function updateFlashNote({ actorId, noteId, content, backgroundId, fontClass, alignClass, price, discountPercentage, imageUrl }) {
+async function updateFlashNote({ actorId, noteId, content, backgroundId, fontClass, alignClass, price, discountPercentage, imageUrl, ownerIds }) {
   const existing = await prisma.flashNote.findFirst({
     where: { id: noteId, userId: actorId },
     select: {
@@ -286,8 +307,11 @@ async function updateFlashNote({ actorId, noteId, content, backgroundId, fontCla
     price ?? existing.price,
     discountPercentage === undefined ? existing.discountPercentage : discountPercentage
   );
+  const owners = ownerIds && ownerIds.length ? ownerIds : [actorId];
   const mediaUrl =
-    imageUrl === undefined ? requireImageUrl(existing.imageUrl) : requireImageUrl(imageUrl);
+    imageUrl === undefined
+      ? requireImageUrl(existing.imageUrl)
+      : await verifyFlashNoteImage(imageUrl, owners);
 
   const mutated = await prisma.flashNote.updateMany({
     where: { id: existing.id, userId: actorId },
