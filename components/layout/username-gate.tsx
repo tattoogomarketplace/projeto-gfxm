@@ -1,12 +1,11 @@
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { UsernameLockRedirect } from '@/components/layout/username-lock-screen';
 import { findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { resolvePerfilSessionFromIncomingRequestCached } from '@/lib/services/perfil-session';
 import {
   isOnboardingPath,
   isUsernameGateExemptPath,
   nextRequiredOnboardingStep,
-  USERNAME_SETUP_PATH,
 } from '@/lib/utils/auth-redirect';
 
 /**
@@ -24,42 +23,37 @@ import {
  * exatamente o @username; os degraus anteriores seguem com seus próprios
  * controladores (`/dashboard/onboarding`, `/dashboard/kyc-pendente`), que
  * constam na lista de isenção para nunca criarem loop.
+ *
+ * Enquanto o status do perfil/@username não estiver verificado (sessão ok mas
+ * perfil ausente/incompleto), o casco NÃO pinta children, chrome ou botões:
+ * devolve uma camada opaca `#121212` com pointer-events bloqueando qualquer
+ * interação residual da dock/FAB globais.
  */
 export async function UsernameGate({ children }: { children: React.ReactNode }) {
   const pathname = (await headers()).get('x-pathname') ?? '';
 
-  // Sem pathname resolvido (fora do fluxo normal do middleware) ou em rota
-  // pré-identidade, o guardião é inerte: fail-open evita qualquer possibilidade
-  // de auto-redirect; as demais camadas (AppShell/Server Actions) revalidam.
-  //
-  // Fase 13.5: a exclusão do próprio degrau de onboarding é REAFIRMADA de forma
-  // explícita (`isOnboardingPath`). Regra soberana anti-loop: se o usuário ainda
-  // não possui handle MAS já está numa rota de onboarding, NADA acontece — a
-  // rota renderiza. Sem esta trava, redirecionar para `/dashboard/onboarding/
-  // username` estando já nela reescreve o histórico em ciclo
-  // (`history.replaceState` > 100x/10s).
   if (!pathname || isOnboardingPath(pathname) || isUsernameGateExemptPath(pathname)) {
     return children;
   }
 
   let perfil = null;
+  let sessionResolved = false;
   try {
     const { userId } = await resolvePerfilSessionFromIncomingRequestCached();
+    sessionResolved = Boolean(userId);
     if (userId) {
       perfil = await findPerfilByClerkId(userId);
     }
   } catch {
-    // Falha transitória de sessão/DB: não punimos o usuário com um redirect;
-    // as demais camadas (AppShell/Server Actions) revalidam na próxima ação.
     perfil = null;
   }
 
-  if (
-    perfil &&
-    !perfil.deleted_at &&
-    nextRequiredOnboardingStep(perfil) === USERNAME_SETUP_PATH
-  ) {
-    redirect(USERNAME_SETUP_PATH);
+  if (!sessionResolved) {
+    return children;
+  }
+
+  if (nextRequiredOnboardingStep(perfil) !== null) {
+    return <UsernameLockRedirect />;
   }
 
   return children;

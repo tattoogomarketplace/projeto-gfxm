@@ -1349,6 +1349,19 @@ html:has([data-auth-shell]) body {
   background-color: #0a0a0a !important;
 }
 
+html:has([data-username-lock]),
+html:has([data-username-lock]) body {
+  background-color: #121212 !important;
+}
+
+html:has([data-username-lock]) [data-app-header],
+html:has([data-username-lock]) [data-header-follow],
+html:has([data-username-lock]) [data-ai-fab],
+html:has([data-username-lock]) .bottom-nav-dock {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .flash-notes-piano {
   background-color: #000000;
 }

@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { AppShellBoundary } from '@/components/layout/app-shell-boundary';
 import { UsernameGate } from '@/components/layout/username-gate';
+import { UsernameLockScreen } from '@/components/layout/username-lock-screen';
 import { BRAND_NAME } from '@/lib/i18n/brands';
 import { ensurePerfilFromClerk, findPerfilByClerkId } from '@/lib/services/ensure-perfil';
 import { buildProfileSource } from '@/lib/services/perfil-session';
@@ -51,9 +53,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       data-viewport-root
       className="luxury-canvas relative flex h-[100dvh] max-h-[100dvh] min-h-[100dvh] min-w-0 w-full flex-col overflow-hidden overscroll-none bg-background text-neutral-900 select-none dark:text-white"
     >
-      <AppShellBoundary title={BRAND_NAME}>
-        <UsernameGate>{children}</UsernameGate>
-      </AppShellBoundary>
+      <Suspense fallback={<UsernameLockScreen />}>
+        <UsernameGate>
+          <AppShellBoundary title={BRAND_NAME}>{children}</AppShellBoundary>
+        </UsernameGate>
+      </Suspense>
     </div>
   );
 }

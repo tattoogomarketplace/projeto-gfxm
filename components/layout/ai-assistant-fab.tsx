@@ -117,6 +117,7 @@ function AiAssistantFabBase({ visible = true }: { visible?: boolean }) {
   return (
     <div
       ref={constraintsRef}
+      data-ai-fab
       aria-hidden={!visible}
       className={cn(
         'pointer-events-none fixed left-[max(1.25rem,env(safe-area-inset-left))] right-[max(1.25rem,env(safe-area-inset-right))] z-[60] bottom-[calc(var(--dock-clearance)+0.25rem)]',
