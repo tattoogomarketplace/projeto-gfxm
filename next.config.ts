@@ -5,6 +5,41 @@ require("./src/config/env.cjs");
 
 const isDev = process.env.NODE_ENV === 'development';
 
+const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+const CLERK_SCRIPT_ORIGINS =
+  'https://*.clerk.accounts.dev https://*.clerk.com https://clerk.com https://*.clerk.services';
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  [
+    "script-src 'self' 'unsafe-inline'",
+    isDev ? "'unsafe-eval'" : null,
+    TURNSTILE_ORIGIN,
+    CLERK_SCRIPT_ORIGINS,
+  ]
+    .filter(Boolean)
+    .join(' '),
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  [
+    "connect-src 'self' data: blob: wss: https:",
+    TURNSTILE_ORIGIN,
+  ].join(' '),
+  [
+    "frame-src 'self'",
+    TURNSTILE_ORIGIN,
+    CLERK_SCRIPT_ORIGINS,
+  ].join(' '),
+  `child-src 'self' blob: ${TURNSTILE_ORIGIN}`,
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
 const nextConfig: NextConfig = {
     turbopack: {},
     experimental: {
@@ -39,6 +74,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },
       {
