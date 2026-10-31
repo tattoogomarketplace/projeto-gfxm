@@ -65,11 +65,17 @@ const nextConfig: NextConfig = {
       ],
     },
   async rewrites() {
+    const expressOrigin = (process.env.EXPRESS_URL || 'http://localhost:3001').replace(
+      /\/$/,
+      ''
+    );
     return {
+      beforeFiles: [],
+      afterFiles: [],
       fallback: [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:3001/api/:path*',
+          destination: `${expressOrigin}/api/:path*`,
         },
       ],
     };
