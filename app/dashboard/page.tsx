@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
   assignAppPath,
@@ -23,6 +24,7 @@ import {
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
   const storedRole = useAuthStore((s) => s.role);
   const redirected = useRef(false);
   const authRef = useRef({ isLoaded, isSignedIn, getToken });
@@ -38,14 +40,15 @@ export default function DashboardPage() {
   const leave = useCallback((path: string) => {
     if (redirected.current) return;
     redirected.current = true;
-    assignAppPath(path);
-  }, []);
+    assignAppPath(path, router);
+  }, [router]);
 
   const releaseToDashboard = useCallback(() => {
     leave(fallbackDashboardPath(roleRef.current));
   }, [leave]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     if (redirected.current) return;
 
     let cancelled = false;
@@ -135,7 +138,7 @@ export default function DashboardPage() {
       window.clearTimeout(hardTimer);
       retryTimers.forEach((id) => window.clearTimeout(id));
     };
-  }, [leave, releaseToDashboard]);
+  }, [isLoaded, leave, releaseToDashboard]);
 
   return null;
 }

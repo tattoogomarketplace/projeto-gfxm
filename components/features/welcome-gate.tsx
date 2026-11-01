@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { NeonButton } from '@/components/ui/neon-button';
 import { assignAppPath, type AppRole } from '@/lib/utils/auth-redirect';
@@ -14,6 +15,7 @@ interface WelcomeGateProps {
 export function WelcomeGate({ role }: WelcomeGateProps) {
   const content = getRoleExperience(role).onboarding;
   const { t } = useI18n();
+  const router = useRouter();
   const [leaving, setLeaving] = useState(false);
 
   return (
@@ -40,7 +42,8 @@ export function WelcomeGate({ role }: WelcomeGateProps) {
           assignAppPath(
             role === 'cliente'
               ? '/dashboard/onboarding/username?flow=cliente'
-              : '/dashboard'
+              : '/dashboard',
+            router
           );
         }}
       >

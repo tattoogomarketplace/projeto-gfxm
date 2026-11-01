@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { OnboardingUsername } from '@/components/features/onboarding-username';
 import { UsernameOnboardingSkeleton } from '@/components/ui/route-skeletons';
@@ -35,6 +35,7 @@ import {
 function UsernameOnboardingInner() {
   const { getToken } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
   const params = useSearchParams();
 
   const flow = params.get('flow') === 'tatuador' ? 'tatuador' : 'cliente';
@@ -63,7 +64,7 @@ function UsernameOnboardingInner() {
 
         // Já possui handle: a identidade está travada — segue para o painel.
         if (perfil?.username) {
-          assignAppPath(dashboardPathForRole(resolvedRole));
+          assignAppPath(dashboardPathForRole(resolvedRole), router);
           return;
         }
 
@@ -80,7 +81,7 @@ function UsernameOnboardingInner() {
     return () => {
       cancelled = true;
     };
-  }, [getToken, user]);
+  }, [getToken, user, router]);
 
   if (checking || !role) {
     return <UsernameOnboardingSkeleton />;
@@ -90,7 +91,7 @@ function UsernameOnboardingInner() {
     <OnboardingUsername
       role={role}
       flow={flow}
-      onCompleted={() => assignAppPath(dashboardPathForRole(role))}
+      onCompleted={() => assignAppPath(dashboardPathForRole(role), router)}
     />
   );
 }

@@ -182,21 +182,16 @@ export function destinationAfterProfileSync(
   return step ?? dashboardPathForRole(perfil.role);
 }
 
-const ASSIGN_RELOAD_KEY = 'tattoogo:assign-reload-at';
+type SoftRouter = {
+  replace: (href: string) => void;
+};
 
-export function assignAppPath(path: string): void {
+export function assignAppPath(path: string, router: SoftRouter): void {
   if (typeof window === 'undefined') return;
   const dest = path.startsWith('/') ? path : `/${path}`;
-  if (window.location.pathname === dest) {
-    try {
-      const last = Number(window.sessionStorage.getItem(ASSIGN_RELOAD_KEY) || 0);
-      if (Date.now() - last < 5000) return;
-      window.sessionStorage.setItem(ASSIGN_RELOAD_KEY, String(Date.now()));
-    } catch {
-      return;
-    }
-    window.location.reload();
-    return;
-  }
-  window.location.assign(dest);
+  const destUrl = new URL(dest, window.location.origin);
+  const next = `${destUrl.pathname}${destUrl.search}`;
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (current === next) return;
+  router.replace(next);
 }

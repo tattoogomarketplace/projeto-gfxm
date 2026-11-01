@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { OnboardingLoadingScreen } from '@/components/features/onboarding-loading-screen';
 import { isOnboardingGrace } from '@/lib/utils/session';
@@ -24,6 +25,7 @@ import { useAuthStore } from '@/hooks/use-auth-store';
 export function ProfileWaiter() {
   const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
   const storedRole = useAuthStore((s) => s.role);
   const navigatingRef = useRef(false);
   const authRef = useRef({ authLoaded, isSignedIn, getToken });
@@ -41,8 +43,8 @@ export function ProfileWaiter() {
   const leave = useCallback((path: string) => {
     if (navigatingRef.current) return;
     navigatingRef.current = true;
-    assignAppPath(path);
-  }, []);
+    assignAppPath(path, router);
+  }, [router]);
 
   const releaseToDashboard = useCallback(() => {
     leave(fallbackDashboardPath(roleRef.current));

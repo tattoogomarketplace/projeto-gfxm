@@ -192,11 +192,11 @@ export default function LoginPage() {
         router.push(nextPath);
       } catch (err) {
         console.error('Session activation error:', err);
-        assignAppPath(nextPath);
+        assignAppPath(nextPath, router);
       }
     }, 160);
     const hard = window.setTimeout(() => {
-      assignAppPath(nextPath);
+      assignAppPath(nextPath, router);
     }, 4000);
     return () => {
       window.clearTimeout(soft);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from '@/lib/toast';
 import { Sparkles } from 'lucide-react';
@@ -36,6 +37,7 @@ function messageFromOnboardingError(
 export default function DashboardOnboardingPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
   const { t } = useI18n();
   const setUser = useAuthStore((s) => s.setUser);
   const setStoreRole = useAuthStore((s) => s.setRole);
@@ -161,7 +163,8 @@ export default function DashboardOnboardingPage() {
       assignAppPath(
         startIdentityOnboarding
           ? '/dashboard/onboarding/username?flow=cliente'
-          : destination
+          : destination,
+        router
       );
     } catch (err) {
       const message = formatAppError(err, 'api');

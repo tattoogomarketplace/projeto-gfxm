@@ -17,6 +17,13 @@ const observedNodes = new Map<Element, string>();
 let observer: IntersectionObserver | null = null;
 let flushTimer: number | null = null;
 let flushing = false;
+let subscriberCount = 0;
+
+function stopFlusher() {
+  if (flushTimer == null) return;
+  window.clearInterval(flushTimer);
+  flushTimer = null;
+}
 
 function readVisitorToken(): string {
   try {
@@ -66,12 +73,17 @@ async function flushQueue() {
     });
   } finally {
     flushing = false;
+    if (queuedIds.size === 0) stopFlusher();
   }
 }
 
 function ensureFlusher() {
   if (flushTimer != null || typeof window === 'undefined') return;
   flushTimer = window.setInterval(() => {
+    if (queuedIds.size === 0) {
+      stopFlusher();
+      return;
+    }
     void flushQueue();
   }, FLUSH_MS);
 }
@@ -117,11 +129,20 @@ export function useViewTracker(postId: string): RefObject<HTMLElement | null> {
     const viewObserver = getObserver();
     observedNodes.set(node, postId);
     viewObserver.observe(node);
+    subscriberCount += 1;
 
     return () => {
       abortDwell(postId);
       observedNodes.delete(node);
       viewObserver.unobserve(node);
+      subscriberCount = Math.max(0, subscriberCount - 1);
+      if (subscriberCount === 0) {
+        stopFlusher();
+        if (observedNodes.size === 0 && observer) {
+          observer.disconnect();
+          observer = null;
+        }
+      }
     };
   }, [postId]);
 
