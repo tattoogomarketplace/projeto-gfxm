@@ -60,7 +60,6 @@ module.exports = {
   logLevel: process.env.LOG_LEVEL || "info",
   geminiApiKey: process.env.GEMINI_API_KEY,
   receitaWsToken: process.env.RECEITA_WS_TOKEN,
-  useMockCnpj: process.env.USE_MOCK_CNPJ === "true",
   databaseUrl: process.env.DATABASE_URL,
   allowedOrigins: collectAllowedOrigins(),
 };

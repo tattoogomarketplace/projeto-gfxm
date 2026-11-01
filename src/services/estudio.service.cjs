@@ -1,5 +1,5 @@
 const { prisma } = require("./prisma.service.cjs");
-const { useMockCnpj, receitaWsToken } = require("../config/env.cjs");
+const { receitaWsToken } = require("../config/env.cjs");
 
 const CONVITE_TTL_DIAS = 7;
 
@@ -59,18 +59,6 @@ async function validarCnpj({ cnpj, userId }) {
     const error = new Error("Formato de CNPJ inválido.");
     error.status = 400;
     throw error;
-  }
-
-  if (useMockCnpj) {
-    console.log(`[CNPJ MOCK] Validado sintaticamente: ${cnpjLimpo} para user: ${userId}`);
-    await persistirCompliance({
-      userId,
-      cnpj: cnpjLimpo,
-      razaoSocial: "Estudio Mock",
-      enderecoOficial: null,
-      statusReceita: "ativa",
-    });
-    return { sucesso: true, status: "validado_mock" };
   }
 
   const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {

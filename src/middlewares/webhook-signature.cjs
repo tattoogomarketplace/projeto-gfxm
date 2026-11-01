@@ -32,8 +32,7 @@ function readHeader(req, names) {
 }
 
 function resolveSecret() {
-  const secret =
-    process.env.PAYMENT_WEBHOOK_SECRET || process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET;
   return typeof secret === "string" ? secret.trim() : "";
 }
 

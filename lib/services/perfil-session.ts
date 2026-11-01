@@ -25,8 +25,7 @@ const SESSION_COOKIE = '__session';
  * produção. Calcular o sufixo esperado permite priorizar o cookie correto.
  */
 function getInstanceCookieSuffix(): string | null {
-  const publishableKey =
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!publishableKey) return null;
   return createHash('sha1')
     .update(publishableKey)

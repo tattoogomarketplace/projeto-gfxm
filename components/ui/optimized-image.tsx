@@ -32,10 +32,8 @@ function resolveSrc(src?: string | null): string | null {
     return trimmed;
   }
   const r2 = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.replace(/\/+$/, '');
-  if (r2) return `${r2}/${trimmed}`;
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/portfolios/${trimmed}`;
+  if (!r2) return null;
+  return `${r2}/${trimmed}`;
 }
 
 function isKnownOptimizerHost(src: string): boolean {

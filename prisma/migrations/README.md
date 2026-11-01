@@ -9,7 +9,6 @@ datasource em `schema.prisma`):
 |---|---|---|---|
 | `DATABASE_URL` | `app_runner` (restrito) | Runtime da aplicação (Prisma Client) | `SELECT`, `INSERT`, `UPDATE`, `DELETE` |
 | `DIRECT_URL` | `neondb_owner` (admin) | `prisma migrate deploy` / `db push` / `studio` no CI/CD | DDL completo (`CREATE`, `ALTER`, `DROP`, ...) |
-| `MIGRATION_URL` | alias opcional | pipelines que injetam a credencial admin sob outro nome | idem `DIRECT_URL` |
 
 Regra: o runtime **nunca** usa a credencial admin. Se `DATABASE_URL` vazar, o
 atacante não consegue `DROP`/`ALTER`/`TRUNCATE` o schema.

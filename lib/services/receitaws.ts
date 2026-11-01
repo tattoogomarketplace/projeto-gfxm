@@ -116,28 +116,6 @@ function mapResponse(cnpj: string, raw: Record<string, unknown>): CnpjValidation
   };
 }
 
-function buildMockValidation(cnpj: string): CnpjValidation {
-  return {
-    cnpj,
-    razaoSocial: 'Estudio Mock LTDA',
-    nomeFantasia: 'Estudio Mock',
-    situacao: 'ATIVA',
-    ativa: true,
-    tipo: 'MATRIZ',
-    porte: 'ME',
-    naturezaJuridica: '206-2 - Sociedade Empresária Limitada',
-    dataAbertura: '01/01/2020',
-    endereco: 'Rua Mock, 100, Centro, São Paulo/SP',
-    municipio: 'São Paulo',
-    uf: 'SP',
-    cep: '01000-000',
-    email: null,
-    telefone: null,
-    atividadePrincipal: 'Atividades de atenção à saúde humana',
-    socios: [],
-  };
-}
-
 /**
  * Consulta a ReceitaWS e normaliza o retorno em um contrato estável.
  *
@@ -156,10 +134,6 @@ export async function validateCnpj(cnpj: string): Promise<CnpjValidation> {
   }
   if (!isValidCnpj(cleanCnpj)) {
     throw new ReceitaWsError('CNPJ inválido.', 400);
-  }
-
-  if (process.env.USE_MOCK_CNPJ === 'true') {
-    return buildMockValidation(cleanCnpj);
   }
 
   const token = process.env.RECEITA_WS_TOKEN;
