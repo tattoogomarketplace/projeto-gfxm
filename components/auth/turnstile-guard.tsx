@@ -25,6 +25,12 @@ export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
 const TOKEN_WAIT_MS = 8000;
 
+const challengeExecutors = new Set<() => void>();
+
+function runInvisibleChallenge() {
+  challengeExecutors.forEach((run) => run());
+}
+
 export type TurnstileGuardHandle = {
   reset: () => void;
   getToken: () => string | undefined;
@@ -65,6 +71,7 @@ export function useTurnstileToken() {
 
   const waitForToken = useCallback((timeoutMs = TOKEN_WAIT_MS) => {
     if (tokenRef.current) return Promise.resolve(tokenRef.current);
+    runInvisibleChallenge();
     return new Promise<string | null>((resolve) => {
       const timeout = window.setTimeout(() => {
         waiterRef.current = null;
@@ -94,8 +101,15 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
   ) {
     const widgetRef = useRef<TurnstileInstance | undefined>(undefined);
     const onSuccessRef = useRef(onSuccess);
-    onSuccessRef.current = onSuccess;
     const configured = TURNSTILE_SITE_KEY.length > 0;
+
+    useEffect(() => {
+      onSuccessRef.current = onSuccess;
+    }, [onSuccess]);
+
+    const executeChallenge = useCallback(() => {
+      widgetRef.current?.execute();
+    }, []);
 
     useEffect(() => {
       if (configured) return;
@@ -105,14 +119,22 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       onSuccessRef.current(TURNSTILE_DEV_BYPASS_TOKEN);
     }, [configured]);
 
+    useEffect(() => {
+      if (!configured) return;
+      challengeExecutors.add(executeChallenge);
+      return () => {
+        challengeExecutors.delete(executeChallenge);
+      };
+    }, [configured, executeChallenge]);
+
     useImperativeHandle(
       ref,
       () => ({
         reset: () => widgetRef.current?.reset(),
         getToken: () => widgetRef.current?.getResponse(),
-        execute: () => widgetRef.current?.execute(),
+        execute: executeChallenge,
       }),
-      []
+      [executeChallenge]
     );
 
     const handleSuccess = useCallback((token: string) => {
@@ -145,11 +167,12 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           onSuccess={handleSuccess}
           onError={handleError}
           onExpire={handleExpire}
+          onWidgetLoad={executeChallenge}
           options={{
             theme,
             action,
-            appearance: 'execute',
-            execution: 'render',
+            appearance: 'interaction-only',
+            execution: 'execute',
             size: 'invisible',
             refreshExpired: 'auto',
             retry: 'auto',
