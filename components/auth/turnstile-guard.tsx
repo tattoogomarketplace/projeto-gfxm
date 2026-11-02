@@ -25,6 +25,7 @@ export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ??
 export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
 const TOKEN_WAIT_MS = 8000;
+const MAX_RECOVER_ATTEMPTS = 3;
 
 const challengeExecutors = new Set<() => void>();
 
@@ -32,6 +33,26 @@ function destroyWidget(widgetId: string | null) {
   if (!widgetId) return;
   try {
     window.turnstile?.remove(widgetId);
+  } catch {
+    void 0;
+  }
+}
+
+function resetTurnstileWidget(
+  instance: TurnstileInstance | undefined,
+  widgetId: string | null
+) {
+  if (instance) {
+    try {
+      instance.reset();
+      return;
+    } catch {
+      void 0;
+    }
+  }
+  if (!widgetId) return;
+  try {
+    window.turnstile?.reset(widgetId);
   } catch {
     void 0;
   }
@@ -114,6 +135,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const isExecutingRef = useRef(false);
     const pendingExecuteRef = useRef(false);
     const mountedRef = useRef(true);
+    const recoverAttemptsRef = useRef(0);
     const onSuccessRef = useRef(onSuccess);
     const configured = TURNSTILE_SITE_KEY.length > 0;
 
@@ -190,7 +212,8 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         reset: () => {
           isExecutingRef.current = false;
           pendingExecuteRef.current = false;
-          widgetRef.current?.reset();
+          recoverAttemptsRef.current = 0;
+          resetTurnstileWidget(widgetRef.current, widgetIdRef.current);
         },
         getToken: () => widgetRef.current?.getResponse(),
         execute: executeChallenge,
@@ -208,26 +231,56 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       [executeChallenge]
     );
 
+    const scheduleWidgetReset = useCallback(() => {
+      const runReset = () => {
+        if (!mountedRef.current) return;
+        resetTurnstileWidget(widgetRef.current, widgetIdRef.current);
+      };
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(runReset);
+      } else {
+        window.setTimeout(runReset, 0);
+      }
+    }, []);
+
+    const recoverFromError = useCallback(() => {
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
+      if (recoverAttemptsRef.current >= MAX_RECOVER_ATTEMPTS) return;
+      recoverAttemptsRef.current += 1;
+      scheduleWidgetReset();
+    }, [scheduleWidgetReset]);
+
+    const recoverFromExpire = useCallback(() => {
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
+      scheduleWidgetReset();
+    }, [scheduleWidgetReset]);
+
     const handleSuccess = useCallback((token: string) => {
       isExecutingRef.current = false;
       pendingExecuteRef.current = false;
+      recoverAttemptsRef.current = 0;
       onSuccessRef.current(token);
     }, []);
 
     const handleError = useCallback(
       (errorCode?: string) => {
-        isExecutingRef.current = false;
-        pendingExecuteRef.current = false;
+        recoverFromError();
         onError?.(errorCode);
       },
-      [onError]
+      [onError, recoverFromError]
     );
 
     const handleExpire = useCallback(() => {
-      isExecutingRef.current = false;
-      pendingExecuteRef.current = false;
+      recoverFromExpire();
       onExpire?.();
-    }, [onExpire]);
+    }, [onExpire, recoverFromExpire]);
+
+    const handleTimeout = useCallback(() => {
+      recoverFromError();
+      onError?.('timeout');
+    }, [onError, recoverFromError]);
 
     if (!configured) {
       return null;
@@ -244,6 +297,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           onSuccess={handleSuccess}
           onError={handleError}
           onExpire={handleExpire}
+          onTimeout={handleTimeout}
           onWidgetLoad={handleWidgetLoad}
           options={{
             theme,
