@@ -30,6 +30,22 @@ export function LocalizedClerkProvider({ children }: { children: React.ReactNode
       afterSignOutUrl="/"
       taskUrls={CLERK_TASK_URLS}
     >
+      <div
+        id="clerk-captcha"
+        aria-hidden
+        data-cl-theme="dark"
+        data-cl-size="flexible"
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          width: 300,
+          height: 65,
+          margin: 0,
+          transform: 'translate(-100%, -100%)',
+          overflow: 'visible',
+        }}
+      />
       {children}
     </ClerkProvider>
   );

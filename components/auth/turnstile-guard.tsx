@@ -8,7 +8,10 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
+  type CSSProperties,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
@@ -26,6 +29,29 @@ export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
 const TOKEN_WAIT_MS = 8000;
 const MAX_RECOVER_ATTEMPTS = 3;
+
+const WIDGET_HOST_STYLE: CSSProperties = {
+  position: 'fixed',
+  left: 0,
+  top: 0,
+  width: 300,
+  height: 65,
+  margin: 0,
+  transform: 'translate(-100%, -100%)',
+  overflow: 'visible',
+};
+
+function subscribePortalTarget() {
+  return () => undefined;
+}
+
+function getPortalTargetSnapshot() {
+  return document.body;
+}
+
+function getPortalTargetServerSnapshot(): HTMLElement | null {
+  return null;
+}
 
 const challengeExecutors = new Set<() => void>();
 
@@ -137,6 +163,11 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const mountedRef = useRef(true);
     const recoverAttemptsRef = useRef(0);
     const onSuccessRef = useRef(onSuccess);
+    const portalTarget = useSyncExternalStore(
+      subscribePortalTarget,
+      getPortalTargetSnapshot,
+      getPortalTargetServerSnapshot
+    );
     const configured = TURNSTILE_SITE_KEY.length > 0;
 
     useEffect(() => {
@@ -282,15 +313,12 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       onError?.('timeout');
     }, [onError, recoverFromError]);
 
-    if (!configured) {
+    if (!configured || !portalTarget) {
       return null;
     }
 
-    return (
-      <div
-        aria-hidden
-        className="pointer-events-none fixed left-0 top-0 -z-10 h-px w-px overflow-hidden opacity-0"
-      >
+    return createPortal(
+      <div aria-hidden style={WIDGET_HOST_STYLE}>
         <Turnstile
           ref={widgetRef}
           siteKey={TURNSTILE_SITE_KEY}
@@ -309,7 +337,8 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
             retry: 'auto',
           }}
         />
-      </div>
+      </div>,
+      portalTarget
     );
   }
 );
