@@ -28,11 +28,54 @@ const isAuthSurface = createRouteMatcher([
   '/sign-up(.*)',
 ]);
 
+const isIgnoredStaticAsset = createRouteMatcher([
+  '/manifest.json',
+  '/manifest.webmanifest',
+  '/site.webmanifest',
+  '/sw.js',
+  '/workbox-(.*)',
+  '/worker-(.*)',
+  '/fallback-(.*)',
+  '/favicon.ico',
+  '/favicon-(.*)',
+  '/icons/(.*)',
+  '/apple-touch-icon.png',
+  '/apple-touch-icon(.*)',
+  '/android-chrome-(.*)',
+  '/icon-(.*)',
+  '/icon.svg',
+  '/offline.html',
+]);
+
 function isPlatformPath(pathname: string): boolean {
   if (pathname === '/api' || pathname.startsWith('/api/')) return true;
   if (pathname === '/trpc' || pathname.startsWith('/trpc/')) return true;
   if (pathname === '/_next' || pathname.startsWith('/_next/')) return true;
   if (pathname === '/__clerk' || pathname.startsWith('/__clerk/')) return true;
+  if (
+    pathname === '/manifest.json' ||
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/site.webmanifest' ||
+    pathname === '/sw.js' ||
+    pathname === '/favicon.ico' ||
+    pathname === '/apple-touch-icon.png' ||
+    pathname === '/icon.svg' ||
+    pathname === '/offline.html'
+  ) {
+    return true;
+  }
+  if (
+    pathname.startsWith('/workbox-') ||
+    pathname.startsWith('/worker-') ||
+    pathname.startsWith('/fallback-') ||
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/apple-touch-icon') ||
+    pathname.startsWith('/android-chrome-') ||
+    pathname.startsWith('/favicon-') ||
+    pathname.startsWith('/icon-')
+  ) {
+    return true;
+  }
   return /\.(?:css|js|mjs|cjs|map|json|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|csv|zip|webmanifest|mp3)$/i.test(
     pathname
   );
@@ -47,6 +90,10 @@ function nextWithPathname(req: Request, pathname: string) {
 export default clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
+
+    if (isIgnoredStaticAsset(req)) {
+      return nextWithPathname(req, pathname);
+    }
 
     const limited = await enforceApiRateLimit(req);
     if (limited) return limited;
@@ -75,7 +122,7 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json)).*)',
+    '/((?!_next|favicon\\.ico|manifest\\.json|manifest\\.webmanifest|site\\.webmanifest|sw\\.js|workbox-|worker-|fallback-|icons/|apple-touch-icon|android-chrome-|[^?]*\\.(?:html?|css|js|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json)).*)',
     '/(api|trpc)(.*)',
     '/__clerk/(.*)',
   ],
