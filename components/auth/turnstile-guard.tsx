@@ -6,6 +6,7 @@ import {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -27,8 +28,10 @@ export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ??
  */
 export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
-const TOKEN_WAIT_MS = 8000;
+const TOKEN_WAIT_MS = 15000;
 const MAX_RECOVER_ATTEMPTS = 3;
+const EXECUTION_WATCHDOG_MS = 20000;
+const INTERACTION_GRACE_MS = 25000;
 
 const WIDGET_HOST_STYLE: CSSProperties = {
   position: 'fixed',
@@ -91,20 +94,21 @@ function destroyWidget(widgetId: string | null) {
 function resetTurnstileWidget(
   instance: TurnstileInstance | undefined,
   widgetId: string | null
-) {
+): boolean {
   if (instance) {
     try {
       instance.reset();
-      return;
+      return true;
     } catch {
       void 0;
     }
   }
-  if (!widgetId) return;
+  if (!widgetId) return false;
   try {
     window.turnstile?.reset(widgetId);
+    return true;
   } catch {
-    void 0;
+    return false;
   }
 }
 
@@ -131,46 +135,64 @@ export function useTurnstileToken() {
   const [token, setToken] = useState('');
   const [nonce, setNonce] = useState(0);
   const tokenRef = useRef('');
-  const waiterRef = useRef<((next: string) => void) | null>(null);
+  const waiterRef = useRef<((next: string | null) => void) | null>(null);
 
-  const onSuccess = useCallback((next: string) => {
-    tokenRef.current = next;
-    setToken(next);
-    waiterRef.current?.(next);
+  const settleWaiter = useCallback((next: string | null) => {
+    const waiter = waiterRef.current;
     waiterRef.current = null;
+    waiter?.(next);
   }, []);
+
+  const onSuccess = useCallback(
+    (next: string) => {
+      tokenRef.current = next;
+      setToken(next);
+      settleWaiter(next);
+    },
+    [settleWaiter]
+  );
 
   const onExpire = useCallback(() => {
     tokenRef.current = '';
     setToken('');
-  }, []);
+    // Libera qualquer submit que esteja aguardando o token: sem isso o
+    // usuário ficaria preso até o timeout total do formulário.
+    settleWaiter(null);
+  }, [settleWaiter]);
 
   const onError = useCallback(() => {
     tokenRef.current = '';
     setToken('');
-  }, []);
+    settleWaiter(null);
+  }, [settleWaiter]);
 
-  const waitForToken = useCallback((timeoutMs = TOKEN_WAIT_MS) => {
-    if (tokenRef.current) return Promise.resolve(tokenRef.current);
-    runInvisibleChallenge();
-    return new Promise<string | null>((resolve) => {
-      const timeout = window.setTimeout(() => {
-        waiterRef.current = null;
-        resolve(null);
-      }, timeoutMs);
-      waiterRef.current = (next: string) => {
-        window.clearTimeout(timeout);
-        resolve(next);
-      };
-    });
-  }, []);
+  const waitForToken = useCallback(
+    (timeoutMs = TOKEN_WAIT_MS) => {
+      if (tokenRef.current) return Promise.resolve(tokenRef.current);
+      // Um novo submit substitui o anterior: resolve o waiter antigo como
+      // falha para que nenhuma promessa fique pendurada para sempre.
+      settleWaiter(null);
+      return new Promise<string | null>((resolve) => {
+        const timeout = window.setTimeout(() => {
+          waiterRef.current = null;
+          resolve(null);
+        }, timeoutMs);
+        waiterRef.current = (next: string | null) => {
+          window.clearTimeout(timeout);
+          resolve(next);
+        };
+        runInvisibleChallenge();
+      });
+    },
+    [settleWaiter]
+  );
 
   const reset = useCallback(() => {
     tokenRef.current = '';
     setToken('');
-    waiterRef.current = null;
+    settleWaiter(null);
     setNonce((current) => current + 1);
-  }, []);
+  }, [settleWaiter]);
 
   return { token, nonce, onSuccess, onExpire, onError, waitForToken, reset };
 }
@@ -184,9 +206,15 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const widgetIdRef = useRef<string | null>(null);
     const isExecutingRef = useRef(false);
     const pendingExecuteRef = useRef(false);
+    const needsResetRef = useRef(false);
+    const interactiveRef = useRef(false);
     const mountedRef = useRef(true);
     const recoverAttemptsRef = useRef(0);
+    const watchdogRef = useRef<number | null>(null);
+    const resetTimerRef = useRef<number | null>(null);
     const onSuccessRef = useRef(onSuccess);
+    const onErrorRef = useRef(onError);
+    const onExpireRef = useRef(onExpire);
     const [interactive, setInteractive] = useState(false);
     const portalTarget = useSyncExternalStore(
       subscribePortalTarget,
@@ -199,6 +227,84 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       onSuccessRef.current = onSuccess;
     }, [onSuccess]);
 
+    useEffect(() => {
+      onErrorRef.current = onError;
+    }, [onError]);
+
+    useEffect(() => {
+      onExpireRef.current = onExpire;
+    }, [onExpire]);
+
+    const clearExecutionWatchdog = useCallback(() => {
+      if (watchdogRef.current === null) return;
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }, []);
+
+    const clearPendingReset = useCallback(() => {
+      if (resetTimerRef.current === null) return;
+      window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }, []);
+
+    const scheduleWidgetReset = useCallback(() => {
+      clearPendingReset();
+      resetTimerRef.current = window.setTimeout(() => {
+        resetTimerRef.current = null;
+        if (!mountedRef.current) return;
+        if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
+          needsResetRef.current = false;
+        }
+      }, 0);
+    }, [clearPendingReset]);
+
+    const recoverFromFailure = useCallback(
+      (errorCode?: string) => {
+        clearExecutionWatchdog();
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
+        interactiveRef.current = false;
+        setInteractive(false);
+        // O widget ficou em estado inválido: a próxima execução (manual ou
+        // automática) precisa de reset antes de chamar `execute()` novamente.
+        needsResetRef.current = true;
+        onErrorRef.current?.(errorCode);
+
+        if (recoverAttemptsRef.current >= MAX_RECOVER_ATTEMPTS) {
+          // Sem reset automático após o limite para evitar loop de rede. O
+          // lock de execução já foi liberado e o próximo submit reseta.
+          return;
+        }
+        recoverAttemptsRef.current += 1;
+        scheduleWidgetReset();
+      },
+      [clearExecutionWatchdog, scheduleWidgetReset]
+    );
+
+    const armExecutionWatchdog = useCallback(() => {
+      clearExecutionWatchdog();
+      if (!mountedRef.current) return;
+
+      const deadline = Date.now() + EXECUTION_WATCHDOG_MS;
+
+      const check = () => {
+        watchdogRef.current = null;
+        if (!mountedRef.current || !isExecutingRef.current) return;
+
+        // Enquanto o usuário resolve um desafio interativo, dá uma janela
+        // extra antes de considerar o adaptador travado.
+        if (interactiveRef.current && Date.now() < deadline + INTERACTION_GRACE_MS) {
+          const remaining = deadline + INTERACTION_GRACE_MS - Date.now();
+          watchdogRef.current = window.setTimeout(check, Math.min(5000, remaining));
+          return;
+        }
+
+        recoverFromFailure('timeout');
+      };
+
+      watchdogRef.current = window.setTimeout(check, EXECUTION_WATCHDOG_MS);
+    }, [clearExecutionWatchdog, recoverFromFailure]);
+
     const executeChallenge = useCallback(() => {
       if (!mountedRef.current || isExecutingRef.current) return;
       const instance = widgetRef.current;
@@ -209,24 +315,34 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       try {
         if (!instance.isExpired()) {
           const existing = instance.getResponse();
-          if (existing) return;
+          if (existing) {
+            pendingExecuteRef.current = false;
+            return;
+          }
         }
       } catch {
         pendingExecuteRef.current = true;
         return;
       }
-      isExecutingRef.current = true;
+
+      // Nova tentativa iniciada pelo formulário: zera o orçamento de
+      // recuperação para que o usuário nunca fique permanentemente bloqueado.
+      recoverAttemptsRef.current = 0;
       pendingExecuteRef.current = false;
+      isExecutingRef.current = true;
+
       try {
-        if (instance.isExpired()) {
-          instance.reset();
+        if (needsResetRef.current || instance.isExpired()) {
+          if (resetTurnstileWidget(instance, widgetIdRef.current)) {
+            needsResetRef.current = false;
+          }
         }
         instance.execute();
+        armExecutionWatchdog();
       } catch {
-        isExecutingRef.current = false;
-        pendingExecuteRef.current = false;
+        recoverFromFailure('execute-error');
       }
-    }, []);
+    }, [armExecutionWatchdog, recoverFromFailure]);
 
     useEffect(() => {
       mountedRef.current = true;
@@ -254,33 +370,42 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     useLayoutEffect(() => {
       if (!configured) return;
       return () => {
+        clearExecutionWatchdog();
+        clearPendingReset();
         isExecutingRef.current = false;
         pendingExecuteRef.current = false;
         const widgetId = widgetIdRef.current;
         widgetIdRef.current = null;
         destroyWidget(widgetId);
       };
-    }, [configured]);
+    }, [configured, clearExecutionWatchdog, clearPendingReset]);
 
     useImperativeHandle(
       ref,
       () => ({
         reset: () => {
+          clearExecutionWatchdog();
+          clearPendingReset();
           isExecutingRef.current = false;
           pendingExecuteRef.current = false;
+          needsResetRef.current = true;
           recoverAttemptsRef.current = 0;
+          interactiveRef.current = false;
           setInteractive(false);
-          resetTurnstileWidget(widgetRef.current, widgetIdRef.current);
+          if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
+            needsResetRef.current = false;
+          }
         },
         getToken: () => widgetRef.current?.getResponse(),
         execute: executeChallenge,
       }),
-      [executeChallenge]
+      [clearExecutionWatchdog, clearPendingReset, executeChallenge]
     );
 
     const handleWidgetLoad = useCallback(
       (widgetId: string) => {
         widgetIdRef.current = widgetId;
+        needsResetRef.current = false;
         if (!mountedRef.current) return;
         if (pendingExecuteRef.current && !isExecutingRef.current) {
           executeChallenge();
@@ -289,68 +414,65 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       [executeChallenge]
     );
 
-    const scheduleWidgetReset = useCallback(() => {
-      const runReset = () => {
-        if (!mountedRef.current) return;
-        resetTurnstileWidget(widgetRef.current, widgetIdRef.current);
-      };
-      if (typeof queueMicrotask === 'function') {
-        queueMicrotask(runReset);
-      } else {
-        window.setTimeout(runReset, 0);
-      }
-    }, []);
-
-    const recoverFromError = useCallback(() => {
-      isExecutingRef.current = false;
-      pendingExecuteRef.current = false;
-      if (recoverAttemptsRef.current >= MAX_RECOVER_ATTEMPTS) return;
-      recoverAttemptsRef.current += 1;
-      scheduleWidgetReset();
-    }, [scheduleWidgetReset]);
-
-    const recoverFromExpire = useCallback(() => {
-      isExecutingRef.current = false;
-      pendingExecuteRef.current = false;
-      scheduleWidgetReset();
-    }, [scheduleWidgetReset]);
-
-    const handleSuccess = useCallback((token: string) => {
-      isExecutingRef.current = false;
-      pendingExecuteRef.current = false;
-      recoverAttemptsRef.current = 0;
-      setInteractive(false);
-      onSuccessRef.current(token);
-    }, []);
+    const handleSuccess = useCallback(
+      (token: string) => {
+        clearExecutionWatchdog();
+        clearPendingReset();
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
+        needsResetRef.current = false;
+        recoverAttemptsRef.current = 0;
+        interactiveRef.current = false;
+        setInteractive(false);
+        onSuccessRef.current(token);
+      },
+      [clearExecutionWatchdog, clearPendingReset]
+    );
 
     const handleBeforeInteractive = useCallback(() => {
+      interactiveRef.current = true;
       setInteractive(true);
     }, []);
 
     const handleAfterInteractive = useCallback(() => {
+      interactiveRef.current = false;
       setInteractive(false);
     }, []);
 
     const handleError = useCallback(
       (errorCode?: string) => {
-        setInteractive(false);
-        recoverFromError();
-        onError?.(errorCode);
+        recoverFromFailure(errorCode ?? 'error');
       },
-      [onError, recoverFromError]
+      [recoverFromFailure]
     );
 
     const handleExpire = useCallback(() => {
+      clearExecutionWatchdog();
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
+      interactiveRef.current = false;
+      needsResetRef.current = true;
       setInteractive(false);
-      recoverFromExpire();
-      onExpire?.();
-    }, [onExpire, recoverFromExpire]);
+      scheduleWidgetReset();
+      onExpireRef.current?.();
+    }, [clearExecutionWatchdog, scheduleWidgetReset]);
 
     const handleTimeout = useCallback(() => {
-      setInteractive(false);
-      recoverFromError();
-      onError?.('timeout');
-    }, [onError, recoverFromError]);
+      recoverFromFailure('timeout');
+    }, [recoverFromFailure]);
+
+    const handleUnsupported = useCallback(() => {
+      recoverFromFailure('unsupported');
+    }, [recoverFromFailure]);
+
+    const handleScriptError = useCallback(() => {
+      recoverFromFailure('script-load-error');
+    }, [recoverFromFailure]);
+
+    const scriptOptions = useMemo(
+      () => ({ onError: handleScriptError }),
+      [handleScriptError]
+    );
 
     if (!configured || !portalTarget) {
       return null;
@@ -371,10 +493,12 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           ref={widgetRef}
           siteKey={TURNSTILE_SITE_KEY}
           style={WIDGET_BOX_STYLE}
+          scriptOptions={scriptOptions}
           onSuccess={handleSuccess}
           onError={handleError}
           onExpire={handleExpire}
           onTimeout={handleTimeout}
+          onUnsupported={handleUnsupported}
           onWidgetLoad={handleWidgetLoad}
           onBeforeInteractive={handleBeforeInteractive}
           onAfterInteractive={handleAfterInteractive}
@@ -384,6 +508,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
             appearance: 'interaction-only',
             execution: 'execute',
             refreshExpired: 'auto',
+            refreshTimeout: 'auto',
             retry: 'auto',
           }}
         />

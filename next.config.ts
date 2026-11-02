@@ -14,47 +14,81 @@ const CLERK_SCRIPT_ORIGINS = [
   'https://*.clerk.com',
   'https://clerk.com',
   'https://*.clerk.services',
-].join(' ');
+];
+// Clerk abre iframes/scripts de proteção contra abuso e fraude em
+// `*.protect.clerk.com`. O `:*` no connect-src é obrigatório: esses hosts
+// também respondem fora da porta 443 e um source sem porta casa só com 443.
+const CLERK_PROTECT_ORIGINS = ['https://*.protect.clerk.com'];
+const CLERK_CONNECT_ORIGINS = [
+  ...CLERK_SCRIPT_ORIGINS,
+  'https://*.protect.clerk.com:*',
+  'https://clerk-telemetry.com',
+  'https://*.clerk-telemetry.com',
+  'https://img.clerk.com',
+];
+const TURNSTILE_SCRIPT_ORIGINS = [TURNSTILE_ORIGIN, 'https://*.challenges.cloudflare.com'];
+
+function buildDirective(name: string, ...sources: Array<string | false | null | undefined>) {
+  return [name, ...sources.filter(Boolean)].join(' ');
+}
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  [
-    "script-src 'self' 'unsafe-inline'",
+  buildDirective(
+    'script-src',
+    "'self'",
+    "'unsafe-inline'",
     isDev ? "'unsafe-eval'" : null,
-    TURNSTILE_ORIGIN,
-    CLERK_SCRIPT_ORIGINS,
-  ]
-    .filter(Boolean)
-    .join(' '),
+    ...TURNSTILE_SCRIPT_ORIGINS,
+    ...CLERK_SCRIPT_ORIGINS,
+    ...CLERK_PROTECT_ORIGINS
+  ),
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com https:",
   "font-src 'self' data:",
-  [
-    "connect-src 'self'",
-    'https://challenges.cloudflare.com',
-    'https://*.challenges.cloudflare.com',
+  "media-src 'self' blob: data:",
+  buildDirective(
+    'connect-src',
+    "'self'",
+    ...TURNSTILE_SCRIPT_ORIGINS,
     'https://*.cloudflare.com',
-    'data:',
-    'blob:',
-    'wss:',
-    'https:',
-    TURNSTILE_ORIGIN,
     TURNSTILE_WSS_ORIGIN,
-    'https://*.cloudflare.com',
-    'wss://challenges.cloudflare.com',
     'wss://*.challenges.cloudflare.com',
     'wss://*.cloudflare.com',
-    CLERK_FRONTEND_API,
-    'https://*.clerk.accounts.dev',
+    ...CLERK_CONNECT_ORIGINS,
     'data:',
-  ].join(' '),
-  [
-    "frame-src 'self'",
-    TURNSTILE_ORIGIN,
-    CLERK_SCRIPT_ORIGINS,
-  ].join(' '),
-  `child-src 'self' blob: data: ${TURNSTILE_ORIGIN}`,
-  `worker-src 'self' blob: data: ${TURNSTILE_ORIGIN} ${CLERK_FRONTEND_API}`,
+    'blob:',
+    'https:',
+    'wss:',
+    isDev ? 'ws:' : null
+  ),
+  buildDirective(
+    'frame-src',
+    "'self'",
+    'data:',
+    'blob:',
+    ...TURNSTILE_SCRIPT_ORIGINS,
+    ...CLERK_SCRIPT_ORIGINS,
+    ...CLERK_PROTECT_ORIGINS
+  ),
+  buildDirective(
+    'child-src',
+    "'self'",
+    'blob:',
+    'data:',
+    ...TURNSTILE_SCRIPT_ORIGINS,
+    ...CLERK_SCRIPT_ORIGINS,
+    ...CLERK_PROTECT_ORIGINS
+  ),
+  buildDirective(
+    'worker-src',
+    "'self'",
+    'blob:',
+    'data:',
+    ...TURNSTILE_SCRIPT_ORIGINS,
+    ...CLERK_SCRIPT_ORIGINS,
+    ...CLERK_PROTECT_ORIGINS
+  ),
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
