@@ -29,8 +29,6 @@ export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
 const TOKEN_WAIT_MS = 8000;
 const MAX_RECOVER_ATTEMPTS = 3;
-const FRAME_READY_MS = 2500;
-const CHALLENGE_ORIGIN = 'https://challenges.cloudflare.com';
 
 const WIDGET_HOST_STYLE: CSSProperties = {
   position: 'fixed',
@@ -43,7 +41,6 @@ const WIDGET_HOST_STYLE: CSSProperties = {
   margin: 0,
   transform: 'translate(-100%, -100%)',
   overflow: 'visible',
-  pointerEvents: 'none',
 };
 
 const INTERACTIVE_HOST_STYLE: CSSProperties = {
@@ -67,34 +64,6 @@ const WIDGET_BOX_STYLE: CSSProperties = {
   minHeight: 65,
   overflow: 'visible',
 };
-
-function isChallengeFrame(iframe: HTMLIFrameElement) {
-  const src = iframe.getAttribute('src') || iframe.src || '';
-  return src.includes('challenges.cloudflare.com') || src.startsWith(CHALLENGE_ORIGIN);
-}
-
-function waitForChallengeFrame(host: HTMLElement | null, timeoutMs = FRAME_READY_MS) {
-  if (!host) return Promise.resolve(false);
-
-  const iframe = host.querySelector('iframe');
-  if (!iframe) return Promise.resolve(false);
-
-  return new Promise<boolean>((resolve) => {
-    let settled = false;
-    const finish = (ok: boolean) => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timer);
-      resolve(ok);
-    };
-
-    iframe.addEventListener('load', () => finish(true), { once: true });
-    if (isChallengeFrame(iframe)) {
-      window.requestAnimationFrame(() => finish(true));
-    }
-    const timer = window.setTimeout(() => finish(isChallengeFrame(iframe)), timeoutMs);
-  });
-}
 
 function subscribePortalTarget() {
   return () => undefined;
@@ -218,7 +187,6 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const mountedRef = useRef(true);
     const recoverAttemptsRef = useRef(0);
     const onSuccessRef = useRef(onSuccess);
-    const hostRef = useRef<HTMLDivElement | null>(null);
     const [interactive, setInteractive] = useState(false);
     const portalTarget = useSyncExternalStore(
       subscribePortalTarget,
@@ -249,21 +217,15 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       }
       isExecutingRef.current = true;
       pendingExecuteRef.current = false;
-      void waitForChallengeFrame(hostRef.current).finally(() => {
-        if (!mountedRef.current) {
-          isExecutingRef.current = false;
-          return;
+      try {
+        if (instance.isExpired()) {
+          instance.reset();
         }
-        try {
-          if (instance.isExpired()) {
-            instance.reset();
-          }
-          instance.execute();
-        } catch {
-          isExecutingRef.current = false;
-          pendingExecuteRef.current = false;
-        }
-      });
+        instance.execute();
+      } catch {
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
+      }
     }, []);
 
     useEffect(() => {
@@ -396,7 +358,6 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
 
     return createPortal(
       <div
-        ref={hostRef}
         aria-hidden={!interactive}
         data-turnstile-host=""
         data-turnstile-interactive={interactive ? '' : undefined}
@@ -422,7 +383,6 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
             action,
             appearance: 'interaction-only',
             execution: 'execute',
-            size: 'invisible',
             refreshExpired: 'auto',
             retry: 'auto',
           }}
