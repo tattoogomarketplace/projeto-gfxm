@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { CalendarDays, Home, MessageCircle, UserRound } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/use-haptic-feedback';
@@ -253,6 +254,8 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
+  const canPrefetchDashboard = Boolean(isAuthLoaded && isSignedIn);
   const role = useAuthStore((s) => s.role);
   const { t } = useI18n();
   const { triggerHaptic } = useHapticFeedback();
@@ -282,6 +285,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   // esteja em cache antes do toque e a troca de aba seja instantânea (sem tela
   // vazia / layout shift).
   useEffect(() => {
+    if (!canPrefetchDashboard) return;
     const warm = [
       '/dashboard/chat',
       '/dashboard/perfil',
@@ -293,7 +297,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
       `${homePath}?tab=agendar`,
     ];
     warm.forEach((href) => router.prefetch(href));
-  }, [router, homePath]);
+  }, [canPrefetchDashboard, router, homePath]);
 
   const navRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -524,7 +528,10 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
   const handleSelect = useCallback(
     (href: string, haptic = true) => {
       if (haptic) triggerHaptic('light');
-      if (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil')) {
+      if (
+        canPrefetchDashboard &&
+        (href.startsWith('/dashboard/chat') || href.startsWith('/dashboard/perfil'))
+      ) {
         router.prefetch(href);
       }
       if (isShellBypassedRoute(pathname, chatThreadActive)) {
@@ -536,7 +543,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
         });
       }
     },
-    [chatThreadActive, pathname, router, triggerHaptic]
+    [canPrefetchDashboard, chatThreadActive, pathname, router, triggerHaptic]
   );
 
   const commitTab = useCallback(
@@ -685,7 +692,7 @@ function BottomNavInner({ hidden = false }: BottomNavProps) {
             >
               <Link
                 href={href}
-                prefetch
+                prefetch={canPrefetchDashboard}
                 scroll={false}
                 draggable={false}
                 onContextMenu={(event) => event.preventDefault()}

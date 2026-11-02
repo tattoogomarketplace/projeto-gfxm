@@ -45,6 +45,10 @@ const isIgnoredStaticAsset = createRouteMatcher([
   '/icon-(.*)',
   '/icon.svg',
   '/offline.html',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/opengraph-image.png',
+  '/twitter-image.png',
 ]);
 
 function isPlatformPath(pathname: string): boolean {
@@ -60,7 +64,11 @@ function isPlatformPath(pathname: string): boolean {
     pathname === '/favicon.ico' ||
     pathname === '/apple-touch-icon.png' ||
     pathname === '/icon.svg' ||
-    pathname === '/offline.html'
+    pathname === '/offline.html' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/opengraph-image.png' ||
+    pathname === '/twitter-image.png'
   ) {
     return true;
   }
@@ -122,7 +130,7 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    '/((?!_next|favicon\\.ico|manifest\\.json|manifest\\.webmanifest|site\\.webmanifest|sw\\.js|workbox-|worker-|fallback-|icons/|apple-touch-icon|android-chrome-|[^?]*\\.(?:html?|css|js|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json)).*)',
+    '/((?!_next|favicon\\.ico|manifest\\.json|manifest\\.webmanifest|site\\.webmanifest|sw\\.js|workbox-|worker-|fallback-|icons/|apple-touch-icon|android-chrome-|robots\\.txt|sitemap\\.xml|opengraph-image|twitter-image|[^?]*\\.(?:html?|css|js|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp3|json|txt|xml)).*)',
     '/(api|trpc)(.*)',
     '/__clerk/(.*)',
   ],
