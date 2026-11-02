@@ -148,6 +148,17 @@ function matchByText(haystack: string): MessageKey | null {
   if (haystack.includes('form_password_incorrect') || haystack.includes('password is incorrect') || haystack.includes('incorrect password') || haystack.includes('current password') || haystack.includes('senha incorreta') || haystack.includes('senha inválida') || haystack.includes('senha invalida') || haystack.includes('senha atual incorreta')) {
     return 'errors.clerk.passwordIncorrect';
   }
+  if (
+    haystack.includes('form_identifier_not_found') ||
+    haystack.includes('form_identification_not_found') ||
+    haystack.includes('identifier_not_found') ||
+    haystack.includes("couldn't find your account") ||
+    haystack.includes('could not find your account') ||
+    haystack.includes('no account was found') ||
+    haystack.includes('no account found')
+  ) {
+    return 'errors.clerk.identifierNotFound';
+  }
   if (haystack.includes('clerk not ready') || haystack.includes('clerk is not') || haystack.includes('clerk não') || haystack.includes('clerk nao') || haystack.includes('not_ready') || haystack.includes('not ready')) {
     return 'errors.clerk.notReady';
   }
@@ -433,8 +444,16 @@ export function formatAppError(
   return t(key, undefined, locale);
 }
 
+const LOGIN_CREDENTIAL_KEYS = new Set<MessageKey>([
+  'errors.clerk.passwordIncorrect',
+  'errors.clerk.identifierNotFound',
+]);
+
 export function clerkErrorMessage(err: unknown, locale?: Locale): string {
   const key = resolveKey(err, 'auth');
+  if (LOGIN_CREDENTIAL_KEYS.has(key)) {
+    return t('errors.clerk.invalidCredentials', undefined, locale);
+  }
   // Em fluxos de autenticação o erro genérico ("Não foi possível autenticar.")
   // esconde a causa real. Quando o código do Clerk não é mapeado, expomos o
   // `longMessage` devolvido pelo próprio Clerk em vez de mascarar a falha.

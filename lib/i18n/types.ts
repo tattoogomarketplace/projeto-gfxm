@@ -764,6 +764,7 @@ export type MessageKey =
   | 'errors.sessionExpired'
   | 'errors.timeout'
   | 'errors.clerk.passwordIncorrect'
+  | 'errors.clerk.invalidCredentials'
   | 'errors.clerk.passwordPwned'
   | 'errors.clerk.passwordWeak'
   | 'errors.clerk.requiresVerification'
