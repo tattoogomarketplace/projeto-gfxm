@@ -31,6 +31,9 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   [
     "connect-src 'self'",
+    'https://challenges.cloudflare.com',
+    'https://*.challenges.cloudflare.com',
+    'https://*.cloudflare.com',
     'data:',
     'blob:',
     'wss:',
@@ -38,6 +41,8 @@ const contentSecurityPolicy = [
     TURNSTILE_ORIGIN,
     TURNSTILE_WSS_ORIGIN,
     'https://*.cloudflare.com',
+    'wss://challenges.cloudflare.com',
+    'wss://*.challenges.cloudflare.com',
     'wss://*.cloudflare.com',
     CLERK_FRONTEND_API,
     'https://*.clerk.accounts.dev',
