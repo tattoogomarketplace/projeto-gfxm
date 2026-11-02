@@ -29,17 +29,72 @@ export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 
 const TOKEN_WAIT_MS = 8000;
 const MAX_RECOVER_ATTEMPTS = 3;
+const FRAME_READY_MS = 2500;
+const CHALLENGE_ORIGIN = 'https://challenges.cloudflare.com';
 
 const WIDGET_HOST_STYLE: CSSProperties = {
   position: 'fixed',
   left: 0,
   top: 0,
   width: 300,
+  minWidth: 300,
   height: 65,
+  minHeight: 65,
   margin: 0,
   transform: 'translate(-100%, -100%)',
   overflow: 'visible',
+  pointerEvents: 'none',
 };
+
+const INTERACTIVE_HOST_STYLE: CSSProperties = {
+  position: 'fixed',
+  left: '50%',
+  top: '50%',
+  width: 300,
+  minWidth: 300,
+  minHeight: 65,
+  margin: 0,
+  transform: 'translate(-50%, -50%)',
+  overflow: 'visible',
+  pointerEvents: 'auto',
+  zIndex: 2147483000,
+};
+
+const WIDGET_BOX_STYLE: CSSProperties = {
+  width: 300,
+  minWidth: 300,
+  height: 65,
+  minHeight: 65,
+  overflow: 'visible',
+};
+
+function isChallengeFrame(iframe: HTMLIFrameElement) {
+  const src = iframe.getAttribute('src') || iframe.src || '';
+  return src.includes('challenges.cloudflare.com') || src.startsWith(CHALLENGE_ORIGIN);
+}
+
+function waitForChallengeFrame(host: HTMLElement | null, timeoutMs = FRAME_READY_MS) {
+  if (!host) return Promise.resolve(false);
+
+  const iframe = host.querySelector('iframe');
+  if (!iframe) return Promise.resolve(false);
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(ok);
+    };
+
+    iframe.addEventListener('load', () => finish(true), { once: true });
+    if (isChallengeFrame(iframe)) {
+      window.requestAnimationFrame(() => finish(true));
+    }
+    const timer = window.setTimeout(() => finish(isChallengeFrame(iframe)), timeoutMs);
+  });
+}
 
 function subscribePortalTarget() {
   return () => undefined;
@@ -163,6 +218,8 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const mountedRef = useRef(true);
     const recoverAttemptsRef = useRef(0);
     const onSuccessRef = useRef(onSuccess);
+    const hostRef = useRef<HTMLDivElement | null>(null);
+    const [interactive, setInteractive] = useState(false);
     const portalTarget = useSyncExternalStore(
       subscribePortalTarget,
       getPortalTargetSnapshot,
@@ -192,15 +249,21 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       }
       isExecutingRef.current = true;
       pendingExecuteRef.current = false;
-      try {
-        if (instance.isExpired()) {
-          instance.reset();
+      void waitForChallengeFrame(hostRef.current).finally(() => {
+        if (!mountedRef.current) {
+          isExecutingRef.current = false;
+          return;
         }
-        instance.execute();
-      } catch {
-        isExecutingRef.current = false;
-        pendingExecuteRef.current = false;
-      }
+        try {
+          if (instance.isExpired()) {
+            instance.reset();
+          }
+          instance.execute();
+        } catch {
+          isExecutingRef.current = false;
+          pendingExecuteRef.current = false;
+        }
+      });
     }, []);
 
     useEffect(() => {
@@ -244,6 +307,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           isExecutingRef.current = false;
           pendingExecuteRef.current = false;
           recoverAttemptsRef.current = 0;
+          setInteractive(false);
           resetTurnstileWidget(widgetRef.current, widgetIdRef.current);
         },
         getToken: () => widgetRef.current?.getResponse(),
@@ -255,9 +319,10 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const handleWidgetLoad = useCallback(
       (widgetId: string) => {
         widgetIdRef.current = widgetId;
-        if (!mountedRef.current || isExecutingRef.current) return;
-        pendingExecuteRef.current = false;
-        executeChallenge();
+        if (!mountedRef.current) return;
+        if (pendingExecuteRef.current && !isExecutingRef.current) {
+          executeChallenge();
+        }
       },
       [executeChallenge]
     );
@@ -292,11 +357,21 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       isExecutingRef.current = false;
       pendingExecuteRef.current = false;
       recoverAttemptsRef.current = 0;
+      setInteractive(false);
       onSuccessRef.current(token);
+    }, []);
+
+    const handleBeforeInteractive = useCallback(() => {
+      setInteractive(true);
+    }, []);
+
+    const handleAfterInteractive = useCallback(() => {
+      setInteractive(false);
     }, []);
 
     const handleError = useCallback(
       (errorCode?: string) => {
+        setInteractive(false);
         recoverFromError();
         onError?.(errorCode);
       },
@@ -304,11 +379,13 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     );
 
     const handleExpire = useCallback(() => {
+      setInteractive(false);
       recoverFromExpire();
       onExpire?.();
     }, [onExpire, recoverFromExpire]);
 
     const handleTimeout = useCallback(() => {
+      setInteractive(false);
       recoverFromError();
       onError?.('timeout');
     }, [onError, recoverFromError]);
@@ -318,15 +395,28 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     }
 
     return createPortal(
-      <div aria-hidden style={WIDGET_HOST_STYLE}>
+      <div
+        ref={hostRef}
+        aria-hidden={!interactive}
+        data-turnstile-host=""
+        data-turnstile-interactive={interactive ? '' : undefined}
+        style={interactive ? INTERACTIVE_HOST_STYLE : WIDGET_HOST_STYLE}
+      >
+        <style>{`
+[data-turnstile-host] iframe{width:300px!important;min-width:300px!important;height:65px!important;min-height:65px!important;overflow:visible!important}
+[data-turnstile-host][data-turnstile-interactive] iframe{min-height:150px!important;height:auto!important}
+`}</style>
         <Turnstile
           ref={widgetRef}
           siteKey={TURNSTILE_SITE_KEY}
+          style={WIDGET_BOX_STYLE}
           onSuccess={handleSuccess}
           onError={handleError}
           onExpire={handleExpire}
           onTimeout={handleTimeout}
           onWidgetLoad={handleWidgetLoad}
+          onBeforeInteractive={handleBeforeInteractive}
+          onAfterInteractive={handleAfterInteractive}
           options={{
             theme,
             action,
