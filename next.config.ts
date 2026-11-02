@@ -40,7 +40,7 @@ const contentSecurityPolicy = [
     CLERK_SCRIPT_ORIGINS,
   ].join(' '),
   `child-src 'self' blob: ${TURNSTILE_ORIGIN}`,
-  `worker-src 'self' blob: ${CLERK_FRONTEND_API}`,
+  `worker-src 'self' blob: ${TURNSTILE_ORIGIN} ${CLERK_FRONTEND_API}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -126,6 +126,7 @@ if (isDev) {
         /clerk\.accounts\.dev/,
         /clerk\.services/,
         /clerk\.com/,
+        /challenges\.cloudflare\.com/,
       ],
       runtimeCaching: [
         {
@@ -138,6 +139,10 @@ if (isDev) {
         },
         {
           urlPattern: /^https?:\/\/([^/]+\.)?(clerk\.accounts\.dev|clerk\.services|clerk\.com)(\/.*)?$/,
+          handler: 'NetworkOnly',
+        },
+        {
+          urlPattern: /^https:\/\/challenges\.cloudflare\.com\/.*/i,
           handler: 'NetworkOnly',
         },
       ],

@@ -532,10 +532,6 @@ export default function RegisterPage() {
 
   return (
     <AuthScreen className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <div
-        id="clerk-captcha"
-        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-      ></div>
       {isActivating ? (
         <div className="screen-fade-in flex w-full max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-center shadow-2xl sm:p-8">
           <TattooMachineLoader label={getOnboardingLoadingMessage(userRole)} />

@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -26,6 +27,15 @@ export const TURNSTILE_DEV_BYPASS_TOKEN = 'turnstile-dev-bypass';
 const TOKEN_WAIT_MS = 8000;
 
 const challengeExecutors = new Set<() => void>();
+
+function destroyWidget(widgetId: string | null) {
+  if (!widgetId) return;
+  try {
+    window.turnstile?.remove(widgetId);
+  } catch {
+    void 0;
+  }
+}
 
 function runInvisibleChallenge() {
   challengeExecutors.forEach((run) => run());
@@ -100,6 +110,10 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     ref
   ) {
     const widgetRef = useRef<TurnstileInstance | undefined>(undefined);
+    const widgetIdRef = useRef<string | null>(null);
+    const isExecutingRef = useRef(false);
+    const pendingExecuteRef = useRef(false);
+    const mountedRef = useRef(true);
     const onSuccessRef = useRef(onSuccess);
     const configured = TURNSTILE_SITE_KEY.length > 0;
 
@@ -108,7 +122,39 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     }, [onSuccess]);
 
     const executeChallenge = useCallback(() => {
-      widgetRef.current?.execute();
+      if (!mountedRef.current || isExecutingRef.current) return;
+      const instance = widgetRef.current;
+      if (!instance) {
+        pendingExecuteRef.current = true;
+        return;
+      }
+      try {
+        if (!instance.isExpired()) {
+          const existing = instance.getResponse();
+          if (existing) return;
+        }
+      } catch {
+        pendingExecuteRef.current = true;
+        return;
+      }
+      isExecutingRef.current = true;
+      pendingExecuteRef.current = false;
+      try {
+        if (instance.isExpired()) {
+          instance.reset();
+        }
+        instance.execute();
+      } catch {
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
+      }
+    }, []);
+
+    useEffect(() => {
+      mountedRef.current = true;
+      return () => {
+        mountedRef.current = false;
+      };
     }, []);
 
     useEffect(() => {
@@ -127,28 +173,59 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       };
     }, [configured, executeChallenge]);
 
+    useLayoutEffect(() => {
+      if (!configured) return;
+      return () => {
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
+        const widgetId = widgetIdRef.current;
+        widgetIdRef.current = null;
+        destroyWidget(widgetId);
+      };
+    }, [configured]);
+
     useImperativeHandle(
       ref,
       () => ({
-        reset: () => widgetRef.current?.reset(),
+        reset: () => {
+          isExecutingRef.current = false;
+          pendingExecuteRef.current = false;
+          widgetRef.current?.reset();
+        },
         getToken: () => widgetRef.current?.getResponse(),
         execute: executeChallenge,
       }),
       [executeChallenge]
     );
 
+    const handleWidgetLoad = useCallback(
+      (widgetId: string) => {
+        widgetIdRef.current = widgetId;
+        if (!mountedRef.current || isExecutingRef.current) return;
+        pendingExecuteRef.current = false;
+        executeChallenge();
+      },
+      [executeChallenge]
+    );
+
     const handleSuccess = useCallback((token: string) => {
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
       onSuccessRef.current(token);
     }, []);
 
     const handleError = useCallback(
       (errorCode?: string) => {
+        isExecutingRef.current = false;
+        pendingExecuteRef.current = false;
         onError?.(errorCode);
       },
       [onError]
     );
 
     const handleExpire = useCallback(() => {
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
       onExpire?.();
     }, [onExpire]);
 
@@ -167,7 +244,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           onSuccess={handleSuccess}
           onError={handleError}
           onExpire={handleExpire}
-          onWidgetLoad={executeChallenge}
+          onWidgetLoad={handleWidgetLoad}
           options={{
             theme,
             action,
