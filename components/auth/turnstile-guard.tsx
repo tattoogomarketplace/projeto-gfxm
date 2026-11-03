@@ -17,6 +17,22 @@ import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
 
+const TURNSTILE_ONLOAD_NAME = 'onloadTurnstileCallback';
+
+declare global {
+  interface Window {
+    onloadTurnstileCallback?: () => void;
+  }
+}
+
+function ensureTurnstileOnloadCallback() {
+  if (typeof window === 'undefined') return;
+  if (typeof window.onloadTurnstileCallback === 'function') return;
+  window.onloadTurnstileCallback = function onloadTurnstileCallback() {};
+}
+
+ensureTurnstileOnloadCallback();
+
 /**
  * Sentinel usado quando a chave pública não está configurada no cliente.
  *
@@ -470,9 +486,29 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     }, [recoverFromFailure]);
 
     const scriptOptions = useMemo(
-      () => ({ onError: handleScriptError }),
-      [handleScriptError]
+      () => ({
+        async: true,
+        defer: true,
+        appendTo: 'head' as const,
+        onLoadCallbackName: TURNSTILE_ONLOAD_NAME,
+      }),
+      []
     );
+
+    useLayoutEffect(() => {
+      ensureTurnstileOnloadCallback();
+    }, []);
+
+    useEffect(() => {
+      if (!configured) return;
+      const script = document.getElementById('cf-turnstile-script');
+      if (!script) return;
+      const onErr = () => handleScriptError();
+      script.addEventListener('error', onErr);
+      return () => {
+        script.removeEventListener('error', onErr);
+      };
+    }, [configured, handleScriptError]);
 
     if (!configured || !portalTarget) {
       return null;
