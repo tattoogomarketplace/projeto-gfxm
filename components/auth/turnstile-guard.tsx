@@ -13,6 +13,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
+import Script from 'next/script';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
@@ -565,7 +566,14 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       return null;
     }
 
-    return createPortal(
+    return (
+      <>
+        <Script
+          id="cf-turnstile-script"
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+        />
+        {createPortal(
       <div
         ref={hostRef}
         aria-hidden={!interactive}
@@ -583,6 +591,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           ref={widgetRef}
           id="tattoogo-turnstile-gate"
           siteKey={TURNSTILE_SITE_KEY}
+          injectScript={false}
           style={WIDGET_BOX_STYLE}
           scriptOptions={scriptOptions}
           onSuccess={handleSuccess}
@@ -596,7 +605,9 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           options={widgetOptions}
         />
       </div>,
-      portalTarget
+        portalTarget
+        )}
+      </>
     );
   }
 );
