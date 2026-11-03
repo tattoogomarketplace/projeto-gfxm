@@ -363,6 +363,8 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           const existing = instance.getResponse();
           if (existing) {
             pendingExecuteRef.current = false;
+            isExecutingRef.current = false;
+            onSuccessRef.current(existing);
             return;
           }
         }
@@ -460,9 +462,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         waitForTurnstileFrameCommit(hostRef.current, () => {
           if (!mountedRef.current) return;
           needsResetRef.current = false;
-          if (pendingExecuteRef.current && !isExecutingRef.current) {
-            executeChallenge();
-          }
+          executeChallenge();
         });
       },
       [executeChallenge]
@@ -537,7 +537,8 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       () => ({
         theme,
         action,
-        appearance: 'interaction-only' as const,
+        size: 'invisible' as const,
+        appearance: 'execute' as const,
         execution: 'execute' as const,
         refreshExpired: 'auto' as const,
         refreshTimeout: 'auto' as const,

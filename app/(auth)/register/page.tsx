@@ -348,7 +348,7 @@ export default function RegisterPage() {
     const officialName = isStudio ? razaoSocial.trim() : '';
     setStudioMeta(isStudio && officialName ? { cnpj: cnpjDigits, razaoSocial: officialName } : null);
     try {
-      const gateToken = turnstileToken || (await waitForTurnstileToken());
+      const gateToken = turnstileToken.trim() || (await waitForTurnstileToken());
       if (!gateToken) {
         toast.error(t('errors.clerk.requiresVerification'));
         return;

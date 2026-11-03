@@ -116,7 +116,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const gateToken = turnstileToken || (await waitForTurnstileToken());
+      const gateToken = turnstileToken.trim() || (await waitForTurnstileToken());
       if (!gateToken) {
         toast.error(t('errors.clerk.requiresVerification'));
         return;
