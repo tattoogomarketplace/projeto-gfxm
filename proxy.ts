@@ -147,10 +147,18 @@ function stripForeignCsp(res: Response) {
   }
 }
 
+function neutralizeCrossOriginIsolation(res: Response) {
+  res.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+}
+
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
   const result = clerkHandler(req, event);
   return Promise.resolve(result).then((res) => {
-    if (res) stripForeignCsp(res);
+    if (res) {
+      stripForeignCsp(res);
+      neutralizeCrossOriginIsolation(res);
+    }
     return res;
   });
 }

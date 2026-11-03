@@ -17,6 +17,7 @@ import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 
 export const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim();
 
+const SITE_ORIGIN = 'https://tattoogomk.com.br';
 const TURNSTILE_ONLOAD_NAME = 'onloadTurnstileCallback';
 
 declare global {
@@ -98,13 +99,27 @@ function getPortalTargetServerSnapshot(): HTMLElement | null {
 
 const challengeExecutors = new Set<() => void>();
 
-function destroyWidget(widgetId: string | null) {
-  if (!widgetId) return;
+function destroyWidget(
+  instance: TurnstileInstance | undefined,
+  widgetId: string | null,
+  host: HTMLElement | null
+) {
   try {
-    window.turnstile?.remove(widgetId);
+    instance?.remove();
   } catch {
     void 0;
   }
+  if (widgetId) {
+    try {
+      window.turnstile?.remove(widgetId);
+    } catch {
+      void 0;
+    }
+  }
+  if (!host) return;
+  host.querySelectorAll('iframe').forEach((frame) => {
+    frame.remove();
+  });
 }
 
 function resetTurnstileWidget(
@@ -219,6 +234,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     ref
   ) {
     const widgetRef = useRef<TurnstileInstance | undefined>(undefined);
+    const hostRef = useRef<HTMLDivElement | null>(null);
     const widgetIdRef = useRef<string | null>(null);
     const isExecutingRef = useRef(false);
     const pendingExecuteRef = useRef(false);
@@ -385,14 +401,17 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
 
     useLayoutEffect(() => {
       if (!configured) return;
+      const host = hostRef.current;
       return () => {
         clearExecutionWatchdog();
         clearPendingReset();
         isExecutingRef.current = false;
         pendingExecuteRef.current = false;
         const widgetId = widgetIdRef.current;
+        const instance = widgetRef.current;
         widgetIdRef.current = null;
-        destroyWidget(widgetId);
+        widgetRef.current = undefined;
+        destroyWidget(instance, widgetId, host);
       };
     }, [configured, clearExecutionWatchdog, clearPendingReset]);
 
@@ -516,8 +535,10 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
 
     return createPortal(
       <div
+        ref={hostRef}
         aria-hidden={!interactive}
         data-turnstile-host=""
+        data-turnstile-origin={SITE_ORIGIN}
         data-turnstile-interactive={interactive ? '' : undefined}
         style={interactive ? INTERACTIVE_HOST_STYLE : WIDGET_HOST_STYLE}
       >
