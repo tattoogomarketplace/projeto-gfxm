@@ -129,21 +129,53 @@ const clerkHandler = clerkMiddleware(
   }
 );
 
-function allowsTurnstileSchemas(policy: string): boolean {
-  return /connect-src[^;]*\bdata:/.test(policy) && /connect-src[^;]*\bblob:/.test(policy);
+const TURNSTILE_CONNECT_SOURCES = ['data:', 'blob:'] as const;
+const TURNSTILE_WORKER_SOURCES = ["'self'", 'blob:', 'data:'] as const;
+
+function cspDirectiveName(part: string): string {
+  return part.trim().split(/\s+/, 1)[0]?.toLowerCase() ?? '';
+}
+
+function ensureCspSources(policy: string, directive: string, sources: readonly string[]): string {
+  const parts = policy
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  let found = false;
+  const next = parts.map((part) => {
+    if (cspDirectiveName(part) !== directive) return part;
+    found = true;
+    const tokens = part.split(/\s+/);
+    const existing = new Set(tokens);
+    const missing = sources.filter((source) => !existing.has(source));
+    if (missing.length === 0) return part;
+    return [tokens[0], ...missing, ...tokens.slice(1)].join(' ');
+  });
+  if (!found) {
+    next.push([directive, ...sources].join(' '));
+  }
+  return next.join('; ');
+}
+
+function patchTurnstileCsp(policy: string): string {
+  return ensureCspSources(
+    ensureCspSources(policy, 'connect-src', TURNSTILE_CONNECT_SOURCES),
+    'worker-src',
+    TURNSTILE_WORKER_SOURCES
+  );
 }
 
 function stripForeignCsp(res: Response) {
-  const kept: string[] = [];
+  const policies: string[] = [];
   res.headers.forEach((value, key) => {
-    if (key.toLowerCase() === 'content-security-policy' && allowsTurnstileSchemas(value)) {
-      kept.push(value);
+    if (key.toLowerCase() === 'content-security-policy') {
+      policies.push(value);
     }
   });
   res.headers.delete('Content-Security-Policy');
   res.headers.delete('Content-Security-Policy-Report-Only');
-  for (const value of kept) {
-    res.headers.append('Content-Security-Policy', value);
+  for (const value of policies) {
+    res.headers.append('Content-Security-Policy', patchTurnstileCsp(value));
   }
 }
 

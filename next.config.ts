@@ -54,14 +54,14 @@ const contentSecurityPolicy = [
   buildDirective(
     'connect-src',
     "'self'",
+    'data:',
+    'blob:',
     ...TURNSTILE_SCRIPT_ORIGINS,
     'https://*.cloudflare.com',
     TURNSTILE_WSS_ORIGIN,
     'wss://*.challenges.cloudflare.com',
     'wss://*.cloudflare.com',
     ...CLERK_CONNECT_ORIGINS,
-    'data:',
-    'blob:',
     'https:',
     'wss:',
     isDev ? 'ws:' : null
