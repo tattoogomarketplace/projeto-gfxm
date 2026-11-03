@@ -136,23 +136,6 @@ function runStableWidgetReset() {
   });
 }
 
-function destroyWidget(
-  instance: TurnstileInstance | undefined,
-  widgetId: string | null
-) {
-  try {
-    instance?.remove();
-  } catch {
-    void 0;
-  }
-  if (!widgetId) return;
-  try {
-    window.turnstile?.remove(widgetId);
-  } catch {
-    void 0;
-  }
-}
-
 function resetTurnstileWidget(
   instance: TurnstileInstance | undefined,
   widgetId: string | null
@@ -435,11 +418,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         clearPendingReset();
         isExecutingRef.current = false;
         pendingExecuteRef.current = false;
-        const widgetId = widgetIdRef.current;
-        const instance = widgetRef.current;
         widgetIdRef.current = null;
-        widgetRef.current = undefined;
-        destroyWidget(instance, widgetId);
       };
     }, [configured, clearExecutionWatchdog, clearPendingReset]);
 
@@ -554,6 +533,19 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       []
     );
 
+    const widgetOptions = useMemo(
+      () => ({
+        theme,
+        action,
+        appearance: 'interaction-only' as const,
+        execution: 'execute' as const,
+        refreshExpired: 'auto' as const,
+        refreshTimeout: 'auto' as const,
+        retry: 'auto' as const,
+      }),
+      [action, theme]
+    );
+
     useLayoutEffect(() => {
       ensureTurnstileOnloadCallback();
     }, []);
@@ -589,6 +581,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
 `}</style>
         <Turnstile
           ref={widgetRef}
+          id="tattoogo-turnstile-gate"
           siteKey={TURNSTILE_SITE_KEY}
           style={WIDGET_BOX_STYLE}
           scriptOptions={scriptOptions}
@@ -600,15 +593,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
           onWidgetLoad={handleWidgetLoad}
           onBeforeInteractive={handleBeforeInteractive}
           onAfterInteractive={handleAfterInteractive}
-          options={{
-            theme,
-            action,
-            appearance: 'interaction-only',
-            execution: 'execute',
-            refreshExpired: 'auto',
-            refreshTimeout: 'auto',
-            retry: 'auto',
-          }}
+          options={widgetOptions}
         />
       </div>,
       portalTarget

@@ -101,6 +101,7 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+    reactStrictMode: false,
     turbopack: {},
     experimental: {
       staleTimes: {
