@@ -98,6 +98,17 @@ function getPortalTargetServerSnapshot(): HTMLElement | null {
 }
 
 const challengeExecutors = new Set<() => void>();
+const widgetResetters = new Set<() => void>();
+
+function runStableWidgetReset() {
+  widgetResetters.forEach((reset) => {
+    try {
+      reset();
+    } catch {
+      void 0;
+    }
+  });
+}
 
 function destroyWidget(
   instance: TurnstileInstance | undefined,
@@ -164,7 +175,6 @@ export type TurnstileGuardProps = {
 
 export function useTurnstileToken() {
   const [token, setToken] = useState('');
-  const [nonce, setNonce] = useState(0);
   const tokenRef = useRef('');
   const waiterRef = useRef<((next: string | null) => void) | null>(null);
 
@@ -222,10 +232,10 @@ export function useTurnstileToken() {
     tokenRef.current = '';
     setToken('');
     settleWaiter(null);
-    setNonce((current) => current + 1);
+    runStableWidgetReset();
   }, [settleWaiter]);
 
-  return { token, nonce, onSuccess, onExpire, onError, waitForToken, reset };
+  return { token, nonce: 0, onSuccess, onExpire, onError, waitForToken, reset };
 }
 
 export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardProps>(
@@ -415,26 +425,35 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       };
     }, [configured, clearExecutionWatchdog, clearPendingReset]);
 
+    const resetInPlace = useCallback(() => {
+      clearExecutionWatchdog();
+      clearPendingReset();
+      isExecutingRef.current = false;
+      pendingExecuteRef.current = false;
+      needsResetRef.current = true;
+      recoverAttemptsRef.current = 0;
+      interactiveRef.current = false;
+      setInteractive(false);
+      if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
+        needsResetRef.current = false;
+      }
+    }, [clearExecutionWatchdog, clearPendingReset]);
+
+    useEffect(() => {
+      widgetResetters.add(resetInPlace);
+      return () => {
+        widgetResetters.delete(resetInPlace);
+      };
+    }, [resetInPlace]);
+
     useImperativeHandle(
       ref,
       () => ({
-        reset: () => {
-          clearExecutionWatchdog();
-          clearPendingReset();
-          isExecutingRef.current = false;
-          pendingExecuteRef.current = false;
-          needsResetRef.current = true;
-          recoverAttemptsRef.current = 0;
-          interactiveRef.current = false;
-          setInteractive(false);
-          if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
-            needsResetRef.current = false;
-          }
-        },
+        reset: resetInPlace,
         getToken: () => widgetRef.current?.getResponse(),
         execute: executeChallenge,
       }),
-      [clearExecutionWatchdog, clearPendingReset, executeChallenge]
+      [executeChallenge, resetInPlace]
     );
 
     const handleWidgetLoad = useCallback(

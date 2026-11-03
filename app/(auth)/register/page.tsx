@@ -198,7 +198,6 @@ export default function RegisterPage() {
   const [studioMeta, setStudioMeta] = useState<{ cnpj: string; razaoSocial: string } | null>(null);
   const {
     token: turnstileToken,
-    nonce: turnstileNonce,
     onSuccess: onTurnstileSuccess,
     onExpire: onTurnstileExpire,
     onError: onTurnstileError,
@@ -772,7 +771,6 @@ export default function RegisterPage() {
           </div>
 
           <TurnstileGuard
-            key={turnstileNonce}
             action="register"
             onSuccess={onTurnstileSuccess}
             onExpire={onTurnstileExpire}

@@ -43,7 +43,6 @@ export default function LoginPage() {
   const [bridging, setBridging] = useState(false);
   const {
     token: turnstileToken,
-    nonce: turnstileNonce,
     onSuccess: onTurnstileSuccess,
     onExpire: onTurnstileExpire,
     onError: onTurnstileError,
@@ -371,7 +370,6 @@ export default function LoginPage() {
           </div>
 
           <TurnstileGuard
-            key={turnstileNonce}
             action="login"
             onSuccess={onTurnstileSuccess}
             onExpire={onTurnstileExpire}
