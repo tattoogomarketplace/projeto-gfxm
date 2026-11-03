@@ -537,8 +537,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       () => ({
         theme,
         action,
-        size: 'invisible' as const,
-        appearance: 'execute' as const,
+        appearance: 'interaction-only' as const,
         execution: 'execute' as const,
         refreshExpired: 'auto' as const,
         refreshTimeout: 'auto' as const,
