@@ -85,6 +85,32 @@ const WIDGET_BOX_STYLE: CSSProperties = {
   overflow: 'visible',
 };
 
+const TURNSTILE_FRAME_HOST = 'challenges.cloudflare.com';
+
+function isTurnstileFrameCommitted(host: HTMLElement | null): boolean {
+  if (!host || !host.isConnected) return false;
+  const frames = host.querySelectorAll('iframe');
+  for (let i = 0; i < frames.length; i += 1) {
+    const src = frames[i].getAttribute('src') || frames[i].src || '';
+    if (src.indexOf(TURNSTILE_FRAME_HOST) !== -1) return true;
+  }
+  return false;
+}
+
+function waitForTurnstileFrameCommit(host: HTMLElement | null, onReady: () => void) {
+  const started = Date.now();
+  const tick = () => {
+    if (!host || !host.isConnected) return;
+    if (isTurnstileFrameCommitted(host)) {
+      onReady();
+      return;
+    }
+    if (Date.now() - started > TOKEN_WAIT_MS) return;
+    window.requestAnimationFrame(tick);
+  };
+  window.requestAnimationFrame(tick);
+}
+
 function subscribePortalTarget() {
   return () => undefined;
 }
@@ -112,25 +138,19 @@ function runStableWidgetReset() {
 
 function destroyWidget(
   instance: TurnstileInstance | undefined,
-  widgetId: string | null,
-  host: HTMLElement | null
+  widgetId: string | null
 ) {
   try {
     instance?.remove();
   } catch {
     void 0;
   }
-  if (widgetId) {
-    try {
-      window.turnstile?.remove(widgetId);
-    } catch {
-      void 0;
-    }
+  if (!widgetId) return;
+  try {
+    window.turnstile?.remove(widgetId);
+  } catch {
+    void 0;
   }
-  if (!host) return;
-  host.querySelectorAll('iframe').forEach((frame) => {
-    frame.remove();
-  });
 }
 
 function resetTurnstileWidget(
@@ -294,6 +314,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       resetTimerRef.current = window.setTimeout(() => {
         resetTimerRef.current = null;
         if (!mountedRef.current) return;
+        if (!isTurnstileFrameCommitted(hostRef.current)) return;
         if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
           needsResetRef.current = false;
         }
@@ -350,7 +371,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const executeChallenge = useCallback(() => {
       if (!mountedRef.current || isExecutingRef.current) return;
       const instance = widgetRef.current;
-      if (!instance) {
+      if (!instance || !widgetIdRef.current || !isTurnstileFrameCommitted(hostRef.current)) {
         pendingExecuteRef.current = true;
         return;
       }
@@ -367,8 +388,6 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         return;
       }
 
-      // Nova tentativa iniciada pelo formulário: zera o orçamento de
-      // recuperação para que o usuário nunca fique permanentemente bloqueado.
       recoverAttemptsRef.current = 0;
       pendingExecuteRef.current = false;
       isExecutingRef.current = true;
@@ -411,7 +430,6 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
 
     useLayoutEffect(() => {
       if (!configured) return;
-      const host = hostRef.current;
       return () => {
         clearExecutionWatchdog();
         clearPendingReset();
@@ -421,7 +439,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         const instance = widgetRef.current;
         widgetIdRef.current = null;
         widgetRef.current = undefined;
-        destroyWidget(instance, widgetId, host);
+        destroyWidget(instance, widgetId);
       };
     }, [configured, clearExecutionWatchdog, clearPendingReset]);
 
@@ -434,6 +452,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
       recoverAttemptsRef.current = 0;
       interactiveRef.current = false;
       setInteractive(false);
+      if (!isTurnstileFrameCommitted(hostRef.current)) return;
       if (resetTurnstileWidget(widgetRef.current, widgetIdRef.current)) {
         needsResetRef.current = false;
       }
@@ -459,11 +478,13 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
     const handleWidgetLoad = useCallback(
       (widgetId: string) => {
         widgetIdRef.current = widgetId;
-        needsResetRef.current = false;
-        if (!mountedRef.current) return;
-        if (pendingExecuteRef.current && !isExecutingRef.current) {
-          executeChallenge();
-        }
+        waitForTurnstileFrameCommit(hostRef.current, () => {
+          if (!mountedRef.current) return;
+          needsResetRef.current = false;
+          if (pendingExecuteRef.current && !isExecutingRef.current) {
+            executeChallenge();
+          }
+        });
       },
       [executeChallenge]
     );
@@ -562,6 +583,7 @@ export const TurnstileGuard = forwardRef<TurnstileGuardHandle, TurnstileGuardPro
         style={interactive ? INTERACTIVE_HOST_STYLE : WIDGET_HOST_STYLE}
       >
         <style>{`
+[data-turnstile-host]>div{width:300px!important;min-width:300px!important;height:65px!important;min-height:65px!important;overflow:visible!important}
 [data-turnstile-host] iframe{width:300px!important;min-width:300px!important;height:65px!important;min-height:65px!important;overflow:visible!important}
 [data-turnstile-host][data-turnstile-interactive] iframe{min-height:150px!important;height:auto!important}
 `}</style>
