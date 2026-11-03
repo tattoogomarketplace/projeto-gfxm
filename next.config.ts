@@ -34,11 +34,15 @@ function buildDirective(name: string, ...sources: Array<string | false | null | 
 
 const contentSecurityPolicy = [
   "default-src 'self'",
+  // 'unsafe-eval' is required in production too: Clerk + Turnstile compile
+  // challenge workers via eval/new Function. Trade-off: a successful XSS can
+  // eval attacker code. Compensated by object-src 'none', strict form-action,
+  // and Turnstile on auth surfaces. Do not gate this on isDev.
   buildDirective(
     'script-src',
     "'self'",
     "'unsafe-inline'",
-    isDev ? "'unsafe-eval'" : null,
+    "'unsafe-eval'",
     ...TURNSTILE_SCRIPT_ORIGINS,
     ...CLERK_SCRIPT_ORIGINS,
     ...CLERK_PROTECT_ORIGINS
@@ -92,7 +96,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  "frame-ancestors 'self'",
   'upgrade-insecure-requests',
 ].join('; ');
 
@@ -133,10 +137,20 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "DENY" },
+          // SAMEORIGIN matches frame-ancestors 'self'. .cursorrules item 8 asked
+          // for DENY; this task requires 'self'/SAMEORIGIN so Clerk/Turnstile
+          // same-origin frames are not in conflict with XFO.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
+        ],
+      },
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
       {
@@ -152,18 +166,25 @@ const nextConfig: NextConfig = {
 if (isDev) {
   module.exports = nextConfig;
 } else {
+  // Option A: next-pwa stays disabled so it cannot overwrite public/sw.js.
+  // The custom SW in public/sw.js (CACHE_VERSION tattoogo-mk-v4) is the only
+  // worker. cacheStartUrl/dynamicStartUrl false prevents Workbox from
+  // precaching / with a stale CSP if this plugin is re-enabled.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const withPWA = require('@ducanh2912/next-pwa').default({
     dest: 'public',
     cacheOnFrontEndNav: true,
     aggressiveFrontEndNavCaching: false,
     reloadOnOnline: true,
-    disable: false,
+    disable: true,
+    cacheStartUrl: false,
+    dynamicStartUrl: false,
     fallbacks: { document: '/offline.html' },
     extendDefaultRuntimeCaching: true,
     workboxOptions: {
       skipWaiting: true,
       clientsClaim: true,
+      cleanupOutdatedCaches: true,
       navigateFallbackDenylist: [
         /^\/register/,
         /^\/login/,
@@ -171,6 +192,7 @@ if (isDev) {
         /^\/sign-in/,
         /^\/sign-up/,
         /^\/api\//,
+        /^\/__clerk/,
         /clerk\.accounts\.dev/,
         /clerk\.services/,
         /clerk\.com/,
@@ -178,7 +200,7 @@ if (isDev) {
       ],
       runtimeCaching: [
         {
-          urlPattern: /\/(login|register|forgot-password|sign-in|sign-up)(\/.*)?$/,
+          urlPattern: /\/(login|register|forgot-password|sign-in|sign-up|__clerk)(\/.*)?$/,
           handler: 'NetworkOnly',
         },
         {

@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import type { NextFetchEvent, NextRequest } from 'next/server';
 import { enforceApiRateLimit } from '@/lib/security/rate-limit';
 
 const LOGIN_PATH = '/login';
@@ -95,7 +96,7 @@ function nextWithPathname(req: Request, pathname: string) {
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
-export default clerkMiddleware(
+const clerkHandler = clerkMiddleware(
   async (auth, req) => {
     const { pathname } = req.nextUrl;
 
@@ -127,6 +128,32 @@ export default clerkMiddleware(
     signUpUrl: SIGN_UP_PATH,
   }
 );
+
+function allowsTurnstileSchemas(policy: string): boolean {
+  return /connect-src[^;]*\bdata:/.test(policy) && /connect-src[^;]*\bblob:/.test(policy);
+}
+
+function stripForeignCsp(res: Response) {
+  const kept: string[] = [];
+  res.headers.forEach((value, key) => {
+    if (key.toLowerCase() === 'content-security-policy' && allowsTurnstileSchemas(value)) {
+      kept.push(value);
+    }
+  });
+  res.headers.delete('Content-Security-Policy');
+  res.headers.delete('Content-Security-Policy-Report-Only');
+  for (const value of kept) {
+    res.headers.append('Content-Security-Policy', value);
+  }
+}
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  const result = clerkHandler(req, event);
+  return Promise.resolve(result).then((res) => {
+    if (res) stripForeignCsp(res);
+    return res;
+  });
+}
 
 export const config = {
   matcher: [

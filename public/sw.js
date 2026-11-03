@@ -1,10 +1,9 @@
-const CACHE_VERSION = 'tattoogo-mk-v3';
+const CACHE_VERSION = 'tattoogo-mk-v4';
 const SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const IMAGE_CACHE = CACHE_VERSION + '-images';
 
 const APP_SHELL = [
-  '/',
   '/offline.html',
   '/manifest.json',
   '/icon-192.png',
@@ -52,8 +51,10 @@ self.addEventListener('fetch', function (event) {
   var bypassAuthAndApi =
     url.pathname.indexOf('/login') === 0 ||
     url.pathname.indexOf('/register') === 0 ||
+    url.pathname.indexOf('/forgot-password') === 0 ||
     url.pathname.indexOf('/sign-in') === 0 ||
     url.pathname.indexOf('/sign-up') === 0 ||
+    url.pathname.indexOf('/__clerk') === 0 ||
     url.pathname.indexOf('/api/') === 0 ||
     url.hostname.indexOf('clerk.accounts.dev') !== -1 ||
     url.hostname.indexOf('clerk.services') !== -1 ||
@@ -89,6 +90,9 @@ self.addEventListener('message', function (event) {
  * with truncated range bodies, so we require an exact status 200 and a GET.
  */
 function canCache(request, response) {
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    return false;
+  }
   return (
     request.method === 'GET' &&
     !!response &&
