@@ -102,6 +102,10 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
     reactStrictMode: false,
+    // Cloud-agnostic Node runtime (Render/Docker/Fly/K8s). NOT static export:
+    // Clerk middleware, RSC auth(), Server Actions, Prisma and /api routes
+    // all require a Node server. `out/` is incompatible with this app.
+    output: 'standalone',
     turbopack: {},
     experimental: {
       staleTimes: {

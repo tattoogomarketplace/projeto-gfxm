@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { getUserFromToken } = require("./clerk-auth.service.cjs");
+const { extractBearerToken, getUserFromToken } = require("./clerk-auth.service.cjs");
 const { logger } = require("../config/logger.cjs");
 const { corsOptions } = require("../middlewares/security.cjs");
 
@@ -19,7 +19,7 @@ function attachRealtime(httpServer) {
     try {
       const token =
         socket.handshake.auth?.token ||
-        (socket.handshake.headers.authorization || "").replace(/^Bearer\s+/i, "");
+        extractBearerToken({ headers: socket.handshake.headers });
       const user = await getUserFromToken(token);
       if (!user) return next(new Error("Não autorizado."));
       socket.user = user;

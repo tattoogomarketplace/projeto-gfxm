@@ -1,10 +1,9 @@
-const { getUserFromToken, extractBearerToken } = require("../services/clerk-auth.service.cjs");
+const { getUserFromRequest } = require("../services/clerk-auth.service.cjs");
 const { prisma } = require("../services/prisma.service.cjs");
 
 async function requireAuth(req, res, next) {
   try {
-    const token = extractBearerToken(req);
-    const user = await getUserFromToken(token);
+    const { token, user } = await getUserFromRequest(req);
     if (!user) {
       return res.status(401).json({ sucesso: false, erro: "Não autorizado." });
     }
