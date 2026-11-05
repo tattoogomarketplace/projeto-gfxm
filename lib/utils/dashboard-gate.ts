@@ -1,11 +1,9 @@
+import { auth } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import {
-  ensurePerfilFromClerk,
-  findPerfilByClerkId,
-  type LocalPerfil,
-} from '@/lib/services/ensure-perfil';
-import { buildProfileSource, resolvePerfilSessionFromIncomingRequestCached } from '@/lib/services/perfil-session';
+import type { LocalPerfil } from '@/lib/services/ensure-perfil';
+import { fetchExpressApi } from '@/lib/server/express-bff';
+import { resolvePerfilSessionFromIncomingRequestCached } from '@/lib/services/perfil-session';
 import { rethrowNextControlFlow } from '@/lib/utils/next-control-flow';
 import {
   dashboardPathForRole,
@@ -63,15 +61,96 @@ async function currentPathname(): Promise<string | null> {
   }
 }
 
+function parseDeletedAt(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function mapExpressPerfil(raw: unknown, clerkId: string): LocalPerfil | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const record = raw as Record<string, unknown>;
+  const id = typeof record.id === 'string' && record.id ? record.id : '';
+  const email = typeof record.email === 'string' && record.email ? record.email : '';
+  if (!id || !email) return null;
+  const role = parseAppRole(typeof record.role === 'string' ? record.role : null) ?? 'cliente';
+  return {
+    id,
+    clerk_id: typeof record.clerk_id === 'string' && record.clerk_id ? record.clerk_id : clerkId,
+    email,
+    nome: typeof record.nome === 'string' ? record.nome : null,
+    username: typeof record.username === 'string' ? record.username : null,
+    role,
+    kyc_status: typeof record.kyc_status === 'string' && record.kyc_status ? record.kyc_status : 'pendente',
+    has_seen_welcome_notice: record.has_seen_welcome_notice === true,
+    deleted_at: parseDeletedAt(record.deleted_at),
+  };
+}
+
+async function resolveClerkBearerToken(): Promise<{ token: string | null; cookie: string | null }> {
+  let token: string | null = null;
+  let cookie: string | null = null;
+
+  try {
+    const { getToken } = await auth();
+    token = (await getToken()) || null;
+  } catch {
+    token = null;
+  }
+
+  try {
+    const incoming = await headers();
+    cookie = incoming.get('cookie');
+    if (!token) {
+      const authorization = incoming.get('authorization');
+      if (authorization?.startsWith('Bearer ')) {
+        const extracted = authorization.slice(7).trim();
+        if (extracted) token = extracted;
+      }
+    }
+  } catch {
+    cookie = null;
+  }
+
+  return { token, cookie };
+}
+
+async function fetchDashboardPerfil(clerkId: string): Promise<LocalPerfil | null> {
+  const { token, cookie } = await resolveClerkBearerToken();
+  const headersInit: Record<string, string> = { Accept: 'application/json' };
+  if (token) headersInit.Authorization = `Bearer ${token}`;
+  if (cookie) headersInit.cookie = cookie;
+
+  const { status, payload } = await fetchExpressApi('/api/perfil/me', {
+    method: 'GET',
+    headers: headersInit,
+    timeoutMs: GATE_STEP_TIMEOUT_MS,
+  });
+
+  if (status === 401 || status === 403 || status >= 500) {
+    return null;
+  }
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const body = payload as { sucesso?: boolean; perfil?: unknown };
+  if (body.sucesso === false || !body.perfil) {
+    return null;
+  }
+  return mapExpressPerfil(body.perfil, clerkId);
+}
+
 export async function requireDashboardSession(): Promise<GateResult | null> {
   let userId: string | null = null;
-  let user = null;
   let metadataRole = null;
 
   try {
     const session = await withTimeout(resolvePerfilSessionFromIncomingRequestCached());
     userId = session.userId;
-    user = session.user;
     metadataRole = session.metadataRole;
   } catch (error) {
     console.error('[dashboard-gate] sessão Clerk indisponível', error);
@@ -84,23 +163,9 @@ export async function requireDashboardSession(): Promise<GateResult | null> {
 
   let perfil: LocalPerfil | null = null;
   try {
-    perfil = await withTimeout(findPerfilByClerkId(userId));
-    const shouldReconcile =
-      !perfil ||
-      Boolean(perfil.deleted_at) ||
-      Boolean(
-        metadataRole &&
-          perfil.role !== metadataRole &&
-          parseAppRole(perfil.role) === 'cliente' &&
-          (metadataRole === 'tatuador' || metadataRole === 'estudio')
-      );
-    if (shouldReconcile) {
-      perfil = await withTimeout(
-        ensurePerfilFromClerk(buildProfileSource(userId, user), metadataRole)
-      );
-    }
+    perfil = await withTimeout(fetchDashboardPerfil(userId));
   } catch (error) {
-    console.error('[dashboard-gate] prisma findPerfilByClerkId falhou', error);
+    console.error('[dashboard-gate] GET /api/perfil/me falhou', error);
     perfil = null;
   }
 
@@ -115,17 +180,12 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
   try {
     const session = await requireDashboardSession();
     if (!session) {
-      // Sessão indisponível (Clerk/DB transitório): mantemos o usuário na
-      // rota que ele pediu em vez de forçá-lo ao painel do cliente. O casco
-      // pinta o skeleton do papel esperado; a próxima revalidação corrige.
       return fallbackPerfil(null, expectedRole ?? 'cliente');
     }
 
     const { perfil, role } = session;
 
     if (!perfil || perfil.deleted_at) {
-      // Sem registro local, o papel seguro do Clerk (publicMetadata) ainda
-      // manda: nunca renderizamos o ecossistema de outro papel.
       if (expectedRole && role && role !== expectedRole) {
         redirect(dashboardPathForRole(role));
       }
@@ -136,14 +196,6 @@ export async function requireDashboardPerfil(expectedRole?: AppRole): Promise<Lo
       redirect(ONBOARDING_PATH);
     }
 
-    // Gatekeeper persistente do @username (Fase 12 — Etapa 1): nenhum acesso
-    // às áreas autenticadas sem handle. A ordem canônica (documentos →
-    // @username) é garantida por `nextRequiredOnboardingStep`, que só devolve o
-    // degrau do username quando o usuário já passou dos pré-requisitos.
-    //
-    // Fase 13.5: exclusão ESTRITA por caminho. O redirect só dispara quando NÃO
-    // estamos em nenhuma rota de onboarding — se já estivermos no próprio degrau
-    // de captura do handle, o guardião é inerte (evita loop de `replaceState`).
     if (
       nextRequiredOnboardingStep(perfil) === USERNAME_SETUP_PATH &&
       !isOnboardingPath(await currentPathname())

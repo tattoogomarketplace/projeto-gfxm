@@ -3,8 +3,26 @@ import { catalogJson } from '@/lib/security/api-guard';
 
 const FORWARD_HEADERS = ['authorization', 'cookie', 'accept', 'accept-language'] as const;
 
-function expressOrigin(): string {
+export function expressOrigin(): string {
   return (process.env.EXPRESS_URL || 'http://localhost:3001').replace(/\/$/, '');
+}
+
+export async function fetchExpressApi(
+  pathname: string,
+  init?: RequestInit & { timeoutMs?: number }
+): Promise<{ status: number; payload: unknown }> {
+  const timeoutMs = init?.timeoutMs ?? 15_000;
+  const { timeoutMs: _ignored, ...requestInit } = init ?? {};
+  void _ignored;
+  const url = new URL(pathname, `${expressOrigin()}/`).toString();
+  const upstream = await fetch(url, {
+    ...requestInit,
+    cache: requestInit.cache ?? 'no-store',
+    redirect: requestInit.redirect ?? 'manual',
+    signal: requestInit.signal ?? AbortSignal.timeout(timeoutMs),
+  });
+  const payload = await upstream.json().catch(() => null);
+  return { status: upstream.status, payload };
 }
 
 function buildUpstreamUrl(request: Request, pathname: string): string {

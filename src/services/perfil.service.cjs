@@ -87,8 +87,10 @@ async function obterPerfil(userId) {
     where: { id: userId },
     select: {
       id: true,
+      clerk_id: true,
       email: true,
       nome: true,
+      username: true,
       role: true,
       kyc_status: true,
       has_seen_welcome_notice: true,
