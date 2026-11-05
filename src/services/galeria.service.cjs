@@ -70,12 +70,22 @@ function parseLimit(raw) {
 
 function artistName(nome) {
   const trimmed = typeof nome === "string" ? nome.trim() : "";
-  return trimmed || "Artista";
+  return trimmed || "";
 }
 
 function artistInitial(nome) {
   const letter = nome.charAt(0);
   return letter ? letter.toUpperCase() : "A";
+}
+
+function resolvePortfolioLocation(input) {
+  const pick = (city, state) => {
+    const c = (city ?? "").trim();
+    const uf = (state ?? "").trim();
+    if (c && uf) return `${c}/${uf}`;
+    return c || uf || null;
+  };
+  return pick(input.studioCity, input.studioState) ?? pick(input.artistCity, input.artistState);
 }
 
 function parseFilters(query) {
@@ -130,12 +140,15 @@ async function listGaleria(filters) {
         select: {
           id: true,
           nome: true,
+          username: true,
           cidade: true,
           estado: true,
           studio: {
             select: {
               id: true,
               nome: true,
+              cidade: true,
+              estado: true,
             },
           },
         },
@@ -162,14 +175,21 @@ async function listGaleria(filters) {
       artist: {
         id: row.tatuador.id,
         name,
+        username: row.tatuador.username ?? null,
         avatarUrl: null,
         initial: artistInitial(name),
         cidade: row.tatuador.cidade,
         estado: row.tatuador.estado,
         studio: row.tatuador.studio
-          ? { id: row.tatuador.studio.id, name: studioName || "Estúdio" }
+          ? { id: row.tatuador.studio.id, name: studioName || "" }
           : null,
       },
+      location: resolvePortfolioLocation({
+        studioCity: row.tatuador.studio?.cidade,
+        studioState: row.tatuador.studio?.estado,
+        artistCity: row.tatuador.cidade,
+        artistState: row.tatuador.estado,
+      }),
     };
   });
 }
