@@ -25,4 +25,24 @@ async function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+async function optionalAuth(req, res, next) {
+  try {
+    const { token, user } = await getUserFromRequest(req);
+    if (user) {
+      const perfil = await prisma.perfil.findUnique({
+        where: { id: user.id },
+        select: { deleted_at: true, role: true },
+      });
+      if (!perfil?.deleted_at) {
+        req.user = user;
+        req.perfil = perfil;
+        req.accessToken = token;
+      }
+    }
+  } catch {
+    // anonymous
+  }
+  return next();
+}
+
+module.exports = { requireAuth, optionalAuth };

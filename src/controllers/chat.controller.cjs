@@ -103,4 +103,26 @@ async function conversas(req, res) {
   }
 }
 
-module.exports = { enviar, historico, marcarLido, conversas };
+async function contexto(req, res) {
+  try {
+    const artistId = req.query.artistId ?? req.query.tatuadorId;
+    const artworkId = req.query.artworkId ?? req.query.portfolioId;
+    if (!artistId) {
+      return res.status(400).json({ sucesso: false, erro: "artistId obrigatório." });
+    }
+    const context = await chatService.getChatContext({
+      actorId: req.user.id,
+      artistIdRaw: artistId,
+      artworkIdRaw: artworkId,
+    });
+    return res.status(200).json({ sucesso: true, actorId: req.user.id, ...context });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "Erro ao carregar contexto de chat");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao carregar contexto." });
+  }
+}
+
+module.exports = { enviar, historico, marcarLido, conversas, contexto };

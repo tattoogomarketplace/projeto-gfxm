@@ -78,4 +78,23 @@ async function atualizar(req, res) {
   }
 }
 
-module.exports = { listar, criar, atualizar };
+async function deletar(req, res) {
+  try {
+    const result = await flashNotesService.deleteFlashNote({
+      actorId: req.user.id,
+      noteId: req.params.id,
+    });
+    return res.status(200).json({ sucesso: true, actorId: req.user.id, id: result.id });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "Erro ao remover Flash Note");
+    return res.status(500).json({
+      sucesso: false,
+      erro: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+module.exports = { listar, criar, atualizar, deletar };

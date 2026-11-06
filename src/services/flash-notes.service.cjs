@@ -345,9 +345,23 @@ async function updateFlashNote({ actorId, noteId, content, backgroundId, fontCla
   return toFlashNoteDto(updated);
 }
 
+async function deleteFlashNote({ actorId, noteId }) {
+  const id = String(noteId || "").trim();
+  if (!id) throw httpError(404, "Flash Note não encontrada.");
+  const mutated = await prisma.flashNote.updateMany({
+    where: { id, userId: actorId },
+    data: { ativa: false },
+  });
+  if (mutated.count === 0) {
+    throw httpError(404, "Flash Note não encontrada.");
+  }
+  return { id };
+}
+
 module.exports = {
   listActiveFlashNotes,
   createFlashNote,
   updateFlashNote,
+  deleteFlashNote,
   expireStaleFlashNotes,
 };

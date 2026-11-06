@@ -29,4 +29,25 @@ async function cheaper(req, res) {
   }
 }
 
-module.exports = { estimate, cheaper };
+async function createQuote(req, res) {
+  try {
+    const quoteService = require("../services/quote.service.cjs");
+    const result = await quoteService.createBudgetQuoteRequest({
+      actorId: req.user.id,
+      artistId: req.body?.artistId,
+      artworkId: req.body?.artworkId,
+      style: req.body?.style,
+      estimateRange: req.body?.estimateRange,
+      imageUrl: req.body?.imageUrl,
+    });
+    return res.status(200).json({ sucesso: true, ...result });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "Falha ao criar orçamento via estimativa");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao criar orçamento." });
+  }
+}
+
+module.exports = { estimate, cheaper, createQuote };

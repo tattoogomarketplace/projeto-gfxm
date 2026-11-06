@@ -193,8 +193,11 @@ function isDateWithinWorkingHours(schedule, date) {
 }
 
 module.exports = {
+  WEEKDAY_IDS,
   isDateWithinWorkingHours,
   createDefaultWorkingHours,
   normalizeWorkingHours,
   listUpcomingSlots,
+  getZonedClock,
+  fallbackTimezone,
 };

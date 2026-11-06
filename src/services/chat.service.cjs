@@ -92,6 +92,105 @@ async function persistirAuditoria({ remetenteId, destinatarioId, mensagem, bloqu
   });
 }
 
+function peerName(nome) {
+  const trimmed = (nome ?? "").trim();
+  return trimmed || "Usuario";
+}
+
+function peerInitial(name) {
+  const letter = String(name || "").charAt(0);
+  return letter ? letter.toUpperCase() : "U";
+}
+
+function toPeer(row) {
+  const name = peerName(row && row.nome);
+  return {
+    id: row.id,
+    name,
+    role: row.role,
+    initial: peerInitial(name),
+    cidade: row.cidade ?? null,
+    estado: row.estado ?? null,
+  };
+}
+
+function toMessageDto(row) {
+  return {
+    id: row.id,
+    remetente_id: row.remetente_id,
+    destinatario_id: row.destinatario_id,
+    mensagem: row.mensagem,
+    bloqueada: row.bloqueada,
+    status: row.status,
+    categoria: normalizeCategoria(row.categoria),
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+  };
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function parseChatId(value, field) {
+  const id = String(value || "").trim();
+  if (!UUID_RE.test(id)) {
+    const error = new Error(`${field} inválido.`);
+    error.status = 400;
+    throw error;
+  }
+  return id;
+}
+
+async function getChatContext({ actorId, artistIdRaw, artworkIdRaw }) {
+  const artistId = parseChatId(artistIdRaw, "artistId");
+  if (artistId === actorId) {
+    const error = new Error("Não é possível iniciar uma conversa consigo mesmo.");
+    error.status = 400;
+    throw error;
+  }
+
+  const artist = await prisma.perfil.findFirst({
+    where: { id: artistId, deleted_at: null, statusConta: "ATIVO" },
+    select: { id: true, nome: true, role: true, cidade: true, estado: true },
+  });
+  if (!artist) {
+    const error = new Error("Artista não encontrado.");
+    error.status = 404;
+    throw error;
+  }
+
+  let artwork = null;
+  if (artworkIdRaw) {
+    const artworkId = parseChatId(artworkIdRaw, "artworkId");
+    const row = await prisma.portfolio.findFirst({
+      where: { id: artworkId, tatuador_id: artistId, deleted_at: null },
+      select: {
+        id: true,
+        tatuador_id: true,
+        url_imagem: true,
+        estilo: true,
+        body_part: true,
+        session_duration: true,
+        is_healed: true,
+        descricao: true,
+      },
+    });
+    if (row) {
+      artwork = {
+        id: row.id,
+        tatuadorId: row.tatuador_id,
+        imageUrl: row.url_imagem,
+        style: row.estilo,
+        bodyPart: row.body_part,
+        sessionDuration: row.session_duration,
+        isHealed: row.is_healed,
+        descricao: row.descricao,
+      };
+    }
+  }
+
+  return { peer: toPeer(artist), artwork };
+}
+
 async function salvarMensagem({ remetenteId, destinatarioId, mensagem }) {
   return persistirAuditoria({
     remetenteId,
@@ -297,6 +396,8 @@ module.exports = {
   marcarLido,
   historico,
   listarConversas,
+  getChatContext,
+  toMessageDto,
   normalizeCategoria,
   parseCategoriaFilter,
 };

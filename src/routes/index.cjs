@@ -14,6 +14,18 @@ const galeriaRoutes = require("./galeria.routes.cjs");
 const artistasRoutes = require("./artistas.routes.cjs");
 const budgetRoutes = require("./budget.routes.cjs");
 const savedInspirationRoutes = require("./saved-inspiration.routes.cjs");
+const viewsRoutes = require("./views.routes.cjs");
+const userRoutes = require("./user.routes.cjs");
+const quotesRoutes = require("./quotes.routes.cjs");
+const transactionRoutes = require("./transaction.routes.cjs");
+const reviewsRoutes = require("./reviews.routes.cjs");
+const sessoesRoutes = require("./sessoes.routes.cjs");
+const searchRoutes = require("./search.routes.cjs");
+const flashNoteBookingRoutes = require("./flash-note-booking.routes.cjs");
+const lifecycleRoutes = require("./lifecycle.routes.cjs");
+const webhooksRoutes = require("./webhooks.routes.cjs");
+const kycRoutes = require("./kyc.routes.cjs");
+const resetCredentialsRoutes = require("./reset-credentials.routes.cjs");
 
 const router = Router();
 
@@ -32,5 +44,17 @@ router.use("/studios", studiosRoutes);
 router.use("/perfil", perfilRoutes);
 router.use("/tatuador/schedule", artistScheduleRoutes);
 router.use("/tatuador/portfolio", artistPortfolioRoutes);
+router.use("/views", viewsRoutes);
+router.use("/user", userRoutes);
+router.use("/quotes", quotesRoutes);
+router.use("/transactions", transactionRoutes);
+router.use("/reviews", reviewsRoutes);
+router.use("/sessoes", sessoesRoutes);
+router.use("/search", searchRoutes);
+router.use("/flash-notes", flashNoteBookingRoutes);
+router.use("/lifecycle", lifecycleRoutes);
+router.use("/webhooks", webhooksRoutes);
+router.use("/kyc", kycRoutes);
+router.use("/auth/verify-reset-credentials", resetCredentialsRoutes);
 
 module.exports = router;
