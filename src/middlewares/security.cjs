@@ -23,6 +23,12 @@ function applySecurity(app) {
       frameguard: { action: "deny" },
       noSniff: true,
       referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      hsts: {
+        maxAge: 63072000,
+        includeSubDomains: true,
+        preload: true,
+      },
     })
   );
   app.use(cors(corsOptions));

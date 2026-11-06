@@ -110,7 +110,7 @@ function jsonResponse(body: unknown, status: number, noStore: boolean) {
   if (noStore) {
     return catalogJson(body, { status });
   }
-  return NextResponse.json(body, { status });
+  return catalogJson(body, { status, cache: status === 200 });
 }
 
 export async function proxyExpressCatalog(

@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const hpp = require("hpp");
+const compression = require("compression");
 const pinoHttp = require("pino-http");
 const { logger } = require("./config/logger.cjs");
 const { applySecurity } = require("./middlewares/security.cjs");
@@ -14,6 +15,8 @@ require("./config/env.cjs");
 const app = express();
 
 applySecurity(app);
+app.use(compression());
+app.use(compression());
 app.get("/", (req, res) => res.status(200).send("TattooGo Backend Online"));
 app.use(pinoHttp({ logger }));
 app.use(

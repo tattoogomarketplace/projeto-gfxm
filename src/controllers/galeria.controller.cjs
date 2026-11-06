@@ -5,11 +5,15 @@ const NO_STORE = {
   Pragma: "no-cache",
 };
 
+const PUBLIC_CACHE = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+};
+
 async function list(req, res) {
   try {
     const filters = galeriaService.parseFilters(req.query || {});
     const items = await galeriaService.listGaleria(filters);
-    return res.status(200).set(NO_STORE).json({ sucesso: true, items });
+    return res.status(200).set(PUBLIC_CACHE).json({ sucesso: true, items });
   } catch (err) {
     if (err.status) {
       return res.status(err.status).set(NO_STORE).json({ sucesso: false, erro: err.message });

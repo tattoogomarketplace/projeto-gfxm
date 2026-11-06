@@ -96,7 +96,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'self'",
+  "frame-ancestors 'none'",
   'upgrade-insecure-requests',
 ].join('; ');
 
@@ -142,12 +142,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
-          // SAMEORIGIN matches frame-ancestors 'self'. .cursorrules item 8 asked
-          // for DENY; this task requires 'self'/SAMEORIGIN so Clerk/Turnstile
-          // same-origin frames are not in conflict with XFO.
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "Cross-Origin-Opener-Policy", value: "unsafe-none" },
           { key: "Cross-Origin-Embedder-Policy", value: "unsafe-none" },
           { key: "Content-Security-Policy", value: contentSecurityPolicy },

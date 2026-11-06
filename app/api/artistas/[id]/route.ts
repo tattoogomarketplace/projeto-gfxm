@@ -10,5 +10,6 @@ export async function GET(
   const { id } = await params;
   return proxyExpressCatalog(request, `/api/catalogo/artistas/${encodeURIComponent(id)}`, {
     fallbackError: 'Falha ao carregar a vitrine do artista.',
+    noStore: false,
   });
 }
