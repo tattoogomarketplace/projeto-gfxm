@@ -1,23 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import { resolvePerfilSessionFromIncomingRequest } from '@/lib/services/perfil-session';
-import { changeUsername } from '@/lib/services/username-change';
-import type { UsernameValidationReason } from '@/lib/username';
-
-/**
- * TATTOOGO MK — Server Action `updateUsername` (The Shield).
- *
- * Porta soberana para a troca do handle publico (@username). Aplica, nesta
- * ordem, todas as regras do protocolo:
- *   1) Formato: apenas minusculas, digitos e underline (`^[a-z0-9_]+$`).
- *      Espacos e prefixos `@` sao removidos antes de persistir.
- *   2) Unicidade: rejeita handles ja existentes (case-insensitive).
- *   3) Trava de 30 dias: rejeita a troca e devolve a data EXATA de desbloqueio.
- *
- * Toda a escrita acontece em UMA transacao (`changeUsername`) atualizando
- * `username` e `last_username_change` simultaneamente.
- */
+import { fetchExpressApi, resolveExpressAuthHeaders } from '@/lib/server/express-bff';
 
 export type UpdateUsernameFailureReason =
   | 'unauthenticated'
@@ -42,96 +25,71 @@ export type UpdateUsernameResult =
       nextChangeAt?: string;
     };
 
-const INVALID_MESSAGES: Record<UsernameValidationReason, string> = {
-  empty: 'Informe um @username.',
-  too_short: 'O @username precisa ter ao menos 3 caracteres.',
-  too_long: 'O @username pode ter no maximo 20 caracteres.',
-  invalid_chars:
-    'O @username aceita apenas letras minusculas, numeros e underline.',
-  reserved: 'Este @username e reservado.',
-};
-
-function formatUnlockDate(date: Date): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone: 'America/Sao_Paulo',
-  }).format(date);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-/**
- * Atualiza o @username do usuario autenticado. NUNCA toca no campo `nome`
- * (Display Name), que permanece a identidade visual soberana.
- */
+function asFailureReason(value: unknown): UpdateUsernameFailureReason {
+  if (
+    value === 'unauthenticated' ||
+    value === 'not_found' ||
+    value === 'forbidden' ||
+    value === 'invalid' ||
+    value === 'taken' ||
+    value === 'locked' ||
+    value === 'error'
+  ) {
+    return value;
+  }
+  return 'error';
+}
+
 export async function updateUsername(input: { username: unknown }): Promise<UpdateUsernameResult> {
-  let userId: string | null = null;
   try {
-    // Mesma resolução resiliente das Route Handlers (`/api/perfil/*`,
-    // `/api/user/username`): Bearer renovado + verificação criptográfica dos
-    // candidatos de cookie, sem depender do heurístico de cookie sufixado do
-    // `auth()`. Sem isso, o Server Action perdia o contexto da sessão na
-    // borda (mobile/proxy) e devolvia "Nao autenticado." mesmo logado.
-    ({ userId } = await resolvePerfilSessionFromIncomingRequest());
-  } catch {
-    userId = null;
-  }
-
-  if (!userId) {
-    return { ok: false, reason: 'unauthenticated', error: 'Nao autenticado.' };
-  }
-
-  try {
-    const perfil = await prisma.perfil.findFirst({
-      where: { clerk_id: userId, deleted_at: null },
-      select: { id: true },
+    const authHeaders = await resolveExpressAuthHeaders();
+    const { status, payload } = await fetchExpressApi('/api/user/username/action', {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username: input.username }),
     });
 
-    if (!perfil) {
-      return { ok: false, reason: 'not_found', error: 'Perfil nao encontrado.' };
+    if (status === 401) {
+      return { ok: false, reason: 'unauthenticated', error: 'Nao autenticado.' };
     }
 
-    const result = await changeUsername(perfil.id, input.username);
+    if (isRecord(payload) && payload.ok === true && typeof payload.username === 'string') {
+      return {
+        ok: true,
+        username: payload.username,
+        lastUsernameChange:
+          typeof payload.lastUsernameChange === 'string'
+            ? payload.lastUsernameChange
+            : new Date().toISOString(),
+        unchanged: payload.unchanged === true,
+      };
+    }
 
-    switch (result.status) {
-      case 'ok':
-        return {
-          ok: true,
-          username: result.username,
-          lastUsernameChange: result.lastUsernameChange.toISOString(),
-          unchanged: false,
-        };
-      case 'unchanged':
-        return {
-          ok: true,
-          username: result.username,
-          lastUsernameChange: (result.lastUsernameChange ?? new Date()).toISOString(),
-          unchanged: true,
-        };
-      case 'not_found':
-        return { ok: false, reason: 'not_found', error: 'Perfil nao encontrado.' };
-      case 'forbidden':
-        return {
-          ok: false,
-          reason: 'forbidden',
-          error: 'Estudios nao podem definir um @username.',
-        };
-      case 'invalid':
-        return { ok: false, reason: 'invalid', error: INVALID_MESSAGES[result.reason] };
-      case 'taken':
-        return { ok: false, reason: 'taken', error: 'Este @username ja esta em uso.' };
-      case 'locked': {
-        const nextChangeAt = result.nextChangeAt;
-        return {
-          ok: false,
-          reason: 'locked',
-          error: `A troca de @username esta bloqueada por 30 dias. Voce podera altera-lo novamente em ${formatUnlockDate(nextChangeAt)}.`,
-          nextChangeAt: nextChangeAt.toISOString(),
-        };
+    if (isRecord(payload) && payload.ok === false) {
+      const result: UpdateUsernameResult = {
+        ok: false,
+        reason: asFailureReason(payload.reason),
+        error:
+          typeof payload.error === 'string' && payload.error
+            ? payload.error
+            : 'Falha ao salvar o @username.',
+      };
+      if (typeof payload.nextChangeAt === 'string') {
+        result.nextChangeAt = payload.nextChangeAt;
       }
+      return result;
     }
+
+    return { ok: false, reason: 'error', error: 'Falha ao salvar o @username.' };
   } catch (error) {
     console.error('[updateUsername] falha inesperada', {
-      userId,
       error: error instanceof Error ? error.message : String(error),
     });
     return { ok: false, reason: 'error', error: 'Falha ao salvar o @username.' };

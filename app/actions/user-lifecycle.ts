@@ -1,13 +1,10 @@
 'use server';
 
-import { AccountStatus, type PerfilRole } from '@prisma/client';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { after } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { parseAppRole, type AppRole } from '@/lib/utils/auth-redirect';
-import { isValidCnpj, onlyCnpjDigits } from '@/lib/utils/cnpj';
+import { auth } from '@clerk/nextjs/server';
+import { fetchExpressApi, resolveExpressAuthHeaders } from '@/lib/server/express-bff';
+import type { AppRole } from '@/lib/utils/auth-redirect';
 
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+export type AccountStatus = 'ATIVO' | 'DESATIVADO' | 'AGUARDANDO_EXCLUSAO';
 
 export type LifecycleResult = {
   ok: boolean;
@@ -24,20 +21,34 @@ export type RoleMigrationExtraData = {
   [key: string]: unknown;
 };
 
-type PerfilLifecycleRow = {
-  id: string;
-  clerk_id: string | null;
-  role: PerfilRole;
-  cnpj: string | null;
-  statusConta: AccountStatus;
-  dataFim: Date | null;
-  deleted_at: Date | null;
-};
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
+function readError(payload: unknown, fallback: string): string {
+  if (!isRecord(payload)) return fallback;
+  if (typeof payload.error === 'string' && payload.error) return payload.error;
+  if (typeof payload.erro === 'string' && payload.erro) return payload.erro;
+  return fallback;
+}
+
+function asAccountStatus(value: unknown): AccountStatus | undefined {
+  if (value === 'ATIVO' || value === 'DESATIVADO' || value === 'AGUARDANDO_EXCLUSAO') {
+    return value;
+  }
+  return undefined;
+}
+
+function asAppRole(value: unknown): AppRole | undefined {
+  if (value === 'cliente' || value === 'tatuador' || value === 'estudio') return value;
+  return undefined;
+}
+
+function asDate(value: unknown): Date | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 async function requireActorUserId(): Promise<string | null> {
@@ -49,50 +60,34 @@ async function requireActorUserId(): Promise<string | null> {
   }
 }
 
-async function findPerfilForLifecycle(userId: string): Promise<PerfilLifecycleRow | null> {
-  const id = String(userId || '').trim();
-  if (!id) return null;
-
-  const select = {
-    id: true,
-    clerk_id: true,
-    role: true,
-    cnpj: true,
-    statusConta: true,
-    dataFim: true,
-    deleted_at: true,
-  } as const;
-
-  const byClerk = await prisma.perfil.findUnique({
-    where: { clerk_id: id },
-    select,
+async function callLifecycleApi(pathname: string, body?: unknown): Promise<LifecycleResult> {
+  const authHeaders = await resolveExpressAuthHeaders();
+  const { status, payload } = await fetchExpressApi(pathname, {
+    method: 'POST',
+    headers: {
+      ...authHeaders,
+      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-  if (byClerk) return byClerk;
 
-  if (!isUuid(id)) return null;
+  if (status === 401) return { ok: false, error: 'Não autenticado.' };
 
-  return prisma.perfil.findUnique({
-    where: { id },
-    select,
-  });
-}
-
-function denyUnlessOwner(actorUserId: string | null, perfil: PerfilLifecycleRow): string | null {
-  if (!actorUserId) return 'Não autenticado.';
-  if (!perfil.clerk_id || perfil.clerk_id !== actorUserId) {
-    return 'Não autorizado.';
+  if (!isRecord(payload) || payload.ok !== true) {
+    return { ok: false, error: readError(payload, 'Falha ao processar o ciclo de vida.') };
   }
-  return null;
-}
 
-function normalizeCnpj(value: unknown): string | null {
-  const digits = onlyCnpjDigits(String(value ?? ''));
-  if (!digits) return null;
-  return isValidCnpj(digits) ? digits : null;
-}
+  const result: LifecycleResult = {
+    ok: true,
+    userId: typeof payload.userId === 'string' ? payload.userId : undefined,
+    statusConta: asAccountStatus(payload.statusConta),
+    role: asAppRole(payload.role),
+  };
 
-function resolveKycStatusForRole(role: AppRole): 'pendente' | 'nao_aplicavel' {
-  return role === 'cliente' ? 'nao_aplicavel' : 'pendente';
+  const dataFim = asDate(payload.dataFim);
+  if (dataFim !== undefined) result.dataFim = dataFim;
+
+  return result;
 }
 
 export async function deactivateAccount(userId: string): Promise<LifecycleResult> {
@@ -104,34 +99,21 @@ export async function deactivateAccount(userId: string): Promise<LifecycleResult
     return { ok: false, error: 'Não autorizado.' };
   }
 
-  after(() => {
-    void (async () => {
-      try {
-        const perfil = await findPerfilForLifecycle(targetId);
-        if (!perfil) return;
-        const denied = denyUnlessOwner(actorUserId, perfil);
-        if (denied) return;
-        await prisma.perfil.updateMany({
-          where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
-          data: {
-            statusConta: AccountStatus.DESATIVADO,
-            agenda_bloqueada: true,
-          },
-        });
-      } catch (error) {
-        console.error('[user-lifecycle] falha ao desativar conta em background', {
-          userId: targetId,
-          error,
-        });
-      }
-    })();
-  });
-
-  return {
-    ok: true,
-    userId: targetId,
-    statusConta: AccountStatus.DESATIVADO,
-  };
+  try {
+    const result = await callLifecycleApi('/api/lifecycle/deactivate');
+    if (!result.ok) return result;
+    return {
+      ok: true,
+      userId: targetId,
+      statusConta: result.statusConta ?? 'DESATIVADO',
+    };
+  } catch (error) {
+    console.error('[user-lifecycle] falha ao desativar conta', {
+      userId: targetId,
+      error,
+    });
+    return { ok: false, error: 'Falha ao desativar conta.' };
+  }
 }
 
 export async function scheduleAccountDeletion(userId: string): Promise<LifecycleResult> {
@@ -143,76 +125,40 @@ export async function scheduleAccountDeletion(userId: string): Promise<Lifecycle
     return { ok: false, error: 'Não autorizado.' };
   }
 
-  const dataFim = new Date(Date.now() + NINETY_DAYS_MS);
-  const now = new Date();
-
-  after(() => {
-    void (async () => {
-      try {
-        const perfil = await findPerfilForLifecycle(targetId);
-        if (!perfil) return;
-        const denied = denyUnlessOwner(actorUserId, perfil);
-        if (denied) return;
-        await prisma.perfil.updateMany({
-          where: { id: perfil.id, clerk_id: actorUserId },
-          data: {
-            statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
-            dataFim,
-            deleted_at: perfil.deleted_at ?? now,
-            agenda_bloqueada: true,
-          },
-        });
-      } catch (error) {
-        console.error('[user-lifecycle] falha ao agendar exclusão em background', {
-          userId: targetId,
-          error,
-        });
-      }
-    })();
-  });
-
-  return {
-    ok: true,
-    userId: targetId,
-    statusConta: AccountStatus.AGUARDANDO_EXCLUSAO,
-    dataFim,
-  };
+  try {
+    const result = await callLifecycleApi('/api/lifecycle/schedule-deletion');
+    if (!result.ok) return result;
+    return {
+      ok: true,
+      userId: targetId,
+      statusConta: result.statusConta ?? 'AGUARDANDO_EXCLUSAO',
+      dataFim: result.dataFim ?? null,
+    };
+  } catch (error) {
+    console.error('[user-lifecycle] falha ao agendar exclusão', {
+      userId: targetId,
+      error,
+    });
+    return { ok: false, error: 'Falha ao agendar exclusão.' };
+  }
 }
 
 export async function reactivateAccount(userId: string): Promise<LifecycleResult> {
   const actorUserId = await requireActorUserId();
   if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
 
-  const perfil = await findPerfilForLifecycle(userId);
-  if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
+  const targetId = String(userId || '').trim();
+  if (!targetId) return { ok: false, error: 'Perfil não encontrado.' };
 
-  const denied = denyUnlessOwner(actorUserId, perfil);
-  if (denied) return { ok: false, error: denied };
-
-  const mutated = await prisma.perfil.updateMany({
-    where: { id: perfil.id, clerk_id: actorUserId },
-    data: {
-      statusConta: AccountStatus.ATIVO,
-      dataFim: null,
-      deleted_at: null,
-      agenda_bloqueada: false,
-    },
-  });
-  if (mutated.count === 0) return { ok: false, error: 'Perfil não encontrado.' };
-
-  const updated = await prisma.perfil.findFirst({
-    where: { id: perfil.id, clerk_id: actorUserId },
-    select: { id: true, statusConta: true, dataFim: true, role: true },
-  });
-  if (!updated) return { ok: false, error: 'Perfil não encontrado.' };
-
-  return {
-    ok: true,
-    userId: updated.id,
-    statusConta: updated.statusConta,
-    dataFim: updated.dataFim,
-    role: updated.role,
-  };
+  try {
+    return await callLifecycleApi('/api/lifecycle/reactivate');
+  } catch (error) {
+    console.error('[user-lifecycle] falha ao reativar conta', {
+      userId: targetId,
+      error,
+    });
+    return { ok: false, error: 'Falha ao reativar conta.' };
+  }
 }
 
 export async function migrateUserRole(
@@ -223,69 +169,19 @@ export async function migrateUserRole(
   const actorUserId = await requireActorUserId();
   if (!actorUserId) return { ok: false, error: 'Não autenticado.' };
 
-  const perfil = await findPerfilForLifecycle(userId);
-  if (!perfil) return { ok: false, error: 'Perfil não encontrado.' };
+  const targetId = String(userId || '').trim();
+  if (!targetId) return { ok: false, error: 'Perfil não encontrado.' };
 
-  const denied = denyUnlessOwner(actorUserId, perfil);
-  if (denied) return { ok: false, error: denied };
-
-  const role = parseAppRole(newRole);
-  if (!role) return { ok: false, error: 'Papel inválido.' };
-
-  const cnpj =
-    role === 'estudio'
-      ? normalizeCnpj(extraData?.cnpj) ?? perfil.cnpj
-      : perfil.cnpj;
-
-  if (role === 'estudio' && extraData?.cnpj != null && extraData.cnpj !== '' && !normalizeCnpj(extraData.cnpj)) {
-    return { ok: false, error: 'CNPJ inválido.' };
+  try {
+    return await callLifecycleApi('/api/lifecycle/migrate-role', {
+      newRole,
+      extraData,
+    });
+  } catch (error) {
+    console.error('[user-lifecycle] falha ao migrar papel', {
+      userId: targetId,
+      error,
+    });
+    return { ok: false, error: 'Falha ao migrar papel.' };
   }
-
-  const nome =
-    typeof extraData?.nome === 'string' && extraData.nome.trim()
-      ? extraData.nome.trim()
-      : undefined;
-
-  const roleChanged = perfil.role !== role;
-
-  const mutated = await prisma.perfil.updateMany({
-    where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
-    data: {
-      role,
-      ...(role === 'estudio' && cnpj ? { cnpj } : {}),
-      ...(nome ? { nome } : {}),
-      ...(roleChanged
-        ? {
-            kyc_status: resolveKycStatusForRole(role),
-            has_seen_welcome_notice: false,
-          }
-        : {}),
-    },
-  });
-  if (mutated.count === 0) return { ok: false, error: 'Perfil não encontrado.' };
-
-  const updated = await prisma.perfil.findFirst({
-    where: { id: perfil.id, clerk_id: actorUserId, deleted_at: null },
-    select: { id: true, clerk_id: true, role: true, statusConta: true, dataFim: true, cnpj: true },
-  });
-  if (!updated) return { ok: false, error: 'Perfil não encontrado.' };
-
-  const clerkId = updated.clerk_id;
-  if (clerkId) {
-    const client = await clerkClient();
-    const publicMetadata: Record<string, unknown> = { role: updated.role };
-    if (updated.role === 'estudio' && updated.cnpj) {
-      publicMetadata.cnpj = updated.cnpj;
-    }
-
-    await client.users.updateUserMetadata(clerkId, { publicMetadata });
-  }
-
-  return {
-    ok: true,
-    userId: updated.id,
-    statusConta: updated.statusConta,
-    dataFim: updated.dataFim,
-    role: updated.role,
-  };
 }
