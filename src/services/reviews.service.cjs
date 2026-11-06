@@ -114,4 +114,123 @@ async function replyToReview({ actorId, actorRole, reviewId, replyRaw }) {
   return toReviewDto(updated);
 }
 
-module.exports = { replyToReview };
+const FEATURED_LIMIT = 8;
+const ARTIST_REVIEWS_LIMIT = 40;
+const { PLACEHOLDER_REVIEWS, REVIEW_FEATURED_ARTISTS } = require("../data/catalog-mocks.cjs");
+
+function summarize(targetId, reviews) {
+  const count = reviews.length;
+  const verifiedCount = reviews.filter((item) => item.isVerified).length;
+  const averageRating =
+    count === 0
+      ? 0
+      : Math.round((reviews.reduce((sum, item) => sum + item.rating, 0) / count) * 10) / 10;
+  return { targetId, count, averageRating, verifiedCount };
+}
+
+function mockReviewsForTarget(targetId) {
+  return PLACEHOLDER_REVIEWS.filter((item) => item.targetId === targetId);
+}
+
+function mockTarget(targetId) {
+  const featured = Object.values(REVIEW_FEATURED_ARTISTS).find((artist) => artist.id === targetId);
+  if (featured) return featured;
+  const fromReview = PLACEHOLDER_REVIEWS.find((item) => item.targetId === targetId)?.target;
+  if (fromReview) return fromReview;
+  return { id: targetId, name: "", role: "tatuador", avatarUrl: null, initial: "A" };
+}
+
+async function getArtistReviews(artistIdRaw) {
+  const artistId = String(artistIdRaw || "").trim();
+  if (!artistId) throw httpError(400, "Artista inválido.");
+  if (!UUID_RE.test(artistId)) {
+    const reviews = mockReviewsForTarget(artistId);
+    return { target: mockTarget(artistId), summary: summarize(artistId, reviews), reviews };
+  }
+  try {
+    const [targetRow, rows] = await Promise.all([
+      prisma.perfil.findFirst({
+        where: {
+          id: artistId,
+          deleted_at: null,
+          statusConta: "ATIVO",
+          role: { in: ["tatuador", "estudio"] },
+        },
+        select: { id: true, nome: true, role: true },
+      }),
+      prisma.review.findMany({
+        where: { target_id: artistId, deleted_at: null },
+        select: REVIEW_SELECT,
+        orderBy: { created_at: "desc" },
+        take: ARTIST_REVIEWS_LIMIT,
+      }),
+    ]);
+    if (!targetRow) throw httpError(404, "Artista não encontrado.");
+    const reviews = rows.map(toReviewDto);
+    const targetName = displayName(targetRow.nome, "");
+    return {
+      target: {
+        id: targetRow.id,
+        name: targetName,
+        role: targetRow.role === "estudio" ? "estudio" : "tatuador",
+        avatarUrl: null,
+        initial: initialFrom(targetName),
+      },
+      summary: summarize(artistId, reviews),
+      reviews,
+    };
+  } catch (err) {
+    if (err.status) throw err;
+    const reviews = mockReviewsForTarget(artistId);
+    return { target: mockTarget(artistId), summary: summarize(artistId, reviews), reviews };
+  }
+}
+
+async function getReviewById(reviewIdRaw) {
+  const reviewId = String(reviewIdRaw || "").trim();
+  if (!reviewId) throw httpError(400, "Avaliação inválida.");
+  if (!UUID_RE.test(reviewId)) {
+    const mock = PLACEHOLDER_REVIEWS.find((item) => item.id === reviewId);
+    if (!mock) throw httpError(404, "Avaliação não encontrada.");
+    return mock;
+  }
+  try {
+    const row = await prisma.review.findFirst({
+      where: { id: reviewId, deleted_at: null },
+      select: REVIEW_SELECT,
+    });
+    if (!row) throw httpError(404, "Avaliação não encontrada.");
+    return toReviewDto(row);
+  } catch (err) {
+    if (err.status) throw err;
+    const mock = PLACEHOLDER_REVIEWS.find((item) => item.id === reviewId);
+    if (mock) return mock;
+    throw httpError(404, "Avaliação não encontrada.");
+  }
+}
+
+async function getFeaturedReviews() {
+  try {
+    const rows = await prisma.review.findMany({
+      where: {
+        deleted_at: null,
+        target: {
+          deleted_at: null,
+          statusConta: "ATIVO",
+          role: { in: ["tatuador", "estudio"] },
+        },
+      },
+      select: REVIEW_SELECT,
+      orderBy: [{ is_verified: "desc" }, { rating: "desc" }, { created_at: "desc" }],
+      take: FEATURED_LIMIT,
+    });
+    if (rows.length === 0) {
+      return { reviews: PLACEHOLDER_REVIEWS.slice(0, FEATURED_LIMIT) };
+    }
+    return { reviews: rows.map(toReviewDto) };
+  } catch {
+    return { reviews: PLACEHOLDER_REVIEWS.slice(0, FEATURED_LIMIT) };
+  }
+}
+
+module.exports = { replyToReview, getArtistReviews, getReviewById, getFeaturedReviews };

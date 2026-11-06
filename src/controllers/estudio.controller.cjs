@@ -3,7 +3,7 @@ const estudioService = require("../services/estudio.service.cjs");
 async function validarCnpj(req, res) {
   const { cnpj, userId } = req.body;
   try {
-    const result = await estudioService.validarCnpj({ cnpj, userId });
+    const result = await estudioService.validarCnpj({ cnpj, userId: userId || req.user?.id });
     return res.status(200).json(result);
   } catch (err) {
     if (err.status) {
@@ -11,6 +11,58 @@ async function validarCnpj(req, res) {
     }
     req.log.error({ err }, "Erro na API ReceitaWS");
     return res.status(500).json({ sucesso: false, erro: "Falha na conexão com o serviço de validação." });
+  }
+}
+
+async function consultarCnpj(req, res) {
+  try {
+    const cnpj = req.params.cnpj || req.body?.cnpj;
+    const cnpjLimpo = String(cnpj || "").replace(/[^\d]+/g, "");
+    if (!estudioService.validarCNPJMatematico(cnpjLimpo)) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: "CNPJ inválido. Informe 14 dígitos válidos.",
+      });
+    }
+    const { receitaWsToken } = require("../config/env.cjs");
+    const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${receitaWsToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
+    if (data.status === "ERROR") {
+      return res.status(400).json({ sucesso: false, erro: "CNPJ não encontrado ou indisponível." });
+    }
+    return res.status(200).json({
+      sucesso: true,
+      nome: data.nome || null,
+      fantasia: data.fantasia || data.nome || null,
+    });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "[cnpj] falha inesperada");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao consultar o CNPJ." });
+  }
+}
+
+async function registrarEstudio(req, res) {
+  try {
+    const result = await estudioService.validarCnpj({
+      cnpj: req.body?.cnpj,
+      userId: req.user.id,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    req.log?.error({ err }, "[studios/register] falha");
+    return res.status(500).json({ sucesso: false, erro: "Falha ao registrar o estúdio." });
   }
 }
 
@@ -122,6 +174,8 @@ async function decidirAfiliacao(req, res) {
 
 module.exports = {
   validarCnpj,
+  consultarCnpj,
+  registrarEstudio,
   convidarTatuador,
   aceitarConvite,
   buscarEstudios,

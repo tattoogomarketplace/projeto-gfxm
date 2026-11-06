@@ -37,4 +37,25 @@ async function toggle(req, res) {
   }
 }
 
-module.exports = { toggle };
+async function list(req, res) {
+  try {
+    const userId = req.user?.clerkId;
+    if (!userId) {
+      return res.status(401).json({ sucesso: false, erro: "Não autenticado." });
+    }
+    const idsOnly = req.query.ids === "1" || req.query.ids === "true";
+    if (idsOnly) {
+      const ids = await savedInspirationService.listIds(userId);
+      return res.status(200).json({ sucesso: true, ids });
+    }
+    const items = await savedInspirationService.listItems(userId);
+    return res.status(200).json({ sucesso: true, items });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ sucesso: false, erro: err.message });
+    }
+    return res.status(500).json({ sucesso: false, erro: "Falha ao listar inspirações salvas." });
+  }
+}
+
+module.exports = { toggle, list };

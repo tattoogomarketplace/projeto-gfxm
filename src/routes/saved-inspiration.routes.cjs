@@ -4,6 +4,7 @@ const { requireAuth } = require("../middlewares/auth.cjs");
 
 const router = Router();
 
+router.get("/", requireAuth, savedInspirationController.list);
 router.post("/:postId/save", requireAuth, savedInspirationController.toggle);
 
 module.exports = router;

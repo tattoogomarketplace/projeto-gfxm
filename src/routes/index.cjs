@@ -26,6 +26,10 @@ const lifecycleRoutes = require("./lifecycle.routes.cjs");
 const webhooksRoutes = require("./webhooks.routes.cjs");
 const kycRoutes = require("./kyc.routes.cjs");
 const resetCredentialsRoutes = require("./reset-credentials.routes.cjs");
+const artistRoutes = require("./artist.routes.cjs");
+const uploadRoutes = require("./upload.routes.cjs");
+const profileRoutes = require("./profile.routes.cjs");
+const cnpjRoutes = require("./cnpj.routes.cjs");
 
 const router = Router();
 
@@ -56,5 +60,9 @@ router.use("/lifecycle", lifecycleRoutes);
 router.use("/webhooks", webhooksRoutes);
 router.use("/kyc", kycRoutes);
 router.use("/auth/verify-reset-credentials", resetCredentialsRoutes);
+router.use("/artist", artistRoutes);
+router.use("/upload", uploadRoutes);
+router.use("/profile", profileRoutes);
+router.use("/cnpj", cnpjRoutes);
 
 module.exports = router;
