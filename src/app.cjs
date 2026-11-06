@@ -1,3 +1,4 @@
+const crypto = require("node:crypto");
 const express = require("express");
 const path = require("path");
 const hpp = require("hpp");
@@ -18,7 +19,21 @@ applySecurity(app);
 app.use(compression());
 app.use(compression());
 app.get("/", (req, res) => res.status(200).send("TattooGo Backend Online"));
-app.use(pinoHttp({ logger }));
+app.use(
+  pinoHttp({
+    logger,
+    genReqId(req) {
+      const incoming = req.headers["x-request-id"];
+      if (typeof incoming === "string" && incoming.trim()) {
+        return incoming.trim();
+      }
+      if (Array.isArray(incoming) && incoming[0]) {
+        return String(incoming[0]).trim();
+      }
+      return crypto.randomUUID();
+    },
+  })
+);
 app.use(
   express.json({
     limit: "10mb",

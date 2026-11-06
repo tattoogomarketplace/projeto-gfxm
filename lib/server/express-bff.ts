@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { catalogJson } from '@/lib/security/api-guard';
 
-const FORWARD_HEADERS = ['authorization', 'cookie', 'accept', 'accept-language'] as const;
+const FORWARD_HEADERS = ['authorization', 'cookie', 'accept', 'accept-language', 'x-request-id'] as const;
 const RAW_FORWARD_HEADERS = [
   ...FORWARD_HEADERS,
   'content-type',
@@ -11,6 +11,14 @@ const RAW_FORWARD_HEADERS = [
   'svix-timestamp',
   'svix-signature',
 ] as const;
+
+function withRequestId(headersInit?: HeadersInit): Headers {
+  const headers = new Headers(headersInit);
+  if (!headers.has('x-request-id')) {
+    headers.set('X-Request-ID', crypto.randomUUID());
+  }
+  return headers;
+}
 
 export function expressOrigin(): string {
   return (process.env.EXPRESS_URL || 'http://localhost:3001').replace(/\/$/, '');
@@ -26,6 +34,7 @@ export async function fetchExpressApi(
   const url = new URL(pathname, `${expressOrigin()}/`).toString();
   const upstream = await fetch(url, {
     ...requestInit,
+    headers: withRequestId(requestInit.headers),
     cache: requestInit.cache ?? 'no-store',
     redirect: requestInit.redirect ?? 'manual',
     signal: requestInit.signal ?? AbortSignal.timeout(timeoutMs),
@@ -122,7 +131,7 @@ export async function proxyExpressCatalog(
   try {
     const upstream = await fetch(buildUpstreamUrl(request, pathname), {
       method: 'GET',
-      headers: forwardHeaders(request),
+      headers: withRequestId(forwardHeaders(request)),
       cache: 'no-store',
       redirect: 'manual',
       signal: AbortSignal.timeout(15_000),
@@ -156,7 +165,7 @@ export async function proxyExpressRequest(
   const method = (options?.method ?? request.method ?? 'GET').toUpperCase();
   const fallbackError = options?.fallbackError ?? 'Falha ao processar a requisição.';
   const timeoutMs = options?.timeoutMs ?? 15_000;
-  const headersInit = forwardHeaders(request);
+  const headersInit = withRequestId(forwardHeaders(request));
   const contentType = request.headers.get('content-type');
   if (contentType) headersInit.set('content-type', contentType);
 
@@ -203,7 +212,7 @@ export async function proxyExpressRaw(
   try {
     const upstream = await fetch(buildUpstreamUrl(request, pathname), {
       method: 'POST',
-      headers: headersInit,
+      headers: withRequestId(headersInit),
       body,
       cache: 'no-store',
       redirect: 'manual',

@@ -11,6 +11,7 @@ const { port } = require("./src/config/env.cjs");
 const { app, logger } = require("./src/app.cjs");
 const { attachRealtime } = require("./src/services/realtime.service.cjs");
 const { expirarMutexVencidos } = require("./src/services/agendamento.service.cjs");
+const { prisma } = require("./src/services/prisma.service.cjs");
 
 const PORT = process.env.PORT || port || 3001;
 const server = http.createServer(app);
@@ -28,5 +29,31 @@ if (typeof mutexSweep.unref === "function") mutexSweep.unref();
 server.listen(PORT, () => {
   logger.info(`TATTOOGO MK - NÚCLEO DE PRODUÇÃO RODANDO NA PORTA ${PORT}`);
 });
+
+let shuttingDown = false;
+
+async function gracefulShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  console.log(`${signal} recebido. Iniciando Graceful Shutdown...`);
+
+  clearInterval(mutexSweep);
+
+  await new Promise((resolve) => {
+    server.close((err) => {
+      if (err) {
+        logger.error({ err }, "Erro ao fechar o servidor HTTP");
+      }
+      resolve();
+    });
+  });
+
+  await prisma.$disconnect();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 module.exports = { app, server };
