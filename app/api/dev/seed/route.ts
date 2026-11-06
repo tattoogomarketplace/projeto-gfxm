@@ -1,51 +1,19 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { NextResponse } from 'next/server';
-import { GHOST_ARTIST_NAME, RELATIONAL_MOCK_POSTS, upsertGhostArtist } from '@/lib/db/seed-mocks';
-import { prisma } from '@/lib/prisma';
+import { proxyExpressRequest } from '@/lib/server/express-bff';
 
-export async function GET() {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(request: Request) {
+  const response = await proxyExpressRequest(request, '/api/dev/seed', {
+    fallbackError: 'Falha ao semear posts.',
+  });
+  if (response.ok) {
+    try {
+      revalidatePath('/', 'layout');
+    } catch {
+      // Cache revalidation is best-effort on the Next.js edge of the BFF.
     }
-
-    const ghostArtist = await upsertGhostArtist();
-
-    await prisma.savedInspiration.deleteMany({ where: { userId } });
-
-    const posts = await prisma.post.createManyAndReturn({
-      data: RELATIONAL_MOCK_POSTS.map((post) => ({
-        imageUrl: post.imageUrl,
-        authorName: ghostArtist.nome ?? GHOST_ARTIST_NAME,
-        authorAvatar: post.authorAvatar,
-        style: post.style,
-        viewsCount: post.viewsCount,
-      })),
-    });
-
-    await prisma.savedInspiration.createMany({
-      data: posts.map((post) => ({
-        userId,
-        postId: post.id,
-      })),
-    });
-
-    revalidatePath('/', 'layout');
-
-    return NextResponse.json({
-      success: true,
-      message: 'Posts created and saved to user profile.',
-      ghostArtistId: ghostArtist.id,
-    });
-  } catch (e) {
-    console.error('[api/dev/seed] falha ao semear posts', {
-      error: e instanceof Error ? e.message : String(e),
-    });
-    return NextResponse.json({ error: String(e) }, { status: 500 });
   }
+  return response;
 }

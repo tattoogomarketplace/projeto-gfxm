@@ -30,6 +30,7 @@ const artistRoutes = require("./artist.routes.cjs");
 const uploadRoutes = require("./upload.routes.cjs");
 const profileRoutes = require("./profile.routes.cjs");
 const cnpjRoutes = require("./cnpj.routes.cjs");
+const devRoutes = require("./dev.routes.cjs");
 
 const router = Router();
 
@@ -64,5 +65,6 @@ router.use("/artist", artistRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/profile", profileRoutes);
 router.use("/cnpj", cnpjRoutes);
+router.use("/dev", devRoutes);
 
 module.exports = router;

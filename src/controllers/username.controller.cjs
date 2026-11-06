@@ -100,7 +100,7 @@ async function updateAction(req, res) {
       default:
         return res.status(500).json({ ok: false, reason: "error", error: "Falha ao salvar o @username." });
     }
-  } catch (err) {
+  } catch {
     return res.status(500).json({ ok: false, reason: "error", error: "Falha ao salvar o @username." });
   }
 }
